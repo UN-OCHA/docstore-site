@@ -1,0 +1,14 @@
+uuid: 7f75adaa-8cf1-41dd-9f66-860210aa0a9a
+name: 'Document store'
+mail: ops@unocha.org
+slogan: ''
+page:
+  403: ''
+  404: ''
+  front: /user/login
+admin_compact_mode: false
+weight_select_max: 100
+langcode: en
+default_langcode: en
+_core:
+  default_config_hash: yXadRE77Va-G6dxhd2kPYapAvbnSvTF6hO4oXiOEynI

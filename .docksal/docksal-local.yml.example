@@ -1,0 +1,16 @@
+version: "2.1"
+
+services:
+  chrome:
+    image: previousnext/chrome-headless:65
+    ports:
+      - "9222:9222"
+    dns:
+      - ${DOCKSAL_DNS1}
+      - ${DOCKSAL_DNS2}
+  selenium:
+    hostname: selenium
+    image: selenium/standalone-chrome:3.141.59-oxygen
+    dns:
+      - ${DOCKSAL_DNS1}
+      - ${DOCKSAL_DNS2}

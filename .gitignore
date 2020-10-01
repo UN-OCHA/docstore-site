@@ -1,0 +1,10 @@
+html/sites/default
+html/sites/default/*
+html/sites/default/files
+html/sites/default/files/*
+html/tmp
+/vendor
+/behat/vendor
+/composer.lock
+*.DS_Store
+*.sass-cache*
