@@ -1,0 +1,62 @@
+uuid: 1f17028d-fc35-4c75-a13b-066baea5b039
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.meta_entity.rw_properties.field_rw_cluster
+    - field.field.meta_entity.rw_properties.field_rw_title
+    - meta_entity.type.rw_properties
+  module:
+    - dynamic_entity_reference
+id: meta_entity.rw_properties.default
+targetEntityType: meta_entity
+bundle: rw_properties
+mode: default
+content:
+  changed:
+    label: inline
+    type: timestamp
+    weight: 22
+    region: content
+    settings:
+      date_format: medium
+      custom_date_format: ''
+      timezone: ''
+    third_party_settings: {  }
+  created:
+    label: inline
+    type: timestamp
+    weight: 20
+    region: content
+    settings:
+      date_format: medium
+      custom_date_format: ''
+      timezone: ''
+    third_party_settings: {  }
+  field_rw_cluster:
+    weight: 24
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    type: dynamic_entity_reference_label
+    region: content
+  field_rw_title:
+    weight: 25
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  label:
+    label: hidden
+    type: string
+    weight: -5
+    region: content
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+hidden:
+  search_api_excerpt: true
+  target: true

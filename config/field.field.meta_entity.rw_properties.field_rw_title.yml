@@ -1,0 +1,19 @@
+uuid: 7eea991e-bbf0-4170-b212-8d9e6ea258c2
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.meta_entity.field_rw_title
+    - meta_entity.type.rw_properties
+id: meta_entity.rw_properties.field_rw_title
+field_name: field_rw_title
+entity_type: meta_entity
+bundle: rw_properties
+label: Title
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

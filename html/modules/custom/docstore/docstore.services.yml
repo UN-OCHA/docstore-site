@@ -1,0 +1,4 @@
+services:
+  api_controller:
+    class: \Drupal\docstore\Controller\ApiController
+    arguments: ['@config.factory', '@logger.factory', '@state']

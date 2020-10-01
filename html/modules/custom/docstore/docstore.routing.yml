@@ -1,0 +1,7 @@
+docstore_getdocuments:
+  path: '/api/documents'
+  defaults:
+    _controller: 'api_controller:getDocuments'
+    _title: 'Get documents'
+  requirements:
+    _permission: 'access content'

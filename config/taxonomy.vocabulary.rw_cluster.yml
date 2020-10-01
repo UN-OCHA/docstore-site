@@ -1,0 +1,8 @@
+uuid: f001fbad-3c04-4bbf-8e3c-05c9021f75b1
+langcode: en
+status: true
+dependencies: {  }
+name: 'Cluster (RW)'
+vid: rw_cluster
+description: 'Reliefweb specific'
+weight: 0

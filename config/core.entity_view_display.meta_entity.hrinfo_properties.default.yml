@@ -1,0 +1,51 @@
+uuid: 14467b5c-eec3-4414-862b-9557dc49158d
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.meta_entity.hrinfo_properties.field_hrinfo_title
+    - meta_entity.type.hrinfo_properties
+id: meta_entity.hrinfo_properties.default
+targetEntityType: meta_entity
+bundle: hrinfo_properties
+mode: default
+content:
+  changed:
+    label: inline
+    type: timestamp
+    weight: 22
+    region: content
+    settings:
+      date_format: medium
+      custom_date_format: ''
+      timezone: ''
+    third_party_settings: {  }
+  created:
+    label: inline
+    type: timestamp
+    weight: 20
+    region: content
+    settings:
+      date_format: medium
+      custom_date_format: ''
+      timezone: ''
+    third_party_settings: {  }
+  field_hrinfo_title:
+    weight: 23
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  label:
+    label: hidden
+    type: string
+    weight: -5
+    region: content
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+hidden:
+  search_api_excerpt: true
+  target: true

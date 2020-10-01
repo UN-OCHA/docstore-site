@@ -1,0 +1,23 @@
+uuid: af1cdb1d-ba0b-43da-ad47-d8930347b5f6
+langcode: en
+status: true
+dependencies:
+  module:
+    - dynamic_entity_reference
+    - node
+    - taxonomy
+id: node.field_rw_organization
+field_name: field_rw_organization
+entity_type: node
+type: dynamic_entity_reference
+settings:
+  exclude_entity_types: false
+  entity_type_ids:
+    taxonomy_term: taxonomy_term
+module: dynamic_entity_reference
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

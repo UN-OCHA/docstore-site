@@ -1,0 +1,5 @@
+name: Document store
+description: Document store
+package: OCHA
+type: module
+core: 8.x

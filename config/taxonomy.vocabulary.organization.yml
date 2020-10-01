@@ -1,0 +1,8 @@
+uuid: 8b7fa768-f32f-43cb-8eb2-cd2f3bca42b6
+langcode: en
+status: true
+dependencies: {  }
+name: Organization
+vid: organization
+description: 'Shared taxonomy for all documents and providers'
+weight: 0

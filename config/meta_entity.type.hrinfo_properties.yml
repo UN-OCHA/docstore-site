@@ -1,0 +1,14 @@
+uuid: fbfe291d-0753-4c1d-b057-f5eb573bd174
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.document
+  module:
+    - node
+id: hrinfo_properties
+label: 'HRInfo properties'
+description: ''
+mapping:
+  node:
+    document: hrinfo_properties

@@ -1,0 +1,8 @@
+uuid: 3d2ed68d-3fd3-4e1c-bb54-099d8a87e7d9
+langcode: en
+status: true
+dependencies: {  }
+name: Country
+vid: country
+description: 'Shared taxonomy for all documents and providers'
+weight: 0
