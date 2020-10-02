@@ -1,8 +1,0 @@
-uuid: 0b033df8-9b5d-4444-94c2-d89fdec8413b
-langcode: en
-status: true
-dependencies: {  }
-name: 'Organization (RW)'
-vid: rw_organization
-description: 'Reliefweb specific'
-weight: 0

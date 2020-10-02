@@ -3,56 +3,21 @@ langcode: en
 status: true
 dependencies:
   config:
-    - field.field.node.document.body
-    - field.field.node.document.field_country
-    - field.field.node.document.field_organization
-    - field.field.node.document.field_rw_organization
     - node.type.document
-  module:
-    - dynamic_entity_reference
-    - text
 id: node.document.default
 targetEntityType: node
 bundle: document
 mode: default
 content:
-  body:
-    type: text_textarea_with_summary
-    weight: 121
-    settings:
-      rows: 9
-      summary_rows: 3
-      placeholder: ''
-      show_summary: false
-    third_party_settings: {  }
-    region: content
   created:
     type: datetime_timestamp
-    weight: 10
+    weight: 3
     region: content
     settings: {  }
     third_party_settings: {  }
-  field_country:
-    weight: 122
-    settings: {  }
-    third_party_settings: {  }
-    type: dynamic_entity_reference_options_buttons
-    region: content
-  field_organization:
-    weight: 123
-    settings: {  }
-    third_party_settings: {  }
-    type: dynamic_entity_reference_options_buttons
-    region: content
-  field_rw_organization:
-    weight: 124
-    settings: {  }
-    third_party_settings: {  }
-    type: dynamic_entity_reference_options_buttons
-    region: content
   langcode:
     type: language_select
-    weight: 2
+    weight: 1
     region: content
     settings:
       include_locked: true
@@ -61,26 +26,26 @@ content:
     type: boolean_checkbox
     settings:
       display_label: true
-    weight: 15
+    weight: 4
     region: content
     third_party_settings: {  }
   status:
     type: boolean_checkbox
     settings:
       display_label: true
-    weight: 120
+    weight: 6
     region: content
     third_party_settings: {  }
   sticky:
     type: boolean_checkbox
     settings:
       display_label: true
-    weight: 16
+    weight: 5
     region: content
     third_party_settings: {  }
   title:
     type: string_textfield
-    weight: -5
+    weight: 0
     region: content
     settings:
       size: 60
@@ -88,7 +53,7 @@ content:
     third_party_settings: {  }
   uid:
     type: entity_reference_autocomplete
-    weight: 5
+    weight: 2
     settings:
       match_operator: CONTAINS
       size: 60

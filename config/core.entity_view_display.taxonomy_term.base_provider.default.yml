@@ -1,0 +1,32 @@
+uuid: f399217d-e0b6-4961-82df-81f5ac51d88b
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.taxonomy_term.base_provider.base_prefix
+    - taxonomy.vocabulary.base_provider
+  module:
+    - text
+id: taxonomy_term.base_provider.default
+targetEntityType: taxonomy_term
+bundle: base_provider
+mode: default
+content:
+  base_prefix:
+    weight: 1
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  description:
+    label: hidden
+    type: text_default
+    weight: 0
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  langcode: true
+  search_api_excerpt: true

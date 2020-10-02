@@ -5,7 +5,6 @@ dependencies:
   config:
     - field.storage.meta_entity.field_rw_cluster
     - meta_entity.type.rw_properties
-    - taxonomy.vocabulary.rw_cluster
   module:
     - dynamic_entity_reference
 id: meta_entity.rw_properties.field_rw_cluster
@@ -22,8 +21,7 @@ settings:
   taxonomy_term:
     handler: 'default:taxonomy_term'
     handler_settings:
-      target_bundles:
-        rw_cluster: rw_cluster
+      target_bundles: {  }
       sort:
         field: name
         direction: asc
@@ -103,5 +101,26 @@ settings:
     handler_settings: {  }
   base_field_override:
     handler: 'default:base_field_override'
+    handler_settings: {  }
+  language_content_settings:
+    handler: 'default:language_content_settings'
+    handler_settings: {  }
+  configurable_language:
+    handler: 'default:configurable_language'
+    handler_settings: {  }
+  solr_request_dispatcher:
+    handler: 'default:solr_request_dispatcher'
+    handler_settings: {  }
+  solr_cache:
+    handler: 'default:solr_cache'
+    handler_settings: {  }
+  solr_request_handler:
+    handler: 'default:solr_request_handler'
+    handler_settings: {  }
+  solr_field_type:
+    handler: 'default:solr_field_type'
+    handler_settings: {  }
+  view:
+    handler: 'default:view'
     handler_settings: {  }
 field_type: dynamic_entity_reference

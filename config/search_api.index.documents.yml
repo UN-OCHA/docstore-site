@@ -8,11 +8,8 @@ dependencies:
     - node
     - search_api
   config:
-    - field.storage.meta_entity.field_rw_cluster
-    - field.storage.node.field_country
-    - field.storage.node.field_organization
-    - field.storage.node.field_rw_organization
     - field.storage.meta_entity.field_hrinfo_title
+    - field.storage.meta_entity.field_rw_cluster
     - field.storage.meta_entity.field_rw_title
     - search_api.server.solr
 third_party_settings:
@@ -58,14 +55,6 @@ name: Documents
 description: ''
 read_only: false
 field_settings:
-  country:
-    label: Country
-    datasource_id: 'entity:node'
-    property_path: field_country
-    type: string
-    dependencies:
-      config:
-        - field.storage.node.field_country
   hrinfo_title:
     label: 'Title (HRInfo)'
     datasource_id: 'entity:node'
@@ -84,14 +73,6 @@ field_settings:
     dependencies:
       module:
         - node
-  organization:
-    label: Organization
-    datasource_id: 'entity:node'
-    property_path: field_organization
-    type: string
-    dependencies:
-      config:
-        - field.storage.node.field_organization
   rw_cluster:
     label: 'Cluster (RW)'
     datasource_id: 'entity:node'
@@ -102,14 +83,6 @@ field_settings:
         - field.storage.meta_entity.field_rw_cluster
       module:
         - meta_entity
-  rw_organization:
-    label: 'Organization (RW)'
-    datasource_id: 'entity:node'
-    property_path: field_rw_organization
-    type: string
-    dependencies:
-      config:
-        - field.storage.node.field_rw_organization
   rw_title:
     label: 'Title (RW)'
     datasource_id: 'entity:node'
