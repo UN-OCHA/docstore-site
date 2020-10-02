@@ -61,13 +61,61 @@ function docstore_create_document_field_for_provider($label, $field_type, $multi
 }
 
 /**
+ * Create a document field for a provider.
+ */
+function docstore_create_document_reference_field_for_provider($label, $bundle, $multiple = FALSE, $provider_prefix = 'shared_') {
+  $field_type = 'entity_reference';
+  $field_name = docstore_generate_unique_machine_name($label, 'node', $provider_prefix);
+  $field_storage = FieldStorageConfig::create([
+    'field_name' => $field_name,
+    'entity_type' => 'node',
+    'type' => $field_type,
+    'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
+    'settings' => [
+      'target_type' => 'taxonomy_term',
+    ],
+  ]);
+  $field_storage->save();
+
+  // Create instance.
+  FieldConfig::create([
+    'field_storage' => $field_storage,
+    'bundle' => 'document',
+    'label' => $label,
+    'settings' => [
+      'handler' => 'default:taxonomy_term',
+      'handler_settings' => [
+        'target_bundles' => [
+          $bundle => $bundle,
+        ],
+      ],
+    ],
+  ])->save();
+
+  // Add to index.
+  docstore_add_document_field_to_index($field_name, $field_type, $label);
+
+  return $field_name;
+}
+
+/**
  * Add field to index.
  */
 function docstore_add_document_field_to_index($field_name, $field_type, $label) {
+  $field_type_mapping = [
+    'string' => 'string',
+    'entity_reference' => 'integer',
+  ];
+
+  // Skip unknown field types.
+  if (!isset($field_type_mapping[$field_type])) {
+    return;
+  }
+
   $index = \Drupal\search_api\Entity\Index::load('documents');
 
   $field = new \Drupal\search_api\Item\Field($index, $field_name);
-  $field->setType($field_type);
+  $field->setType($field_type_mapping[$field_type]);
   $field->setPropertyPath($field_name);
   $field->setDatasourceId('entity:node');
   $field->setLabel($label);

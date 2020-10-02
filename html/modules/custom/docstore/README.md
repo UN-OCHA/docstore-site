@@ -22,4 +22,7 @@ $bundle = docstore_create_vocabulary_for_provider($label, $provider_prefix);
 
 $label = 'My vocabulary field';
 $new_field_name = docstore_create_vocabulary_field_for_provider($bundle, $label, $field_type, $multiple, $provider_prefix);
+
+$label = 'Reference to term';
+docstore_create_document_reference_field_for_provider($label, $bundle, TRUE);
 ```
