@@ -76,17 +76,29 @@ class ApiController extends ControllerBase {
       foreach($field_mapping as $name => $solr_name) {
         // TODO: Only return base, shared and provider fields.
         if (isset($solr_row[$solr_name])) {
-          // TODO: Add label for term references.
+          // TODO: Check cardinality.
           $row[$name] = $solr_row[$solr_name];
         }
       }
+
+      // Remove solr fields.
+      if (isset($row['search_api_id'])) {
+        unset($row['search_api_id']);
+      }
+      if (isset($row['search_api_datasource'])) {
+        unset($row['search_api_datasource']);
+      }
+      if (isset($row['search_api_language'])) {
+        unset($row['search_api_language']);
+      }
+
       $data[] = $row;
     }
 
     // Add cache tags.
     $cache_tags['#cache'] = [
       'tags' => [
-        // TODO: Track actual node ids.
+        // TODO: Track actual node ids + search api.
         'node',
       ],
     ];
