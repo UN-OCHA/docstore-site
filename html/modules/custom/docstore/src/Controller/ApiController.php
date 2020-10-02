@@ -77,7 +77,7 @@ class ApiController extends ControllerBase {
     // Add cache tags.
     $cache_tags['#cache'] = [
       'tags' => [
-        'documents',
+        'node',
       ],
     ];
 

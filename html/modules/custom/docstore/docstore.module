@@ -1,5 +1,9 @@
 <?php
 
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+
 /**
  * @file
  * Contains Document Store code.
@@ -28,4 +32,74 @@ function docstore_form_field_ui_field_overview_form_remove_field_prefix(&$form, 
 
   $field_name = preg_replace('/^field_/', '', $form_state->getValue('field_name'));
   $form_state->setValue('field_name', $field_name);
+}
+
+/**
+ * Create a document field for a provider.
+ */
+function docstore_create_document_field_for_provider($label, $field_type, $multiple = FALSE, $provider_prefix = 'shared_') {
+  $field_name = docstore_generate_unique_machine_name($label, 'node', $provider_prefix);
+  $field_storage = FieldStorageConfig::create([
+    'field_name' => $field_name,
+    'entity_type' => 'node',
+    'type' => $field_type,
+    'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
+  ]);
+  $field_storage->save();
+
+  // Create instance.
+  FieldConfig::create([
+    'field_storage' => $field_storage,
+    'bundle' => 'document',
+    'label' => $label,
+  ])->save();
+
+  // Add to index.
+  docstore_add_document_field_to_index($field_name, $field_type, $label);
+}
+
+/**
+ * Add field to index.
+ */
+function docstore_add_document_field_to_index($field_name, $field_type, $label) {
+  $index = \Drupal\search_api\Entity\Index::load('documents');
+
+  $field = new \Drupal\search_api\Item\Field($index, $field_name);
+  $field->setType($field_type);
+  $field->setPropertyPath($field_name);
+  $field->setDatasourceId('entity:node');
+  $field->setLabel($label);
+  $index->addField($field);
+
+  $index->save();
+
+  // Re-index.
+  $index->reindex();
+}
+
+/**
+ * Generate a unique machine name.
+ */
+function docstore_generate_unique_machine_name($label, $entity_type, $provider_prefix) {
+  $label = strtolower($label);
+  $label = preg_replace('/[^a-z0-9_]+/', '_', $label);
+  $label = preg_replace('/_+/', '_', $label);
+  $label = $provider_prefix . $label;
+
+  $label = trim(substr($label, 0, 31), '_');
+  $counter = 0;
+  $machine_name = $label;
+  while (docstore_machine_name_exists($machine_name, $entity_type, 'field_namex')) {
+    $suffix = '_' . $counter++;
+    $machine_name = substr($label, 0, 31 - strlen($suffix)) . $suffix;
+  }
+  return $machine_name;
+}
+
+/**
+ * Check if a machine name already exists.
+ */
+function docstore_machine_name_exists($machine_name, $entity_type, $lookup_property) {
+  $field = FieldStorageConfig::loadByName($entity_type, $machine_name);
+  return !empty($field);
 }
