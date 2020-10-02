@@ -67,7 +67,9 @@ class ApiController extends ControllerBase {
     foreach ($solr_response['response']['docs'] as $solr_row) {
       $row = [];
       foreach($field_mapping as $name => $solr_name) {
+        // TODO: Only return base, shared and provider fields.
         if (isset($solr_row[$solr_name])) {
+          // TODO: Add label for term references.
           $row[$name] = $solr_row[$solr_name];
         }
       }
@@ -77,6 +79,7 @@ class ApiController extends ControllerBase {
     // Add cache tags.
     $cache_tags['#cache'] = [
       'tags' => [
+        // TODO: Track actual node ids.
         'node',
       ],
     ];

@@ -38,7 +38,10 @@ function docstore_form_field_ui_field_overview_form_remove_field_prefix(&$form, 
  * Create a document field for a provider.
  */
 function docstore_create_document_field_for_provider($label, $field_type, $multiple = FALSE, $provider_prefix = 'shared_') {
+  // TODO: Check field types.
   $field_name = docstore_generate_unique_machine_name($label, 'node', $provider_prefix);
+
+  // Create storage.
   $field_storage = FieldStorageConfig::create([
     'field_name' => $field_name,
     'entity_type' => 'node',
@@ -64,7 +67,7 @@ function docstore_create_document_field_for_provider($label, $field_type, $multi
  * Create a document field for a provider.
  */
 function docstore_create_document_reference_field_for_provider($label, $bundle, $multiple = FALSE, $provider_prefix = 'shared_') {
-  $field_type = 'entity_reference';
+  $field_type = 'entity_reference_uuid';
   $field_name = docstore_generate_unique_machine_name($label, 'node', $provider_prefix);
   $field_storage = FieldStorageConfig::create([
     'field_name' => $field_name,
@@ -105,6 +108,7 @@ function docstore_add_document_field_to_index($field_name, $field_type, $label) 
   $field_type_mapping = [
     'string' => 'string',
     'entity_reference' => 'integer',
+    'entity_reference_uuid' => 'string',
   ];
 
   // Skip unknown field types.
