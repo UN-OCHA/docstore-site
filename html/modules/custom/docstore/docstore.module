@@ -56,6 +56,8 @@ function docstore_create_document_field_for_provider($label, $field_type, $multi
 
   // Add to index.
   docstore_add_document_field_to_index($field_name, $field_type, $label);
+
+  return $field_name;
 }
 
 /**
@@ -78,6 +80,46 @@ function docstore_add_document_field_to_index($field_name, $field_type, $label) 
 }
 
 /**
+ * Create a vocabulary for a provider.
+ */
+function docstore_create_vocabulary_for_provider($label, $provider_prefix = 'shared_') {
+  $vid = docstore_generate_unique_machine_name($label, 'taxonomy_vocabulary', $provider_prefix);
+
+  $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::create(array(
+    'vid' => $vid,
+    'machine_name' => $vid,
+    'name' => $label,
+  ));
+
+  $vocabulary->save();
+
+  return $vid;
+}
+
+/**
+ * Create a vocabulary field for a provider.
+ */
+function docstore_create_vocabulary_field_for_provider($bundle, $label, $field_type, $multiple = FALSE, $provider_prefix = 'shared_') {
+  $field_name = docstore_generate_unique_machine_name($label, 'taxonomy_term', $provider_prefix);
+  $field_storage = FieldStorageConfig::create([
+    'field_name' => $field_name,
+    'entity_type' => 'taxonomy_term',
+    'type' => $field_type,
+    'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
+  ]);
+  $field_storage->save();
+
+  // Create instance.
+  FieldConfig::create([
+    'field_storage' => $field_storage,
+    'bundle' => $bundle,
+    'label' => $label,
+  ])->save();
+
+  return $field_name;
+}
+
+/**
  * Generate a unique machine name.
  */
 function docstore_generate_unique_machine_name($label, $entity_type, $provider_prefix) {
@@ -89,7 +131,7 @@ function docstore_generate_unique_machine_name($label, $entity_type, $provider_p
   $label = trim(substr($label, 0, 31), '_');
   $counter = 0;
   $machine_name = $label;
-  while (docstore_machine_name_exists($machine_name, $entity_type, 'field_namex')) {
+  while (docstore_machine_name_exists($machine_name, $entity_type)) {
     $suffix = '_' . $counter++;
     $machine_name = substr($label, 0, 31 - strlen($suffix)) . $suffix;
   }
@@ -99,7 +141,8 @@ function docstore_generate_unique_machine_name($label, $entity_type, $provider_p
 /**
  * Check if a machine name already exists.
  */
-function docstore_machine_name_exists($machine_name, $entity_type, $lookup_property) {
+function docstore_machine_name_exists($machine_name, $entity_type) {
   $field = FieldStorageConfig::loadByName($entity_type, $machine_name);
+
   return !empty($field);
 }
