@@ -62,9 +62,16 @@ class ApiController extends ControllerBase {
     $server = $index->getServerInstance();
     $solr = $server->getBackend();
 
+    // TODO: Check if backend is solr.
     $field_mapping = $solr->getSolrFieldNames($index);
+    $language_field = $field_mapping['search_api_language'];
 
     foreach ($solr_response['response']['docs'] as $solr_row) {
+      if ($language_field && isset($solr_row[$language_field])) {
+        $language_id = $solr_row[$language_field];
+        $field_mapping = $solr->getLanguageSpecificSolrFieldNames($language_id, $index);
+      }
+
       $row = [];
       foreach($field_mapping as $name => $solr_name) {
         // TODO: Only return base, shared and provider fields.
