@@ -32,7 +32,6 @@ class DocStoreAuthenticationProvider implements AuthenticationProviderInterface 
    * {@inheritdoc}
    */
   public function applies(Request $request) {
-    //\Drupal::logger('applies')->notice($this->authenticationService->getKey($request));
     return (bool) $this->authenticationService->getKey($request);
   }
 
@@ -41,21 +40,15 @@ class DocStoreAuthenticationProvider implements AuthenticationProviderInterface 
    */
   public function authenticate(Request $request) {
     // TODO: Add flood protection.
-    \Drupal::logger('my_module')->notice('authenticate');
+
     // Get the provided key.
     if ($key = $this->authenticationService->getKey($request)) {
-      \Drupal::logger('key')->notice($key);
       // Find the linked user.
       if ($user = $this->authenticationService->getProviderByKey($key)) {
-        \Drupal::logger('my_module')->notice('provider found');
         return $user;
-      }
-      else {
-        \Drupal::logger('my_module write')->notice('wrong key');
       }
     }
 
-    \Drupal::logger('my_module')->notice('not authenticated');
     return [];
   }
 

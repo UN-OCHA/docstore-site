@@ -2,14 +2,15 @@
 
 namespace Drupal\docstore\Controller;
 
-use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Cache\CacheableJsonResponse;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
-use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\State\State;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Class ApiController.
@@ -44,19 +45,6 @@ class ApiController extends ControllerBase {
     $this->config = $config->get('docstore.settings');
     $this->loggerFactory = $logger_factory;
     $this->state = $state;
-  }
-
-  /**
-   * Checks access for a specific request.
-   *
-   * @param \Drupal\Core\Session\AccountInterface $account
-   *   Run access checks for this account.
-   *
-   * @return \Drupal\Core\Access\AccessResultInterface
-   *   The access result.
-   */
-  public function access(AccountInterface $account) {
-    return AccessResult::allowedIf($account->hasPermission('do example things') && $this->someOtherCustomCondition());
   }
 
   /**
@@ -128,9 +116,13 @@ class ApiController extends ControllerBase {
    * Get document fields.
    */
   public function getDocumentFields() {
-    $data = [
-      'message' => 'Not implemented',
-    ];
+    $data = [];
+
+    $map = \Drupal::service('entity_field.manager')->getFieldMap();
+    foreach ($map['node'] as $field_name => $field_info) {
+      $data[$field_name] = $field_info['type'];
+    }
+
     $response = new CacheableJsonResponse($data);
 
     return $response;
@@ -139,11 +131,35 @@ class ApiController extends ControllerBase {
   /**
    * Get document fields.
    */
-  public function addDocumentField() {
+  public function addDocumentField(Request $request) {
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+
+    // Check required fields.
+    if (empty($params['label']) || empty($params['type'])) {
+      throw new NotFoundHttpException();
+    }
+
+    // Multi value field.
+    $multiple = FALSE;
+    if (isset($params['multiple'])) {
+      $multiple = $params['multiple'];
+    }
+
+    // Get proxy account to get session info.
+    $user = \Drupal::currentUser()->getAccount();
+
+    // Load provider.
+    $provider = taxonomy_term_load($user->docstore_provider);
+
+    // Create field.
+    $field_name = docstore_create_document_field_for_provider($params['label'], $params['type'], $multiple, $provider->get('base_prefix')->value);
+
     $data = [
-      'message' => 'Not implemented',
+      'message' => 'Field added',
+      'field_name' => $field_name,
     ];
-    $response = new CacheableJsonResponse($data);
+    $response = new JsonResponse($data);
 
     return $response;
   }

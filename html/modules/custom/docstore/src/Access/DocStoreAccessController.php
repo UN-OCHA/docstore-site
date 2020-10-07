@@ -61,12 +61,11 @@ class DocStoreAccessController implements AccessInterface {
     }
     else {
       // Full account is available.
-      \Drupal::logger('my_module')->notice($user->docstore_write);
-      \Drupal::logger('my_module')->notice(print_r($user->docstore_provider, TRUE));
+      $user_write_access = $user->docstore_write;
+      $user_provider = $user->docstore_provider;
     }
 
-    \Drupal::logger('my_module')->notice($route_match->getRouteName());
-
+    $route_name = $route_match->getRouteName();
 
     return AccessResult::allowed();
   }

@@ -98,7 +98,7 @@ class AuthenticationService {
     if ($provider) {
       // Extend anonymous user object.
       $user = User::getAnonymousUser();
-      $user->docstore_provider = $provider;
+      $user->docstore_provider = reset($provider);
       $user->docstore_write = TRUE;
       return $user;
     }
@@ -115,7 +115,7 @@ class AuthenticationService {
     if ($provider) {
       // Extend anonymous user object.
       $user = User::getAnonymousUser();
-      $user->docstore_provider = $provider;
+      $user->docstore_provider = reset($provider);
       $user->docstore_write = FALSE;
       return $user;
     }

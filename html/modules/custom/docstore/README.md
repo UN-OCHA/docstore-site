@@ -26,3 +26,15 @@ $new_field_name = docstore_create_vocabulary_field_for_provider($bundle, $label,
 $label = 'Reference to term';
 docstore_create_document_reference_field_for_provider($label, $bundle, TRUE);
 ```
+
+### Using the API
+
+```bash
+curl -X POST "http://docstore.local.docksal/api/documents/fields" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"label\":\"My string field\",\"type\":\"string\"}"
+```
+
+Response
+
+```json
+{"message":"Field added","field_name":"my_string_field"}
+```
