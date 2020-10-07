@@ -10,7 +10,7 @@ docstore_getdocuments:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_documents_getfields:
-  path: '/api/documents/fields'
+  path: '/api/document/fields'
   defaults:
     _controller: 'docstore.api_controller:getDocumentFields'
     _title: 'Get documents'
@@ -22,7 +22,7 @@ docstore_documents_getfields:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 docstore_documents_addfields:
-  path: '/api/documents/fields'
+  path: '/api/document/fields'
   defaults:
     _controller: 'docstore.api_controller:addDocumentField'
     _title: 'Get documents'
