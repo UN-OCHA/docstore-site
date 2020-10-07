@@ -2,6 +2,7 @@
 
 namespace Drupal\docstore\Controller;
 
+use Drupal\Component\Uuid\Uuid;
 use Drupal\Core\Cache\CacheableJsonResponse;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -118,9 +119,9 @@ class ApiController extends ControllerBase {
   public function getDocumentFields() {
     $data = [];
 
-    $map = \Drupal::service('entity_field.manager')->getFieldMap();
-    foreach ($map['node'] as $field_name => $field_info) {
-      $data[$field_name] = $field_info['type'];
+    $map = \Drupal::service('entity_field.manager')->getFieldDefinitions('node', 'document');
+    foreach ($map as $field_name => $field_info) {
+      $data[$field_name] = $field_info->getType();
     }
 
     $response = new CacheableJsonResponse($data);
@@ -164,4 +165,115 @@ class ApiController extends ControllerBase {
     return $response;
   }
 
+  /**
+   * Get vocabularies.
+   */
+  public function getVocabularies() {
+    $data = [];
+
+    $vocabularies = \Drupal::entityTypeManager()->getStorage('taxonomy_vocabulary')->loadMultiple();
+    foreach ($vocabularies as $vocabulary) {
+      $data[] = [
+        'uuid' => $vocabulary->uuid(),
+        'label' => $vocabulary->label(),
+        'machine_name' => $vocabulary->id(),
+      ];
+    }
+
+    $response = new CacheableJsonResponse($data);
+
+    return $response;
+  }
+
+  /**
+   * Get vocabulary.
+   */
+  public function getVocabulary($id) {
+    $vocabulary = FALSE;
+    if (Uuid::isValid($id)) {
+      $vocabulary = \Drupal::service('entity.repository')->loadEntityByUuid('taxonomy_vocabulary', $id);
+    }
+    else {
+      // Assume it's the machine name.
+      $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::load($id);
+    }
+
+    if (!$vocabulary) {
+      throw new NotFoundHttpException();
+    }
+
+    $data = [
+      'uuid' => $vocabulary->uuid(),
+      'label' => $vocabulary->label(),
+      'machine_name' => $vocabulary->id(),
+    ];
+
+    $response = new CacheableJsonResponse($data);
+
+    return $response;
+  }
+
+  /**
+   * Get vocabulary fields.
+   */
+  public function getVocabularyFields($id) {
+    $vocabulary = FALSE;
+    if (Uuid::isValid($id)) {
+      $vocabulary = \Drupal::service('entity.repository')->loadEntityByUuid('taxonomy_vocabulary', $id);
+    }
+    else {
+      // Assume it's the machine name.
+      $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::load($id);
+    }
+
+    if (!$vocabulary) {
+      throw new NotFoundHttpException();
+    }
+
+    $data = [];
+    $map = \Drupal::service('entity_field.manager')->getFieldDefinitions('taxonomy_term', $vocabulary->id());
+    foreach ($map as $field_name => $field_info) {
+      $data[$field_name] = $field_info->getType();
+    }
+
+    $response = new CacheableJsonResponse($data);
+
+    return $response;
+  }
+
+  /**
+   * Get vocabulary fields.
+   */
+  public function addVocabularyField($id, Request $request) {
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+
+    // Check required fields.
+    if (empty($params['label']) || empty($params['type'])) {
+      throw new NotFoundHttpException();
+    }
+
+    // Multi value field.
+    $multiple = FALSE;
+    if (isset($params['multiple'])) {
+      $multiple = $params['multiple'];
+    }
+
+    // Get proxy account to get session info.
+    $user = \Drupal::currentUser()->getAccount();
+
+    // Load provider.
+    $provider = taxonomy_term_load($user->docstore_provider);
+
+    // Create field.
+    $field_name = docstore_create_document_field_for_provider($params['label'], $params['type'], $multiple, $provider->get('base_prefix')->value);
+
+    $data = [
+      'message' => 'Field added',
+      'field_name' => $field_name,
+    ];
+    $response = new JsonResponse($data);
+
+    return $response;
+  }
 }

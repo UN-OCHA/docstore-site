@@ -9,11 +9,11 @@ docstore_getdocuments:
   options:
     docstore_crud: 'R'
     docstore_access_level: 'B'
-docstore_documents_getfields:
+docstore_document_getfields:
   path: '/api/document/fields'
   defaults:
     _controller: 'docstore.api_controller:getDocumentFields'
-    _title: 'Get documents'
+    _title: 'Get document fields'
   methods: [GET]
   requirements:
     _docstore_access_check: 'TRUE'
@@ -21,11 +21,60 @@ docstore_documents_getfields:
     _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'A'
-docstore_documents_addfields:
+docstore_document_addfields:
   path: '/api/document/fields'
   defaults:
     _controller: 'docstore.api_controller:addDocumentField'
-    _title: 'Get documents'
+    _title: 'Add document field'
+  methods: [POST]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'C'
+    docstore_access_level: 'A'
+
+docstore_getvocabularies:
+  path: '/api/vocabularies'
+  defaults:
+    _controller: 'docstore.api_controller:getVocabularies'
+    _title: 'Get vocabularies'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_getvocabulary:
+  path: '/api/vocabularies/{id}'
+  defaults:
+    _controller: 'docstore.api_controller:getVocabulary'
+    _title: 'Get vocabulary'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_vocabulary_getfields:
+  path: '/api/vocabularies/{id}/fields'
+  defaults:
+    _controller: 'docstore.api_controller:getVocabularyFields'
+    _title: 'Get vocabulary fields'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_vocabulary_addfields:
+  path: '/api/vocabularies/{id}/fields'
+  defaults:
+    _controller: 'docstore.api_controller:addVocabularyField'
+    _title: 'Add vocabulary field'
   methods: [POST]
   requirements:
     _docstore_access_check: 'TRUE'

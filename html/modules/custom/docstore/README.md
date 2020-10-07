@@ -8,6 +8,35 @@
 - `reliefweb_`: fields, vocabularies for reliefweb
 - `unocha_`: fields, vocabularies for unocha
 
+## Vocabularies
+
+### Get list of vocabularies
+
+```bash
+curl -X GET "http://docstore.local.docksal/api/vocabularies" -H  "accept: application/json" -H  "API-KEY: abcd"
+```
+
+### Get a vocabulary
+
+```bash
+curl -X GET "http://docstore.local.docksal/api/vocabularies/base_provider" -H  "accept: application/json" -H  "API-KEY: abcd"
+```
+
+```bash
+curl -X GET "http://docstore.local.docksal/api/vocabularies/f56fb44b-a17c-4b5e-bf79-afc4e195af86" -H  "accept: application/json" -H  "API-KEY: abcd"
+```
+
+### Get vocabulary fields
+
+```bash
+curl -X GET "http://docstore.local.docksal/api/vocabularies/base_provider/fields" -H  "accept: application/json" -H  "API-KEY: abcd"
+```
+
+```bash
+curl -X GET "http://docstore.local.docksal/api/vocabularies/f56fb44b-a17c-4b5e-bf79-afc4e195af86/fields" -H  "accept: application/json" -H  "API-KEY: abcd"
+```
+
+
 ## Creating vocabularies, adding fields
 
 ```php
