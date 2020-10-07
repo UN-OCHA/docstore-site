@@ -1,7 +1,35 @@
 docstore_getdocuments:
   path: '/api/documents'
   defaults:
-    _controller: 'api_controller:getDocuments'
+    _controller: 'docstore.api_controller:getDocuments'
     _title: 'Get documents'
+  methods: [GET]
   requirements:
-    _permission: 'access content'
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_documents_getfields:
+  path: '/api/documents/fields'
+  defaults:
+    _controller: 'docstore.api_controller:getDocumentFields'
+    _title: 'Get documents'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_documents_addfields:
+  path: '/api/documents/field'
+  defaults:
+    _controller: 'docstore.api_controller:addDocumentField'
+    _title: 'Get documents'
+  methods: [POST]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'C'
+    docstore_access_level: 'A'

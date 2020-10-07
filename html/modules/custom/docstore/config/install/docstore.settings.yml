@@ -1,0 +1,5 @@
+key_length: 32
+param_name: 'api-key'
+detection_methods:
+  - header
+  - query

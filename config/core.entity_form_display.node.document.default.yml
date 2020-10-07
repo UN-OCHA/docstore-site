@@ -3,12 +3,32 @@ langcode: en
 status: true
 dependencies:
   config:
+    - field.field.node.document.base_author_hid
+    - field.field.node.document.base_provider
     - node.type.document
 id: node.document.default
 targetEntityType: node
 bundle: document
 mode: default
 content:
+  base_author_hid:
+    weight: 27
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  base_provider:
+    weight: 26
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    region: content
   created:
     type: datetime_timestamp
     weight: 3

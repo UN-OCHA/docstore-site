@@ -2,11 +2,13 @@
 
 namespace Drupal\docstore\Controller;
 
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Cache\CacheableJsonResponse;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\State\State;
 
 /**
@@ -39,9 +41,22 @@ class ApiController extends ControllerBase {
    * {@inheritdoc}
    */
   public function __construct(ConfigFactoryInterface $config, LoggerChannelFactoryInterface $logger_factory, State $state) {
-    $this->config = $config->get('allocations.settings');
+    $this->config = $config->get('docstore.settings');
     $this->loggerFactory = $logger_factory;
     $this->state = $state;
+  }
+
+  /**
+   * Checks access for a specific request.
+   *
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   Run access checks for this account.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   The access result.
+   */
+  public function access(AccountInterface $account) {
+    return AccessResult::allowedIf($account->hasPermission('do example things') && $this->someOtherCustomCondition());
   }
 
   /**
@@ -105,6 +120,30 @@ class ApiController extends ControllerBase {
 
     $response = new CacheableJsonResponse($data);
     $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+
+    return $response;
+  }
+
+  /**
+   * Get document fields.
+   */
+  public function getDocumentFields() {
+    $data = [
+      'message' => 'Not implemented',
+    ];
+    $response = new CacheableJsonResponse($data);
+
+    return $response;
+  }
+
+  /**
+   * Get document fields.
+   */
+  public function addDocumentField() {
+    $data = [
+      'message' => 'Not implemented',
+    ];
+    $response = new CacheableJsonResponse($data);
 
     return $response;
   }

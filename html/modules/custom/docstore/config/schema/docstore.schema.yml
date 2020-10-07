@@ -1,0 +1,16 @@
+docstore.settings:
+  type: config_object
+  label: 'Document store settings.'
+  mapping:
+    key_length:
+      type: integer
+      label: 'Key length'
+    param_name:
+      type: string
+      label: 'Parameter name'
+    detection_methods:
+      type: sequence
+      label: 'Detection methods'
+      sequence:
+        type: string
+        label: 'Detection method'
