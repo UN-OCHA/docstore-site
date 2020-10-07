@@ -1,0 +1,21 @@
+uuid: 173941d5-45fe-441b-8bc8-bbc35761f9fa
+langcode: en
+status: true
+dependencies:
+  module:
+    - entity_reference_uuid
+    - node
+    - taxonomy
+id: node.base_provider
+field_name: base_provider
+entity_type: node
+type: entity_reference_uuid
+settings:
+  target_type: taxonomy_term
+module: entity_reference_uuid
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

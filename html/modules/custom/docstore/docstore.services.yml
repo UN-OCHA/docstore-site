@@ -1,4 +1,22 @@
 services:
-  api_controller:
+  docstore.access_checker:
+    class: Drupal\docstore\Access\DocStoreAccessController
+    tags:
+      - { name: access_check, applies_to: _docstore_access_check }
+  docstore.authentication_service:
+    class: Drupal\docstore\AuthenticationService
+    arguments: ['@config.factory', '@entity_type.manager']
+  docstore.authentication_provider:
+    class: Drupal\docstore\Authentication\Provider\DocStoreAuthenticationProvider
+    arguments: ['@docstore.authentication_service']
+    tags:
+      - { name: authentication_provider, provider_id: 'docstore_auth', priority: 200 }
+  docstore.page_cache_request_policy.disallow_docstore_requests:
+      class: Drupal\docstore\PageCache\DisallowCaching
+      arguments: ['@docstore.authentication_service']
+      public: false
+      tags:
+        - { name: page_cache_request_policy }
+  docstore.api_controller:
     class: \Drupal\docstore\Controller\ApiController
     arguments: ['@config.factory', '@logger.factory', '@state']

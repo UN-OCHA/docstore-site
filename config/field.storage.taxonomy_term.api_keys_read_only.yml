@@ -1,0 +1,21 @@
+uuid: e09cf582-50e1-42a5-acbb-7d93e95f4600
+langcode: en
+status: true
+dependencies:
+  module:
+    - taxonomy
+id: taxonomy_term.api_keys_read_only
+field_name: api_keys_read_only
+entity_type: taxonomy_term
+type: string
+settings:
+  max_length: 255
+  is_ascii: false
+  case_sensitive: false
+module: core
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false
