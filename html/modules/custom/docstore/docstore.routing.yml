@@ -292,14 +292,36 @@ docstore_delete_file:
   options:
     docstore_crud: 'D'
     docstore_access_level: 'B'
-docstore_get_file:
+docstore_get_file_content:
   path: '/api/files/{id}/content'
   defaults:
     _controller: 'docstore.api_controller:getFileContent'
-    _title: 'Get file'
+    _title: 'Get file content'
   methods: [GET]
   requirements:
     _docstore_access_check: 'TRUE'
   options:
     docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_create_file_content:
+  path: '/api/files/{id}/content'
+  defaults:
+    _controller: 'docstore.api_controller:createFileContent'
+    _title: 'Create file content'
+  methods: [POST]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'C'
+    docstore_access_level: 'B'
+docstore_update_file_content:
+  path: '/api/files/{id}/content'
+  defaults:
+    _controller: 'docstore.api_controller:updateFileContent'
+    _title: 'Update file content'
+  methods: [PUT]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'U'
     docstore_access_level: 'B'

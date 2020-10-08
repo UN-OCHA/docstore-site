@@ -501,13 +501,6 @@ class ApiController extends ControllerBase {
   }
 
   /**
-   * Get file content.
-   */
-  public function getFileContent($id, Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
-  }
-
-  /**
    * Update file.
    */
   public function updateFile($id, Request $request) {
@@ -518,6 +511,27 @@ class ApiController extends ControllerBase {
    * Delete file.
    */
   public function deleteFile($id, Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Get file content.
+   */
+  public function getFileContent($id, Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Create file content.
+   */
+  public function createFileContent($id, Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Update file content.
+   */
+  public function updateFileContent($id, Request $request) {
     throw new PreconditionFailedHttpException('Not implemented (yet)');
   }
 
