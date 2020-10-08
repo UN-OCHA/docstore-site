@@ -524,7 +524,9 @@ class ApiController extends ControllerBase {
       file_prepare_directory($destination, FILE_CREATE_DIRECTORY);
 
       // Append filename.
-      // TODO: Transliterate.
+      $trans = \Drupal::transliteration();
+      $params['filename'] = $trans->transliterate($params['filename'], 'en');
+      $params['filename'] = preg_replace('/\-+/', '-', strtolower(preg_replace('/[^a-zA-Z0-9_\-\.]+/', '', str_replace(' ', '-', $params['filename']))));
       $destination .= '/' . $params['filename'];
 
       // Decode data.
@@ -596,7 +598,6 @@ class ApiController extends ControllerBase {
     file_prepare_directory($destination, FILE_CREATE_DIRECTORY);
 
     // Append filename.
-    // TODO: Transliterate.
     $destination .= '/' . $file->getFilename();
 
     if ($uri = file_unmanaged_save_data($request->getContent(), $destination, FILE_EXISTS_RENAME)) {
