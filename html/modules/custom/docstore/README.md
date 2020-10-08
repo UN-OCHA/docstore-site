@@ -132,10 +132,20 @@ Response
 
 ### Create file
 
+#### Create entry
+
 ```bash
 curl -X POST "http://docstore.local.docksal/api/files" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"filename\":\"my_test_file.txt\"}" | jq
 ```
 
+#### Create entry and data
+
 ```bash
 (echo -n '{"filename":"test.pdf","mime":"application/pdf","data": "'; base64 ~/Documents/test_xyzzy.pdf; echo '"}') | curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" -H "Content-Type: application/json" -d @-  http://docstore.local.docksal/api/files | jq
+```
+
+#### Create data (binary)
+
+```bash
+curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" --data-binary "@updated.pdf" http://docstore.local.docksal/api/files/b51bf47c-b9f1-4fb2-addc-66127ee82c39/content | jq
 ```

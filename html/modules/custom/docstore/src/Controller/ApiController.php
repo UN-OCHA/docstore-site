@@ -507,7 +507,7 @@ class ApiController extends ControllerBase {
     }
 
     // TODO: Support public vs private.
-    
+
     //$filesystem = \Drupal::service('file_system');
     $file = File::create();
     $file->setOwnerId($provider->id());
@@ -530,11 +530,12 @@ class ApiController extends ControllerBase {
       // Decode data.
       $params['data'] = base64_decode($params['data']);
 
-      \Drupal::logger('destination')->notice($destination);
-      if ($uri = file_unmanaged_save_data($params['data'], $destination, FILE_EXISTS_REPLACE)) {
-        \Drupal::logger('uri')->notice($uri);
+      if ($uri = file_unmanaged_save_data($params['data'], $destination, FILE_EXISTS_RENAME)) {
         $file->setFileUri($uri);
         $file->setPermanent();
+      }
+      else {
+        throw new BadRequestHttpException('Unable to write file');
       }
     }
 
@@ -582,7 +583,39 @@ class ApiController extends ControllerBase {
    * Create file content.
    */
   public function createFileContent($id, Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    /** @var Drupal\file\Entity\File $file */
+    $file = \Drupal::service('entity.repository')->loadEntityByUuid('file', $id);
+    if (!$file) {
+      throw new BadRequestHttpException('File does not exist');
+    }
+
+    // Create destination.
+    $destination = file_default_scheme() . '://';
+    $destination .= substr(md5($file->getFilename()), 0, 3);
+    $destination .= '/' . substr(md5($file->getFilename()), 3, 3);
+    file_prepare_directory($destination, FILE_CREATE_DIRECTORY);
+
+    // Append filename.
+    // TODO: Transliterate.
+    $destination .= '/' . $file->getFilename();
+
+    if ($uri = file_unmanaged_save_data($request->getContent(), $destination, FILE_EXISTS_RENAME)) {
+      $file->setFileUri($uri);
+      $file->setPermanent();
+      $file->save();
+    }
+    else {
+      throw new BadRequestHttpException('Unable to write file');
+    }
+
+    $data = [
+      'message' => 'File content created',
+      'uuid' => $file->uuid(),
+    ];
+
+    $response = new JsonResponse($data);
+
+    return $response;
   }
 
   /**
