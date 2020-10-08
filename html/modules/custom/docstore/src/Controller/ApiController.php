@@ -134,62 +134,21 @@ class ApiController extends ControllerBase {
    * Get document fields.
    */
   public function addDocumentField(Request $request) {
-    // Get proxy account to get session info.
-    $user = \Drupal::currentUser()->getAccount();
-
-    // Load provider.
-    $provider = taxonomy_term_load($user->docstore_provider);
-    if (!$provider) {
-      throw new BadRequestHttpException('Provider is required');
-    }
-
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
 
-    // Check required fields.
-    if (empty($params['label'])) {
-      throw new BadRequestHttpException('Label is required');
-    }
+    // Load provider.
+    $provider = $this->getProvider();
 
-    // If target is specified, type is not needed.
-    if (isset($params['target'])) {
-      $params['type'] = 'entity_reference_uuid';
-    }
-    else {
-      if (empty($params['type'])) {
-        throw new BadRequestHttpException('Type is required');
-      }
-
-      $allowed_types = docstore_allowed_field_types();
-      if (!isset($allowed_types[$params['type']])) {
-        throw new BadRequestHttpException('Unknown type');
-      }
-    }
-
-    // Reference fields need a target as well.
-    if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
-      if (empty($params['target'])) {
-        throw new BadRequestHttpException('Target is required for reference fields');
-      }
-
-      // Make sure bundle is valid.
-      if (!docstore_vocabulary_is_valid($params['target'], $provider->get('base_prefix')->value)) {
-        throw new BadRequestHttpException('Target does not exist or is invalid');
-      }
-    }
-
-    // Multi value field.
-    $multiple = FALSE;
-    if (isset($params['multiple'])) {
-      $multiple = $params['multiple'];
-    }
+    // Check field parameters.
+    $this->validFieldParameters($params, $provider);
 
     // Create field.
     if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
-      $field_name = docstore_create_document_reference_field_for_provider($params['label'], $params['target'], $multiple, $provider->get('base_prefix')->value);
+      $field_name = docstore_create_document_reference_field_for_provider($params['label'], $params['target'], $params['multiple'], $provider->get('base_prefix')->value);
     }
     else {
-      $field_name = docstore_create_document_field_for_provider($params['label'], $params['type'], $multiple, $provider->get('base_prefix')->value);
+      $field_name = docstore_create_document_field_for_provider($params['label'], $params['type'], $params['multiple'], $provider->get('base_prefix')->value);
     }
 
     $data = [
@@ -314,25 +273,14 @@ class ApiController extends ControllerBase {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
 
-    // Check required fields.
-    if (empty($params['label']) || empty($params['type'])) {
-      throw new NotFoundHttpException();
-    }
-
-    // Multi value field.
-    $multiple = FALSE;
-    if (isset($params['multiple'])) {
-      $multiple = $params['multiple'];
-    }
-
-    // Get proxy account to get session info.
-    $user = \Drupal::currentUser()->getAccount();
-
     // Load provider.
-    $provider = taxonomy_term_load($user->docstore_provider);
+    $provider = $this->getProvider();
+
+    // Check field parameters.
+    $this->validFieldParameters($params, $provider);
 
     // Create field.
-    $field_name = docstore_create_document_field_for_provider($params['label'], $params['type'], $multiple, $provider->get('base_prefix')->value);
+    $field_name = docstore_create_document_field_for_provider($params['label'], $params['type'], $params['multiple'], $provider->get('base_prefix')->value);
 
     $data = [
       'message' => 'Field added',
@@ -342,4 +290,64 @@ class ApiController extends ControllerBase {
 
     return $response;
   }
+
+  /**
+   * Get provider.
+   */
+  protected function getProvider() {
+    // Get proxy account to get session info.
+    $user = \Drupal::currentUser()->getAccount();
+
+    // Load provider.
+    $provider = taxonomy_term_load($user->docstore_provider);
+
+    if (!$provider) {
+      throw new BadRequestHttpException('Provider is required');
+    }
+
+    return $provider;
+  }
+
+  /**
+   * Check field parameters.
+   */
+  protected function validFieldParameters(&$params, $provider) {
+    // Multi value field.
+    if (!isset($params['multiple'])) {
+      $params['multiple'] = FALSE;
+    }
+
+    // Check required fields.
+    if (empty($params['label'])) {
+      throw new BadRequestHttpException('Label is required');
+    }
+
+    // If target is specified, type is not needed.
+    if (isset($params['target'])) {
+      $params['type'] = 'entity_reference_uuid';
+    }
+    else {
+      if (empty($params['type'])) {
+        throw new BadRequestHttpException('Type is required');
+      }
+
+      $allowed_types = docstore_allowed_field_types();
+      if (!isset($allowed_types[$params['type']])) {
+        throw new BadRequestHttpException('Unknown type');
+      }
+    }
+
+    // Reference fields need a target as well.
+    if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
+      if (empty($params['target'])) {
+        throw new BadRequestHttpException('Target is required for reference fields');
+      }
+
+      // Make sure bundle is valid.
+      if (!docstore_vocabulary_is_valid($params['target'], $provider->get('base_prefix')->value)) {
+        throw new BadRequestHttpException('Target does not exist or is invalid');
+      }
+    }
+  }
+
 }

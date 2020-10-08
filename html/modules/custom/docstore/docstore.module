@@ -60,6 +60,7 @@ function docstore_create_document_field_for_provider($label, $field_type, $multi
     return;
   }
 
+  // Create new machine name.
   $field_name = docstore_generate_unique_machine_name($label, 'node', $provider_prefix);
 
   // Create storage.
