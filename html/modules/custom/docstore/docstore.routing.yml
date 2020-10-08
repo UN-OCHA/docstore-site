@@ -8,6 +8,7 @@ docstore_get_documents:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_create_document:
@@ -19,6 +20,7 @@ docstore_create_document:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'C'
     docstore_access_level: 'B'
 docstore_get_document:
@@ -30,6 +32,7 @@ docstore_get_document:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_get_document_files:
@@ -41,6 +44,7 @@ docstore_get_document_files:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_get_document_terms:
@@ -52,6 +56,7 @@ docstore_get_document_terms:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_update_document:
@@ -63,6 +68,7 @@ docstore_update_document:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'U'
     docstore_access_level: 'B'
 docstore_delete_document:
@@ -74,6 +80,7 @@ docstore_delete_document:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'D'
     docstore_access_level: 'B'
 
@@ -189,6 +196,7 @@ docstore_get_terms:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_create_term:
@@ -200,6 +208,7 @@ docstore_create_term:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'C'
     docstore_access_level: 'B'
 docstore_get_term:
@@ -211,6 +220,7 @@ docstore_get_term:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_update_term:
@@ -222,6 +232,7 @@ docstore_update_term:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'U'
     docstore_access_level: 'B'
 docstore_delete_term:
@@ -233,6 +244,7 @@ docstore_delete_term:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'D'
     docstore_access_level: 'B'
 
@@ -246,6 +258,7 @@ docstore_get_files:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_create_file:
@@ -257,6 +270,7 @@ docstore_create_file:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'C'
     docstore_access_level: 'B'
 docstore_get_file:
@@ -268,6 +282,7 @@ docstore_get_file:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_update_file:
@@ -279,6 +294,7 @@ docstore_update_file:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'U'
     docstore_access_level: 'B'
 docstore_delete_file:
@@ -290,6 +306,7 @@ docstore_delete_file:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'D'
     docstore_access_level: 'B'
 docstore_get_file_content:
@@ -301,6 +318,7 @@ docstore_get_file_content:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_create_file_content:
@@ -312,6 +330,7 @@ docstore_create_file_content:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'C'
     docstore_access_level: 'B'
 docstore_update_file_content:
@@ -323,5 +342,6 @@ docstore_update_file_content:
   requirements:
     _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'U'
     docstore_access_level: 'B'

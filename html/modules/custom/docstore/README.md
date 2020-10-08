@@ -127,3 +127,15 @@ Response
   "field_name":"my_string_field"
 }
 ```
+
+## Files
+
+### Create file
+
+```bash
+curl -X POST "http://docstore.local.docksal/api/files" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"filename\":\"my_test_file.txt\"}" | jq
+```
+
+```bash
+(echo -n '{"filename":"test.pdf","mime":"application/pdf","data": "'; base64 ~/Documents/test_xyzzy.pdf; echo '"}') | curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" -H "Content-Type: application/json" -d @-  http://docstore.local.docksal/api/files | jq
+```

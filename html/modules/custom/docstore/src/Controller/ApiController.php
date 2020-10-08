@@ -9,6 +9,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\State\State;
+use Drupal\file\Entity\File;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -490,7 +491,63 @@ class ApiController extends ControllerBase {
    * Create file.
    */
   public function createFile(Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+
+    // Load provider?
+    $provider = $this->getProvider();
+
+    // Filename is required.
+    if (!isset($params['filename'])) {
+      throw new BadRequestHttpException('File name is required');
+    }
+
+    if (!isset($params['mime'])) {
+      $params['mime'] = 'undefined';
+    }
+
+    // TODO: Support public vs private.
+    
+    //$filesystem = \Drupal::service('file_system');
+    $file = File::create();
+    $file->setOwnerId($provider->id());
+    $file->setMimeType($params['mime']);
+    $file->setFileName($params['filename']);
+    $file->setFileUri($params['filename']);
+    $file->setTemporary();
+
+    if (isset($params['data'])) {
+      // Create destination.
+      $destination = file_default_scheme() . '://';
+      $destination .= substr(md5($params['filename']), 0, 3);
+      $destination .= '/' . substr(md5($params['filename']), 3, 3);
+      file_prepare_directory($destination, FILE_CREATE_DIRECTORY);
+
+      // Append filename.
+      // TODO: Transliterate.
+      $destination .= '/' . $params['filename'];
+
+      // Decode data.
+      $params['data'] = base64_decode($params['data']);
+
+      \Drupal::logger('destination')->notice($destination);
+      if ($uri = file_unmanaged_save_data($params['data'], $destination, FILE_EXISTS_REPLACE)) {
+        \Drupal::logger('uri')->notice($uri);
+        $file->setFileUri($uri);
+        $file->setPermanent();
+      }
+    }
+
+    $file->save();
+
+    $data = [
+      'message' => 'File created',
+      'uuid' => $file->uuid(),
+    ];
+
+    $response = new JsonResponse($data);
+
+    return $response;
   }
 
   /**
