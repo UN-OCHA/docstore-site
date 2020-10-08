@@ -46,6 +46,18 @@ docstore_getvocabularies:
     _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'A'
+docstore_addvocabulary:
+  path: '/api/vocabularies'
+  defaults:
+    _controller: 'docstore.api_controller:addVocabulary'
+    _title: 'Add vocabulary'
+  methods: [POST]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'C'
+    docstore_access_level: 'A'
 docstore_getvocabulary:
   path: '/api/vocabularies/{id}'
   defaults:

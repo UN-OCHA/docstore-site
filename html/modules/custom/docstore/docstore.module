@@ -1,5 +1,6 @@
 <?php
 
+use Drupal\Component\Uuid\Uuid;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
@@ -159,6 +160,35 @@ function docstore_add_document_field_to_index($field_name, $field_type, $label) 
 }
 
 /**
+ * Check is a vocabulary does exist.
+ */
+function docstore_vocabulary_is_valid($machine_name, $provider_prefix) {
+  if (Uuid::isValid($machine_name)) {
+    $vocabulary = \Drupal::service('entity.repository')->loadEntityByUuid('taxonomy_vocabulary', $machine_name);
+  }
+  else {
+    // Assume it's the machine name.
+    $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::load($machine_name);
+    if (!$vocabulary) {
+      return FALSE;
+    }
+  }
+
+  // Disallow access to base vocabularies.
+  if (strpos($machine_name, 'base_') === 0) {
+    return FALSE;
+  }
+
+  // Disallow access to vocabulary of an other provider.
+  if (strpos($machine_name, 'shared_') !== 0 && strpos($machine_name, $provider_prefix) !== 0) {
+    return FALSE;
+  }
+
+  // Check name.
+  return docstore_machine_name_exists($machine_name, 'taxonomy_vocabulary');
+}
+
+/**
  * Create a vocabulary for a provider.
  */
 function docstore_create_vocabulary_for_provider($label, $provider_prefix = 'shared_') {
@@ -260,6 +290,11 @@ function docstore_generate_unique_machine_name($label, $entity_type, $provider_p
  * Check if a machine name already exists.
  */
 function docstore_machine_name_exists($machine_name, $entity_type) {
+  if ($entity_type == 'taxonomy_vocabulary') {
+    $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::load($machine_name);
+    return !empty($vocabulary);
+  }
+
   $field = FieldStorageConfig::loadByName($entity_type, $machine_name);
 
   return !empty($field);
