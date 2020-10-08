@@ -234,7 +234,7 @@ function docstore_create_vocabulary_field_for_provider($bundle, $label, $field_t
 /**
  * Create a reference field on a vocabulary for a provider.
  */
-function docstore_create_vocabulary_reference_field_for_provider($label, $bundle, $multiple = FALSE, $provider_prefix = 'shared_') {
+function docstore_create_vocabulary_reference_field_for_provider($bundle, $label, $target, $multiple = FALSE, $provider_prefix = 'shared_') {
   $field_type = 'entity_reference_uuid';
   $field_name = docstore_generate_unique_machine_name($label, 'taxonomy_term', $provider_prefix);
 
@@ -253,13 +253,13 @@ function docstore_create_vocabulary_reference_field_for_provider($label, $bundle
   // Create instance.
   FieldConfig::create([
     'field_storage' => $field_storage,
-    'bundle' => 'document',
+    'bundle' => $bundle,
     'label' => $label,
     'settings' => [
       'handler' => 'default:taxonomy_term',
       'handler_settings' => [
         'target_bundles' => [
-          $bundle => $bundle,
+          $target => $target,
         ],
       ],
     ],

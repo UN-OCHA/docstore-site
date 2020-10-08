@@ -276,11 +276,19 @@ class ApiController extends ControllerBase {
     // Load provider.
     $provider = $this->getProvider();
 
+    // Id is either UUID or machine name.
+    $vocabulary = $this->getVocabularyMachineName($id, $provider->get('base_prefix')->value);
+
     // Check field parameters.
     $this->validFieldParameters($params, $provider);
 
     // Create field.
-    $field_name = docstore_create_document_field_for_provider($params['label'], $params['type'], $params['multiple'], $provider->get('base_prefix')->value);
+    if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
+      $field_name = docstore_create_vocabulary_reference_field_for_provider($vocabulary->id(), $params['label'], $params['target'], $params['multiple'], $provider->get('base_prefix')->value);
+    }
+    else {
+      $field_name = docstore_create_vocabulary_field_for_provider($vocabulary->id(), $params['label'], $params['type'], $params['multiple'], $provider->get('base_prefix')->value);
+    }
 
     $data = [
       'message' => 'Field added',
@@ -306,6 +314,28 @@ class ApiController extends ControllerBase {
     }
 
     return $provider;
+  }
+
+  /**
+   * Get vocabulary machine name.
+   */
+  protected function getVocabularyMachineName($id, $provider_prefix) {
+    if (!docstore_vocabulary_is_valid($id, $provider_prefix)) {
+      throw new BadRequestHttpException('Invalid vocabulary');
+    }
+
+    if (Uuid::isValid($id)) {
+      $vocabulary = \Drupal::service('entity.repository')->loadEntityByUuid('taxonomy_vocabulary', $id);
+    }
+    else {
+      // Assume it's the machine name.
+      $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::load($id);
+      if (!$vocabulary) {
+        throw new BadRequestHttpException('Invalid vocabulary');
+      }
+    }
+
+    return $vocabulary;
   }
 
   /**

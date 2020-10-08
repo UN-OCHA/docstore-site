@@ -28,10 +28,14 @@ curl -X POST "http://docstore.local.docksal/api/vocabularies" -H  "accept: appli
 curl -X POST "http://docstore.local.docksal/api/document/fields" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"label\":\"My voc field\",\"target\":\"test_my_vocabulary\"}"
 ```
 
+```bash
+curl -X POST "http://docstore.local.docksal/api/document/fields" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"label\":\"My voc field\",\"target\":\"test_my_vocabulary\",\"multiple\":0}"
+```
+
 ### Get a vocabulary
 
 ```bash
-curl -X GET "http://docstore.local.docksal/api/vocabularies/base_provider" -H  "accept: application/json" -H  "API-KEY: abcd"
+curl -X GET "http://docstore.local.docksal/api/vocabularies/test_my_vocabulary" -H  "accept: application/json" -H  "API-KEY: abcd" | jq
 ```
 
 ```bash
@@ -41,11 +45,17 @@ curl -X GET "http://docstore.local.docksal/api/vocabularies/f56fb44b-a17c-4b5e-b
 ### Get vocabulary fields
 
 ```bash
-curl -X GET "http://docstore.local.docksal/api/vocabularies/base_provider/fields" -H  "accept: application/json" -H  "API-KEY: abcd"
+curl -X GET "http://docstore.local.docksal/api/vocabularies/test_my_vocabulary/fields" -H  "accept: application/json" -H  "API-KEY: abcd" | jq
 ```
 
 ```bash
 curl -X GET "http://docstore.local.docksal/api/vocabularies/f56fb44b-a17c-4b5e-bf79-afc4e195af86/fields" -H  "accept: application/json" -H  "API-KEY: abcd"
+```
+
+### Add vocabulary field.
+
+```bash
+curl -X POST "http://docstore.local.docksal/api/vocabularies/test_my_vocabulary/fields" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"label\":\"My voc field\",\"target\":\"test_my_vocabulary\",\"multiple\":0}"
 ```
 
 ## Creating vocabularies, adding fields
