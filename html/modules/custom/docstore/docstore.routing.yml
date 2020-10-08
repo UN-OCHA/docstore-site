@@ -1,4 +1,5 @@
-docstore_getdocuments:
+# Documents
+docstore_get_documents:
   path: '/api/documents'
   defaults:
     _controller: 'docstore.api_controller:getDocuments'
@@ -9,7 +10,75 @@ docstore_getdocuments:
   options:
     docstore_crud: 'R'
     docstore_access_level: 'B'
-docstore_document_getfields:
+docstore_create_document:
+  path: '/api/documents'
+  defaults:
+    _controller: 'docstore.api_controller:createDocument'
+    _title: 'Create document'
+  methods: [POST]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'C'
+    docstore_access_level: 'B'
+docstore_get_document:
+  path: '/api/documents/{id}'
+  defaults:
+    _controller: 'docstore.api_controller:getDocument'
+    _title: 'Get document'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_get_document_files:
+  path: '/api/documents/{id}/files'
+  defaults:
+    _controller: 'docstore.api_controller:getDocumentFiles'
+    _title: 'Get document files'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_get_document_terms:
+  path: '/api/documents/{id}/terms'
+  defaults:
+    _controller: 'docstore.api_controller:getDocumentTerms'
+    _title: 'Get document terms'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_update_document:
+  path: '/api/documents/{id}'
+  defaults:
+    _controller: 'docstore.api_controller:updateDocument'
+    _title: 'Update document'
+  methods: [PUT]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'U'
+    docstore_access_level: 'B'
+docstore_delete_document:
+  path: '/api/documents/{id}'
+  defaults:
+    _controller: 'docstore.api_controller:DeleteDocument'
+    _title: 'Delete document'
+  methods: [DELETE]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'D'
+    docstore_access_level: 'B'
+
+# Document fields
+docstore_document_get_fields:
   path: '/api/document/fields'
   defaults:
     _controller: 'docstore.api_controller:getDocumentFields'
@@ -21,11 +90,11 @@ docstore_document_getfields:
     _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'A'
-docstore_document_addfields:
+docstore_document_create_fields:
   path: '/api/document/fields'
   defaults:
-    _controller: 'docstore.api_controller:addDocumentField'
-    _title: 'Add document field'
+    _controller: 'docstore.api_controller:createDocumentField'
+    _title: 'Create document field'
   methods: [POST]
   requirements:
     _docstore_access_check: 'TRUE'
@@ -34,7 +103,8 @@ docstore_document_addfields:
     docstore_crud: 'C'
     docstore_access_level: 'A'
 
-docstore_getvocabularies:
+# Vocabularies
+docstore_get_vocabularies:
   path: '/api/vocabularies'
   defaults:
     _controller: 'docstore.api_controller:getVocabularies'
@@ -46,11 +116,11 @@ docstore_getvocabularies:
     _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'A'
-docstore_addvocabulary:
+docstore_create_vocabulary:
   path: '/api/vocabularies'
   defaults:
-    _controller: 'docstore.api_controller:addVocabulary'
-    _title: 'Add vocabulary'
+    _controller: 'docstore.api_controller:createVocabulary'
+    _title: 'Create vocabulary'
   methods: [POST]
   requirements:
     _docstore_access_check: 'TRUE'
@@ -58,7 +128,7 @@ docstore_addvocabulary:
     _auth: ['docstore_auth']
     docstore_crud: 'C'
     docstore_access_level: 'A'
-docstore_getvocabulary:
+docstore_get_vocabulary:
   path: '/api/vocabularies/{id}'
   defaults:
     _controller: 'docstore.api_controller:getVocabulary'
@@ -70,6 +140,20 @@ docstore_getvocabulary:
     _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'A'
+docstore_get_vocabulary_terms:
+  path: '/api/vocabularies/{id}/terms'
+  defaults:
+    _controller: 'docstore.api_controller:getVocabularyTerms'
+    _title: 'Get vocabulary terms'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+
+# Vocabulary fields
 docstore_vocabulary_getfields:
   path: '/api/vocabularies/{id}/fields'
   defaults:
@@ -82,11 +166,11 @@ docstore_vocabulary_getfields:
     _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'A'
-docstore_vocabulary_addfields:
+docstore_vocabulary_create_fields:
   path: '/api/vocabularies/{id}/fields'
   defaults:
-    _controller: 'docstore.api_controller:addVocabularyField'
-    _title: 'Add vocabulary field'
+    _controller: 'docstore.api_controller:createVocabularyField'
+    _title: 'Create vocabulary field'
   methods: [POST]
   requirements:
     _docstore_access_check: 'TRUE'
@@ -94,3 +178,128 @@ docstore_vocabulary_addfields:
     _auth: ['docstore_auth']
     docstore_crud: 'C'
     docstore_access_level: 'A'
+
+# Terms
+docstore_get_terms:
+  path: '/api/terms'
+  defaults:
+    _controller: 'docstore.api_controller:getTerms'
+    _title: 'Get terms'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_create_term:
+  path: '/api/terms'
+  defaults:
+    _controller: 'docstore.api_controller:createTerm'
+    _title: 'Create term'
+  methods: [POST]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'C'
+    docstore_access_level: 'B'
+docstore_get_term:
+  path: '/api/terms/{id}'
+  defaults:
+    _controller: 'docstore.api_controller:getTerm'
+    _title: 'Get term'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_update_term:
+  path: '/api/terms/{id}'
+  defaults:
+    _controller: 'docstore.api_controller:updateTerm'
+    _title: 'Update term'
+  methods: [PUT]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'U'
+    docstore_access_level: 'B'
+docstore_delete_term:
+  path: '/api/terms/{id}'
+  defaults:
+    _controller: 'docstore.api_controller:DeleteTerm'
+    _title: 'Delete term'
+  methods: [DELETE]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'D'
+    docstore_access_level: 'B'
+
+# Files
+docstore_get_files:
+  path: '/api/files'
+  defaults:
+    _controller: 'docstore.api_controller:getFiles'
+    _title: 'Get files'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_create_file:
+  path: '/api/files'
+  defaults:
+    _controller: 'docstore.api_controller:createFile'
+    _title: 'Create file'
+  methods: [POST]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'C'
+    docstore_access_level: 'B'
+docstore_get_file:
+  path: '/api/files/{id}'
+  defaults:
+    _controller: 'docstore.api_controller:getFile'
+    _title: 'Get file'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_update_file:
+  path: '/api/files/{id}'
+  defaults:
+    _controller: 'docstore.api_controller:updateFile'
+    _title: 'Update file'
+  methods: [PUT]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'U'
+    docstore_access_level: 'B'
+docstore_delete_file:
+  path: '/api/files/{id}'
+  defaults:
+    _controller: 'docstore.api_controller:DeleteFile'
+    _title: 'Delete file'
+  methods: [DELETE]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'D'
+    docstore_access_level: 'B'
+docstore_get_file:
+  path: '/api/files/{id}/content'
+  defaults:
+    _controller: 'docstore.api_controller:getFileContent'
+    _title: 'Get file'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    docstore_crud: 'R'
+    docstore_access_level: 'B'

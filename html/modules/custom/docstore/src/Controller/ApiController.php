@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException;
 
 /**
  * Class ApiController.
@@ -115,6 +116,48 @@ class ApiController extends ControllerBase {
   }
 
   /**
+   * Create document.
+   */
+  public function createDocument(Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Get document.
+   */
+  public function getDocument($id, Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Get document files.
+   */
+  public function getDocumentFiles($id, Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Get document terms.
+   */
+  public function getDocumentTerms($id, Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Update document.
+   */
+  public function updateDocument($id, Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Delete document.
+   */
+  public function deleteDocument($id, Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
    * Get document fields.
    */
   public function getDocumentFields() {
@@ -131,9 +174,9 @@ class ApiController extends ControllerBase {
   }
 
   /**
-   * Get document fields.
+   * Create document field.
    */
-  public function addDocumentField(Request $request) {
+  public function createDocumentField(Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
 
@@ -152,12 +195,19 @@ class ApiController extends ControllerBase {
     }
 
     $data = [
-      'message' => 'Field added',
+      'message' => 'Field created',
       'field_name' => $field_name,
     ];
     $response = new JsonResponse($data);
 
     return $response;
+  }
+
+  /**
+   * Delete document field.
+   */
+  public function deleteDocumentField(Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
   }
 
   /**
@@ -181,9 +231,9 @@ class ApiController extends ControllerBase {
   }
 
   /**
-   * Add vocabulary.
+   * Create vocabulary.
    */
-  public function addVocabulary(Request $request) {
+  public function createVocabulary(Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
 
@@ -202,7 +252,7 @@ class ApiController extends ControllerBase {
     $machine_name = docstore_create_vocabulary_for_provider($params['label'], $provider->get('base_prefix')->value);
 
     $data = [
-      'message' => 'Vocabulary added',
+      'message' => 'Vocabulary created',
       'machine_name' => $machine_name,
     ];
     $response = new JsonResponse($data);
@@ -239,6 +289,13 @@ class ApiController extends ControllerBase {
   }
 
   /**
+   * Get vocabulary terms.
+   */
+  public function getVocabularyTerms($id, Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
    * Get vocabulary fields.
    */
   public function getVocabularyFields($id) {
@@ -267,9 +324,9 @@ class ApiController extends ControllerBase {
   }
 
   /**
-   * Get vocabulary fields.
+   * Create vocabulary fields.
    */
-  public function addVocabularyField($id, Request $request) {
+  public function createVocabularyField($id, Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
 
@@ -291,12 +348,19 @@ class ApiController extends ControllerBase {
     }
 
     $data = [
-      'message' => 'Field added',
+      'message' => 'Field created',
       'field_name' => $field_name,
     ];
     $response = new JsonResponse($data);
 
     return $response;
+  }
+
+  /**
+   * Create vocabulary fields.
+   */
+  public function deleteVocabularyField($id, Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
   }
 
   /**
@@ -378,6 +442,83 @@ class ApiController extends ControllerBase {
         throw new BadRequestHttpException('Target does not exist or is invalid');
       }
     }
+  }
+
+  /**
+   * Get Terms.
+   */
+  public function getTerms(Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Create term.
+   */
+  public function createTerm(Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Get term.
+   */
+  public function getTerm($id, Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Update term.
+   */
+  public function updateTerm($id, Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Delete term.
+   */
+  public function deleteTerm($id, Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Get files.
+   */
+  public function getFiles(Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Create file.
+   */
+  public function createFile(Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Get file.
+   */
+  public function getFile($id, Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Get file content.
+   */
+  public function getFileContent($id, Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Update file.
+   */
+  public function updateFile($id, Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Delete file.
+   */
+  public function deleteFile($id, Request $request) {
+    throw new PreconditionFailedHttpException('Not implemented (yet)');
   }
 
 }

@@ -13,7 +13,7 @@
 ### Get list of vocabularies
 
 ```bash
-curl -X GET "http://docstore.local.docksal/api/vocabularies" -H  "accept: application/json" -H  "API-KEY: abcd"
+curl -X GET "http://docstore.local.docksal/api/vocabularies" -H  "accept: application/json" -H  "API-KEY: abcd" | jq
 ```
 
 ### Create vocabulary
