@@ -87,9 +87,7 @@ class AuthenticationService {
    */
   public function getProviderByKey($key) {
     // Load base_provider storage.
-    $storage = $this->entityTypeManager
-      ->getStorage('taxonomy_term');
-
+    $storage = $this->entityTypeManager->getStorage('user');
     $provider = $storage
       ->getQuery()
       ->condition('api_keys', $key)
@@ -97,16 +95,13 @@ class AuthenticationService {
 
     if ($provider) {
       // Extend anonymous user object.
-      $user = User::getAnonymousUser();
+      $user = User::load(reset($provider));
       $user->docstore_provider = reset($provider);
       $user->docstore_write = TRUE;
       return $user;
     }
 
-    // Load base_provider storage.
-    $storage = $this->entityTypeManager
-      ->getStorage('taxonomy_term');
-
+    $storage = $this->entityTypeManager->getStorage('user');
     $provider = $storage
       ->getQuery()
       ->condition('api_keys_read_only', $key)
@@ -114,7 +109,7 @@ class AuthenticationService {
 
     if ($provider) {
       // Extend anonymous user object.
-      $user = User::getAnonymousUser();
+      $user = User::load(reset($provider));
       $user->docstore_provider = reset($provider);
       $user->docstore_write = FALSE;
       return $user;

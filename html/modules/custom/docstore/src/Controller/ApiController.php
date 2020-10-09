@@ -264,10 +264,10 @@ class ApiController extends ControllerBase {
     }
 
     // Get proxy account to get session info.
-    $user = \Drupal::currentUser()->getAccount();
+    $provider = $this->getProvider();
 
     // Load provider.
-    $provider = taxonomy_term_load($user->docstore_provider);
+    $provider = taxonomy_term_load($provider->docstore_provider);
 
     // Create field.
     $machine_name = docstore_create_vocabulary_for_provider($params['label'], $provider->get('base_prefix')->value);
@@ -389,10 +389,7 @@ class ApiController extends ControllerBase {
    */
   protected function getProvider() {
     // Get proxy account to get session info.
-    $user = \Drupal::currentUser()->getAccount();
-
-    // Load provider.
-    $provider = taxonomy_term_load($user->docstore_provider);
+    $provider = \Drupal::currentUser()->getAccount();
 
     if (!$provider) {
       throw new BadRequestHttpException('Provider is required');
@@ -541,7 +538,7 @@ class ApiController extends ControllerBase {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
 
-    // Load provider and save it somewhere!
+    // Load provider.
     $provider = $this->getProvider();
 
     // Filename is required.
@@ -595,13 +592,10 @@ class ApiController extends ControllerBase {
         // Save file.
         $file->save();
 
-        // TODO Add provider to media.
-        $provider = $this->getProvider();
-
         // Create media.
         $media_entity = Media::create([
           'bundle' => 'file',
-          'uid' => '0',
+          'uid' => $provider->id(),
           'name' => $file->getFilename(),
           'status' => TRUE,
           'field_media_file' => [
@@ -731,6 +725,14 @@ class ApiController extends ControllerBase {
       throw new BadRequestHttpException('File does not exist');
     }
 
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Provider can only update own files.
+    if ($file->getOwnerId() !== $provider->id()) {
+      throw new BadRequestHttpException('File is not owned by you');
+    }
+
     // TODO Throw error if file already exists on disk.
 
     // Create destination.
@@ -757,7 +759,7 @@ class ApiController extends ControllerBase {
       // Create media.
       $media_entity = Media::create([
         'bundle' => 'file',
-        'uid' => '0',
+        'uid' => $provider->id(),
         'name' => $file->getFilename(),
         'status' => TRUE,
         'field_media_file' => [

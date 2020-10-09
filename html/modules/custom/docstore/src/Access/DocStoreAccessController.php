@@ -44,11 +44,11 @@ class DocStoreAccessController implements AccessInterface {
     }
 
     // Get real account.
-    $user = $account->getAccount();
+    $provider = $account->getAccount();
 
     // If no API key is used, no info is available.
-    if (!isset($user->docstore_write)) {
-      $user->docstore_write = FALSE;
+    if (!isset($provider->docstore_write)) {
+      $provider->docstore_write = FALSE;
       // Any non read operation isn't allowed.
       if ($crud !== 'R') {
         return AccessResult::forbidden();
@@ -59,13 +59,13 @@ class DocStoreAccessController implements AccessInterface {
         return AccessResult::forbidden();
       }
     }
-    else {
-      // Full account is available.
-      $user_write_access = $user->docstore_write;
-      $user_provider = $user->docstore_provider;
-    }
 
-    $route_name = $route_match->getRouteName();
+    // Check access.
+    if (!$provider->docstore_write) {
+      if ($crud !== 'R') {
+        return AccessResult::forbidden();
+      }
+    }
 
     return AccessResult::allowed();
   }
