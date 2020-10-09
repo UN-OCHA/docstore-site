@@ -10,6 +10,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\State\State;
 use Drupal\file\Entity\File;
+use Drupal\media\Entity\Media;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -506,6 +507,10 @@ class ApiController extends ControllerBase {
       $params['mime'] = 'undefined';
     }
 
+    if (!isset($params['alt'])) {
+      $params['alt'] = $params['filename'];
+    }
+
     // TODO: Support public vs private.
 
     //$filesystem = \Drupal::service('file_system');
@@ -539,9 +544,26 @@ class ApiController extends ControllerBase {
       else {
         throw new BadRequestHttpException('Unable to write file');
       }
+
+      // Detect mime type.
+      if ($file->getMimeType() == 'undefined') {
+        // TODO
+      }
     }
 
     $file->save();
+
+    $media_entity = Media::create([
+      'bundle' => 'file',
+      'uid' => '0',
+      'name' => $file->getFilename(),
+      'status' => TRUE,
+      'field_media_file' => [
+        'target_id' => $file->id(),
+        'alt' => $params['alt'],
+      ],
+    ]);
+    $media_entity->save();
 
     $data = [
       'message' => 'File created',
@@ -603,6 +625,12 @@ class ApiController extends ControllerBase {
     if ($uri = file_unmanaged_save_data($request->getContent(), $destination, FILE_EXISTS_RENAME)) {
       $file->setFileUri($uri);
       $file->setPermanent();
+
+      // Detect mime type.
+      if ($file->getMimeType() == 'undefined') {
+        // TODO
+      }
+
       $file->save();
     }
     else {
