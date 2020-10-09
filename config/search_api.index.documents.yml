@@ -4,13 +4,11 @@ status: true
 dependencies:
   module:
     - search_api_solr
-    - meta_entity
     - node
     - search_api
   config:
-    - field.storage.meta_entity.field_hrinfo_title
-    - field.storage.meta_entity.field_rw_cluster
-    - field.storage.meta_entity.field_rw_title
+    - field.storage.node.base_files
+    - field.storage.node.base_provider
     - search_api.server.solr
 third_party_settings:
   search_api_solr:
@@ -55,16 +53,22 @@ name: Documents
 description: ''
 read_only: false
 field_settings:
-  hrinfo_title:
-    label: 'Title (HRInfo)'
+  base_files:
+    label: 'Files » Media ID'
     datasource_id: 'entity:node'
-    property_path: 'hrinfo_properties:entity:field_hrinfo_title'
+    property_path: 'base_files:target_id'
+    type: integer
+    dependencies:
+      config:
+        - field.storage.node.base_files
+  base_provider:
+    label: Provider
+    datasource_id: 'entity:node'
+    property_path: base_provider
     type: string
     dependencies:
       config:
-        - field.storage.meta_entity.field_hrinfo_title
-      module:
-        - meta_entity
+        - field.storage.node.base_provider
   langcode:
     label: Language
     datasource_id: 'entity:node'
@@ -73,26 +77,6 @@ field_settings:
     dependencies:
       module:
         - node
-  rw_cluster:
-    label: 'Cluster (RW)'
-    datasource_id: 'entity:node'
-    property_path: 'rw_properties:entity:field_rw_cluster'
-    type: string
-    dependencies:
-      config:
-        - field.storage.meta_entity.field_rw_cluster
-      module:
-        - meta_entity
-  rw_title:
-    label: 'Title (RW)'
-    datasource_id: 'entity:node'
-    property_path: 'rw_properties:entity:field_rw_title'
-    type: string
-    dependencies:
-      config:
-        - field.storage.meta_entity.field_rw_title
-      module:
-        - meta_entity
   title:
     label: Title
     datasource_id: 'entity:node'
