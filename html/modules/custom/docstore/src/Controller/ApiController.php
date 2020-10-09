@@ -12,6 +12,7 @@ use Drupal\Core\State\State;
 use Drupal\file\Entity\File;
 use Drupal\media\Entity\Media;
 use Drupal\node\Entity\Node;
+use Drupal\taxonomy\Entity\Term;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -203,6 +204,23 @@ class ApiController extends ControllerBase {
     // Check for meta tags.
     if (isset($params['metadata']) && $params['metadata']) {
       $metadata = $params['metadata'];
+      foreach($metadata as $metaitem) {
+        foreach ($metaitem as $key => $values) {
+          if (!is_array($values)) {
+            $values = [$values];
+          }
+
+          if (!isset($item[$key])) {
+            $item[$key] = [];
+          }
+
+          foreach ($values as $value) {
+            $item[$key][] = [
+              'target_uuid' => $value,
+            ];
+          }
+        }
+      }
     }
 
     /** @var \Drupal\node\Entity\Node $document */
@@ -318,10 +336,10 @@ class ApiController extends ControllerBase {
 
     // Create field.
     if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
-      $field_name = docstore_create_document_reference_field_for_provider($params['label'], $params['target'], $params['multiple'], $provider->get('base_prefix')->value);
+      $field_name = docstore_create_document_reference_field_for_provider($params['label'], $params['target'], $params['multiple'], $provider->get('prefix')->value);
     }
     else {
-      $field_name = docstore_create_document_field_for_provider($params['label'], $params['type'], $params['multiple'], $provider->get('base_prefix')->value);
+      $field_name = docstore_create_document_field_for_provider($params['label'], $params['type'], $params['multiple'], $provider->get('prefix')->value);
     }
 
     $data = [
@@ -376,7 +394,7 @@ class ApiController extends ControllerBase {
     $provider = $this->getProvider();
 
     // Create field.
-    $machine_name = docstore_create_vocabulary_for_provider($params['label'], $provider->get('base_prefix')->value);
+    $machine_name = docstore_create_vocabulary_for_provider($params['label'], $provider->get('prefix')->value);
 
     $data = [
       'message' => 'Vocabulary created',
@@ -461,17 +479,17 @@ class ApiController extends ControllerBase {
     $provider = $this->getProvider();
 
     // Id is either UUID or machine name.
-    $vocabulary = $this->getVocabularyMachineName($id, $provider->get('base_prefix')->value);
+    $vocabulary = $this->getVocabularyMachineName($id, $provider->get('prefix')->value);
 
     // Check field parameters.
     $this->validFieldParameters($params, $provider);
 
     // Create field.
     if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
-      $field_name = docstore_create_vocabulary_reference_field_for_provider($vocabulary->id(), $params['label'], $params['target'], $params['multiple'], $provider->get('base_prefix')->value);
+      $field_name = docstore_create_vocabulary_reference_field_for_provider($vocabulary->id(), $params['label'], $params['target'], $params['multiple'], $provider->get('prefix')->value);
     }
     else {
-      $field_name = docstore_create_vocabulary_field_for_provider($vocabulary->id(), $params['label'], $params['type'], $params['multiple'], $provider->get('base_prefix')->value);
+      $field_name = docstore_create_vocabulary_field_for_provider($vocabulary->id(), $params['label'], $params['type'], $params['multiple'], $provider->get('prefix')->value);
     }
 
     $data = [
@@ -562,7 +580,7 @@ class ApiController extends ControllerBase {
       }
 
       // Make sure bundle is valid.
-      if (!docstore_vocabulary_is_valid($params['target'], $provider->get('base_prefix')->value)) {
+      if (!docstore_vocabulary_is_valid($params['target'], $provider->get('prefix')->value)) {
         throw new BadRequestHttpException('Target does not exist or is invalid');
       }
     }
@@ -579,7 +597,47 @@ class ApiController extends ControllerBase {
    * Create term.
    */
   public function createTerm(Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+
+    // Check required fields.
+    if (empty($params['label'])) {
+      throw new BadRequestHttpException('Label is required');
+    }
+
+    if (empty($params['vocabulary'])) {
+      throw new BadRequestHttpException('Vocabulary is required');
+    }
+
+    // TODO refactor in separate function.
+    $vocabulary = FALSE;
+    if (Uuid::isValid($params['vocabulary'])) {
+      $vocabulary = \Drupal::service('entity.repository')->loadEntityByUuid('taxonomy_vocabulary', $params['vocabulary']);
+    }
+    else {
+      // Assume it's the machine name.
+      $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::load($params['vocabulary']);
+    }
+
+    if (!$vocabulary) {
+      throw new BadRequestHttpException('Vocabulary does not exist');
+    }
+
+    // Term.
+    $term = Term::create([
+      'name' => $params['label'],
+      'vid' => $vocabulary->id(),
+      'parent' => [],
+    ]);
+    $term->save();
+
+    $data = [
+      'message' => 'Term created',
+      'machine_name' => $term->uuid(),
+    ];
+    $response = new JsonResponse($data);
+
+    return $response;
   }
 
   /**

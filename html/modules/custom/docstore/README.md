@@ -26,10 +26,16 @@ curl -X POST "http://docstore.local.docksal/api/documents" -H  "accept: applicat
 (echo -n '{"title":"Doc with files","author":"123456789","files":["42fc7dfc-5943-47a3-ab4e-1d3b8fe335c4", "74ea6b33-8add-4433-b49d-a4181bf037c5"]}') | curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" -H "Content-Type: application/json" -d @-  http://docstore.local.docksal/api/documents | jq
 ```
 
+```bash
+curl -X POST "http://docstore.local.docksal/api/documents" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"title\":\"My first document\",\"author\":\"123\",\"metadata\":[{\"peter_city\":\"16000b57-a81b-4c42-9162-e5ec356d88c2\"}]}" | jq
+
+(echo -n '{"title":"Doc with term and files","author":"123456789","metadata":[{"peter_city":"16000b57-a81b-4c42-9162-e5ec356d88c2"}],"files":["42fc7dfc-5943-47a3-ab4e-1d3b8fe335c4", "74ea6b33-8add-4433-b49d-a4181bf037c5"]}') | curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" -H "Content-Type: application/json" -d @-  http://docstore.local.docksal/api/documents | jq
+```
+
 ### Get document
 
 ```bash
-curl -X GET "http://docstore.local.docksal/api/documents/fd445f3c-b69f-4144-a256-c7b0f998c135" -H  "accept: application/json" -H  "API-KEY: abcd" | jq
+curl -X GET "http://docstore.local.docksal/api/documents/88d701de-b7d9-44f9-991b-b31674ac1f0d" -H  "accept: application/json" -H  "API-KEY: abcd" | jq
 ```
 
 ## Vocabularies
@@ -43,13 +49,13 @@ curl -X GET "http://docstore.local.docksal/api/vocabularies" -H  "accept: applic
 ### Create vocabulary
 
 ```bash
-curl -X POST "http://docstore.local.docksal/api/vocabularies" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"label\":\"My vocabulary\"}"
+curl -X POST "http://docstore.local.docksal/api/vocabularies" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"label\":\"City\"}"
 ```
 
 #### Add reference to vocabulary
 
 ```bash
-curl -X POST "http://docstore.local.docksal/api/document/fields" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"label\":\"My voc field\",\"target\":\"test_my_vocabulary\"}"
+curl -X POST "http://docstore.local.docksal/api/document/fields" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"label\":\"City\",\"target\":\"peter_city\"}"
 ```
 
 ```bash
@@ -80,6 +86,14 @@ curl -X GET "http://docstore.local.docksal/api/vocabularies/f56fb44b-a17c-4b5e-b
 
 ```bash
 curl -X POST "http://docstore.local.docksal/api/vocabularies/test_my_vocabulary/fields" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"label\":\"My voc field\",\"target\":\"test_my_vocabulary\",\"multiple\":0}"
+```
+
+## Terms
+
+### Create term
+
+```bash
+(echo -n '{"label":"Antwerp","vocabulary":"peter_city"}') | curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" -H "Content-Type: application/json" -d @-  http://docstore.local.docksal/api/terms | jq
 ```
 
 ## Creating vocabularies, adding fields
