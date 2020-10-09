@@ -1,0 +1,46 @@
+uuid: 74a824c6-1063-4483-8efc-890108b8bb91
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.user.provider.api_keys
+    - field.field.user.provider.api_keys_read_only
+    - field.field.user.provider.prefix
+    - user_bundle.user_type.provider
+id: user.provider.default
+targetEntityType: user
+bundle: provider
+mode: default
+content:
+  api_keys:
+    weight: 6
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  api_keys_read_only:
+    weight: 7
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  member_for:
+    weight: 5
+    settings: {  }
+    third_party_settings: {  }
+    region: content
+  prefix:
+    weight: 8
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+hidden:
+  langcode: true
+  search_api_excerpt: true

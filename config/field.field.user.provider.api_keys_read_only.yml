@@ -1,0 +1,19 @@
+uuid: 63bca161-f701-4970-8858-cf1cfed86728
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.api_keys_read_only
+    - user_bundle.user_type.provider
+id: user.provider.api_keys_read_only
+field_name: api_keys_read_only
+entity_type: user
+bundle: provider
+label: 'API keys (read-only)'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

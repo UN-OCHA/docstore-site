@@ -1,0 +1,19 @@
+uuid: 824359ff-749a-4110-b12a-2cb6d295b2d0
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.prefix
+    - user_bundle.user_type.provider
+id: user.provider.prefix
+field_name: prefix
+entity_type: user
+bundle: provider
+label: 'Prefix for fields and vocabularies'
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

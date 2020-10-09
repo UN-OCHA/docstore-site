@@ -1,0 +1,11 @@
+uuid: cab51d23-1740-48fb-873a-c89782907a20
+langcode: en
+status: true
+dependencies:
+  config:
+    - user_bundle.user_type.provider
+id: user.provider
+target_entity_type_id: user
+target_bundle: provider
+default_langcode: site_default
+language_alterable: false

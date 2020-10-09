@@ -1,0 +1,21 @@
+uuid: 55ba8f46-7f76-44c6-99bc-2d7631e1318b
+langcode: en
+status: true
+dependencies:
+  module:
+    - user
+id: user.api_keys
+field_name: api_keys
+entity_type: user
+type: string
+settings:
+  max_length: 255
+  is_ascii: false
+  case_sensitive: false
+module: core
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

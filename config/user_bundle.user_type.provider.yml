@@ -1,0 +1,7 @@
+uuid: f14d55db-25aa-4e09-b59e-aecdc590890a
+langcode: en
+status: true
+dependencies: {  }
+id: provider
+label: Provider
+description: ''

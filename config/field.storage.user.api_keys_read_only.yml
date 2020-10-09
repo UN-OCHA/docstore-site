@@ -1,0 +1,21 @@
+uuid: 3cf59809-e274-4d34-9b92-88fde031cab6
+langcode: en
+status: true
+dependencies:
+  module:
+    - user
+id: user.api_keys_read_only
+field_name: api_keys_read_only
+entity_type: user
+type: string
+settings:
+  max_length: 255
+  is_ascii: false
+  case_sensitive: false
+module: core
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false
