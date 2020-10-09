@@ -1,0 +1,23 @@
+uuid: 09451cac-c4e5-4668-a63e-05d609ad6505
+langcode: en
+status: true
+dependencies:
+  module:
+    - dynamic_entity_reference
+    - media
+    - node
+id: node.base_files
+field_name: base_files
+entity_type: node
+type: dynamic_entity_reference
+settings:
+  exclude_entity_types: false
+  entity_type_ids:
+    media: media
+module: dynamic_entity_reference
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false
