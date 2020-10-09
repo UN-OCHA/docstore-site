@@ -1,20 +1,18 @@
-uuid: 09451cac-c4e5-4668-a63e-05d609ad6505
+uuid: 8cd8320f-af4c-4d95-b740-407d398a21a7
 langcode: en
 status: true
 dependencies:
   module:
-    - dynamic_entity_reference
+    - entity_reference_uuid
     - media
     - node
 id: node.base_files
 field_name: base_files
 entity_type: node
-type: dynamic_entity_reference
+type: entity_reference_uuid
 settings:
-  exclude_entity_types: false
-  entity_type_ids:
-    media: media
-module: dynamic_entity_reference
+  target_type: media
+module: entity_reference_uuid
 locked: false
 cardinality: -1
 translatable: true

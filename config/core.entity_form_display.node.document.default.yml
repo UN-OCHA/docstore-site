@@ -7,8 +7,6 @@ dependencies:
     - field.field.node.document.base_files
     - field.field.node.document.base_provider
     - node.type.document
-  module:
-    - media_library
 id: node.document.default
 targetEntityType: node
 bundle: document
@@ -23,21 +21,20 @@ content:
     type: string_textfield
     region: content
   base_files:
-    type: media_library_widget
+    type: entity_reference_autocomplete
     weight: 28
-    settings:
-      media_types: {  }
-    third_party_settings: {  }
-    region: content
-  base_provider:
-    weight: 26
     settings:
       match_operator: CONTAINS
       match_limit: 10
       size: 60
       placeholder: ''
     third_party_settings: {  }
-    type: entity_reference_autocomplete
+    region: content
+  base_provider:
+    weight: 26
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
     region: content
   created:
     type: datetime_timestamp

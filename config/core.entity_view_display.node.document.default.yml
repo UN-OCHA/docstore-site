@@ -8,6 +8,7 @@ dependencies:
     - field.field.node.document.base_provider
     - node.type.document
   module:
+    - entity_reference_uuid
     - user
 id: node.document.default
 targetEntityType: node
@@ -23,7 +24,7 @@ content:
     type: string
     region: content
   base_files:
-    type: entity_reference_entity_view
+    type: entity_reference_uuid_entity_view
     weight: 103
     label: above
     settings:
@@ -41,9 +42,9 @@ content:
     region: content
   links:
     weight: 100
+    region: content
     settings: {  }
     third_party_settings: {  }
-    region: content
 hidden:
   langcode: true
   search_api_excerpt: true

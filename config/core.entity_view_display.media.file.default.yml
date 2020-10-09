@@ -15,10 +15,9 @@ content:
   field_media_file:
     label: visually_hidden
     weight: 0
-    settings:
-      use_description_as_link_text: true
+    settings: {  }
     third_party_settings: {  }
-    type: file_default
+    type: file_url_plain
     region: content
 hidden:
   created: true
