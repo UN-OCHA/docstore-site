@@ -529,8 +529,8 @@ class ApiController extends ControllerBase {
       throw new BadRequestHttpException('File name is required');
     }
 
-    if (!isset($params['mime'])) {
-      $params['mime'] = 'undefined';
+    if (!isset($params['mimetype'])) {
+      $params['mimetype'] = 'undefined';
     }
 
     if (!isset($params['alt'])) {
@@ -542,7 +542,7 @@ class ApiController extends ControllerBase {
     //$filesystem = \Drupal::service('file_system');
     $file = File::create();
     $file->setOwnerId($provider->id());
-    $file->setMimeType($params['mime']);
+    $file->setMimeType($params['mimetype']);
     $file->setFileName($params['filename']);
     $file->setFileUri($params['filename']);
     $file->setTemporary();
@@ -569,7 +569,7 @@ class ApiController extends ControllerBase {
 
         // Detect mime type.
         if ($file->getMimeType() == 'undefined') {
-          // TODO
+          $file->setMimeType(\Drupal::service('file.mime_type.guesser')->guess($uri));
         }
 
         // Save file.
@@ -610,11 +610,23 @@ class ApiController extends ControllerBase {
    * Get file.
    */
   public function getFile($id, Request $request) {
-    /** @var Drupal\file\Entity\File $file */
+    /** @var \Drupal\file\Entity\File $file */
     $file = \Drupal::service('entity.repository')->loadEntityByUuid('file', $id);
     if (!$file) {
       throw new BadRequestHttpException('File does not exist');
     }
+
+    $data = [
+      'file' => $file->uuid(),
+      'url' => $file->createFileUrl(),
+      'created' => $file->getCreatedTime(),
+      'updated' => $file->getChangedTime(),
+      'mimetype' => $file->getMimeType(),
+    ];
+
+    $response = new JsonResponse($data);
+
+    return $response;
   }
 
   /**
@@ -665,7 +677,7 @@ class ApiController extends ControllerBase {
 
       // Detect mime type.
       if ($file->getMimeType() == 'undefined') {
-        // TODO
+        $file->setMimeType(\Drupal::service('file.mime_type.guesser')->guess($uri));
       }
 
       // Save file.
