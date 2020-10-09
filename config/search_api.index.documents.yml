@@ -4,9 +4,13 @@ status: true
 dependencies:
   module:
     - search_api_solr
+    - file
+    - media
     - node
     - search_api
   config:
+    - field.storage.node.base_author_hid
+    - field.storage.media.field_media_file
     - field.storage.node.base_files
     - field.storage.node.base_provider
     - search_api.server.solr
@@ -53,14 +57,24 @@ name: Documents
 description: ''
 read_only: false
 field_settings:
-  base_files:
-    label: 'Files » Media ID'
+  base_author_hid:
+    label: 'Author (HID)'
     datasource_id: 'entity:node'
-    property_path: 'base_files:target_id'
-    type: integer
+    property_path: base_author_hid
+    type: string
+    dependencies:
+      config:
+        - field.storage.node.base_author_hid
+  base_files:
+    label: 'Files » UUID'
+    datasource_id: 'entity:node'
+    property_path: 'base_files:entity:uuid'
+    type: string
     dependencies:
       config:
         - field.storage.node.base_files
+      module:
+        - media
   base_provider:
     label: Provider
     datasource_id: 'entity:node'
@@ -69,6 +83,18 @@ field_settings:
     dependencies:
       config:
         - field.storage.node.base_provider
+  base_urls:
+    label: 'Files » URI'
+    datasource_id: 'entity:node'
+    property_path: 'base_files:entity:field_media_file:entity:uri:url'
+    type: string
+    dependencies:
+      config:
+        - field.storage.media.field_media_file
+        - field.storage.node.base_files
+      module:
+        - file
+        - media
   langcode:
     label: Language
     datasource_id: 'entity:node'
