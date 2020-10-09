@@ -89,6 +89,25 @@ class ApiController extends ControllerBase {
         }
       }
 
+      // Re-write file information.
+      $row['files'] = [];
+      foreach ($row['files_media_uuid'] as $key => $value) {
+        $row['files'][] = [
+          'media_uuid' => $value,
+          'file_uuid' => $row['files_file_uuid'][$key] ?? '',
+          'file_filename' => $row['files_file_filename'][$key] ?? '',
+          'files_file_uri' => $row['files_file_uri'][$key] ?? '',
+          'files_file_filemime' => $row['files_file_filemime'][$key] ?? '',
+        ];
+      }
+
+      // Remove files fields.
+      foreach ($row as $key => $value) {
+        if (strpos($key, 'files_') === 0) {
+          unset($row[$key]);
+        }
+      }
+
       // Remove solr fields.
       if (isset($row['search_api_id'])) {
         unset($row['search_api_id']);

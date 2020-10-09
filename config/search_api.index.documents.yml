@@ -65,16 +65,6 @@ field_settings:
     dependencies:
       config:
         - field.storage.node.base_author_hid
-  base_files:
-    label: 'Files » UUID'
-    datasource_id: 'entity:node'
-    property_path: 'base_files:entity:uuid'
-    type: string
-    dependencies:
-      config:
-        - field.storage.node.base_files
-      module:
-        - media
   base_provider:
     label: Provider
     datasource_id: 'entity:node'
@@ -83,8 +73,32 @@ field_settings:
     dependencies:
       config:
         - field.storage.node.base_provider
-  base_urls:
-    label: 'Files » URI'
+  files_file_filemime:
+    label: 'Files » File » MIME type'
+    datasource_id: 'entity:node'
+    property_path: 'base_files:entity:field_media_file:entity:filemime'
+    type: string
+    dependencies:
+      config:
+        - field.storage.media.field_media_file
+        - field.storage.node.base_files
+      module:
+        - file
+        - media
+  files_file_filename:
+    label: 'Files » File » Filename'
+    datasource_id: 'entity:node'
+    property_path: 'base_files:entity:field_media_file:entity:filename'
+    type: string
+    dependencies:
+      config:
+        - field.storage.media.field_media_file
+        - field.storage.node.base_files
+      module:
+        - file
+        - media
+  files_file_uri:
+    label: 'Files » File » URI'
     datasource_id: 'entity:node'
     property_path: 'base_files:entity:field_media_file:entity:uri:url'
     type: string
@@ -94,6 +108,28 @@ field_settings:
         - field.storage.node.base_files
       module:
         - file
+        - media
+  files_file_uuid:
+    label: 'Files » File » UUID'
+    datasource_id: 'entity:node'
+    property_path: 'base_files:entity:field_media_file:entity:uuid'
+    type: string
+    dependencies:
+      config:
+        - field.storage.media.field_media_file
+        - field.storage.node.base_files
+      module:
+        - file
+        - media
+  files_media_uuid:
+    label: 'Files » Media » UUID'
+    datasource_id: 'entity:node'
+    property_path: 'base_files:entity:uuid'
+    type: string
+    dependencies:
+      config:
+        - field.storage.node.base_files
+      module:
         - media
   langcode:
     label: Language
