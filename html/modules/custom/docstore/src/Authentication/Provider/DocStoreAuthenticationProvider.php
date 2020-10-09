@@ -45,7 +45,6 @@ class DocStoreAuthenticationProvider implements AuthenticationProviderInterface 
     if ($key = $this->authenticationService->getKey($request)) {
       // Find the linked user.
       if ($user = $this->authenticationService->getProviderByKey($key)) {
-        \Drupal::logger('authenticate')->notice('passed');
         return $user;
       }
     }

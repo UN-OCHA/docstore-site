@@ -8,6 +8,14 @@
 - `reliefweb_`: fields, vocabularies for reliefweb
 - `unocha_`: fields, vocabularies for unocha
 
+## Documents
+
+### Get list
+
+```bash
+curl -X GET "http://docstore.local.docksal/api/documents" -H  "accept: application/json" -H  "API-KEY: abcd" | jq
+```
+
 ## Vocabularies
 
 ### Get list of vocabularies

@@ -482,6 +482,32 @@ class ApiController extends ControllerBase {
   }
 
   /**
+   * Get media.
+   */
+  public function getMedia($id, Request $request) {
+    /** @var \Drupal\media\Entity\Media $media */
+    $media = \Drupal::service('entity.repository')->loadEntityByUuid('media', $id);
+    if (!$media) {
+      throw new BadRequestHttpException('Media does not exist');
+    }
+
+    $file = File::load($media->getSource()->getSourceFieldValue($media));
+
+    $data = [
+      'uuid' => $media->uuid(),
+      'name' => $media->getName(),
+      'created' => $media->getCreatedTime(),
+      'updated' => $media->getChangedTime(),
+      'file' => $file->uuid(),
+      'url' => $file->createFileUrl(),
+    ];
+
+    $response = new JsonResponse($data);
+
+    return $response;
+  }
+
+  /**
    * Get files.
    */
   public function getFiles(Request $request) {
@@ -540,30 +566,35 @@ class ApiController extends ControllerBase {
       if ($uri = file_unmanaged_save_data($params['data'], $destination, FILE_EXISTS_RENAME)) {
         $file->setFileUri($uri);
         $file->setPermanent();
+
+        // Detect mime type.
+        if ($file->getMimeType() == 'undefined') {
+          // TODO
+        }
+
+        // Save file.
+        $file->save();
+
+        // Create media.
+        $media_entity = Media::create([
+          'bundle' => 'file',
+          'uid' => '0',
+          'name' => $file->getFilename(),
+          'status' => TRUE,
+          'field_media_file' => [
+            'target_id' => $file->id(),
+            'alt' => $params['alt'],
+          ],
+        ]);
+        $media_entity->save();
       }
       else {
         throw new BadRequestHttpException('Unable to write file');
       }
-
-      // Detect mime type.
-      if ($file->getMimeType() == 'undefined') {
-        // TODO
-      }
     }
-
-    $file->save();
-
-    $media_entity = Media::create([
-      'bundle' => 'file',
-      'uid' => '0',
-      'name' => $file->getFilename(),
-      'status' => TRUE,
-      'field_media_file' => [
-        'target_id' => $file->id(),
-        'alt' => $params['alt'],
-      ],
-    ]);
-    $media_entity->save();
+    else {
+      $file->save();
+    }
 
     $data = [
       'message' => 'File created',
@@ -579,7 +610,11 @@ class ApiController extends ControllerBase {
    * Get file.
    */
   public function getFile($id, Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    /** @var Drupal\file\Entity\File $file */
+    $file = \Drupal::service('entity.repository')->loadEntityByUuid('file', $id);
+    if (!$file) {
+      throw new BadRequestHttpException('File does not exist');
+    }
   }
 
   /**
@@ -613,6 +648,8 @@ class ApiController extends ControllerBase {
       throw new BadRequestHttpException('File does not exist');
     }
 
+    // TODO Throw error if file already exists on disk.
+
     // Create destination.
     $destination = file_default_scheme() . '://';
     $destination .= substr(md5($file->getFilename()), 0, 3);
@@ -631,7 +668,21 @@ class ApiController extends ControllerBase {
         // TODO
       }
 
+      // Save file.
       $file->save();
+
+      // Create media.
+      $media_entity = Media::create([
+        'bundle' => 'file',
+        'uid' => '0',
+        'name' => $file->getFilename(),
+        'status' => TRUE,
+        'field_media_file' => [
+          'target_id' => $file->id(),
+          'alt' => $params['alt'],
+        ],
+      ]);
+      $media_entity->save();
     }
     else {
       throw new BadRequestHttpException('Unable to write file');

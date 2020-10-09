@@ -248,6 +248,20 @@ docstore_delete_term:
     docstore_crud: 'D'
     docstore_access_level: 'B'
 
+# Media
+docstore_get_media:
+  path: '/api/media/{id}'
+  defaults:
+    _controller: 'docstore.api_controller:getMedia'
+    _title: 'Get media'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+
 # Files
 docstore_get_files:
   path: '/api/files'
