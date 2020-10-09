@@ -16,6 +16,22 @@
 curl -X GET "http://docstore.local.docksal/api/documents" -H  "accept: application/json" -H  "API-KEY: abcd" | jq
 ```
 
+### Create document
+
+```bash
+curl -X POST "http://docstore.local.docksal/api/documents" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"title\":\"My first document\"}"
+```
+
+```bash
+(echo -n '{"title":"Doc with files","author":"123456789","files":["42fc7dfc-5943-47a3-ab4e-1d3b8fe335c4", "74ea6b33-8add-4433-b49d-a4181bf037c5"]}') | curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" -H "Content-Type: application/json" -d @-  http://docstore.local.docksal/api/documents | jq
+```
+
+### Get document
+
+```bash
+curl -X GET "http://docstore.local.docksal/api/documents/fd445f3c-b69f-4144-a256-c7b0f998c135" -H  "accept: application/json" -H  "API-KEY: abcd" | jq
+```
+
 ## Vocabularies
 
 ### Get list of vocabularies

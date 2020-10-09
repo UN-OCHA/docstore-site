@@ -11,6 +11,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\State\State;
 use Drupal\file\Entity\File;
 use Drupal\media\Entity\Media;
+use Drupal\node\Entity\Node;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -66,15 +67,36 @@ class ApiController extends ControllerBase {
     // Use solr response directly.
     $solr_response = $results->getExtraData('search_api_solr_response', []);
 
-    // Get field mappings.
+    // Build output data.
+    // TODO: Check if backend is solr.
     $server = $index->getServerInstance();
     $solr = $server->getBackend();
+    $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index);
 
-    // TODO: Check if backend is solr.
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => [
+        // TODO: Track actual node ids + search api index.
+        'node',
+      ],
+    ];
+
+    $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+
+    return $response;
+  }
+
+  /**
+   * Build document output.
+   */
+  protected function buildDocumentOutputFromSolr($docs, $solr, $index) {
+    $data = [];
+
     $field_mapping = $solr->getSolrFieldNames($index);
     $language_field = $field_mapping['search_api_language'];
 
-    foreach ($solr_response['response']['docs'] as $solr_row) {
+    foreach ($docs as $solr_row) {
       if ($language_field && isset($solr_row[$language_field])) {
         $language_id = $solr_row[$language_field];
         $field_mapping = $solr->getLanguageSpecificSolrFieldNames($language_id, $index);
@@ -122,10 +144,111 @@ class ApiController extends ControllerBase {
       $data[] = $row;
     }
 
+    return $data;
+  }
+
+  /**
+   * Create document.
+   */
+  public function createDocument(Request $request) {
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+
+    // Check required fields.
+    if (empty($params['title'])) {
+      throw new BadRequestHttpException('Title is required');
+    }
+
+    if (empty($params['author'])) {
+      throw new BadRequestHttpException('Author is required');
+    }
+
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Create node.
+    $item = [
+      'type' => 'document',
+      'title' => $params['title'],
+      'uid' => $provider->id(),
+      'base_author_hid' => [],
+      'base_files' => [],
+    ];
+
+    // Store HID Id.
+    $item['base_author_hid'][] = [
+      'value' => $params['author'],
+    ];
+
+    // Attach files.
+    if (isset($params['files']) && $params['files']) {
+      $files = $params['files'];
+      if (!is_array($files)) {
+        $files = [$files];
+      }
+
+      foreach ($files as $uuid) {
+        /** @var \Drupal\media\Entity\Media $media */
+        $media = \Drupal::service('entity.repository')->loadEntityByUuid('media', $uuid);
+        if (!$media) {
+          throw new BadRequestHttpException($this->t('Media @uuid does not exist', ['@uuid' => $uuid]));
+        }
+
+        $item['base_files'][] = [
+          'target_uuid' => $media->uuid(),
+        ];
+      }
+    }
+
+    // Check for meta tags.
+    if (isset($params['metadata']) && $params['metadata']) {
+      $metadata = $params['metadata'];
+    }
+
+    /** @var \Drupal\node\Entity\Node $document */
+    $document = Node::create($item);
+    $document->save();
+
+    $data = [
+      'message' => 'Document created',
+      'uuid' => $document->uuid(),
+    ];
+    $response = new JsonResponse($data);
+
+    return $response;
+  }
+
+  /**
+   * Get document.
+   */
+  public function getDocument($id, Request $request) {
+    $data = [];
+
+    // Query index.
+    $index = \Drupal\search_api\Entity\Index::load('documents');
+    $query = $index->query();
+    $query->addCondition('uuid', $id);
+    $results = $query->execute();
+
+    // Use solr response directly.
+    $solr_response = $results->getExtraData('search_api_solr_response', []);
+
+    // Build output data.
+    // TODO: Check if backend is solr.
+    $server = $index->getServerInstance();
+    $solr = $server->getBackend();
+    $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index);
+
+    if (empty($data)) {
+      throw new BadRequestHttpException($this->t('Document @uuid does not exist', ['@uuid' => $id]));
+    }
+
+    $data = reset($data);
+
     // Add cache tags.
     $cache_tags['#cache'] = [
       'tags' => [
-        // TODO: Track actual node ids + search api.
+        // TODO: Track actual node ids + search api index.
         'node',
       ],
     ];
@@ -134,20 +257,6 @@ class ApiController extends ControllerBase {
     $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
 
     return $response;
-  }
-
-  /**
-   * Create document.
-   */
-  public function createDocument(Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
-  }
-
-  /**
-   * Get document.
-   */
-  public function getDocument($id, Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
   }
 
   /**
@@ -263,11 +372,8 @@ class ApiController extends ControllerBase {
       throw new NotFoundHttpException();
     }
 
-    // Get proxy account to get session info.
+    // Get provider.
     $provider = $this->getProvider();
-
-    // Load provider.
-    $provider = taxonomy_term_load($provider->docstore_provider);
 
     // Create field.
     $machine_name = docstore_create_vocabulary_for_provider($params['label'], $provider->get('base_prefix')->value);
