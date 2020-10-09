@@ -517,8 +517,9 @@ class ApiController extends ControllerBase {
       'name' => $media->getName(),
       'created' => $media->getCreatedTime(),
       'updated' => $media->getChangedTime(),
-      'file' => $file->uuid(),
-      'url' => $file->createFileUrl(),
+      'mimetype' => $file->getMimeType(),
+      'file_uuid' => $file->uuid(),
+      'uri' => $file->createFileUrl(),
     ];
 
     $response = new JsonResponse($data);
@@ -540,7 +541,7 @@ class ApiController extends ControllerBase {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
 
-    // Load provider?
+    // Load provider and save it somewhere!
     $provider = $this->getProvider();
 
     // Filename is required.
@@ -593,6 +594,9 @@ class ApiController extends ControllerBase {
 
         // Save file.
         $file->save();
+
+        // TODO Add provider to media.
+        $provider = $this->getProvider();
 
         // Create media.
         $media_entity = Media::create([
@@ -659,7 +663,55 @@ class ApiController extends ControllerBase {
    * Delete file.
    */
   public function deleteFile($id, Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    /** @var \Drupal\file\Entity\File $file */
+    $file = \Drupal::service('entity.repository')->loadEntityByUuid('file', $id);
+    if (!$file) {
+      throw new BadRequestHttpException('File does not exist');
+    }
+
+    $usage_list = \Drupal::service('file.usage')->listUsage($file);
+    $usage_list = isset($usage_list['file']) ? $usage_list['file'] : array();
+    if (count($usage_list) > 0) {
+      throw new BadRequestHttpException($this->t('File is still in use in @num places', ['@num' => $usage_list]));
+    }
+
+    $file->delete();
+
+    $data = [
+      'message' => 'File is deleted',
+    ];
+
+    $response = new JsonResponse($data);
+
+    return $response;
+  }
+
+  /**
+   * Get file usage.
+   */
+  public function getFileUsage($id, Request $request) {
+    /** @var \Drupal\file\Entity\File $file */
+    $file = \Drupal::service('entity.repository')->loadEntityByUuid('file', $id);
+    if (!$file) {
+      throw new BadRequestHttpException('File does not exist');
+    }
+
+    $data = [];
+    $usage_list = \Drupal::service('file.usage')->listUsage($file);
+    $usage_list = isset($usage_list['file']) ? $usage_list['file'] : array();
+    foreach ($usage_list as $entity_type_id => $entity_ids) {
+      $entities = \Drupal::entityTypeManager()
+        ->getStorage($entity_type_id)
+        ->loadMultiple(array_keys($entity_ids));
+
+      foreach ($entities as $entity) {
+        $data[] = '/api/media/' . $entity->uuid();
+      }
+    }
+
+    $response = new JsonResponse($data);
+
+    return $response;
   }
 
   /**
@@ -673,7 +725,7 @@ class ApiController extends ControllerBase {
    * Create file content.
    */
   public function createFileContent($id, Request $request) {
-    /** @var Drupal\file\Entity\File $file */
+    /** @var \Drupal\file\Entity\File $file */
     $file = \Drupal::service('entity.repository')->loadEntityByUuid('file', $id);
     if (!$file) {
       throw new BadRequestHttpException('File does not exist');
