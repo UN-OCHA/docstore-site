@@ -112,7 +112,7 @@
         "composer-exit-on-patch-failure": true
     },
     "scripts": {
-        "git-hooks": "git config core.hooksPath git-hooks",
+        "git-hooks": "test -d .git && git config core.hooksPath git-hooks",
         "gulp-prepare": "test -f html/themes/custom/bootstrap_subtheme_sass/gulpfile.js && cd html/themes/custom/bootstrap_subtheme_sass && npm install || exit 0",
         "gulp-build": "test -f html/themes/custom/bootstrap_subtheme_sass/gulpfile.js && cd html/themes/custom/bootstrap_subtheme_sass && ./node_modules/.bin/gulp build || exit 0",
         "gulp-cleanup": "test -f html/themes/custom/bootstrap_subtheme_sass/gulpfile.js && cd html/themes/custom/bootstrap_subtheme_sass && rm -rf ./node_modules || exit 0",
