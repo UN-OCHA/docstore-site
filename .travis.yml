@@ -23,8 +23,8 @@ env:
      - CODER_VERSION='dev-8.x-2.x'
      - DB=sqlite
 
-install:
-  ssh-agent -k
+# install:
+#   ssh-agent -k
 
 before_script:
   # Composer.
@@ -38,6 +38,7 @@ before_script:
   # Code sniff
   - cd $TRAVIS_BUILD_DIR
   - composer install
+  - composer gulp
 
 script:
   # PHP linting
