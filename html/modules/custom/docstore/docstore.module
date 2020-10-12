@@ -39,6 +39,7 @@ function docstore_form_field_ui_field_overview_form_remove_field_prefix(&$form, 
  * Allowed field types and mapping to search API.
  */
 function docstore_allowed_field_types() {
+  // TODO Add date field.
   return [
     'string' => 'string',
     'entity_reference' => 'integer',
