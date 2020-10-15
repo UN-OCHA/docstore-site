@@ -4,15 +4,15 @@ status: true
 dependencies:
   module:
     - search_api_solr
+    - node
+    - user
     - file
     - media
-    - node
     - search_api
   config:
     - field.storage.node.base_author_hid
     - field.storage.media.field_media_file
     - field.storage.node.base_files
-    - field.storage.node.base_provider
     - search_api.server.solr
 third_party_settings:
   search_api_solr:
@@ -65,14 +65,31 @@ field_settings:
     dependencies:
       config:
         - field.storage.node.base_author_hid
-  base_provider:
-    label: Provider
+  base_provider_uuid:
+    label: 'User » UUID'
     datasource_id: 'entity:node'
-    property_path: base_provider
+    property_path: 'uid:entity:uuid'
     type: string
     dependencies:
-      config:
-        - field.storage.node.base_provider
+      module:
+        - node
+        - user
+  changed:
+    label: Changed
+    datasource_id: 'entity:node'
+    property_path: changed
+    type: date
+    dependencies:
+      module:
+        - node
+  created:
+    label: 'Authored on'
+    datasource_id: 'entity:node'
+    property_path: created
+    type: date
+    dependencies:
+      module:
+        - node
   files_file_filemime:
     label: 'Files » File » MIME type'
     datasource_id: 'entity:node'

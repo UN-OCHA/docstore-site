@@ -5,7 +5,6 @@ dependencies:
   config:
     - field.field.node.document.base_author_hid
     - field.field.node.document.base_files
-    - field.field.node.document.base_provider
     - node.type.document
 id: node.document.default
 targetEntityType: node
@@ -13,7 +12,7 @@ bundle: document
 mode: default
 content:
   base_author_hid:
-    weight: 27
+    weight: 8
     settings:
       size: 60
       placeholder: ''
@@ -22,19 +21,13 @@ content:
     region: content
   base_files:
     type: entity_reference_autocomplete
-    weight: 28
+    weight: 9
     settings:
       match_operator: CONTAINS
       match_limit: 10
       size: 60
       placeholder: ''
     third_party_settings: {  }
-    region: content
-  base_provider:
-    weight: 26
-    settings: {  }
-    third_party_settings: {  }
-    type: options_select
     region: content
   created:
     type: datetime_timestamp

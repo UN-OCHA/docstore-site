@@ -1,8 +1,0 @@
-uuid: f56fb44b-a17c-4b5e-bf79-afc4e195af86
-langcode: en
-status: true
-dependencies: {  }
-name: Provider
-vid: base_provider
-description: 'List of allowed providers'
-weight: 0

@@ -5,7 +5,6 @@ dependencies:
   config:
     - field.field.node.document.base_author_hid
     - field.field.node.document.base_files
-    - field.field.node.document.base_provider
     - node.type.document
   module:
     - entity_reference_uuid
@@ -31,14 +30,6 @@ content:
       view_mode: default
       link: false
     third_party_settings: {  }
-    region: content
-  base_provider:
-    weight: 101
-    label: above
-    settings:
-      link: true
-    third_party_settings: {  }
-    type: entity_reference_label
     region: content
   links:
     weight: 100

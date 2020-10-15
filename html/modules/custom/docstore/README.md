@@ -92,7 +92,7 @@ curl -X POST "http://docstore.local.docksal/api/vocabularies/peter_test1/fields"
 
 ### Get terms
 
-````bash
+```bash
 curl -X GET "http://docstore.local.docksal/api/terms" -H  "accept: application/json" -H  "API-KEY: abcd" | jq
 ```
 
@@ -192,4 +192,26 @@ curl -X POST "http://docstore.local.docksal/api/files" -H  "accept: application/
 
 ```bash
 curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" --data-binary "@updated.pdf" http://docstore.local.docksal/api/files/b51bf47c-b9f1-4fb2-addc-66127ee82c39/content | jq
+```
+
+## Ignore config
+
+```yaml
+taxonomy.*
+field.field.taxonomy_term.*
+field.storage.taxonomy_term.*
+~field.storage.taxonomy_term.base_provider_uuid
+~field.storage.taxonomy_term.created
+field.field.node.document.*
+~field.field.node.document.base_author_hid
+~field.field.node.document.base_files
+field.storage.node.*
+~field.storage.node.base_author_hid
+~field.storage.node.base_files
+core.entity_view_display.taxonomy_term.*
+core.entity_form_display.taxonomy_term.*
+core.entity_form_display.node.document.default
+search_api.index.documents
+core.entity_view_display.node.document.teaser
+core.entity_view_display.node.document.default
 ```
