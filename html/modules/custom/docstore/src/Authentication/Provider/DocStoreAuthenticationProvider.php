@@ -40,7 +40,6 @@ class DocStoreAuthenticationProvider implements AuthenticationProviderInterface 
    */
   public function authenticate(Request $request) {
     // TODO: Add flood protection.
-
     // Get the provided key.
     if ($key = $this->authenticationService->getKey($request)) {
       // Find the linked user.

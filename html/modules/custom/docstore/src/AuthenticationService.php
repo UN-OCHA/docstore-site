@@ -5,7 +5,6 @@ namespace Drupal\docstore;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Drupal\user\Entity\User;
 
 /**
  * Class AuthenticationService.
@@ -95,7 +94,7 @@ class AuthenticationService {
 
     if ($provider) {
       // Extend anonymous user object.
-      $user = User::load(reset($provider));
+      $user = $this->entityTypeManager->getStorage('user')->load(reset($provider));
       $user->docstore_provider = reset($provider);
       $user->docstore_write = TRUE;
       return $user;
@@ -109,7 +108,7 @@ class AuthenticationService {
 
     if ($provider) {
       // Extend anonymous user object.
-      $user = User::load(reset($provider));
+      $user = $this->entityTypeManager->getStorage('user')->load(reset($provider));
       $user->docstore_provider = reset($provider);
       $user->docstore_write = FALSE;
       return $user;

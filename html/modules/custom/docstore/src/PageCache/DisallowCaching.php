@@ -25,7 +25,7 @@ class DisallowCaching implements RequestPolicyInterface {
   /**
    * Constructs a key authentication page cache policy.
    *
-   * @param \Drupal\docstore\AuthenticationService $docstore
+   * @param \Drupal\docstore\AuthenticationService $authenticationService
    *   The key auth service..
    */
   public function __construct(AuthenticationService $authenticationService) {

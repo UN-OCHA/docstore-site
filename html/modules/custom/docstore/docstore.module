@@ -1,36 +1,38 @@
 <?php
 
-use Drupal\Component\Uuid\Uuid;
-use Drupal\Core\Field\FieldStorageDefinitionInterface;
-use Drupal\field\Entity\FieldConfig;
-use Drupal\field\Entity\FieldStorageConfig;
-
 /**
  * @file
  * Contains Document Store code.
  */
 
+use Drupal\Component\Uuid\Uuid;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\taxonomy\Entity\Vocabulary;
+use Drupal\search_api\Entity\Index;
+use Drupal\search_api\Item\Field;
+
 /**
  * Implements hook_form_FORM_ID_alter().
  */
-function docstore_form_field_ui_field_storage_add_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
-
-  //Remove the unnecessary field_ prefix.
+function docstore_form_field_ui_field_storage_add_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  // Remove the unnecessary field_ prefix.
   $language = \Drupal::languageManager()->getCurrentLanguage();
   $form['new_storage_wrapper']['field_name']['#field_prefix'] = '<span dir="' . $language->getDirection() . '">';
 
   // Attach validate function to prevent adding the field_ prefix.
   $form['#validate'][] = 'docstore_form_field_ui_field_overview_form_remove_field_prefix';
 
-  // Increase maximum characters to 32 as per database constraint
+  // Increase maximum characters to 32 as per database constraint.
   $form['new_storage_wrapper']['field_name']['#maxlength'] = 32;
 }
 
 /**
  * Validate function to prevent adding the field_ prefix.
  */
-function docstore_form_field_ui_field_overview_form_remove_field_prefix(&$form, \Drupal\Core\Form\FormStateInterface $form_state) {
-
+function docstore_form_field_ui_field_overview_form_remove_field_prefix(&$form, FormStateInterface $form_state) {
   $field_name = preg_replace('/^field_/', '', $form_state->getValue('field_name'));
   $form_state->setValue('field_name', $field_name);
 }
@@ -135,9 +137,9 @@ function docstore_add_document_field_to_index($field_name, $field_type, $label) 
     return;
   }
 
-  $index = \Drupal\search_api\Entity\Index::load('documents');
+  $index = Index::load('documents');
 
-  $field = new \Drupal\search_api\Item\Field($index, $field_name);
+  $field = new Field($index, $field_name);
   $field->setType($field_type_mapping[$field_type]);
   $field->setPropertyPath($field_name);
   $field->setDatasourceId('entity:node');
@@ -146,7 +148,7 @@ function docstore_add_document_field_to_index($field_name, $field_type, $label) 
 
   // Add term name if needed.
   if ($field_type == 'entity_reference' || $field_type == 'entity_reference_uuid') {
-    $field = new \Drupal\search_api\Item\Field($index, $field_name . '_label');
+    $field = new Field($index, $field_name . '_label');
     $field->setType('string');
     $field->setPropertyPath($field_name . ':entity:name');
     $field->setDatasourceId('entity:node');
@@ -170,7 +172,7 @@ function docstore_vocabulary_is_valid($machine_name, $provider_prefix) {
   }
   else {
     // Assume it's the machine name.
-    $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::load($machine_name);
+    $vocabulary = Vocabulary::load($machine_name);
     if (!$vocabulary) {
       return FALSE;
     }
@@ -196,11 +198,11 @@ function docstore_vocabulary_is_valid($machine_name, $provider_prefix) {
 function docstore_create_vocabulary_for_provider($label, $provider_prefix = 'shared_') {
   $vid = docstore_generate_unique_machine_name($label, 'taxonomy_vocabulary', $provider_prefix);
 
-  $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::create(array(
+  $vocabulary = Vocabulary::create([
     'vid' => $vid,
     'machine_name' => $vid,
     'name' => $label,
-  ));
+  ]);
 
   $vocabulary->save();
 
@@ -293,7 +295,7 @@ function docstore_generate_unique_machine_name($label, $entity_type, $provider_p
  */
 function docstore_machine_name_exists($machine_name, $entity_type) {
   if ($entity_type == 'taxonomy_vocabulary') {
-    $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::load($machine_name);
+    $vocabulary = Vocabulary::load($machine_name);
     return !empty($vocabulary);
   }
 

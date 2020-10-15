@@ -18,19 +18,15 @@ class DocStoreAccessController implements AccessInterface {
    *
    * @param \Drupal\Core\Session\AccountProxy $account
    *   Run access checks for this account.
-   *
    * @param \Drupal\Core\Routing\RouteMatch $route_match
    *   Matched route.
-   *
    * @param \Symfony\Component\Routing\Route $route
    *   Route.
-
+   *
    * @return \Drupal\Core\Access\AccessResultInterface
    *   The access result.
    */
   public function access(AccountProxy $account, RouteMatch $route_match, Route $route) {
-    // Check method, route, provider, HID.
-
     // Assume read.
     $crud = 'R';
     if ($route->hasOption('docstore_crud')) {
