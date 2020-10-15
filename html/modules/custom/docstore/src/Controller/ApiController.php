@@ -2,19 +2,18 @@
 
 namespace Drupal\docstore\Controller;
 
-use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Component\Transliteration\TransliterationInterface;
 use Drupal\Component\Uuid\Uuid;
 use Drupal\Core\Cache\CacheableJsonResponse;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Entity\Query\QueryFactoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
-use Drupal\Core\File\MimeType\MimeTypeGuesser;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\File\FileSystem;
+use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
-use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\State\State;
 use Drupal\file\Entity\File;
 use Drupal\file\FileUsage\FileUsageInterface;
@@ -56,11 +55,11 @@ class ApiController extends ControllerBase {
   protected $entityRepository;
 
   /**
-   * Entity query.
+   * The entity type manager.
    *
-   * @var \Drupal\Core\Entity\Query\QueryFactoryInterface
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected $entityQuery;
+  protected $entityTypeManager;
 
   /**
    * The transliteration service.
@@ -72,7 +71,7 @@ class ApiController extends ControllerBase {
   /**
    * The mime type guesser service.
    *
-   * @var \Drupal\Core\File\MimeType\MimeTypeGuesser
+   * @var \Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser
    */
   protected $mimeTypeGuesser;
 
@@ -89,13 +88,6 @@ class ApiController extends ControllerBase {
    * @var \Drupal\file\FileUsage\FileUsage
    */
   protected $fileUsage;
-
-  /**
-   * Current user.
-   *
-   * @var Drupal\Core\Session\AccountInterface
-   */
-  protected $currentUser;
 
   /**
    * The logger factory.
@@ -117,24 +109,22 @@ class ApiController extends ControllerBase {
   public function __construct(ConfigFactoryInterface $config,
       EntityFieldManagerInterface $entityFieldManager,
       EntityRepositoryInterface $entityRepository,
-      QueryFactoryInterface $entityQuery,
+      EntityTypeManagerInterface $entityTypeManager,
       TransliterationInterface $transliteration,
       MimeTypeGuesser $mimeTypeGuesser,
       FileSystem $fileSystem,
       FileUsageInterface $fileUsage,
-      AccountInterface $currentUser,
       LoggerChannelFactoryInterface $logger_factory,
       State $state
     ) {
     $this->config = $config;
     $this->entityFieldManager = $entityFieldManager;
     $this->entityRepository = $entityRepository;
-    $this->entityQuery = $entityQuery;
+    $this->entityTypeManager = $entityTypeManager;
     $this->transliteration = $transliteration;
     $this->mimeTypeGuesser = $mimeTypeGuesser;
     $this->fileSystem = $fileSystem;
     $this->fileUsage = $fileUsage;
-    $this->currentUser = $currentUser;
     $this->loggerFactory = $logger_factory;
     $this->state = $state;
   }
@@ -597,8 +587,9 @@ class ApiController extends ControllerBase {
    * Get provider.
    */
   protected function getProvider() {
-    // Get proxy account to get session info.
-    $provider = $this->currentUser->getAccount();
+    /** @var Drupal\Core\Session\AccountProxyInterface; */
+    $current_user = $this->currentUser();
+    $provider = $current_user->getAccount();
 
     if (!$provider) {
       throw new BadRequestHttpException('Provider is required');
@@ -691,13 +682,13 @@ class ApiController extends ControllerBase {
     }
 
     // Build query, use paging.
-    $query = $this->entityQuery('taxonomy_term');
+    $query = $this->entityTypeManager->getStorage('taxonomy_term')->getQuery();
     if (!empty($vids)) {
       $query->condition('vid', $vids, 'IN');
     }
 
     $tids = $query->execute();
-    $terms = $this->entityManager->getStorage('taxonomy_term')->loadMultiple($tids);
+    $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadMultiple($tids);
 
     /** @var \Drupal\Core\Entity\Term $term */
     foreach ($terms as $term) {
@@ -820,7 +811,7 @@ class ApiController extends ControllerBase {
     }
 
     /** @var \Drupal\media\Entity\File $file */
-    $file = $this->entityManager->getStorage('file')->load($media->getSource()->getSourceFieldValue($media));
+    $file = $this->entityTypeManager->getStorage('file')->load($media->getSource()->getSourceFieldValue($media));
 
     $data = [
       'uuid' => $media->uuid(),
@@ -965,7 +956,7 @@ class ApiController extends ControllerBase {
     $usage_list = $this->fileUsage->listUsage($file);
     $usage_list = isset($usage_list['file']) ? $usage_list['file'] : [];
     foreach ($usage_list as $entity_type_id => $entity_ids) {
-      $entities = $this->entityManager->getStorage($entity_type_id)->loadMultiple(array_keys($entity_ids));
+      $entities = $this->entityTypeManager->getStorage($entity_type_id)->loadMultiple(array_keys($entity_ids));
 
       foreach ($entities as $entity) {
         $data[] = '/api/media/' . $entity->uuid();
@@ -1030,7 +1021,7 @@ class ApiController extends ControllerBase {
     }
     else {
       // Assume it's the machine name.
-      $vocabulary = $this->entityTypeManager()->getStorage('taxonomy_vocabulary')->load($id);
+      $vocabulary = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->load($id);
     }
 
     if (!$vocabulary) {
@@ -1044,7 +1035,7 @@ class ApiController extends ControllerBase {
    * Load all vocabularies.
    */
   protected function loadVocabularies() {
-    $vocabularies = $this->entityTypeManager()->getStorage('taxonomy_vocabulary')->loadMultiple();
+    $vocabularies = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple();
 
     return $vocabularies;
   }

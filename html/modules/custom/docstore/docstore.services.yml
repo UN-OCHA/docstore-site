@@ -19,4 +19,4 @@ services:
         - { name: page_cache_request_policy }
   docstore.api_controller:
     class: \Drupal\docstore\Controller\ApiController
-    arguments: ['@config.factory', '@entity_field.manager', '@entity.repository', '@entity.query', '@transliteration', '@file.mime_type.guesser', '@file_system', '@file.usage', '@logger.factory', '@state']
+    arguments: ['@config.factory', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@transliteration', '@file.mime_type.guesser', '@file_system', '@file.usage', '@logger.factory', '@state']
