@@ -1,0 +1,21 @@
+ignored_config_entities:
+  - 'taxonomy.*'
+  - 'field.field.taxonomy_term.*'
+  - 'field.storage.taxonomy_term.*'
+  - ~field.storage.taxonomy_term.base_provider_uuid
+  - ~field.storage.taxonomy_term.created
+  - 'field.field.node.document.*'
+  - ~field.field.node.document.base_author_hid
+  - ~field.field.node.document.base_files
+  - 'field.storage.node.*'
+  - ~field.storage.node.base_author_hid
+  - ~field.storage.node.base_files
+  - 'core.entity_view_display.taxonomy_term.*'
+  - 'core.entity_form_display.taxonomy_term.*'
+  - core.entity_form_display.node.document.default
+  - search_api.index.documents
+  - core.entity_view_display.node.document.teaser
+  - core.entity_view_display.node.document.default
+_core:
+  default_config_hash: UVH1aJ4b44UM-VdPVN7hNNuuVqfReJxwfVeDQH1Hvsk
+enable_export_filtering: true
