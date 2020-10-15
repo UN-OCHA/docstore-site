@@ -2,17 +2,27 @@
 
 namespace Drupal\docstore\Controller;
 
+use Drupal\Component\FileSystem\FileSystem;
+use Drupal\Component\Transliteration\TransliterationInterface;
 use Drupal\Component\Uuid\Uuid;
 use Drupal\Core\Cache\CacheableJsonResponse;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Entity\Query\QueryFactoryInterface;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityRepositoryInterface;
+use Drupal\Core\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\State\State;
 use Drupal\file\Entity\File;
+use Drupal\file\FileUsage\FileUsageInterface;
 use Drupal\media\Entity\Media;
 use Drupal\node\Entity\Node;
+use Drupal\search_api\Entity\Index;
 use Drupal\taxonomy\Entity\Term;
+use Drupal\taxonomy\Entity\Vocabulary;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -32,6 +42,62 @@ class ApiController extends ControllerBase {
   protected $config;
 
   /**
+   * The entity field manager service.
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
+   */
+  protected $entityFieldManager;
+
+  /**
+   * The entity manager service.
+   *
+   * @var \Drupal\Core\Entity\EntityRepositoryInterface
+   */
+  protected $entityRepository;
+
+  /**
+   * Entity query.
+   *
+   * @var \Drupal\Core\Entity\Query\QueryFactoryInterface
+   */
+  protected $entityQuery;
+
+  /**
+   * The transliteration service.
+   *
+   * @var \Drupal\Component\Transliteration\TransliterationInterface
+   */
+  protected $transliteration;
+
+  /**
+   * The mime type guesser service.
+   *
+   * @var \Drupal\Core\File\MimeType\MimeTypeGuesser
+   */
+  protected $mimeTypeGuesser;
+
+  /**
+   * The file system.
+   *
+   * @var Drupal\Core\File\FileSystem
+   */
+  protected $fileSystem;
+
+  /**
+   * The file usage.
+   *
+   * @var \Drupal\file\FileUsage\FileUsage
+   */
+  protected $fileUsage;
+
+  /**
+   * Current user.
+   *
+   * @var Drupal\Core\Session\AccountInterface
+   */
+  protected $currentUser;
+
+  /**
    * The logger factory.
    *
    * @var \Drupal\Core\Logger\LoggerChannelFactory
@@ -48,8 +114,27 @@ class ApiController extends ControllerBase {
   /**
    * {@inheritdoc}
    */
-  public function __construct(ConfigFactoryInterface $config, LoggerChannelFactoryInterface $logger_factory, State $state) {
-    $this->config = $config->get('docstore.settings');
+  public function __construct(ConfigFactoryInterface $config,
+      EntityFieldManagerInterface $entityFieldManager,
+      EntityRepositoryInterface $entityRepository,
+      QueryFactoryInterface $entityQuery,
+      TransliterationInterface $transliteration,
+      MimeTypeGuesser $mimeTypeGuesser,
+      FileSystem $fileSystem,
+      FileUsageInterface $fileUsage,
+      AccountInterface $currentUser,
+      LoggerChannelFactoryInterface $logger_factory,
+      State $state
+    ) {
+    $this->config = $config;
+    $this->entityFieldManager = $entityFieldManager;
+    $this->entityRepository = $entityRepository;
+    $this->entityQuery = $entityQuery;
+    $this->transliteration = $transliteration;
+    $this->mimeTypeGuesser = $mimeTypeGuesser;
+    $this->fileSystem = $fileSystem;
+    $this->fileUsage = $fileUsage;
+    $this->currentUser = $currentUser;
     $this->loggerFactory = $logger_factory;
     $this->state = $state;
   }
@@ -61,7 +146,7 @@ class ApiController extends ControllerBase {
     $data = [];
 
     // Query index.
-    $index = \Drupal\search_api\Entity\Index::load('documents');
+    $index = Index::load('documents');
     $query = $index->query();
     $results = $query->execute();
 
@@ -104,7 +189,7 @@ class ApiController extends ControllerBase {
       }
 
       $row = [];
-      foreach($field_mapping as $name => $solr_name) {
+      foreach ($field_mapping as $name => $solr_name) {
         // TODO: Only return base, shared and provider fields.
         if (isset($solr_row[$solr_name])) {
           // TODO: Check cardinality.
@@ -190,9 +275,9 @@ class ApiController extends ControllerBase {
 
       foreach ($files as $uuid) {
         /** @var \Drupal\media\Entity\Media $media */
-        $media = \Drupal::service('entity.repository')->loadEntityByUuid('media', $uuid);
+        $media = $this->entityRepository->loadEntityByUuid('media', $uuid);
         if (!$media) {
-          throw new BadRequestHttpException($this->t('Media @uuid does not exist', ['@uuid' => $uuid]));
+          throw new BadRequestHttpException(strtr('Media @uuid does not exist', ['@uuid' => $uuid]));
         }
 
         $item['base_files'][] = [
@@ -204,7 +289,7 @@ class ApiController extends ControllerBase {
     // Check for meta tags.
     if (isset($params['metadata']) && $params['metadata']) {
       $metadata = $params['metadata'];
-      foreach($metadata as $metaitem) {
+      foreach ($metadata as $metaitem) {
         foreach ($metaitem as $key => $values) {
           if (!is_array($values)) {
             $values = [$values];
@@ -243,7 +328,7 @@ class ApiController extends ControllerBase {
     $data = [];
 
     // Query index.
-    $index = \Drupal\search_api\Entity\Index::load('documents');
+    $index = Index::load('documents');
     $query = $index->query();
     $query->addCondition('uuid', $id);
     $results = $query->execute();
@@ -258,7 +343,7 @@ class ApiController extends ControllerBase {
     $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index);
 
     if (empty($data)) {
-      throw new BadRequestHttpException($this->t('Document @uuid does not exist', ['@uuid' => $id]));
+      throw new BadRequestHttpException(strtr('Document @uuid does not exist', ['@uuid' => $id]));
     }
 
     $data = reset($data);
@@ -311,7 +396,7 @@ class ApiController extends ControllerBase {
   public function getDocumentFields() {
     $data = [];
 
-    $map = \Drupal::service('entity_field.manager')->getFieldDefinitions('node', 'document');
+    $map = $this->entityFieldManager->getFieldDefinitions('node', 'document');
     foreach ($map as $field_name => $field_info) {
       $data[$field_name] = $field_info->getType();
     }
@@ -364,7 +449,7 @@ class ApiController extends ControllerBase {
   public function getVocabularies() {
     $data = [];
 
-    $vocabularies = \Drupal::entityTypeManager()->getStorage('taxonomy_vocabulary')->loadMultiple();
+    $vocabularies = $this->loadVocabularies();
     foreach ($vocabularies as $vocabulary) {
       $data[] = [
         'uuid' => $vocabulary->uuid(),
@@ -411,11 +496,11 @@ class ApiController extends ControllerBase {
   public function getVocabulary($id) {
     $vocabulary = FALSE;
     if (Uuid::isValid($id)) {
-      $vocabulary = \Drupal::service('entity.repository')->loadEntityByUuid('taxonomy_vocabulary', $id);
+      $vocabulary = $this->entityRepository->loadEntityByUuid('taxonomy_vocabulary', $id);
     }
     else {
       // Assume it's the machine name.
-      $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::load($id);
+      Vocabulary::load($id);
     }
 
     if (!$vocabulary) {
@@ -446,11 +531,11 @@ class ApiController extends ControllerBase {
   public function getVocabularyFields($id) {
     $vocabulary = FALSE;
     if (Uuid::isValid($id)) {
-      $vocabulary = \Drupal::service('entity.repository')->loadEntityByUuid('taxonomy_vocabulary', $id);
+      $vocabulary = $this->entityRepository->loadEntityByUuid('taxonomy_vocabulary', $id);
     }
     else {
       // Assume it's the machine name.
-      $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::load($id);
+      $vocabulary = Vocabulary::load($id);
     }
 
     if (!$vocabulary) {
@@ -458,7 +543,7 @@ class ApiController extends ControllerBase {
     }
 
     $data = [];
-    $map = \Drupal::service('entity_field.manager')->getFieldDefinitions('taxonomy_term', $vocabulary->id());
+    $map = $this->entityFieldManager->getFieldDefinitions('taxonomy_term', $vocabulary->id());
     foreach ($map as $field_name => $field_info) {
       $data[$field_name] = $field_info->getType();
     }
@@ -513,7 +598,7 @@ class ApiController extends ControllerBase {
    */
   protected function getProvider() {
     // Get proxy account to get session info.
-    $provider = \Drupal::currentUser()->getAccount();
+    $provider = $this->currentUser->getAccount();
 
     if (!$provider) {
       throw new BadRequestHttpException('Provider is required');
@@ -531,11 +616,11 @@ class ApiController extends ControllerBase {
     }
 
     if (Uuid::isValid($id)) {
-      $vocabulary = \Drupal::service('entity.repository')->loadEntityByUuid('taxonomy_vocabulary', $id);
+      $vocabulary = $this->entityRepository->loadEntityByUuid('taxonomy_vocabulary', $id);
     }
     else {
       // Assume it's the machine name.
-      $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::load($id);
+      $vocabulary = Vocabulary::load($id);
       if (!$vocabulary) {
         throw new BadRequestHttpException('Invalid vocabulary');
       }
@@ -590,7 +675,70 @@ class ApiController extends ControllerBase {
    * Get Terms.
    */
   public function getTerms(Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    // Allow filtering by vocabularies.
+    $vids = [];
+    if ($request->get('vocabularies')) {
+      if (is_array($request->get('vocabularies'))) {
+        $vids = $request->get('vocabularies');
+      }
+      else {
+        $vids = explode(',', $request->get('vocabularies'));
+      }
+    }
+    else {
+      // List of own and shared vocabularies.
+      $vids = [];
+    }
+
+    // Build query, use paging.
+    $query = $this->entityQuery('taxonomy_term');
+    if (!empty($vids)) {
+      $query->condition('vid', $vids, 'IN');
+    }
+
+    $tids = $query->execute();
+    $terms = $this->entityManager->getStorage('taxonomy_term')->loadMultiple($tids);
+
+    /** @var \Drupal\Core\Entity\Term $term */
+    foreach ($terms as $term) {
+      $vocabulary = $this->loadVocabulary($term->getVocabularyId());
+
+      $row = [
+        'uuid' => $term->uuid(),
+        'label' => $term->label(),
+        'machine_name' => $term->id(),
+        'vocabulary_name' => $term->getVocabularyId(),
+        'vocabulary_uuid' => $vocabulary->uuid(),
+      ];
+
+      // Add all fields.
+      $term_fields = $term->getFields();
+      foreach ($term_fields as $term_field) {
+        $field_item_list = isset($term->{$term_field->getName()}) ? $term->{$term_field->getName()} : NULL;
+        $field_item_definition = $field_item_list->getFieldDefinition();
+        $values = [];
+        foreach ($field_item_list as $field_item) {
+          if ($main_property_name = $field_item->mainPropertyName()) {
+            $values[] = $field_item->{$main_property_name};
+          }
+          else {
+            $values[] = $field_item->value;
+          }
+        }
+        if ($field_item_definition->getFieldStorageDefinition()->getCardinality() == 1) {
+          $row[$term_field->getName()] = reset($values);
+        }
+        else {
+          $row[$term_field->getName()] = $values;
+        }
+      }
+
+      $data[] = $row;
+    }
+
+    $response = new CacheableJsonResponse($data);
+
+    return $response;
   }
 
   /**
@@ -612,11 +760,11 @@ class ApiController extends ControllerBase {
     // TODO refactor in separate function.
     $vocabulary = FALSE;
     if (Uuid::isValid($params['vocabulary'])) {
-      $vocabulary = \Drupal::service('entity.repository')->loadEntityByUuid('taxonomy_vocabulary', $params['vocabulary']);
+      $vocabulary = $this->entityRepository->loadEntityByUuid('taxonomy_vocabulary', $params['vocabulary']);
     }
     else {
       // Assume it's the machine name.
-      $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::load($params['vocabulary']);
+      $vocabulary = Vocabulary::load($params['vocabulary']);
     }
 
     if (!$vocabulary) {
@@ -666,12 +814,13 @@ class ApiController extends ControllerBase {
    */
   public function getMedia($id, Request $request) {
     /** @var \Drupal\media\Entity\Media $media */
-    $media = \Drupal::service('entity.repository')->loadEntityByUuid('media', $id);
+    $media = $this->entityRepository->loadEntityByUuid('media', $id);
     if (!$media) {
       throw new BadRequestHttpException('Media does not exist');
     }
 
-    $file = File::load($media->getSource()->getSourceFieldValue($media));
+    /** @var \Drupal\media\Entity\File $file */
+    $file = $this->entityManager->getStorage('file')->load($media->getSource()->getSourceFieldValue($media));
 
     $data = [
       'uuid' => $media->uuid(),
@@ -719,8 +868,6 @@ class ApiController extends ControllerBase {
     }
 
     // TODO: Support public vs private.
-
-    //$filesystem = \Drupal::service('file_system');
     $file = File::create();
     $file->setOwnerId($provider->id());
     $file->setMimeType($params['mimetype']);
@@ -729,49 +876,9 @@ class ApiController extends ControllerBase {
     $file->setTemporary();
 
     if (isset($params['data'])) {
-      // Create destination.
-      $destination = file_default_scheme() . '://';
-      $destination .= substr(md5($params['filename']), 0, 3);
-      $destination .= '/' . substr(md5($params['filename']), 3, 3);
-      file_prepare_directory($destination, FILE_CREATE_DIRECTORY);
-
-      // Append filename.
-      $trans = \Drupal::transliteration();
-      $params['filename'] = $trans->transliterate($params['filename'], 'en');
-      $params['filename'] = preg_replace('/\-+/', '-', strtolower(preg_replace('/[^a-zA-Z0-9_\-\.]+/', '', str_replace(' ', '-', $params['filename']))));
-      $destination .= '/' . $params['filename'];
-
       // Decode data.
-      $params['data'] = base64_decode($params['data']);
-
-      if ($uri = file_unmanaged_save_data($params['data'], $destination, FILE_EXISTS_RENAME)) {
-        $file->setFileUri($uri);
-        $file->setPermanent();
-
-        // Detect mime type.
-        if ($file->getMimeType() == 'undefined') {
-          $file->setMimeType(\Drupal::service('file.mime_type.guesser')->guess($uri));
-        }
-
-        // Save file.
-        $file->save();
-
-        // Create media.
-        $media_entity = Media::create([
-          'bundle' => 'file',
-          'uid' => $provider->id(),
-          'name' => $file->getFilename(),
-          'status' => TRUE,
-          'field_media_file' => [
-            'target_id' => $file->id(),
-            'alt' => $params['alt'],
-          ],
-        ]);
-        $media_entity->save();
-      }
-      else {
-        throw new BadRequestHttpException('Unable to write file');
-      }
+      $content = base64_decode($params['data']);
+      $this->saveFileToDisk($file, $content, $provider);
     }
     else {
       $file->save();
@@ -792,7 +899,7 @@ class ApiController extends ControllerBase {
    */
   public function getFile($id, Request $request) {
     /** @var \Drupal\file\Entity\File $file */
-    $file = \Drupal::service('entity.repository')->loadEntityByUuid('file', $id);
+    $file = $this->entityRepository->loadEntityByUuid('file', $id);
     if (!$file) {
       throw new BadRequestHttpException('File does not exist');
     }
@@ -822,15 +929,15 @@ class ApiController extends ControllerBase {
    */
   public function deleteFile($id, Request $request) {
     /** @var \Drupal\file\Entity\File $file */
-    $file = \Drupal::service('entity.repository')->loadEntityByUuid('file', $id);
+    $file = $this->entityRepository->loadEntityByUuid('file', $id);
     if (!$file) {
       throw new BadRequestHttpException('File does not exist');
     }
 
-    $usage_list = \Drupal::service('file.usage')->listUsage($file);
-    $usage_list = isset($usage_list['file']) ? $usage_list['file'] : array();
+    $usage_list = $this->fileUsage->listUsage($file);
+    $usage_list = isset($usage_list['file']) ? $usage_list['file'] : [];
     if (count($usage_list) > 0) {
-      throw new BadRequestHttpException($this->t('File is still in use in @num places', ['@num' => $usage_list]));
+      throw new BadRequestHttpException(strtr('File is still in use in @num places', ['@num' => $usage_list]));
     }
 
     $file->delete();
@@ -849,18 +956,16 @@ class ApiController extends ControllerBase {
    */
   public function getFileUsage($id, Request $request) {
     /** @var \Drupal\file\Entity\File $file */
-    $file = \Drupal::service('entity.repository')->loadEntityByUuid('file', $id);
+    $file = $this->entityRepository->loadEntityByUuid('file', $id);
     if (!$file) {
       throw new BadRequestHttpException('File does not exist');
     }
 
     $data = [];
-    $usage_list = \Drupal::service('file.usage')->listUsage($file);
-    $usage_list = isset($usage_list['file']) ? $usage_list['file'] : array();
+    $usage_list = $this->fileUsage->listUsage($file);
+    $usage_list = isset($usage_list['file']) ? $usage_list['file'] : [];
     foreach ($usage_list as $entity_type_id => $entity_ids) {
-      $entities = \Drupal::entityTypeManager()
-        ->getStorage($entity_type_id)
-        ->loadMultiple(array_keys($entity_ids));
+      $entities = $this->entityManager->getStorage($entity_type_id)->loadMultiple(array_keys($entity_ids));
 
       foreach ($entities as $entity) {
         $data[] = '/api/media/' . $entity->uuid();
@@ -884,7 +989,7 @@ class ApiController extends ControllerBase {
    */
   public function createFileContent($id, Request $request) {
     /** @var \Drupal\file\Entity\File $file */
-    $file = \Drupal::service('entity.repository')->loadEntityByUuid('file', $id);
+    $file = $this->entityRepository->loadEntityByUuid('file', $id);
     if (!$file) {
       throw new BadRequestHttpException('File does not exist');
     }
@@ -897,45 +1002,7 @@ class ApiController extends ControllerBase {
       throw new BadRequestHttpException('File is not owned by you');
     }
 
-    // TODO Throw error if file already exists on disk.
-
-    // Create destination.
-    $destination = file_default_scheme() . '://';
-    $destination .= substr(md5($file->getFilename()), 0, 3);
-    $destination .= '/' . substr(md5($file->getFilename()), 3, 3);
-    file_prepare_directory($destination, FILE_CREATE_DIRECTORY);
-
-    // Append filename.
-    $destination .= '/' . $file->getFilename();
-
-    if ($uri = file_unmanaged_save_data($request->getContent(), $destination, FILE_EXISTS_RENAME)) {
-      $file->setFileUri($uri);
-      $file->setPermanent();
-
-      // Detect mime type.
-      if ($file->getMimeType() == 'undefined') {
-        $file->setMimeType(\Drupal::service('file.mime_type.guesser')->guess($uri));
-      }
-
-      // Save file.
-      $file->save();
-
-      // Create media.
-      $media_entity = Media::create([
-        'bundle' => 'file',
-        'uid' => $provider->id(),
-        'name' => $file->getFilename(),
-        'status' => TRUE,
-        'field_media_file' => [
-          'target_id' => $file->id(),
-          'alt' => $params['alt'],
-        ],
-      ]);
-      $media_entity->save();
-    }
-    else {
-      throw new BadRequestHttpException('Unable to write file');
-    }
+    $this->saveFileToDisk($file, $request->getContent(), $provider);
 
     $data = [
       'message' => 'File content created',
@@ -952,6 +1019,76 @@ class ApiController extends ControllerBase {
    */
   public function updateFileContent($id, Request $request) {
     throw new PreconditionFailedHttpException('Not implemented (yet)');
+  }
+
+  /**
+   * Load a vocabulary.
+   */
+  protected function loadVocabulary($id) {
+    if (Uuid::isValid($id)) {
+      $vocabulary = $this->entityRepository->loadEntityByUuid('taxonomy_vocabulary', $id);
+    }
+    else {
+      // Assume it's the machine name.
+      $vocabulary = $this->entityTypeManager()->getStorage('taxonomy_vocabulary')->load($id);
+    }
+
+    if (!$vocabulary) {
+      throw new BadRequestHttpException('Unable to write file');
+    }
+
+    return $vocabulary;
+  }
+
+  /**
+   * Load all vocabularies.
+   */
+  protected function loadVocabularies() {
+    $vocabularies = $this->entityTypeManager()->getStorage('taxonomy_vocabulary')->loadMultiple();
+
+    return $vocabularies;
+  }
+
+  /**
+   * Create file content.
+   */
+  protected function saveFileToDisk(&$file, $content, $provider) {
+    // Create destination.
+    $destination = $this->config->get('default_scheme') . '://';
+    $destination .= substr(md5($file->getFilename()), 0, 3);
+    $destination .= '/' . substr(md5($file->getFilename()), 3, 3);
+    $this->fileSystem->prepareDirectory($destination, $this->fileSystem::FILE_CREATE_DIRECTORY);
+
+    // Append filename.
+    $destination .= '/' . $file->getFilename();
+
+    if ($uri = $this->fileSystem->saveData($content, $destination, $this->fileSystem::FILE_EXISTS_RENAME)) {
+      $file->setFileUri($uri);
+      $file->setPermanent();
+
+      // Detect mime type.
+      if ($file->getMimeType() == 'undefined') {
+        $file->setMimeType($this->mimeTypeGuesser->guess($uri));
+      }
+
+      // Save file.
+      $file->save();
+
+      // Create media.
+      $media_entity = Media::create([
+        'bundle' => 'file',
+        'uid' => $provider->id(),
+        'name' => $file->getFilename(),
+        'status' => TRUE,
+        'field_media_file' => [
+          'target_id' => $file->id(),
+        ],
+      ]);
+      $media_entity->save();
+    }
+    else {
+      throw new BadRequestHttpException('Unable to write file');
+    }
   }
 
 }
