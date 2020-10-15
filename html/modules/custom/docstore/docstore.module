@@ -210,9 +210,76 @@ function docstore_create_vocabulary_for_provider($label, $provider_prefix = 'sha
 }
 
 /**
+ * Add created field to a vocabulary.
+ */
+function docstore_create_vocabulary_base_field_created($bundle) {
+  $label = 'Created';
+  $field_name = 'created';
+  $field_type = 'timestamp';
+
+  $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
+  if (!$field_storage) {
+    $field_storage = FieldStorageConfig::create([
+      'field_name' => $field_name,
+      'entity_type' => 'taxonomy_term',
+      'type' => $field_type,
+      'cardinality' => 1,
+    ]);
+    $field_storage->save();
+  }
+
+  // Create instance.
+  FieldConfig::create([
+    'field_storage' => $field_storage,
+    'bundle' => $bundle,
+    'label' => $label,
+  ])->save();
+}
+
+/**
+ * Add provider uuid field to a vocabulary.
+ */
+function docstore_create_vocabulary_base_field_provider_uuid($bundle) {
+  $label = 'Provider UUID';
+  $field_name = 'base_provider_uuid';
+  $field_type = 'entity_reference_uuid';
+
+  $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
+  if (!$field_storage) {
+    // Create storage.
+    $field_storage = FieldStorageConfig::create([
+      'field_name' => $field_name,
+      'entity_type' => 'taxonomy_term',
+      'type' => $field_type,
+      'cardinality' => 1,
+      'settings' => [
+        'target_type' => 'taxonomy_term',
+      ],
+    ]);
+    $field_storage->save();
+  }
+
+  // Create instance.
+  FieldConfig::create([
+    'field_storage' => $field_storage,
+    'bundle' => $bundle,
+    'label' => $label,
+    'settings' => [
+      'handler' => 'default:user',
+      'handler_settings' => [
+        'target_bundles' => [
+          'provider' => 'provider',
+        ],
+      ],
+    ],
+  ])->save();
+}
+
+/**
  * Create a vocabulary field for a provider.
  */
 function docstore_create_vocabulary_field_for_provider($bundle, $label, $field_type, $multiple = FALSE, $provider_prefix = 'shared_') {
+  $provider_prefix = $bundle . '_';
   $field_name = docstore_generate_unique_machine_name($label, 'taxonomy_term', $provider_prefix);
 
   // Create storage.
@@ -239,6 +306,7 @@ function docstore_create_vocabulary_field_for_provider($bundle, $label, $field_t
  */
 function docstore_create_vocabulary_reference_field_for_provider($bundle, $label, $target, $multiple = FALSE, $provider_prefix = 'shared_') {
   $field_type = 'entity_reference_uuid';
+  $provider_prefix = $bundle . '_';
   $field_name = docstore_generate_unique_machine_name($label, 'taxonomy_term', $provider_prefix);
 
   // Create storage.

@@ -85,7 +85,7 @@ curl -X GET "http://docstore.local.docksal/api/vocabularies/f56fb44b-a17c-4b5e-b
 ### Add vocabulary field
 
 ```bash
-curl -X POST "http://docstore.local.docksal/api/vocabularies/test_my_vocabulary/fields" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"label\":\"My voc field\",\"target\":\"test_my_vocabulary\",\"multiple\":0}"
+curl -X POST "http://docstore.local.docksal/api/vocabularies/peter_test1/fields" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"label\":\"ISO3\",\"target\":\"peter_test1\",\"multiple\":0}"
 ```
 
 ## Terms

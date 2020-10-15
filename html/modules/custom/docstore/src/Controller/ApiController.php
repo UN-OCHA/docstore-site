@@ -471,6 +471,12 @@ class ApiController extends ControllerBase {
     // Create field.
     $machine_name = docstore_create_vocabulary_for_provider($params['label'], $provider->get('prefix')->value);
 
+    // Add created field.
+    docstore_create_vocabulary_base_field_created($machine_name);
+
+    // Add provider uuid.
+    docstore_create_vocabulary_base_field_provider_uuid($machine_name);
+
     $data = [
       'message' => 'Vocabulary created',
       'machine_name' => $machine_name,
@@ -512,7 +518,13 @@ class ApiController extends ControllerBase {
    * Get vocabulary terms.
    */
   public function getVocabularyTerms($id, Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    $vocabulary = $this->loadVocabulary($id);
+
+    $data = $this->loadTerms([$vocabulary->id()]);
+
+    $response = new CacheableJsonResponse($data);
+
+    return $response;
   }
 
   /**
@@ -681,51 +693,7 @@ class ApiController extends ControllerBase {
       $vids = [];
     }
 
-    // Build query, use paging.
-    $query = $this->entityTypeManager->getStorage('taxonomy_term')->getQuery();
-    if (!empty($vids)) {
-      $query->condition('vid', $vids, 'IN');
-    }
-
-    $tids = $query->execute();
-    $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadMultiple($tids);
-
-    /** @var \Drupal\Core\Entity\Term $term */
-    foreach ($terms as $term) {
-      $vocabulary = $this->loadVocabulary($term->getVocabularyId());
-
-      $row = [
-        'uuid' => $term->uuid(),
-        'label' => $term->label(),
-        'machine_name' => $term->id(),
-        'vocabulary_name' => $term->getVocabularyId(),
-        'vocabulary_uuid' => $vocabulary->uuid(),
-      ];
-
-      // Add all fields.
-      $term_fields = $term->getFields();
-      foreach ($term_fields as $term_field) {
-        $field_item_list = isset($term->{$term_field->getName()}) ? $term->{$term_field->getName()} : NULL;
-        $field_item_definition = $field_item_list->getFieldDefinition();
-        $values = [];
-        foreach ($field_item_list as $field_item) {
-          if ($main_property_name = $field_item->mainPropertyName()) {
-            $values[] = $field_item->{$main_property_name};
-          }
-          else {
-            $values[] = $field_item->value;
-          }
-        }
-        if ($field_item_definition->getFieldStorageDefinition()->getCardinality() == 1) {
-          $row[$term_field->getName()] = reset($values);
-        }
-        else {
-          $row[$term_field->getName()] = $values;
-        }
-      }
-
-      $data[] = $row;
-    }
+    $data = $this->loadTerms($vids);
 
     $response = new CacheableJsonResponse($data);
 
@@ -739,6 +707,9 @@ class ApiController extends ControllerBase {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
 
+    // Get provider.
+    $provider = $this->getProvider();
+
     // Check required fields.
     if (empty($params['label'])) {
       throw new BadRequestHttpException('Label is required');
@@ -748,26 +719,26 @@ class ApiController extends ControllerBase {
       throw new BadRequestHttpException('Vocabulary is required');
     }
 
-    // TODO refactor in separate function.
-    $vocabulary = FALSE;
-    if (Uuid::isValid($params['vocabulary'])) {
-      $vocabulary = $this->entityRepository->loadEntityByUuid('taxonomy_vocabulary', $params['vocabulary']);
-    }
-    else {
-      // Assume it's the machine name.
-      $vocabulary = Vocabulary::load($params['vocabulary']);
-    }
-
-    if (!$vocabulary) {
-      throw new BadRequestHttpException('Vocabulary does not exist');
-    }
+    // Load vocabulary.
+    $vocabulary = $this->loadVocabulary($params['vocabulary']);
 
     // Term.
-    $term = Term::create([
+    $item = [
       'name' => $params['label'],
       'vid' => $vocabulary->id(),
+      'created' => [],
+      'base_provider_uuid' => [],
       'parent' => [],
-    ]);
+      'description' => $params['description'] ?? '',
+    ];
+
+    // Set creation time.
+    $item['created'][] = ['value' => time()];
+
+    // Set owner.
+    $item['base_provider_uuid'][] = ['target_uuid' => $provider->uuid()];
+
+    $term = Term::create($item);
     $term->save();
 
     $data = [
@@ -817,7 +788,7 @@ class ApiController extends ControllerBase {
       'uuid' => $media->uuid(),
       'name' => $media->getName(),
       'created' => $media->getCreatedTime(),
-      'updated' => $media->getChangedTime(),
+      'changed' => $media->getChangedTime(),
       'mimetype' => $file->getMimeType(),
       'file_uuid' => $file->uuid(),
       'uri' => $file->createFileUrl(),
@@ -899,7 +870,7 @@ class ApiController extends ControllerBase {
       'file' => $file->uuid(),
       'url' => $file->createFileUrl(),
       'created' => $file->getCreatedTime(),
-      'updated' => $file->getChangedTime(),
+      'changed' => $file->getChangedTime(),
       'mimetype' => $file->getMimeType(),
     ];
 
@@ -1080,6 +1051,77 @@ class ApiController extends ControllerBase {
     else {
       throw new BadRequestHttpException('Unable to write file');
     }
+  }
+
+  /**
+   * Fetch terms.
+   */
+  public function loadTerms($vids) {
+    // Fields to hide.
+    $hide_fields = [
+      'tid',
+      'revision_id',
+      'vid',
+      'revision_created',
+      'revision_user',
+      'revision_log_message',
+      'weight',
+      'changed',
+      'parent',
+      'changed',
+    ];
+
+    // Build query, use paging.
+    $query = $this->entityTypeManager->getStorage('taxonomy_term')->getQuery();
+    if (!empty($vids)) {
+      $query->condition('vid', $vids, 'IN');
+    }
+
+    $tids = $query->execute();
+    $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadMultiple($tids);
+
+    /** @var \Drupal\Core\Entity\Term $term */
+    foreach ($terms as $term) {
+      $vocabulary = $this->loadVocabulary($term->getVocabularyId());
+      $row = [
+        'uuid' => $term->uuid(),
+        'label' => $term->label(),
+        'machine_name' => $term->id(),
+        'vocabulary_name' => $term->getVocabularyId(),
+        'vocabulary_uuid' => $vocabulary->uuid(),
+        'changed' => $term->getChangedTime(),
+      ];
+
+      // Add all fields.
+      $term_fields = $term->getFields();
+      foreach ($term_fields as $term_field) {
+        if (in_array($term_field->getName(), $hide_fields)) {
+          continue;
+        }
+
+        $field_item_list = isset($term->{$term_field->getName()}) ? $term->{$term_field->getName()} : NULL;
+        $field_item_definition = $field_item_list->getFieldDefinition();
+        $values = [];
+        foreach ($field_item_list as $field_item) {
+          if ($main_property_name = $field_item->mainPropertyName()) {
+            $values[] = $field_item->{$main_property_name};
+          }
+          else {
+            $values[] = $field_item->value;
+          }
+        }
+        if ($field_item_definition->getFieldStorageDefinition()->getCardinality() == 1) {
+          $row[$term_field->getName()] = reset($values);
+        }
+        else {
+          $row[$term_field->getName()] = $values;
+        }
+      }
+
+      $data[] = $row;
+    }
+
+    return $data;
   }
 
 }
