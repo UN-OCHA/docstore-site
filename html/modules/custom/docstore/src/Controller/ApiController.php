@@ -13,6 +13,7 @@ use Drupal\file\Entity\File;
 use Drupal\media\Entity\Media;
 use Drupal\node\Entity\Node;
 use Drupal\taxonomy\Entity\Term;
+use Drupal\taxonomy\Entity\Vocabulary;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -364,7 +365,7 @@ class ApiController extends ControllerBase {
   public function getVocabularies() {
     $data = [];
 
-    $vocabularies = \Drupal::entityTypeManager()->getStorage('taxonomy_vocabulary')->loadMultiple();
+    $vocabularies = Vocabulary::loadMultiple([]);
     foreach ($vocabularies as $vocabulary) {
       $data[] = [
         'uuid' => $vocabulary->uuid(),
@@ -590,7 +591,68 @@ class ApiController extends ControllerBase {
    * Get Terms.
    */
   public function getTerms(Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    // Allow filtering by vocabularies.
+    $vids = [];
+    if ($request->get('vocabularies')) {
+      if (is_array($request->get('vocabularies'))) {
+        $vids = $request->get('vocabularies');
+      }
+      else {
+        $vids = explode(',', $request->get('vocabularies'));
+      }
+    }
+    else {
+      // List of own and shared vocabularies.
+      $vids = [];
+    }
+
+    // Build query, use paging.
+    $query = \Drupal::entityQuery('taxonomy_term');
+    if (!empty($vids)) {
+      $query->condition('vid', $vids, 'IN');
+    }
+
+    $tids = $query->execute();
+    $terms = Term::loadMultiple($tids);
+    foreach ($terms as $term) {
+      $vocabulary = Vocabulary::load($term->getVocabularyId());
+
+      $row = [
+        'uuid' => $term->uuid(),
+        'label' => $term->label(),
+        'machine_name' => $term->id(),
+        'vocabulary_name' => $term->getVocabularyId(),
+        'vocabulary_uuid' => $vocabulary->uuid(),
+      ];
+
+      // Add all fields.
+      $term_fields = $term->getFields();
+      foreach ($term_fields as $term_field) {
+        $field_item_list = isset($term->{$term_field->getName()}) ? $term->{$term_field->getName()} : NULL;
+        $field_item_definition = $field_item_list->getFieldDefinition();
+        $values = [];
+        foreach ($field_item_list as $field_item) {
+          if ($main_property_name = $field_item->mainPropertyName()) {
+            $values[] = $field_item->{$main_property_name};
+          }
+          else {
+            $values[] = $field_item->value;
+          }
+        }
+        if ($field_item_definition->getFieldStorageDefinition()->getCardinality() == 1) {
+          $row[$term_field->getName()] = reset($values);
+        }
+        else {
+          $row[$term_field->getName()] = $values;
+        }
+      }
+
+      $data[] = $row;
+    }
+
+    $response = new CacheableJsonResponse($data);
+
+    return $response;
   }
 
   /**
@@ -616,7 +678,7 @@ class ApiController extends ControllerBase {
     }
     else {
       // Assume it's the machine name.
-      $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::load($params['vocabulary']);
+      $vocabulary = Vocabulary::load($params['vocabulary']);
     }
 
     if (!$vocabulary) {

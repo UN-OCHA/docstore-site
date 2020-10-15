@@ -90,6 +90,12 @@ curl -X POST "http://docstore.local.docksal/api/vocabularies/test_my_vocabulary/
 
 ## Terms
 
+### Get terms
+
+````bash
+curl -X GET "http://docstore.local.docksal/api/terms" -H  "accept: application/json" -H  "API-KEY: abcd" | jq
+```
+
 ### Create term
 
 ```bash
