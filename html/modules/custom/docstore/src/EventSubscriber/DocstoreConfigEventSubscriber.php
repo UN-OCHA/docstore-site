@@ -64,7 +64,6 @@ final class DocstoreConfigEventSubscriber implements EventSubscriberInterface {
    *   The transformation event.
    */
   public function onConfigTransformImport(StorageTransformEvent $event) {
-    \Drupal::logger('config')->notice('onConfigTransformImport');
     $storage = $event->getStorage();
     if (!$storage->exists('core.extension')) {
       return;
@@ -80,14 +79,12 @@ final class DocstoreConfigEventSubscriber implements EventSubscriberInterface {
    *   The transformation event.
    */
   public function onConfigTransformExport(StorageTransformEvent $event) {
-    \Drupal::logger('config')->notice('onConfigTransformExport');
     $storage = $event->getStorage();
     if (!$storage->exists('core.extension')) {
       return;
     }
 
     foreach (array_merge([StorageInterface::DEFAULT_COLLECTION], $storage->getAllCollectionNames()) as $collectionName) {
-      \Drupal::logger('export')->notice($collectionName);
 
       $collection = $storage->createCollection($collectionName);
       foreach ($this->getConfigNames() as $configName) {
@@ -96,16 +93,13 @@ final class DocstoreConfigEventSubscriber implements EventSubscriberInterface {
 
       // Remove config created by providers.
       foreach ($collection->listAll() as $configName) {
-//        \Drupal::logger('export - 2')->notice($configName);
         // Ignore index.
         if ($configName === 'search_api.index.documents') {
-          \Drupal::logger('ignore')->notice($configName);
           $collection->delete($configName);
         }
 
         // Ignore all vocabularies.
-        if (strpos($configName, '	taxonomy.vocabulary.') === 0) {
-          \Drupal::logger('ignore')->notice($configName);
+        if (strpos($configName, 'taxonomy.vocabulary.') === 0) {
           $collection->delete($configName);
         }
 
@@ -120,23 +114,19 @@ final class DocstoreConfigEventSubscriber implements EventSubscriberInterface {
             continue;
           }
 
-          \Drupal::logger('ignore')->notice($configName);
           $collection->delete($configName);
         }
 
         if (strpos($configName, 'field.field.taxonomy_term.') === 0) {
-          \Drupal::logger('ignore')->notice($configName);
           $collection->delete($configName);
         }
 
         // Ignore all document fields, except base_ fields.
         if (strpos($configName, 'field.storage.node.') === 0 && strpos($configName, 'field.storage.node.base_') === FALSE) {
-          \Drupal::logger('ignore')->notice($configName);
           $collection->delete($configName);
         }
 
         if (strpos($configName, 'field.field.node.document.') === 0 && strpos($configName, 'field.field.node.document.base_') === FALSE) {
-          \Drupal::logger('ignore')->notice($configName);
           $collection->delete($configName);
         }
       }
@@ -188,12 +178,4 @@ final class DocstoreConfigEventSubscriber implements EventSubscriberInterface {
     return array_unique($config);
   }
 
-  /**
-   * Get all the configuration which depends on one of the excluded modules.
-   *
-   * @return string[]
-   */
-  private function getFieldsToIgnore() {
-
-  }
 }
