@@ -6,8 +6,6 @@ module:
   config_filter: 0
   config_ignore: 0
   dblog: 0
-  devel: 0
-  devel_php: 0
   docstore: 0
   dynamic_entity_reference: 0
   dynamic_page_cache: 0
