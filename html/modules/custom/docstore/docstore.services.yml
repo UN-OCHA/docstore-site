@@ -20,3 +20,8 @@ services:
   docstore.api_controller:
     class: \Drupal\docstore\Controller\ApiController
     arguments: ['@config.factory', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@transliteration', '@file.mime_type.guesser', '@file_system', '@file.usage', '@logger.factory', '@state']
+  docstore.config_sync.event_subscriber:
+    class: Drupal\docstore\EventSubscriber\DocstoreConfigEventSubscriber
+    arguments: ['@config.storage', '@settings', '@config.manager']
+    tags:
+      - { name: event_subscriber }
