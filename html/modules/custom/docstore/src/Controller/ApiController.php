@@ -493,18 +493,7 @@ class ApiController extends ControllerBase {
    * Get vocabulary.
    */
   public function getVocabulary($id) {
-    $vocabulary = FALSE;
-    if (Uuid::isValid($id)) {
-      $vocabulary = $this->entityRepository->loadEntityByUuid('taxonomy_vocabulary', $id);
-    }
-    else {
-      // Assume it's the machine name.
-      Vocabulary::load($id);
-    }
-
-    if (!$vocabulary) {
-      throw new NotFoundHttpException();
-    }
+    $vocabulary = $this->loadVocabulary($id);
 
     $data = [
       'uuid' => $vocabulary->uuid(),

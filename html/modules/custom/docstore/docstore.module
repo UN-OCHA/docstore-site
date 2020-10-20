@@ -276,6 +276,34 @@ function docstore_create_vocabulary_base_field_provider_uuid($bundle) {
 }
 
 /**
+ * Add HID id field to a vocabulary.
+ */
+function docstore_create_vocabulary_base_field_hid_id($bundle) {
+  $label = 'Author (HID)';
+  $field_name = 'base_author_hid';
+  $field_type = 'string';
+
+  $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
+  if (!$field_storage) {
+    // Create storage.
+    $field_storage = FieldStorageConfig::create([
+      'field_name' => $field_name,
+      'entity_type' => 'taxonomy_term',
+      'type' => $field_type,
+      'cardinality' => 1,
+    ]);
+    $field_storage->save();
+  }
+
+  // Create instance.
+  FieldConfig::create([
+    'field_storage' => $field_storage,
+    'bundle' => $bundle,
+    'label' => $label,
+  ])->save();
+}
+
+/**
  * Create a vocabulary field for a provider.
  */
 function docstore_create_vocabulary_field_for_provider($bundle, $label, $field_type, $multiple = FALSE, $provider_prefix = 'shared_') {

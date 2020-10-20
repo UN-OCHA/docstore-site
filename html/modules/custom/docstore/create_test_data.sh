@@ -2,6 +2,8 @@ curl -X POST "http://docstore.local.docksal/api/vocabularies" -H  "accept: appli
 
 curl -X POST "http://docstore.local.docksal/api/vocabularies" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"label\":\"Organization\"}"
 
+curl -X GET "http://docstore.local.docksal/api/vocabularies" -H  "accept: application/json" -H  "API-KEY: abcd" | jq
+
 curl -X POST "http://docstore.local.docksal/api/document/fields" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"label\":\"City\",\"target\":\"peter_city\"}"
 
 curl -X POST "http://docstore.local.docksal/api/document/fields" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"label\":\"Organizations\",\"target\":\"peter_organization\",\"multiple\":1}"
