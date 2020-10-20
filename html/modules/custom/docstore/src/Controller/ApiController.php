@@ -735,7 +735,7 @@ class ApiController extends ControllerBase {
 
     $data = [
       'message' => 'Term created',
-      'machine_name' => $term->uuid(),
+      'uuid' => $term->uuid(),
     ];
     $response = new JsonResponse($data);
 
