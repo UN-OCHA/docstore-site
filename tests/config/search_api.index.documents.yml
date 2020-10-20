@@ -14,8 +14,6 @@ dependencies:
     - field.storage.node.base_author_hid
     - field.storage.media.field_media_file
     - field.storage.node.base_files
-    - field.storage.node.peter_city
-    - field.storage.node.peter_organizations
     - search_api.server.solr
 third_party_settings:
   search_api_solr:
@@ -159,42 +157,6 @@ field_settings:
     dependencies:
       module:
         - node
-  peter_city:
-    label: City
-    datasource_id: 'entity:node'
-    property_path: peter_city
-    type: string
-    dependencies:
-      config:
-        - field.storage.node.peter_city
-  peter_city_label:
-    label: 'City (name)'
-    datasource_id: 'entity:node'
-    property_path: 'peter_city:entity:name'
-    type: string
-    dependencies:
-      config:
-        - field.storage.node.peter_city
-      module:
-        - taxonomy
-  peter_organizations:
-    label: Organizations
-    datasource_id: 'entity:node'
-    property_path: peter_organizations
-    type: string
-    dependencies:
-      config:
-        - field.storage.node.peter_organizations
-  peter_organizations_label:
-    label: 'Organizations (name)'
-    datasource_id: 'entity:node'
-    property_path: 'peter_organizations:entity:name'
-    type: string
-    dependencies:
-      config:
-        - field.storage.node.peter_organizations
-      module:
-        - taxonomy
   title:
     label: Title
     datasource_id: 'entity:node'
