@@ -8,10 +8,10 @@ ignored_config_entities:
   - '~field.field.node.document.base_*'
   - 'field.storage.node.*'
   - '~field.storage.node.base_*'
+  - search_api.index.documents
   - 'core.entity_view_display.taxonomy_term.*'
   - 'core.entity_form_display.taxonomy_term.*'
   - core.entity_form_display.node.document.default
-  - search_api.index.documents
   - core.entity_view_display.node.document.teaser
   - core.entity_view_display.node.document.default
 _core:

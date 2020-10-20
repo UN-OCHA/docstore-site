@@ -108,7 +108,7 @@ Example output.
 
 # Create terms
 
-Create terms.
+Create city terms.
 
 ## POST /terms
 
@@ -234,3 +234,130 @@ Example output.
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
 * Data.label: /./
 * Data.vocabulary_name: {city}
+
+Create organization terms.
+
+## POST /terms
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "CERF",
+  "vocabulary": "{organization}"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term created"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term created"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {organization_cerf}
+
+## POST /terms
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "UNOCHA",
+  "vocabulary": "{organization}"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term created"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term created"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {organization_unocha}
+
+## POST /terms
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "WFP",
+  "vocabulary": "{organization}"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term created"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term created"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {organization_wfp}
+
+## GET /terms/{organization_wfp}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "WFP",
+  "vocabulary": "{organization}"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "label": "WFP",
+  "vocabulary_name": "{organization}",
+  "langcode": "en",
+  "status": "1",
+  "name": "WFP"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
+* Data.label: /./
+* Data.vocabulary_name: {organization}

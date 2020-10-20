@@ -14,16 +14,22 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final class DocstoreConfigEventSubscriber implements EventSubscriberInterface {
 
   /**
+   * Storage.
+   *
    * @var \Drupal\Core\Config\StorageInterface
    */
   private $active;
 
   /**
+   * Drupal settings.
+   *
    * @var \Drupal\Core\Site\Settings
    */
   private $settings;
 
   /**
+   * Config manager.
+   *
    * @var \Drupal\Core\Config\ConfigManagerInterface
    */
   private $manager;
@@ -143,6 +149,7 @@ final class DocstoreConfigEventSubscriber implements EventSubscriberInterface {
    * Get the modules set as excluded in the drupal settings.
    *
    * @return string[]
+   *   List of modules.
    */
   private function getExcludedModules() {
     return $this->settings->get("config_exclude_modules", [
@@ -157,6 +164,7 @@ final class DocstoreConfigEventSubscriber implements EventSubscriberInterface {
    * Get all the configuration which depends on one of the excluded modules.
    *
    * @return string[]
+   *   List of config names.
    */
   private function getConfigNames() {
     $modules = $this->getExcludedModules();

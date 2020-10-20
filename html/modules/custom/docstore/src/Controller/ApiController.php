@@ -746,9 +746,6 @@ class ApiController extends ControllerBase {
    * Get term.
    */
   public function getTerm($id, Request $request) {
-    // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-
     // Load term.
     $term = $this->loadTerm($id);
     $terms = $this->loadTerms([], $term->id());
