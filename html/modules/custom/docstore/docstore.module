@@ -13,6 +13,7 @@ use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\search_api\Entity\Index;
 use Drupal\search_api\Item\Field;
+use Drupal\user\Entity\User;
 
 /**
  * Implements hook_form_FORM_ID_alter().
@@ -417,8 +418,8 @@ function _docstore_setup_testing() {
   \Drupal::entityTypeManager()->getStorage('taxonomy_vocabulary')->delete($vocabularies);
 
   // Create user if needed.
-  if (!\Drupal\user\Entity\User::load(2)) {
-    \Drupal\user\Entity\User::create([
+  if (!User::load(2)) {
+    User::create([
       'uid' => 2,
       'status' => 1,
       'name' => 'Silk test',
