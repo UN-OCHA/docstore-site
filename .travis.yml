@@ -20,8 +20,7 @@ env:
      - PHPCS_VERSION='2.9.*@dev'
      - CODER_VERSION='dev-8.x-2.x'
      - DB=sqlite
-     - SOLR_VERSION=6.6.6
-     - SEARCH_API_SOLR_CONF=6.x
+     - SOLR_VERSION=7.5.0
 
 before_script:
   # Composer.
@@ -52,7 +51,7 @@ script:
   # Solr
   - export SOLR_INDEX_WAIT=4
   - $TRAVIS_BUILD_DIR/solr-${SOLR_VERSION}/bin/solr start -e techproducts || travis_terminate 1;
-  - $TRAVIS_BUILD_DIR/solr-${SOLR_VERSION}/bin/solr create -c d8 -d $TRAVIS_BUILD_DIR/solr-conf/${SEARCH_API_SOLR_CONF} || travis_terminate 1;
+  - $TRAVIS_BUILD_DIR/solr-${SOLR_VERSION}/bin/solr create -c d8 -d $TRAVIS_BUILD_DIR/html/modules/contrib/search_api_solr/solr-conf-templates/7.x/ || travis_terminate 1;
 
   # Drupal install
   - mysql -e "CREATE DATABASE drupal;"
