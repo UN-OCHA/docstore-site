@@ -71,8 +71,9 @@ script:
   - sleep 5
 
   # Test
+  - ../vendor/bin/drush eval "_docstore_setup_testing()"
   - cd ${TRAVIS_BUILD_DIR}/tests
-  - ./run_travis.sh
+  - ./silk -test.v -silk.url http://127.0.0.1/api silk_create.md
 
 after_success:
   - echo "The tests completed without errors."
