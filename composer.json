@@ -52,7 +52,6 @@
         "drupal-composer/drupal-scaffold": "^2.5",
         "drupal/coder": "^8.3",
         "drupal/console": "~1.0",
-        "drupal/default_content": "^1.0@alpha",
         "drupal/devel": "^2.0",
         "drupal/upgrade_rector": "^1.0@alpha",
         "drupal/upgrade_status": "^2.9",
