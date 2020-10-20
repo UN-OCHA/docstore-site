@@ -350,7 +350,7 @@ Example output.
   "vocabulary_name": "{organization}",
   "langcode": "en",
   "status": "1",
-  "name": "Borgerhout"
+  "name": "WFP"
 }
 ```
 
