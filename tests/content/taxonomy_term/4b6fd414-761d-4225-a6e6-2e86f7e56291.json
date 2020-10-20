@@ -1,0 +1,103 @@
+{
+    "_links": {
+        "self": {
+            "href": "http:\/\/docstore.local.docksal\/taxonomy\/term\/2?_format=hal_json"
+        },
+        "type": {
+            "href": "http:\/\/drupal.org\/rest\/type\/taxonomy_term\/peter_city"
+        },
+        "http:\/\/drupal.org\/rest\/relation\/taxonomy_term\/peter_city\/parent": [
+            null
+        ],
+        "http:\/\/drupal.org\/rest\/relation\/taxonomy_term\/peter_city\/base_provider_uuid": [
+            {
+                "lang": "en"
+            }
+        ]
+    },
+    "tid": [
+        {
+            "value": 2
+        }
+    ],
+    "uuid": [
+        {
+            "value": "4b6fd414-761d-4225-a6e6-2e86f7e56291"
+        }
+    ],
+    "revision_id": [
+        {
+            "value": 2
+        }
+    ],
+    "langcode": [
+        {
+            "value": "en",
+            "lang": "en"
+        }
+    ],
+    "vid": [
+        {
+            "target_id": "peter_city"
+        }
+    ],
+    "revision_created": [
+        {
+            "value": "2020-10-20T08:17:47+00:00",
+            "format": "Y-m-d\\TH:i:sP"
+        }
+    ],
+    "status": [
+        {
+            "value": true,
+            "lang": "en"
+        }
+    ],
+    "name": [
+        {
+            "value": "Brussels",
+            "lang": "en"
+        }
+    ],
+    "weight": [
+        {
+            "value": 0
+        }
+    ],
+    "_embedded": {
+        "http:\/\/drupal.org\/rest\/relation\/taxonomy_term\/peter_city\/parent": [
+            null
+        ],
+        "http:\/\/drupal.org\/rest\/relation\/taxonomy_term\/peter_city\/base_provider_uuid": [
+            {
+                "lang": "en"
+            }
+        ]
+    },
+    "changed": [
+        {
+            "value": "2020-10-20T08:17:47+00:00",
+            "lang": "en",
+            "format": "Y-m-d\\TH:i:sP"
+        }
+    ],
+    "default_langcode": [
+        {
+            "value": true,
+            "lang": "en"
+        }
+    ],
+    "revision_translation_affected": [
+        {
+            "value": true,
+            "lang": "en"
+        }
+    ],
+    "created": [
+        {
+            "value": "2020-10-20T08:17:47+00:00",
+            "lang": "en",
+            "format": "Y-m-d\\TH:i:sP"
+        }
+    ]
+}

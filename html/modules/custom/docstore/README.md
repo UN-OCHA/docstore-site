@@ -88,6 +88,12 @@ curl -X GET "http://docstore.local.docksal/api/vocabularies/f56fb44b-a17c-4b5e-b
 curl -X POST "http://docstore.local.docksal/api/vocabularies/peter_test1/fields" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"label\":\"ISO3\",\"target\":\"peter_test1\",\"multiple\":0}"
 ```
 
+### Get vocabulary terms
+
+```bash
+curl -X GET "http://docstore.local.docksal/api/vocabularies/test_my_vocabulary/terms" -H  "accept: application/json" -H  "API-KEY: abcd" | jq
+```
+
 ## Terms
 
 ### Get terms
@@ -214,4 +220,12 @@ core.entity_form_display.node.document.default
 search_api.index.documents
 core.entity_view_display.node.document.teaser
 core.entity_view_display.node.document.default
+```
+
+## Testing
+
+### SILK
+
+```bash
+./silk -test.v -silk.url http://docstore.local.docksal/api README.md
 ```
