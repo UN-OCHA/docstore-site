@@ -477,6 +477,9 @@ class ApiController extends ControllerBase {
     // Add provider uuid.
     docstore_create_vocabulary_base_field_provider_uuid($machine_name);
 
+    // Add author HID.
+    docstore_create_vocabulary_base_field_hid_id($machine_name);
+
     $data = [
       'message' => 'Vocabulary created',
       'machine_name' => $machine_name,
