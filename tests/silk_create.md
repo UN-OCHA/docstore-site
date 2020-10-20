@@ -199,3 +199,38 @@ Example output.
 * Content-Type: "application/json"
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_borgerhout}
+
+## GET /terms/{city_borgerhout}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Borgerhout",
+  "vocabulary": "{city}"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "label": "Borgerhout",
+  "vocabulary_name": "{city}",
+  "langcode": "en",
+  "status": "1",
+  "name": "Borgerhout"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
+* Data.label: /./
+* Data.vocabulary_name: {city}
