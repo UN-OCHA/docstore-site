@@ -51,6 +51,7 @@ script:
   - cd ${TRAVIS_BUILD_DIR}
   - mkdir -p ./html/sites/default
   - cp ./tests/default.se* ./html/sites/default/
+  - cp ./tests/config/* ./config/
 
   - cd ${TRAVIS_BUILD_DIR}/html
   - ../vendor/bin/drush -y si --db-url=mysql://drupal:drupal@127.0.0.1/drupal minimal
