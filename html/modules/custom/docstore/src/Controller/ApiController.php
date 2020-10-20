@@ -746,7 +746,18 @@ class ApiController extends ControllerBase {
    * Get term.
    */
   public function getTerm($id, Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+
+    // Load term.
+    $term = $this->loadTerm($id);
+    $terms = $this->loadTerms([], $term->id());
+
+    $data = reset($terms);
+
+    $response = new CacheableJsonResponse($data);
+
+    return $response;
   }
 
   /**
@@ -1004,6 +1015,25 @@ class ApiController extends ControllerBase {
   }
 
   /**
+   * Load a term.
+   */
+  protected function loadTerm($id) {
+    if (Uuid::isValid($id)) {
+      $term = $this->entityRepository->loadEntityByUuid('taxonomy_term', $id);
+    }
+    else {
+      // Assume it's the machine name.
+      $term = $this->entityTypeManager->getStorage('taxonomy_term')->load($id);
+    }
+
+    if (!$term) {
+      throw new BadRequestHttpException('Unable to write file');
+    }
+
+    return $term;
+  }
+
+  /**
    * Create file content.
    */
   protected function saveFileToDisk(&$file, $content, $provider) {
@@ -1048,7 +1078,7 @@ class ApiController extends ControllerBase {
   /**
    * Fetch terms.
    */
-  public function loadTerms($vids) {
+  public function loadTerms($vids = [], $tid = NULL) {
     // Fields to hide.
     $hide_fields = [
       'tid',
@@ -1063,13 +1093,20 @@ class ApiController extends ControllerBase {
       'changed',
     ];
 
-    // Build query, use paging.
-    $query = $this->entityTypeManager->getStorage('taxonomy_term')->getQuery();
-    if (!empty($vids)) {
-      $query->condition('vid', $vids, 'IN');
+    if ($tid) {
+      $tids[] = $tid;
     }
+    else {
+      // Build query, use paging.
+      $query = $this->entityTypeManager->getStorage('taxonomy_term')->getQuery();
 
-    $tids = $query->execute();
+      // Filter by vocabularies.
+      if (!empty($vids)) {
+        $query->condition('vid', $vids, 'IN');
+      }
+
+      $tids = $query->execute();
+    }
     $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadMultiple($tids);
 
     /** @var \Drupal\Core\Entity\Term $term */
