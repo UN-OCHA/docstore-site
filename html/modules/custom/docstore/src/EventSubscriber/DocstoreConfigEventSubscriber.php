@@ -116,6 +116,10 @@ final class DocstoreConfigEventSubscriber implements EventSubscriberInterface {
             continue;
           }
 
+          if ($configName === 'field.storage.taxonomy_term.base_author_hid') {
+            continue;
+          }
+
           if ($configName === 'field.storage.taxonomy_term.created') {
             continue;
           }
