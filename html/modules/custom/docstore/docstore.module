@@ -399,3 +399,40 @@ function docstore_machine_name_exists($machine_name, $entity_type) {
 
   return !empty($field);
 }
+
+/**
+ * Setup testing.
+ */
+function _docstore_setup_testing() {
+  // Delete all documents.
+  $documents = \Drupal::entityTypeManager()->getStorage('node')->loadByProperties(['type' => 'document']);
+  \Drupal::entityTypeManager()->getStorage('node')->delete($documents);
+
+  // Delete all terms.
+  $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadMultiple();
+  \Drupal::entityTypeManager()->getStorage('taxonomy_term')->delete($terms);
+
+  // Delete all vocabularies.
+  $vocabularies = \Drupal::entityTypeManager()->getStorage('taxonomy_vocabulary')->loadMultiple();
+  \Drupal::entityTypeManager()->getStorage('taxonomy_vocabulary')->delete($vocabularies);
+
+  // Create user if needed.
+  if (!\Drupal\user\Entity\User::load(2)) {
+    \Drupal\user\Entity\User::create([
+      'uid' => 2,
+      'status' => 1,
+      'name' => 'Silk test',
+      'type' => 'provider',
+      'pass' => '',
+      'prefix' => [
+        'value' => 'silk_',
+      ],
+      'api_keys' => [
+        'value' => 'abcd',
+      ],
+      'api_keys_read_only' => [
+        'value' => 'xyzzy',
+      ],
+    ])->save();
+  }
+}
