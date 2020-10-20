@@ -4,5 +4,5 @@ package: OCHA
 type: module
 core: 8.x
 dependencies:
-  - user_bundle:user_bundle
   - search_api:search_api
+  - search_api_solr:search_api_solr
