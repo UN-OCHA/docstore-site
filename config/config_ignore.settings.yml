@@ -2,8 +2,6 @@ ignored_config_entities:
   - 'taxonomy.*'
   - 'field.field.taxonomy_term.*'
   - 'field.storage.taxonomy_term.*'
-  - '~field.storage.taxonomy_term.base_*'
-  - ~field.storage.taxonomy_term.created
   - 'field.field.node.document.*'
   - '~field.field.node.document.base_*'
   - 'field.storage.node.*'
