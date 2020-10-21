@@ -1,4 +1,4 @@
-# Documents
+# General
 docstore_wait:
   path: '/api/wait'
   defaults:
@@ -11,6 +11,8 @@ docstore_wait:
     _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'B'
+
+# Documents
 docstore_get_documents:
   path: '/api/documents'
   defaults:
@@ -261,6 +263,18 @@ docstore_delete_term:
     docstore_access_level: 'B'
 
 # Media
+docstore_get_media:
+  path: '/api/media'
+  defaults:
+    _controller: 'docstore.api_controller:getAllMedia'
+    _title: 'Get all media'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
 docstore_get_media:
   path: '/api/media/{id}'
   defaults:

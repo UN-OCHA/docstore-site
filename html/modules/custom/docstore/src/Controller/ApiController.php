@@ -801,6 +801,35 @@ class ApiController extends ControllerBase {
   /**
    * Get media.
    */
+  public function getAllMedia(Request $request) {
+    $data = [];
+
+    $entities = $this->entityTypeManager->getStorage('media')->loadMultiple();
+
+    /** @var \Drupal\media\Entity\Media $media */
+    foreach ($entities as $media) {
+      /** @var \Drupal\media\Entity\File $file */
+      $file = $this->entityTypeManager->getStorage('file')->load($media->getSource()->getSourceFieldValue($media));
+
+      $data[] = [
+        'uuid' => $media->uuid(),
+        'name' => $media->getName(),
+        'created' => $media->getCreatedTime(),
+        'changed' => $media->getChangedTime(),
+        'mimetype' => $file->getMimeType(),
+        'file_uuid' => $file->uuid(),
+        'uri' => $file->createFileUrl(),
+      ];
+    }
+
+    $response = new JsonResponse($data);
+
+    return $response;
+  }
+
+  /**
+   * Get media.
+   */
   public function getMedia($id, Request $request) {
     /** @var \Drupal\media\Entity\Media $media */
     $media = $this->entityRepository->loadEntityByUuid('media', $id);
@@ -1064,15 +1093,15 @@ class ApiController extends ControllerBase {
    */
   protected function saveFileToDisk(&$file, $content, $provider) {
     // Create destination.
-    $destination = $this->config->get('default_scheme') . '://';
+    $destination = $this->config('system.file')->get('default_scheme') . '://';
     $destination .= substr(md5($file->getFilename()), 0, 3);
     $destination .= '/' . substr(md5($file->getFilename()), 3, 3);
-    $this->fileSystem->prepareDirectory($destination, $this->fileSystem::FILE_CREATE_DIRECTORY);
+    $this->fileSystem->prepareDirectory($destination, $this->fileSystem::CREATE_DIRECTORY);
 
     // Append filename.
     $destination .= '/' . $file->getFilename();
 
-    if ($uri = $this->fileSystem->saveData($content, $destination, $this->fileSystem::FILE_EXISTS_RENAME)) {
+    if ($uri = $this->fileSystem->saveData($content, $destination, $this->fileSystem::EXISTS_RENAME)) {
       $file->setFileUri($uri);
       $file->setPermanent();
 
