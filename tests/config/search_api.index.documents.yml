@@ -17,8 +17,8 @@ dependencies:
     - search_api.server.solr
 third_party_settings:
   search_api_solr:
-    finalize: false
-    commit_before_finalize: false
+    finalize: true
+    commit_before_finalize: true
     commit_after_finalize: false
     multilingual:
       limit_to_content_language: false

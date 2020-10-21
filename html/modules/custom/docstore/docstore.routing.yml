@@ -1,4 +1,16 @@
 # Documents
+docstore_wait:
+  path: '/api/wait'
+  defaults:
+    _controller: 'docstore.api_controller:wait'
+    _title: 'Wait a second'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
 docstore_get_documents:
   path: '/api/documents'
   defaults:

@@ -4,6 +4,7 @@ namespace Drupal\docstore\Controller;
 
 use Drupal\Component\Transliteration\TransliterationInterface;
 use Drupal\Component\Uuid\Uuid;
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\Cache\CacheableJsonResponse;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -130,6 +131,16 @@ class ApiController extends ControllerBase {
   }
 
   /**
+   * Wait endpoint.
+   */
+  public function wait() {
+    sleep(1);
+
+    $response = new JsonResponse([]);
+    return $response;
+  }
+
+  /**
    * Get documents.
    */
   public function getDocuments() {
@@ -152,10 +163,15 @@ class ApiController extends ControllerBase {
     // Add cache tags.
     $cache_tags['#cache'] = [
       'tags' => [
-        // TODO: Track actual node ids + search api index.
-        'node',
+        'documents',
       ],
     ];
+
+    // Add cache tags.
+    foreach ($data as &$document) {
+      $cache_tags['#cache']['tags'][] = $document['search_api_id'];
+      unset($document['search_api_id']);
+    }
 
     $response = new CacheableJsonResponse($data);
     $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
@@ -207,9 +223,6 @@ class ApiController extends ControllerBase {
       }
 
       // Remove solr fields.
-      if (isset($row['search_api_id'])) {
-        unset($row['search_api_id']);
-      }
       if (isset($row['search_api_datasource'])) {
         unset($row['search_api_datasource']);
       }
@@ -302,6 +315,9 @@ class ApiController extends ControllerBase {
     $document = Node::create($item);
     $document->save();
 
+    // Invalidate cache.
+    Cache::invalidateTags(['documents']);
+
     $data = [
       'message' => 'Document created',
       'uuid' => $document->uuid(),
@@ -341,10 +357,11 @@ class ApiController extends ControllerBase {
     // Add cache tags.
     $cache_tags['#cache'] = [
       'tags' => [
-        // TODO: Track actual node ids + search api index.
-        'node',
+        'documents',
+        $data['search_api_id'],
       ],
     ];
+    unset($data['search_api_id']);
 
     $response = new CacheableJsonResponse($data);
     $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));

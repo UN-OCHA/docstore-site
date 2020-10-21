@@ -6,6 +6,7 @@
  */
 
 use Drupal\Component\Uuid\Uuid;
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\field\Entity\FieldConfig;
@@ -436,4 +437,7 @@ function _docstore_setup_testing() {
       ],
     ])->save();
   }
+
+  // Invalidate cache.
+  Cache::invalidateTags(['documents']);
 }

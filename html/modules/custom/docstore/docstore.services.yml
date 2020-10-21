@@ -25,3 +25,8 @@ services:
     arguments: ['@config.storage', '@settings', '@config.manager']
     tags:
       - { name: event_subscriber }
+  docstore.search_api.event_listener:
+    class: Drupal\docstore\EventSubscriber\DocstoreSearchApiEventSubscriber
+    arguments: ['@messenger']
+    tags:
+      - { name: event_subscriber }
