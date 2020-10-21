@@ -322,7 +322,9 @@ class ApiController extends ControllerBase {
       'message' => 'Document created',
       'uuid' => $document->uuid(),
     ];
+
     $response = new JsonResponse($data);
+    $response->setStatusCode(201);
 
     return $response;
   }
@@ -349,7 +351,7 @@ class ApiController extends ControllerBase {
     $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index);
 
     if (empty($data)) {
-      throw new BadRequestHttpException(strtr('Document @uuid does not exist', ['@uuid' => $id]));
+      throw new NotFoundHttpException(strtr('Document @uuid does not exist', ['@uuid' => $id]));
     }
 
     $data = reset($data);
@@ -438,7 +440,9 @@ class ApiController extends ControllerBase {
       'message' => 'Field created',
       'field_name' => $field_name,
     ];
+
     $response = new JsonResponse($data);
+    $response->setStatusCode(201);
 
     return $response;
   }
@@ -501,7 +505,9 @@ class ApiController extends ControllerBase {
       'message' => 'Vocabulary created',
       'machine_name' => $machine_name,
     ];
+
     $response = new JsonResponse($data);
+    $response->setStatusCode(201);
 
     return $response;
   }
@@ -592,13 +598,15 @@ class ApiController extends ControllerBase {
       'message' => 'Field created',
       'field_name' => $field_name,
     ];
+
     $response = new JsonResponse($data);
+    $response->setStatusCode(201);
 
     return $response;
   }
 
   /**
-   * Create vocabulary fields.
+   * Delete vocabulary fields.
    */
   public function deleteVocabularyField($id, Request $request) {
     throw new PreconditionFailedHttpException('Not implemented (yet)');
@@ -754,7 +762,9 @@ class ApiController extends ControllerBase {
       'message' => 'Term created',
       'uuid' => $term->uuid(),
     ];
+
     $response = new JsonResponse($data);
+    $response->setStatusCode(201);
 
     return $response;
   }
@@ -869,6 +879,7 @@ class ApiController extends ControllerBase {
     ];
 
     $response = new JsonResponse($data);
+    $response->setStatusCode(201);
 
     return $response;
   }
@@ -989,6 +1000,7 @@ class ApiController extends ControllerBase {
     ];
 
     $response = new JsonResponse($data);
+    $response->setStatusCode(201);
 
     return $response;
   }
@@ -1048,7 +1060,7 @@ class ApiController extends ControllerBase {
   }
 
   /**
-   * Create file content.
+   * Save file content to disk.
    */
   protected function saveFileToDisk(&$file, $content, $provider) {
     // Create destination.
