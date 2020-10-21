@@ -67,6 +67,7 @@ script:
   - ../vendor/bin/drush -y cset system.site uuid $(grep uuid ${TRAVIS_BUILD_DIR}/config/system.site.yml | awk '{print $2}')
   - ../vendor/bin/drush -y cim --source=${TRAVIS_BUILD_DIR}/config
   - ../vendor/bin/drush rs 127.0.0.1:8080 >/dev/null 2>&1 &
+  - ../vendor/bin/drush -y en dblog
   - ../vendor/bin/drush cr
   - sleep 5
 
@@ -80,3 +81,4 @@ after_success:
 
 after_failure:
   - echo "The tests failed. Please check the output above for problems."
+  - ../vendor/bin/drush watchdog:show --extended
