@@ -25,7 +25,7 @@ Example output.
 
 ===
 
-* Status: `200`
+* Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Vocabulary created"
 * Data.machine_name: /^[0-9a-z_]+$/ // Machine_name {city}
@@ -78,7 +78,7 @@ Example output.
 
 ===
 
-* Status: `200`
+* Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Vocabulary created"
 * Data.machine_name: /^[0-9a-z_]+$/ // Machine_name {organization}
@@ -135,7 +135,7 @@ Example output.
 
 ===
 
-* Status: `200`
+* Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_antwerp}
@@ -165,7 +165,7 @@ Example output.
 
 ===
 
-* Status: `200`
+* Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_brussels}
@@ -195,7 +195,7 @@ Example output.
 
 ===
 
-* Status: `200`
+* Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_borgerhout}
@@ -253,7 +253,7 @@ Example output.
 
 ===
 
-* Status: `200`
+* Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {organization_cerf}
@@ -283,7 +283,7 @@ Example output.
 
 ===
 
-* Status: `200`
+* Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {organization_unocha}
@@ -313,7 +313,7 @@ Example output.
 
 ===
 
-* Status: `200`
+* Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {organization_wfp}
@@ -381,7 +381,7 @@ Example output.
 
 ===
 
-* Status: `200`
+* Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_city}
@@ -413,7 +413,7 @@ Example output.
 
 ===
 
-* Status: `200`
+* Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_organization}
@@ -460,47 +460,10 @@ Example output.
 
 ===
 
-* Status: `200`
+* Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Document created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc1}
-
-## POST /documents
-
-Add a document without a file.
-
-* Content-Type: "application/json"
-* Accept: "application/json"
-* API-KEY: abcd
-
-```json
-{
-  "title": "Doc with term, no files",
-  "author": "hid_123456789",
-  "metadata": [
-    {
-      "{field_city}": "{city_brussels}"
-    }
-  ]
-}
-```
-
-===
-
-Example output.
-
-```json
-{
-  "message": "Document created"
-}
-```
-
-===
-
-* Status: `200`
-* Content-Type: "application/json"
-* Data.message: "Document created"
-* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc2}
 
 ## GET /wait
 
