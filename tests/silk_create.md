@@ -206,13 +206,6 @@ Example output.
 * Accept: "application/json"
 * API-KEY: abcd
 
-```json
-{
-  "label": "Borgerhout",
-  "vocabulary": "{city}"
-}
-```
-
 ===
 
 Example output.
@@ -227,17 +220,15 @@ Example output.
 }
 ```
 
-===
-
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
 * Data.label: /./
 * Data.vocabulary_name: {city}
 
-Create organization terms.
-
 ## POST /terms
+
+Create organization terms.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -426,3 +417,118 @@ Example output.
 * Content-Type: "application/json"
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_organization}
+
+# Document
+
+(echo -n '{"title":"Doc with term, no files","author":"hid_123456789","metadata":[{"peter_city":"2a6ef841-eafa-41e4-9933-afe33671a7d2"}, {"peter_organizations":["95ac1ef7-c637-448c-9b3d-336ac85bffe8","41e1ef47-e5bb-4f89-b01b-fc0f34092073"]}]}') | curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" -H "Content-Type: application/json" -d @-  http://docstore.local.docksal/api/documents | jq
+
+## POST /documents
+
+Add a document without a file.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "title": "Doc with term, no files",
+  "author": "hid_123456789",
+  "metadata": [
+    {
+      "{field_city}": "{city_borgerhout}"
+    },
+    {
+      "{field_organization}": [
+        "{organization_wfp}",
+        "{organization_unocha}"
+      ]
+    }
+  ]
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Document created"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Document created"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc1}
+
+## POST /documents
+
+Add a document without a file.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "title": "Doc with term, no files",
+  "author": "hid_123456789",
+  "metadata": [
+    {
+      "{field_city}": "{city_brussels}"
+    }
+  ]
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Document created"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Document created"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc2}
+
+## GET /wait
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /documents
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].uuid: {doc1}
+* Data[0].title: "Doc with term, no files"
