@@ -11,7 +11,7 @@ use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * The event subscriber preventing config to be exported.
+ * Wrap exceptions inside json.
  */
 final class DocstoreExceptionSubscriber implements EventSubscriberInterface {
 

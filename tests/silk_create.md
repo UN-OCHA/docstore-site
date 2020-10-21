@@ -495,3 +495,89 @@ Example output.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
 * Data[0].title: "Doc with term, no files"
+
+## GET /media
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {media1}
+
+## POST /documents
+
+Add a document with a file.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "title": "Doc term and file",
+  "author": "hid_123456789",
+  "files": [
+    "{media1}"
+  ],
+  "metadata": [
+    {
+      "{field_organization}": [
+        "{organization_unocha}"
+      ]
+    }
+  ]
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Document created"
+}
+```
+
+===
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Document created"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc2}
+
+## GET /wait
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /documents/{doc2}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: {doc2}
+* Data.title: "Doc term and file"
+* Data.files[0].media_uuid: "{media1}"
