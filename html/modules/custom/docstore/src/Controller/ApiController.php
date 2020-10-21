@@ -351,7 +351,7 @@ class ApiController extends ControllerBase {
     $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index);
 
     if (empty($data)) {
-      throw new BadRequestHttpException(strtr('Document @uuid does not exist', ['@uuid' => $id]));
+      throw new NotFoundHttpException(strtr('Document @uuid does not exist', ['@uuid' => $id]));
     }
 
     $data = reset($data);
