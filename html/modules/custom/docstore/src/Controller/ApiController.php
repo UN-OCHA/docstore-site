@@ -198,8 +198,22 @@ class ApiController extends ControllerBase {
       foreach ($field_mapping as $name => $solr_name) {
         // TODO: Only return base, shared and provider fields.
         if (isset($solr_row[$solr_name])) {
-          // TODO: Check cardinality.
           $row[$name] = $solr_row[$solr_name];
+        }
+      }
+
+      // Output tags as objects.
+      foreach ($row as $key => $row_data) {
+        if (isset($row[$key . '_label'])) {
+          $tupples = [];
+          foreach ($row_data as $tupple_key => $tupple_value) {
+            $tupples[$tupple_key] = [
+              'uuid' => $tupple_value,
+              'name' => is_array($row[$key . '_label']) ? $row[$key . '_label'][$tupple_key] : $row[$key . '_label'],
+            ];
+          }
+          $row[$key] = $tupples;
+          unset($row[$key . '_label']);
         }
       }
 
@@ -409,6 +423,16 @@ class ApiController extends ControllerBase {
     foreach ($map as $field_name => $field_info) {
       $data[$field_name] = $field_info->getType();
     }
+
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => [
+        'document_fields',
+      ],
+    ];
+
+    $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
 
     $response = new CacheableJsonResponse($data);
 
