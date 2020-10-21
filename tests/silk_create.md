@@ -361,3 +361,68 @@ Example output.
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
 * Data.label: /./
 * Data.vocabulary_name: {organization}
+
+# Add fields to documents
+
+## POST /document/fields
+
+Add city field.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "My hometown",
+  "target": "{city}"
+}
+```
+===
+
+Example output.
+
+```json
+{
+  "message": "Field created"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Field created"
+* Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_city}
+
+## POST /document/fields
+
+Add organizations field.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Organizations",
+  "target": "{organization}"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Field created"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Field created"
+* Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_organization}
