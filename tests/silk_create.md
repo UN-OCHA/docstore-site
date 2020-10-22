@@ -106,6 +106,36 @@ Example output.
 * Data.label: /./
 * Data.machine_name: {organization}
 
+## POST /vocabularies/{organization}/fields
+
+Add iso3 field to vocabulary.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "ISO 3 code",
+  "type": "string"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Field created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Field created"
+* Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_iso3}
+
 # Create terms
 
 Create city terms.
@@ -266,6 +296,7 @@ Create organization terms.
 ```json
 {
   "label": "CERF",
+  "{field_iso3}": "BEL",
   "vocabulary": "{organization}"
 }
 ```
@@ -326,6 +357,11 @@ Example output.
 ```json
 {
   "label": "WFP",
+  "metadata": [
+    {
+      "{field_iso3}": "BEL"
+    }
+  ],
   "vocabulary": "{organization}"
 }
 ```
@@ -353,13 +389,6 @@ Example output.
 * Accept: "application/json"
 * API-KEY: abcd
 
-```json
-{
-  "label": "WFP",
-  "vocabulary": "{organization}"
-}
-```
-
 ===
 
 Example output.
@@ -370,7 +399,8 @@ Example output.
   "vocabulary_name": "{organization}",
   "langcode": "en",
   "status": "1",
-  "name": "WFP"
+  "name": "WFP",
+  "{field_iso3}": "BEL"
 }
 ```
 
@@ -398,6 +428,7 @@ Add city field.
   "target": "{city}"
 }
 ```
+
 ===
 
 Example output.
@@ -407,8 +438,6 @@ Example output.
   "message": "Field created"
 }
 ```
-
-===
 
 * Status: `201`
 * Content-Type: "application/json"
