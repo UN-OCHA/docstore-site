@@ -800,10 +800,15 @@ class ApiController extends ControllerBase {
     // Load term.
     $term = $this->loadTerm($id);
     $terms = $this->loadTerms([], $term->id());
-
     $data = reset($terms);
 
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => $term->getCacheTags(),
+    ];
+
     $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
 
     return $response;
   }
@@ -812,7 +817,63 @@ class ApiController extends ControllerBase {
    * Update term.
    */
   public function updateTerm($id, Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    // Load term.
+    $term = $this->loadTerm($id);
+
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Provider can only update own terms.
+    if ($term->base_provider_uuid->entity->uuid() !== $provider->uuid()) {
+      throw new BadRequestHttpException('Term is not owned by you');
+    }
+
+    // Check required fields.
+    if (empty($params['label'])) {
+      throw new BadRequestHttpException('Label is required');
+    }
+
+    if (isset($params['vocabulary'])) {
+      throw new BadRequestHttpException('Vocabulary cannot be changed');
+    }
+
+    if (isset($params['vid'])) {
+      throw new BadRequestHttpException('Vocabulary cannot be changed');
+    }
+
+    if (isset($params['created'])) {
+      throw new BadRequestHttpException('Created cannot be changed');
+    }
+
+    if (isset($params['base_provider_uuid'])) {
+      throw new BadRequestHttpException('Provider cannot be changed');
+    }
+
+    // Update all fields specified in params.
+    foreach ($params as $name => $value) {
+      if ($term->hasField($name)) {
+
+      }
+    }
+
+    // Remove all fields not part of params.
+    $data = [
+      'message' => 'Term updated',
+      'uuid' => $term->uuid(),
+    ];
+
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => $term->getCacheTags(),
+    ];
+
+    $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+
+    return $response;
   }
 
   /**
@@ -1095,6 +1156,12 @@ class ApiController extends ControllerBase {
 
   /**
    * Load a term.
+   *
+   * @param string $id
+   *   The term uuid or entity_id.
+   *
+   * @return \Drupal\taxonomy\Entity\Term
+   *   Term.
    */
   protected function loadTerm($id) {
     if (Uuid::isValid($id)) {

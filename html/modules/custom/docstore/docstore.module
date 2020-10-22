@@ -256,7 +256,7 @@ function docstore_create_vocabulary_base_field_provider_uuid($bundle) {
       'type' => $field_type,
       'cardinality' => 1,
       'settings' => [
-        'target_type' => 'taxonomy_term',
+        'target_type' => 'user',
       ],
     ]);
     $field_storage->save();
@@ -433,26 +433,26 @@ function _docstore_setup_testing() {
   $fields = $entityFieldManager->getFieldDefinitions('node', 'document');
 
   // Remove fields we need.
-  unset($fields["nid"]);
-  unset($fields["uuid"]);
-  unset($fields["vid"]);
-  unset($fields["langcode"]);
-  unset($fields["type"]);
-  unset($fields["revision_timestamp"]);
-  unset($fields["revision_uid"]);
-  unset($fields["revision_log"]);
-  unset($fields["status"]);
-  unset($fields["uid"]);
-  unset($fields["title"]);
-  unset($fields["created"]);
-  unset($fields["changed"]);
-  unset($fields["promote"]);
-  unset($fields["sticky"]);
-  unset($fields["default_langcode"]);
-  unset($fields["revision_default"]);
-  unset($fields["revision_translation_affected"]);
-  unset($fields["base_author_hid"]);
-  unset($fields["base_files"]);
+  unset($fields['nid']);
+  unset($fields['uuid']);
+  unset($fields['vid']);
+  unset($fields['langcode']);
+  unset($fields['type']);
+  unset($fields['revision_timestamp']);
+  unset($fields['revision_uid']);
+  unset($fields['revision_log']);
+  unset($fields['status']);
+  unset($fields['uid']);
+  unset($fields['title']);
+  unset($fields['created']);
+  unset($fields['changed']);
+  unset($fields['promote']);
+  unset($fields['sticky']);
+  unset($fields['default_langcode']);
+  unset($fields['revision_default']);
+  unset($fields['revision_translation_affected']);
+  unset($fields['base_author_hid']);
+  unset($fields['base_files']);
 
   foreach ($fields as $field_name => $field_info) {
     FieldStorageConfig::loadByName('node', $field_name)->delete();

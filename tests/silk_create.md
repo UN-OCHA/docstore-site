@@ -226,6 +226,35 @@ Example output.
 * Data.label: /./
 * Data.vocabulary_name: {city}
 
+## PUT /terms/{city_borgerhout}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Borgerhout"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term updated"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term updated"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_borgerhout}
+
 ## POST /terms
 
 Create organization terms.
