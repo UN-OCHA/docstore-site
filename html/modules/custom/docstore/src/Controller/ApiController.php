@@ -309,17 +309,20 @@ class ApiController extends ControllerBase {
       foreach ($metadata as $metaitem) {
         foreach ($metaitem as $key => $values) {
           if (!is_array($values)) {
-            $values = [$values];
-          }
-
-          if (!isset($item[$key])) {
-            $item[$key] = [];
-          }
-
-          foreach ($values as $value) {
             $item[$key][] = [
-              'target_uuid' => $value,
+              'value' => $values,
             ];
+          }
+          else {
+            if (!isset($item[$key])) {
+              $item[$key] = [];
+            }
+
+            foreach ($values as $value) {
+              $item[$key][] = [
+                'target_uuid' => $value,
+              ];
+            }
           }
         }
       }
@@ -778,6 +781,31 @@ class ApiController extends ControllerBase {
 
     // Set owner.
     $item['base_provider_uuid'][] = ['target_uuid' => $provider->uuid()];
+
+    // Check for meta tags.
+    if (isset($params['metadata']) && $params['metadata']) {
+      $metadata = $params['metadata'];
+      foreach ($metadata as $metaitem) {
+        foreach ($metaitem as $key => $values) {
+          if (!is_array($values)) {
+            $item[$key][] = [
+              'value' => $values,
+            ];
+          }
+          else {
+            if (!isset($item[$key])) {
+              $item[$key] = [];
+            }
+
+            foreach ($values as $value) {
+              $item[$key][] = [
+                'target_uuid' => $value,
+              ];
+            }
+          }
+        }
+      }
+    }
 
     $term = Term::create($item);
     $term->save();
