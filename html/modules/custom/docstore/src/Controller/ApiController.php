@@ -9,6 +9,7 @@ use Drupal\Core\Cache\CacheableJsonResponse;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -40,6 +41,13 @@ class ApiController extends ControllerBase {
    * @var \Drupal\Core\Config\Config
    */
   protected $config;
+
+  /**
+   * The database connection.
+   *
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected $database;
 
   /**
    * The entity field manager service.
@@ -108,6 +116,7 @@ class ApiController extends ControllerBase {
    * {@inheritdoc}
    */
   public function __construct(ConfigFactoryInterface $config,
+      Connection $database,
       EntityFieldManagerInterface $entityFieldManager,
       EntityRepositoryInterface $entityRepository,
       EntityTypeManagerInterface $entityTypeManager,
@@ -119,6 +128,7 @@ class ApiController extends ControllerBase {
       State $state
     ) {
     $this->config = $config;
+    $this->database = $database;
     $this->entityFieldManager = $entityFieldManager;
     $this->entityRepository = $entityRepository;
     $this->entityTypeManager = $entityTypeManager;
@@ -835,6 +845,41 @@ class ApiController extends ControllerBase {
     $term = $this->loadTerm($id);
     $terms = $this->loadTerms([], $term->id());
     $data = reset($terms);
+
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => $term->getCacheTags(),
+    ];
+
+    $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+
+    return $response;
+  }
+
+  /**
+   * Get term revisions.
+   */
+  public function getTermRevisions($id, Request $request) {
+    // Load term.
+    $term = $this->loadTerm($id);
+    $terms = $this->loadTerms([], $term->id());
+    $data = reset($terms);
+
+    $revisions = $this->database->select('taxonomy_term_revision', 'tr')
+      ->fields('tr', [
+        'revision_id',
+        'revision_created',
+        'revision_default',
+        'revision_user',
+        'revision_log_message',
+      ])
+      ->condition('tr.tid', $term->id())
+      ->orderBy('revision_id', 'DESC')
+      ->execute()
+      ->fetchAll();
+
+    $data['revisions'] = $revisions;
 
     // Add cache tags.
     $cache_tags['#cache'] = [
