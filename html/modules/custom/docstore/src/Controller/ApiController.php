@@ -9,6 +9,7 @@ use Drupal\Core\Cache\CacheableJsonResponse;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -40,6 +41,13 @@ class ApiController extends ControllerBase {
    * @var \Drupal\Core\Config\Config
    */
   protected $config;
+
+  /**
+   * The database connection.
+   *
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected $database;
 
   /**
    * The entity field manager service.
@@ -108,6 +116,7 @@ class ApiController extends ControllerBase {
    * {@inheritdoc}
    */
   public function __construct(ConfigFactoryInterface $config,
+      Connection $database,
       EntityFieldManagerInterface $entityFieldManager,
       EntityRepositoryInterface $entityRepository,
       EntityTypeManagerInterface $entityTypeManager,
@@ -119,6 +128,7 @@ class ApiController extends ControllerBase {
       State $state
     ) {
     $this->config = $config;
+    $this->database = $database;
     $this->entityFieldManager = $entityFieldManager;
     $this->entityRepository = $entityRepository;
     $this->entityTypeManager = $entityTypeManager;
@@ -219,14 +229,16 @@ class ApiController extends ControllerBase {
 
       // Re-write file information.
       $row['files'] = [];
-      foreach ($row['files_media_uuid'] as $key => $value) {
-        $row['files'][] = [
-          'media_uuid' => $value,
-          'file_uuid' => $row['files_file_uuid'][$key] ?? '',
-          'file_filename' => $row['files_file_filename'][$key] ?? '',
-          'files_file_uri' => $row['files_file_uri'][$key] ?? '',
-          'files_file_filemime' => $row['files_file_filemime'][$key] ?? '',
-        ];
+      if (isset($row['files_media_uuid'])) {
+        foreach ($row['files_media_uuid'] as $key => $value) {
+          $row['files'][] = [
+            'media_uuid' => $value,
+            'file_uuid' => $row['files_file_uuid'][$key] ?? '',
+            'file_filename' => $row['files_file_filename'][$key] ?? '',
+            'files_file_uri' => $row['files_file_uri'][$key] ?? '',
+            'files_file_filemime' => $row['files_file_filemime'][$key] ?? '',
+          ];
+        }
       }
 
       // Remove files fields.
@@ -309,17 +321,20 @@ class ApiController extends ControllerBase {
       foreach ($metadata as $metaitem) {
         foreach ($metaitem as $key => $values) {
           if (!is_array($values)) {
-            $values = [$values];
-          }
-
-          if (!isset($item[$key])) {
-            $item[$key] = [];
-          }
-
-          foreach ($values as $value) {
             $item[$key][] = [
-              'target_uuid' => $value,
+              'value' => $values,
             ];
+          }
+          else {
+            if (!isset($item[$key])) {
+              $item[$key] = [];
+            }
+
+            foreach ($values as $value) {
+              $item[$key][] = [
+                'target_uuid' => $value,
+              ];
+            }
           }
         }
       }
@@ -774,10 +789,39 @@ class ApiController extends ControllerBase {
     ];
 
     // Set creation time.
-    $item['created'][] = ['value' => time()];
+    $item['created'][] = [
+      'value' => time(),
+    ];
 
     // Set owner.
-    $item['base_provider_uuid'][] = ['target_uuid' => $provider->uuid()];
+    $item['base_provider_uuid'][] = [
+      'target_uuid' => $provider->uuid(),
+    ];
+
+    // Check for meta tags.
+    if (isset($params['metadata']) && $params['metadata']) {
+      $metadata = $params['metadata'];
+      foreach ($metadata as $metaitem) {
+        foreach ($metaitem as $key => $values) {
+          if (!is_array($values)) {
+            $item[$key][] = [
+              'value' => $values,
+            ];
+          }
+          else {
+            if (!isset($item[$key])) {
+              $item[$key] = [];
+            }
+
+            foreach ($values as $value) {
+              $item[$key][] = [
+                'target_uuid' => $value,
+              ];
+            }
+          }
+        }
+      }
+    }
 
     $term = Term::create($item);
     $term->save();
@@ -800,10 +844,50 @@ class ApiController extends ControllerBase {
     // Load term.
     $term = $this->loadTerm($id);
     $terms = $this->loadTerms([], $term->id());
-
     $data = reset($terms);
 
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => $term->getCacheTags(),
+    ];
+
     $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+
+    return $response;
+  }
+
+  /**
+   * Get term revisions.
+   */
+  public function getTermRevisions($id, Request $request) {
+    // Load term.
+    $term = $this->loadTerm($id);
+    $terms = $this->loadTerms([], $term->id());
+    $data = reset($terms);
+
+    $revisions = $this->database->select('taxonomy_term_revision', 'tr')
+      ->fields('tr', [
+        'revision_id',
+        'revision_created',
+        'revision_default',
+        'revision_user',
+        'revision_log_message',
+      ])
+      ->condition('tr.tid', $term->id())
+      ->orderBy('revision_id', 'DESC')
+      ->execute()
+      ->fetchAll();
+
+    $data['revisions'] = $revisions;
+
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => $term->getCacheTags(),
+    ];
+
+    $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
 
     return $response;
   }
@@ -812,7 +896,84 @@ class ApiController extends ControllerBase {
    * Update term.
    */
   public function updateTerm($id, Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    // Load term.
+    $term = $this->loadTerm($id);
+
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Provider can only update own terms.
+    if ($term->base_provider_uuid->entity->uuid() !== $provider->uuid()) {
+      throw new BadRequestHttpException('Term is not owned by you');
+    }
+
+    // Check required fields.
+    if (empty($params['label'])) {
+      throw new BadRequestHttpException('Label is required');
+    }
+
+    if (isset($params['vocabulary'])) {
+      throw new BadRequestHttpException('Vocabulary cannot be changed');
+    }
+
+    if (isset($params['vid'])) {
+      throw new BadRequestHttpException('Vocabulary cannot be changed');
+    }
+
+    if (isset($params['created'])) {
+      throw new BadRequestHttpException('Created cannot be changed');
+    }
+
+    if (isset($params['base_provider_uuid'])) {
+      throw new BadRequestHttpException('Provider cannot be changed');
+    }
+
+    // Update all fields specified in metadata.
+    if (isset($params['metadata'])) {
+      foreach ($params['metadata'] as $metaitem) {
+        foreach ($metaitem as $name => $values) {
+          if ($term->hasField($name)) {
+            $term->set($name, $values);
+          }
+        }
+      }
+
+      unset($params['metadata']);
+    }
+
+    // Update all fields specified in params.
+    foreach ($params as $name => $values) {
+      if ($term->hasField($name)) {
+        $term->set($name, $values);
+      }
+    }
+
+    $term->setNewRevision();
+    $term->revision_log = 'Term updated';
+    $term->setRevisionCreationTime(time());
+    $term->isDefaultRevision(TRUE);
+    $term->setRevisionUserId($provider->id());
+
+    $term->save();
+
+    // Remove all fields not part of params.
+    $data = [
+      'message' => 'Term updated',
+      'uuid' => $term->uuid(),
+    ];
+
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => $term->getCacheTags(),
+    ];
+
+    $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+
+    return $response;
   }
 
   /**
@@ -1095,6 +1256,12 @@ class ApiController extends ControllerBase {
 
   /**
    * Load a term.
+   *
+   * @param string $id
+   *   The term uuid or entity_id.
+   *
+   * @return \Drupal\taxonomy\Entity\Term
+   *   Term.
    */
   protected function loadTerm($id) {
     if (Uuid::isValid($id)) {

@@ -106,6 +106,36 @@ Example output.
 * Data.label: /./
 * Data.machine_name: {organization}
 
+## POST /vocabularies/{organization}/fields
+
+Add iso3 field to vocabulary.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "ISO 3 code",
+  "type": "string"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Field created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Field created"
+* Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_iso3}
+
 # Create terms
 
 Create city terms.
@@ -226,6 +256,35 @@ Example output.
 * Data.label: /./
 * Data.vocabulary_name: {city}
 
+## PUT /terms/{city_borgerhout}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Borgerhout"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term updated"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term updated"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_borgerhout}
+
 ## POST /terms
 
 Create organization terms.
@@ -237,6 +296,7 @@ Create organization terms.
 ```json
 {
   "label": "CERF",
+  "{field_iso3}": "BEL",
   "vocabulary": "{organization}"
 }
 ```
@@ -297,6 +357,11 @@ Example output.
 ```json
 {
   "label": "WFP",
+  "metadata": [
+    {
+      "{field_iso3}": "BEL"
+    }
+  ],
   "vocabulary": "{organization}"
 }
 ```
@@ -311,8 +376,6 @@ Example output.
 }
 ```
 
-===
-
 * Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Term created"
@@ -324,12 +387,67 @@ Example output.
 * Accept: "application/json"
 * API-KEY: abcd
 
+===
+
+Example output.
+
 ```json
 {
   "label": "WFP",
-  "vocabulary": "{organization}"
+  "vocabulary_name": "{organization}",
+  "langcode": "en",
+  "status": "1",
+  "name": "WFP",
+  "{field_iso3}": "BEL"
 }
 ```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
+* Data.label: /./
+* Data.vocabulary_name: {organization}
+
+## PUT /terms/{organization_wfp}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "WFP",
+  "description": "Term updated",
+  "metadata": [
+    {
+      "{field_iso3}": "NED"
+    }
+  ]
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term updated"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term updated"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
+
+## GET /terms/{organization_wfp}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
 
 ===
 
@@ -341,7 +459,8 @@ Example output.
   "vocabulary_name": "{organization}",
   "langcode": "en",
   "status": "1",
-  "name": "WFP"
+  "name": "WFP",
+  "{field_iso3}": "NED"
 }
 ```
 
@@ -351,6 +470,7 @@ Example output.
 * Content-Type: "application/json"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
 * Data.label: /./
+* Data.description: "Term updated"
 * Data.vocabulary_name: {organization}
 
 # Add fields to documents
@@ -369,6 +489,7 @@ Add city field.
   "target": "{city}"
 }
 ```
+
 ===
 
 Example output.
@@ -378,8 +499,6 @@ Example output.
   "message": "Field created"
 }
 ```
-
-===
 
 * Status: `201`
 * Content-Type: "application/json"
@@ -411,12 +530,40 @@ Example output.
 }
 ```
 
-===
-
 * Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_organization}
+
+## POST /document/fields
+
+Add id field.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "My Id",
+  "type": "integer"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Field created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Field created"
+* Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_id}
 
 # Document
 
@@ -435,6 +582,9 @@ Add a document without a file.
   "title": "Doc with term, no files",
   "author": "hid_123456789",
   "metadata": [
+    {
+      "{field_id}": 42
+    },
     {
       "{field_city}": "{city_borgerhout}"
     },
@@ -495,6 +645,7 @@ Example output.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
 * Data[0].title: "Doc with term, no files"
+* Data[0].silk_my_id: 42 // Hard-coded field name!
 
 ## GET /media
 
