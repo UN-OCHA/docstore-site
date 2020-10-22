@@ -376,8 +376,6 @@ Example output.
 }
 ```
 
-===
-
 * Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Term created"
@@ -410,6 +408,69 @@ Example output.
 * Content-Type: "application/json"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
 * Data.label: /./
+* Data.vocabulary_name: {organization}
+
+## PUT /terms/{organization_wfp}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "WFP",
+  "description": "Term updated",
+  "metadata": [
+    {
+      "{field_iso3}": "NED"
+    }
+  ]
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term updated"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term updated"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
+
+## GET /terms/{organization_wfp}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+{
+  "label": "WFP",
+  "vocabulary_name": "{organization}",
+  "langcode": "en",
+  "status": "1",
+  "name": "WFP",
+  "{field_iso3}": "NED"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
+* Data.label: /./
+* Data.description: "Term updated"
 * Data.vocabulary_name: {organization}
 
 # Add fields to documents

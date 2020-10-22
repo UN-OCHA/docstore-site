@@ -219,14 +219,16 @@ class ApiController extends ControllerBase {
 
       // Re-write file information.
       $row['files'] = [];
-      foreach ($row['files_media_uuid'] as $key => $value) {
-        $row['files'][] = [
-          'media_uuid' => $value,
-          'file_uuid' => $row['files_file_uuid'][$key] ?? '',
-          'file_filename' => $row['files_file_filename'][$key] ?? '',
-          'files_file_uri' => $row['files_file_uri'][$key] ?? '',
-          'files_file_filemime' => $row['files_file_filemime'][$key] ?? '',
-        ];
+      if (isset($row['files_media_uuid'])) {
+        foreach ($row['files_media_uuid'] as $key => $value) {
+          $row['files'][] = [
+            'media_uuid' => $value,
+            'file_uuid' => $row['files_file_uuid'][$key] ?? '',
+            'file_filename' => $row['files_file_filename'][$key] ?? '',
+            'files_file_uri' => $row['files_file_uri'][$key] ?? '',
+            'files_file_filemime' => $row['files_file_filemime'][$key] ?? '',
+          ];
+        }
       }
 
       // Remove files fields.
@@ -777,10 +779,14 @@ class ApiController extends ControllerBase {
     ];
 
     // Set creation time.
-    $item['created'][] = ['value' => time()];
+    $item['created'][] = [
+      'value' => time(),
+    ];
 
     // Set owner.
-    $item['base_provider_uuid'][] = ['target_uuid' => $provider->uuid()];
+    $item['base_provider_uuid'][] = [
+      'target_uuid' => $provider->uuid(),
+    ];
 
     // Check for meta tags.
     if (isset($params['metadata']) && $params['metadata']) {
@@ -880,12 +886,33 @@ class ApiController extends ControllerBase {
       throw new BadRequestHttpException('Provider cannot be changed');
     }
 
-    // Update all fields specified in params.
-    foreach ($params as $name => $value) {
-      if ($term->hasField($name)) {
+    // Update all fields specified in metadata.
+    if (isset($params['metadata'])) {
+      foreach ($params['metadata'] as $metaitem) {
+        foreach ($metaitem as $name => $values) {
+          if ($term->hasField($name)) {
+            $term->set($name, $values);
+          }
+        }
+      }
 
+      unset($params['metadata']);
+    }
+
+    // Update all fields specified in params.
+    foreach ($params as $name => $values) {
+      if ($term->hasField($name)) {
+        $term->set($name, $values);
       }
     }
+
+    $term->setNewRevision();
+    $term->revision_log = 'Term updated';
+    $term->setRevisionCreationTime(time());
+    $term->isDefaultRevision(TRUE);
+    $term->setRevisionUserId($provider->id());
+
+    $term->save();
 
     // Remove all fields not part of params.
     $data = [
