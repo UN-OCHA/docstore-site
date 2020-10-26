@@ -241,6 +241,7 @@ Example output.
 ```json
 {
   "label": "Borgerhout",
+  "description": "Great district in Antwerp",
   "vocabulary": "{city}"
 }
 ```
@@ -296,7 +297,61 @@ Example output.
 
 ```json
 {
-  "label": "Borgerhout"
+  "label": "Borgerhout district"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term updated"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term updated"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_borgerhout}
+
+## GET /terms/{city_borgerhout}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+{
+  "label": "Borgerhout district",
+  "vocabulary_name": "{city}",
+  "langcode": "en",
+  "status": "1"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
+* Data.description: null
+* Data.vocabulary_name: {city}
+
+## PATCH /terms/{city_borgerhout}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "description": "Borgerhout district"
 }
 ```
 

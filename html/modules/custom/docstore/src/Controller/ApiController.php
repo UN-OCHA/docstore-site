@@ -896,6 +896,25 @@ class ApiController extends ControllerBase {
    * Update term.
    */
   public function updateTerm($id, Request $request) {
+    $protected_fields = [
+      'base_provider_uuid',
+      'changed',
+      'created',
+      'default_langcode',
+      'langcode',
+      'parent',
+      'revision_created',
+      'revision_id',
+      'revision_log_message',
+      'revision_user',
+      'status',
+      'tid',
+      'uuid',
+      'vid',
+      'vocabulary',
+      'weight',
+    ];
+
     // Load term.
     $term = $this->loadTerm($id);
 
@@ -911,43 +930,79 @@ class ApiController extends ControllerBase {
     }
 
     // Check required fields.
-    if (empty($params['label'])) {
-      throw new BadRequestHttpException('Label is required');
+    if ($request->getMethod() === 'PUT') {
+      if (empty($params['label'])) {
+        throw new BadRequestHttpException('Label is required');
+      }
     }
 
-    if (isset($params['vocabulary'])) {
-      throw new BadRequestHttpException('Vocabulary cannot be changed');
+    // Label is actually name.
+    if (isset($params['label'])) {
+      $params['name'] = $params['label'];
+      unset($params['label']);
     }
 
-    if (isset($params['vid'])) {
-      throw new BadRequestHttpException('Vocabulary cannot be changed');
-    }
-
-    if (isset($params['created'])) {
-      throw new BadRequestHttpException('Created cannot be changed');
-    }
-
-    if (isset($params['base_provider_uuid'])) {
-      throw new BadRequestHttpException('Provider cannot be changed');
-    }
+    $updated_fields = [];
 
     // Update all fields specified in metadata.
     if (isset($params['metadata'])) {
       foreach ($params['metadata'] as $metaitem) {
         foreach ($metaitem as $name => $values) {
+          // Make sure protected fields aren't set.
+          if (isset($protected_fields[$name])) {
+            throw new BadRequestHttpException(strtr('Field @name cannot be changed', ['@name' => $name]));
+          }
+
           if ($term->hasField($name)) {
             $term->set($name, $values);
+            $updated_fields[] = $name;
+          }
+          else {
+            throw new BadRequestHttpException(strtr('Field @name does not exists', ['@name' => $name]));
           }
         }
       }
-
       unset($params['metadata']);
     }
 
     // Update all fields specified in params.
     foreach ($params as $name => $values) {
+      // Make sure protected fields aren't set.
+      if (isset($protected_fields[$name])) {
+        throw new BadRequestHttpException(strtr('Field @name cannot be changed', ['@name' => $name]));
+      }
+
       if ($term->hasField($name)) {
         $term->set($name, $values);
+        $updated_fields[] = $name;
+      }
+      else {
+        throw new BadRequestHttpException(strtr('Field @name does not exists', ['@name' => $name]));
+      }
+    }
+
+    // Remove all fields not part of params.
+    if ($request->getMethod() === 'PUT') {
+      $term_fields = $term->getFields(FALSE);
+      foreach ($term_fields as $term_field) {
+        // Skip name field.
+        if ($term_field->getName() === 'name') {
+          continue;
+        }
+
+        if (in_array($term_field->getName(), $updated_fields)) {
+          continue;
+        }
+
+        if (in_array($term_field->getName(), $protected_fields)) {
+          continue;
+        }
+
+        if (!$term_field->isEmpty()) {
+          \Drupal::logger('my_module')->notice($term_field->getName());
+          \Drupal::logger('my_module')->notice('remove it');
+          $term->set($term_field->getName(), NULL);
+        }
       }
     }
 
@@ -959,7 +1014,6 @@ class ApiController extends ControllerBase {
 
     $term->save();
 
-    // Remove all fields not part of params.
     $data = [
       'message' => 'Term updated',
       'uuid' => $term->uuid(),
@@ -1259,7 +1313,7 @@ class ApiController extends ControllerBase {
     }
 
     if (!$vocabulary) {
-      throw new BadRequestHttpException('Unable to write file');
+      throw new NotFoundHttpException('Vocabulary does not exist');
     }
 
     return $vocabulary;

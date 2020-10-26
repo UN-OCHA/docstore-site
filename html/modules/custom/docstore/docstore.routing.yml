@@ -261,6 +261,18 @@ docstore_update_term:
     _auth: ['docstore_auth']
     docstore_crud: 'U'
     docstore_access_level: 'B'
+docstore_patch_term:
+  path: '/api/terms/{id}'
+  defaults:
+    _controller: 'docstore.api_controller:updateTerm'
+    _title: 'Update term'
+  methods: [PATCH]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'U'
+    docstore_access_level: 'B'
 docstore_delete_term:
   path: '/api/terms/{id}'
   defaults:
