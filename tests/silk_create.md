@@ -193,12 +193,44 @@ Example output.
 }
 ```
 
-===
-
 * Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_brussels}
+
+## DELETE /terms/{city_brussels}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term deleted"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term deleted"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
+
+## GET /terms/{city_brussels}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+* Status: `404`
+* Content-Type: "application/json"
 
 ## POST /terms
 
