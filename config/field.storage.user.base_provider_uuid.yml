@@ -1,14 +1,13 @@
-uuid: 7856fc24-f3d3-4789-a76b-dce7cb7e22cb
+uuid: 1fc04d8c-8361-4415-8366-77a1c8b499ec
 langcode: en
 status: true
 dependencies:
   module:
     - entity_reference_uuid
-    - taxonomy
     - user
-id: taxonomy_term.base_provider_uuid
+id: user.base_provider_uuid
 field_name: base_provider_uuid
-entity_type: taxonomy_term
+entity_type: user
 type: entity_reference_uuid
 settings:
   target_type: user

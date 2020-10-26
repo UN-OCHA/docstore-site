@@ -149,6 +149,7 @@ Create city terms.
 ```json
 {
   "label": "Antwerp",
+  "author": "23cdf322",
   "vocabulary": "{city}"
 }
 ```
@@ -179,6 +180,7 @@ Example output.
 ```json
 {
   "label": "Brussels",
+  "author": "23cdf322",
   "vocabulary": "{city}"
 }
 ```
@@ -198,27 +200,6 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_brussels}
 
-## DELETE /terms/{city_brussels}
-
-* Content-Type: "application/json"
-* Accept: "application/json"
-* API-KEY: abcd
-
-===
-
-Example output.
-
-```json
-{
-  "message": "Term deleted"
-}
-```
-
-* Status: `200`
-* Content-Type: "application/json"
-* Data.message: "Term deleted"
-* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
-
 ## GET /terms/{city_brussels}
 
 * Content-Type: "application/json"
@@ -229,7 +210,7 @@ Example output.
 
 Example output.
 
-* Status: `404`
+* Status: `200`
 * Content-Type: "application/json"
 
 ## POST /terms
@@ -241,6 +222,8 @@ Example output.
 ```json
 {
   "label": "Borgerhout",
+  "author": "23cdf322",
+  "description": "Great district in Antwerp",
   "vocabulary": "{city}"
 }
 ```
@@ -296,7 +279,7 @@ Example output.
 
 ```json
 {
-  "label": "Borgerhout"
+  "label": "Borgerhout district"
 }
 ```
 
@@ -317,6 +300,94 @@ Example output.
 * Data.message: "Term updated"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_borgerhout}
 
+## GET /terms/{city_borgerhout}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+{
+  "label": "Borgerhout district",
+  "vocabulary_name": "{city}",
+  "langcode": "en",
+  "status": "1"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
+* Data.description: null
+* Data.vocabulary_name: {city}
+
+## PATCH /terms/{city_borgerhout}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "description": "Borgerhout district"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term updated"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term updated"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_borgerhout}
+
+## DELETE /terms/{city_brussels}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term deleted"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term deleted"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
+
+## GET /terms/{city_brussels}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+* Status: `404`
+* Content-Type: "application/json"
+
 ## POST /terms
 
 Create organization terms.
@@ -328,6 +399,7 @@ Create organization terms.
 ```json
 {
   "label": "CERF",
+  "author": "23cdf322",
   "{field_iso3}": "BEL",
   "vocabulary": "{organization}"
 }
@@ -359,6 +431,7 @@ Example output.
 ```json
 {
   "label": "UNOCHA",
+  "author": "23cdf322",
   "vocabulary": "{organization}"
 }
 ```
@@ -389,6 +462,7 @@ Example output.
 ```json
 {
   "label": "WFP",
+  "author": "23cdf322",
   "metadata": [
     {
       "{field_iso3}": "BEL"
