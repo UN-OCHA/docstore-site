@@ -775,6 +775,10 @@ class ApiController extends ControllerBase {
       throw new BadRequestHttpException('Vocabulary is required');
     }
 
+    if (empty($params['author'])) {
+      throw new BadRequestHttpException('Author is required');
+    }
+
     // Load vocabulary.
     $vocabulary = $this->loadVocabulary($params['vocabulary']);
 
@@ -796,6 +800,11 @@ class ApiController extends ControllerBase {
     // Set owner.
     $item['base_provider_uuid'][] = [
       'target_uuid' => $provider->uuid(),
+    ];
+
+    // Store HID Id.
+    $item['base_author_hid'][] = [
+      'value' => $params['author'],
     ];
 
     // Check for meta tags.
@@ -897,6 +906,7 @@ class ApiController extends ControllerBase {
    */
   public function updateTerm($id, Request $request) {
     $protected_fields = [
+      'base_author_hid',
       'base_provider_uuid',
       'changed',
       'created',

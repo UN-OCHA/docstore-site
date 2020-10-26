@@ -149,6 +149,7 @@ Create city terms.
 ```json
 {
   "label": "Antwerp",
+  "author": "23cdf322",
   "vocabulary": "{city}"
 }
 ```
@@ -179,6 +180,7 @@ Example output.
 ```json
 {
   "label": "Brussels",
+  "author": "23cdf322",
   "vocabulary": "{city}"
 }
 ```
@@ -254,6 +256,7 @@ Example output.
 ```json
 {
   "label": "Borgerhout",
+  "author": "23cdf322",
   "description": "Great district in Antwerp",
   "vocabulary": "{city}"
 }
@@ -396,6 +399,7 @@ Create organization terms.
 ```json
 {
   "label": "CERF",
+  "author": "23cdf322",
   "{field_iso3}": "BEL",
   "vocabulary": "{organization}"
 }
@@ -427,6 +431,7 @@ Example output.
 ```json
 {
   "label": "UNOCHA",
+  "author": "23cdf322",
   "vocabulary": "{organization}"
 }
 ```
@@ -457,6 +462,7 @@ Example output.
 ```json
 {
   "label": "WFP",
+  "author": "23cdf322",
   "metadata": [
     {
       "{field_iso3}": "BEL"
