@@ -198,6 +198,19 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_brussels}
 
+## GET /terms/{city_brussels}
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+* Status: `200`
+* Content-Type: "application/json"
+
 ## DELETE /terms/{city_brussels}
 
 * Content-Type: "application/json"
