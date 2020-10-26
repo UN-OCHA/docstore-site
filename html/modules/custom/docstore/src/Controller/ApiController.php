@@ -980,7 +980,27 @@ class ApiController extends ControllerBase {
    * Delete term.
    */
   public function deleteTerm($id, Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    // Load term.
+    $term = $this->loadTerm($id);
+
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Provider can only update own terms.
+    if ($term->base_provider_uuid->entity->uuid() !== $provider->uuid()) {
+      throw new BadRequestHttpException('Term is not owned by you');
+    }
+
+    $data = [
+      'message' => 'Term deleted',
+      'uuid' => $term->uuid(),
+    ];
+
+    $term->delete();
+
+    $response = new JsonResponse($data);
+
+    return $response;
   }
 
   /**
@@ -1273,7 +1293,7 @@ class ApiController extends ControllerBase {
     }
 
     if (!$term) {
-      throw new BadRequestHttpException('Unable to write file');
+      throw new NotFoundHttpException('Term does not exist');
     }
 
     return $term;
