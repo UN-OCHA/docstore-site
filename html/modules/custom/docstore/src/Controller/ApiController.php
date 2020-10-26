@@ -999,8 +999,6 @@ class ApiController extends ControllerBase {
         }
 
         if (!$term_field->isEmpty()) {
-          \Drupal::logger('my_module')->notice($term_field->getName());
-          \Drupal::logger('my_module')->notice('remove it');
           $term->set($term_field->getName(), NULL);
         }
       }
