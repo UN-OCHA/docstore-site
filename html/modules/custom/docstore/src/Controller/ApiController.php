@@ -1686,4 +1686,5 @@ class ApiController extends ControllerBase {
   protected function entityInUse($entity) {
     return !empty($this->entityUsage->listSources($entity));
   }
+
 }
