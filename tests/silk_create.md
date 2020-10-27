@@ -839,3 +839,25 @@ Example output.
 * Data.uuid: {doc2}
 * Data.title: "Doc term and file"
 * Data.files[0].media_uuid: "{media1}"
+
+## DELETE /terms/{organization_wfp}
+
+Delete a term which is in use.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term is in use and can not be deleted"
+}
+```
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Term is in use and can not be deleted"

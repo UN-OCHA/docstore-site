@@ -17,6 +17,7 @@ use Drupal\Core\File\FileSystem;
 use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\State\State;
+use Drupal\entity_usage\EntityUsage;
 use Drupal\file\Entity\File;
 use Drupal\file\FileUsage\FileUsageInterface;
 use Drupal\media\Entity\Media;
@@ -108,9 +109,16 @@ class ApiController extends ControllerBase {
   /**
    * The state store.
    *
-   * @var Drupal\Core\State\State
+   * @var \Drupal\Core\State\State
    */
   protected $state;
+
+  /**
+   * The state store.
+   *
+   * @var \Drupal\entity_usage\EntityUsage
+   */
+  protected $entityUsage;
 
   /**
    * {@inheritdoc}
@@ -125,7 +133,8 @@ class ApiController extends ControllerBase {
       FileSystem $fileSystem,
       FileUsageInterface $fileUsage,
       LoggerChannelFactoryInterface $logger_factory,
-      State $state
+      State $state,
+      EntityUsage $entityUsage
     ) {
     $this->config = $config;
     $this->database = $database;
@@ -138,6 +147,7 @@ class ApiController extends ControllerBase {
     $this->fileUsage = $fileUsage;
     $this->loggerFactory = $logger_factory;
     $this->state = $state;
+    $this->entityUsage = $entityUsage;
   }
 
   /**
@@ -699,6 +709,11 @@ class ApiController extends ControllerBase {
       throw new BadRequestHttpException('Vocabulary is not owned by you');
     }
 
+    // Check if term is in use.
+    if ($this->entityInUse($vocabulary)) {
+      throw new BadRequestHttpException('Vocabulary is in use and can not be deleted');
+    }
+
     $data = [
       'message' => 'Vocabulary deleted',
       'uuid' => $vocabulary->uuid(),
@@ -900,12 +915,31 @@ class ApiController extends ControllerBase {
   }
 
   /**
+   * Create term on vocabulary.
+   */
+  public function createTermOnVocabulary($id, Request $request) {
+    $vocabulary = $this->loadVocabulary($id);
+
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+
+    $params['vocabulary'] = $vocabulary->uuid();
+    return $this->createTermFromParameters($params);
+  }
+
+  /**
    * Create term.
    */
   public function createTerm(Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    return $this->createTermFromParameters($params);
+  }
 
+  /**
+   * Create term.
+   */
+  protected function createTermFromParameters($params) {
     // Get provider.
     $provider = $this->getProvider();
 
@@ -1194,6 +1228,11 @@ class ApiController extends ControllerBase {
     // Provider can only update own terms.
     if ($term->base_provider_uuid->entity->uuid() !== $provider->uuid()) {
       throw new BadRequestHttpException('Term is not owned by you');
+    }
+
+    // Check if term is in use.
+    if ($this->entityInUse($term)) {
+      throw new BadRequestHttpException('Term is in use and can not be deleted');
     }
 
     $data = [
@@ -1559,6 +1598,8 @@ class ApiController extends ControllerBase {
    * Fetch terms.
    */
   public function loadTerms($vids = [], $tid = NULL) {
+    $data = [];
+
     // Fields to hide.
     $hide_fields = [
       'tid',
@@ -1631,6 +1672,19 @@ class ApiController extends ControllerBase {
     }
 
     return $data;
+  }
+
+  /**
+   * Check if in entity is in use.
+   *
+   * \Drupal\Core\Entity\EntityInterface $entity
+   *   The entity to check.
+   *
+   * @return bool
+   *   TRUE if entity is used somewhere.
+   */
+  protected function entityInUse($entity) {
+    return !empty($this->entityUsage->listSources($entity));
   }
 
 }

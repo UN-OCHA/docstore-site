@@ -173,6 +173,18 @@ docstore_get_vocabulary_terms:
     _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'B'
+docstore_create_term_in_vocabulary:
+  path: '/api/vocabularies/{id}/terms'
+  defaults:
+    _controller: 'docstore.api_controller:createTermOnVocabulary'
+    _title: 'Create term'
+  methods: [POST]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'C'
+    docstore_access_level: 'B'
 docstore_update_vocabulary:
   path: '/api/vocabularies/{id}'
   defaults:
