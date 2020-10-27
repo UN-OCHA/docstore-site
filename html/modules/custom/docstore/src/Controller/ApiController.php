@@ -709,6 +709,11 @@ class ApiController extends ControllerBase {
       throw new BadRequestHttpException('Vocabulary is not owned by you');
     }
 
+    // Check if term is in use.
+    if ($this->entityInUse($vocabulary)) {
+      throw new BadRequestHttpException('Vocabulary is in use and can not be deleted');
+    }
+
     $data = [
       'message' => 'Vocabulary deleted',
       'uuid' => $vocabulary->uuid(),
@@ -910,12 +915,31 @@ class ApiController extends ControllerBase {
   }
 
   /**
+   * Create term on vocabulary.
+   */
+  public function createTermOnVocabulary($id, Request $request) {
+    $vocabulary = $this->loadVocabulary($id);
+
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+
+    $params['vocabulary'] = $vocabulary->uuid();
+    return $this->createTermFromParameters($params);
+  }
+
+  /**
    * Create term.
    */
   public function createTerm(Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    return $this->createTermFromParameters($params);
+  }
 
+  /**
+   * Create term.
+   */
+  protected function createTermFromParameters($params) {
     // Get provider.
     $provider = $this->getProvider();
 
@@ -1204,6 +1228,11 @@ class ApiController extends ControllerBase {
     // Provider can only update own terms.
     if ($term->base_provider_uuid->entity->uuid() !== $provider->uuid()) {
       throw new BadRequestHttpException('Term is not owned by you');
+    }
+
+    // Check if term is in use.
+    if ($this->entityInUse($term)) {
+      throw new BadRequestHttpException('Term is in use and can not be deleted');
     }
 
     $data = [
@@ -1569,6 +1598,8 @@ class ApiController extends ControllerBase {
    * Fetch terms.
    */
   public function loadTerms($vids = [], $tid = NULL) {
+    $data = [];
+
     // Fields to hide.
     $hide_fields = [
       'tid',
@@ -1643,4 +1674,16 @@ class ApiController extends ControllerBase {
     return $data;
   }
 
+  /**
+   * Check if in entity is in use.
+   *
+   * \Drupal\Core\Entity\EntityInterface $entity
+   *   The entity to check.
+   *
+   * @return bool
+   *   TRUE if entity is used somewhere.
+   */
+  protected function entityInUse($entity) {
+    return !empty($this->entityUsage->listSources($entity));
+  }
 }
