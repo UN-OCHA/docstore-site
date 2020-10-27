@@ -213,7 +213,7 @@ Example output.
 * Data.uuid: {uuid}
 * Data.machine_name: {machine_name}
 
-## POST /terms
+## POST /vocabularies/{machine_name}/terms
 
 Create city term.
 
@@ -224,8 +224,7 @@ Create city term.
 ```json
 {
   "label": "Antwerp",
-  "author": "23cdf322",
-  "vocabulary": "{machine_name}"
+  "author": "23cdf322"
 }
 ```
 
@@ -244,7 +243,7 @@ Example output.
 * Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Term created"
-* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_antwerp}
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {term_uuid}
 
 ## `GET /vocabularies/{machine_name}/terms`
 
@@ -258,6 +257,50 @@ Get a vocabulary.
 * Status: `200`
 * Content-Type: "application/json"
 * Data[0].label: "Antwerp"
+
+## DELETE /vocabularies/{uuid}
+
+Delete vocabulary.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Vocabulary is in use and can not be deleted"
+}
+```
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Vocabulary is in use and can not be deleted"
+
+## DELETE /terms/{term_uuid}
+
+Delete term.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term deleted"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term deleted"
 
 ## DELETE /vocabularies/{uuid}
 
@@ -306,9 +349,8 @@ Get all terms.
 Example output.
 
 ```json
-{}
+[]
 ```
 
 * Status: `200`
 * Content-Type: "application/json"
-
