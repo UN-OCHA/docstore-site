@@ -19,7 +19,7 @@ services:
         - { name: page_cache_request_policy }
   docstore.api_controller:
     class: \Drupal\docstore\Controller\ApiController
-    arguments: ['@config.factory', '@database', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@transliteration', '@file.mime_type.guesser', '@file_system', '@file.usage', '@logger.factory', '@state']
+    arguments: ['@config.factory', '@database', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@transliteration', '@file.mime_type.guesser', '@file_system', '@file.usage', '@logger.factory', '@state', '@entity_usage.usage']
   docstore.config_sync.event_subscriber:
     class: Drupal\docstore\EventSubscriber\DocstoreConfigEventSubscriber
     arguments: ['@config.storage', '@settings', '@config.manager']

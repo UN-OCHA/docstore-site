@@ -17,6 +17,7 @@ use Drupal\Core\File\FileSystem;
 use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\State\State;
+use Drupal\entity_usage\EntityUsage;
 use Drupal\file\Entity\File;
 use Drupal\file\FileUsage\FileUsageInterface;
 use Drupal\media\Entity\Media;
@@ -108,9 +109,16 @@ class ApiController extends ControllerBase {
   /**
    * The state store.
    *
-   * @var Drupal\Core\State\State
+   * @var \Drupal\Core\State\State
    */
   protected $state;
+
+  /**
+   * The state store.
+   *
+   * @var \Drupal\entity_usage\EntityUsage
+   */
+  protected $entityUsage;
 
   /**
    * {@inheritdoc}
@@ -125,7 +133,8 @@ class ApiController extends ControllerBase {
       FileSystem $fileSystem,
       FileUsageInterface $fileUsage,
       LoggerChannelFactoryInterface $logger_factory,
-      State $state
+      State $state,
+      EntityUsage $entityUsage
     ) {
     $this->config = $config;
     $this->database = $database;
@@ -138,6 +147,7 @@ class ApiController extends ControllerBase {
     $this->fileUsage = $fileUsage;
     $this->loggerFactory = $logger_factory;
     $this->state = $state;
+    $this->entityUsage = $entityUsage;
   }
 
   /**
