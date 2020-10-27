@@ -522,7 +522,11 @@ class ApiController extends ControllerBase {
 
     // Check required fields.
     if (empty($params['label'])) {
-      throw new NotFoundHttpException();
+      throw new BadRequestHttpException('Label is required');
+    }
+
+    if (empty($params['author'])) {
+      throw new BadRequestHttpException('Author is required');
     }
 
     // Get provider.
@@ -530,6 +534,12 @@ class ApiController extends ControllerBase {
 
     // Create field.
     $machine_name = docstore_create_vocabulary_for_provider($params['label'], $provider->get('prefix')->value);
+
+    // Set provider and hid.
+    $vocabulary = $this->loadVocabulary($machine_name);
+    $vocabulary->setThirdPartySetting('docstore', 'base_provider_uuid', $provider->uuid());
+    $vocabulary->setThirdPartySetting('docstore', 'base_author_hid', $params['author']);
+    $vocabulary->save();
 
     // Add created field.
     docstore_create_vocabulary_base_field_created($machine_name);
@@ -564,6 +574,94 @@ class ApiController extends ControllerBase {
     ];
 
     $response = new CacheableJsonResponse($data);
+
+    return $response;
+  }
+
+  /**
+   * Update vocabulary.
+   */
+  public function updateVocabulary($id, Request $request) {
+    $protected_fields = [
+      'base_author_hid',
+      'base_provider_uuid',
+      'changed',
+      'created',
+      'default_langcode',
+      'langcode',
+      'parent',
+      'revision_created',
+      'revision_id',
+      'revision_log_message',
+      'revision_user',
+      'status',
+      'tid',
+      'uuid',
+      'vid',
+      'vocabulary',
+      'weight',
+    ];
+
+    // Load vocabulary.
+    $vocabulary = $this->loadVocabulary($id);
+
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Provider can only update own vocabularys.
+    if ($vocabulary->getThirdPartySetting('docstore', 'base_provider_uuid') !== $provider->uuid()) {
+      throw new BadRequestHttpException('Vocabulary is not owned by you');
+    }
+
+    // Check required fields.
+    if ($request->getMethod() === 'PUT') {
+      if (empty($params['label'])) {
+        throw new BadRequestHttpException('Label is required');
+      }
+    }
+
+    // Label is actually name.
+    if (isset($params['label'])) {
+      $params['name'] = $params['label'];
+      unset($params['label']);
+    }
+
+    $updated_fields = [];
+
+    // Update all fields specified in params.
+    foreach ($params as $name => $values) {
+      // Make sure protected fields aren't set.
+      if (isset($protected_fields[$name])) {
+        throw new BadRequestHttpException(strtr('Field @name cannot be changed', ['@name' => $name]));
+      }
+
+      if ($name === 'name' || $name === 'description') {
+        $vocabulary->set($name, $values);
+        $updated_fields[] = $name;
+      }
+      else {
+        throw new BadRequestHttpException(strtr('Field @name does not exists', ['@name' => $name]));
+      }
+    }
+
+    // Remove all fields not part of params.
+    if ($request->getMethod() === 'PUT') {
+      if (!isset($updated_fields['description'])) {
+        $vocabulary->set('description', NULL);
+      }
+    }
+
+    $vocabulary->save();
+
+    $data = [
+      'message' => 'Vocabulary updated',
+      'uuid' => $vocabulary->uuid(),
+    ];
+
+    $response = new JsonResponse($data);
 
     return $response;
   }
@@ -1310,6 +1408,12 @@ class ApiController extends ControllerBase {
 
   /**
    * Load a vocabulary.
+   *
+   * @param string $id
+   *   The vocabulary uuid or entity_id.
+   *
+   * @return \Drupal\taxonomy\Entity\Vocabulary
+   *   Vocabulary.
    */
   protected function loadVocabulary($id) {
     if (Uuid::isValid($id)) {
