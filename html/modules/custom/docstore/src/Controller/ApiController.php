@@ -498,17 +498,27 @@ class ApiController extends ControllerBase {
    */
   public function getVocabularies() {
     $data = [];
+    $cache_tags = [];
 
     $vocabularies = $this->loadVocabularies();
     foreach ($vocabularies as $vocabulary) {
       $data[] = [
         'uuid' => $vocabulary->uuid(),
-        'label' => $vocabulary->label(),
         'machine_name' => $vocabulary->id(),
+        'label' => $vocabulary->label(),
+        'description' => $vocabulary->getDescription(),
       ];
+
+      $cache_tags[] = $vocabulary->getCacheTags();
     }
 
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => $cache_tags,
+    ];
+
     $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
 
     return $response;
   }
@@ -522,7 +532,11 @@ class ApiController extends ControllerBase {
 
     // Check required fields.
     if (empty($params['label'])) {
-      throw new NotFoundHttpException();
+      throw new BadRequestHttpException('Label is required');
+    }
+
+    if (empty($params['author'])) {
+      throw new BadRequestHttpException('Author is required');
     }
 
     // Get provider.
@@ -530,6 +544,12 @@ class ApiController extends ControllerBase {
 
     // Create field.
     $machine_name = docstore_create_vocabulary_for_provider($params['label'], $provider->get('prefix')->value);
+
+    // Set provider and hid.
+    $vocabulary = $this->loadVocabulary($machine_name);
+    $vocabulary->setThirdPartySetting('docstore', 'base_provider_uuid', $provider->uuid());
+    $vocabulary->setThirdPartySetting('docstore', 'base_author_hid', $params['author']);
+    $vocabulary->save();
 
     // Add created field.
     docstore_create_vocabulary_base_field_created($machine_name);
@@ -543,6 +563,7 @@ class ApiController extends ControllerBase {
     $data = [
       'message' => 'Vocabulary created',
       'machine_name' => $machine_name,
+      'uuid' => $vocabulary->uuid(),
     ];
 
     $response = new JsonResponse($data);
@@ -559,11 +580,133 @@ class ApiController extends ControllerBase {
 
     $data = [
       'uuid' => $vocabulary->uuid(),
-      'label' => $vocabulary->label(),
       'machine_name' => $vocabulary->id(),
+      'label' => $vocabulary->label(),
+      'description' => $vocabulary->getDescription(),
+    ];
+
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => $vocabulary->getCacheTags(),
     ];
 
     $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+
+    return $response;
+  }
+
+  /**
+   * Update vocabulary.
+   */
+  public function updateVocabulary($id, Request $request) {
+    $protected_fields = [
+      'base_author_hid',
+      'base_provider_uuid',
+      'changed',
+      'created',
+      'default_langcode',
+      'langcode',
+      'parent',
+      'revision_created',
+      'revision_id',
+      'revision_log_message',
+      'revision_user',
+      'status',
+      'tid',
+      'uuid',
+      'vid',
+      'vocabulary',
+      'weight',
+    ];
+
+    // Load vocabulary.
+    $vocabulary = $this->loadVocabulary($id);
+
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Provider can only update own vocabulary.
+    if ($vocabulary->getThirdPartySetting('docstore', 'base_provider_uuid') !== $provider->uuid()) {
+      throw new BadRequestHttpException('Vocabulary is not owned by you');
+    }
+
+    // Check required fields.
+    if ($request->getMethod() === 'PUT') {
+      if (empty($params['label'])) {
+        throw new BadRequestHttpException('Label is required');
+      }
+    }
+
+    // Label is actually name.
+    if (isset($params['label'])) {
+      $params['name'] = $params['label'];
+      unset($params['label']);
+    }
+
+    $updated_fields = [];
+
+    // Update all fields specified in params.
+    foreach ($params as $name => $values) {
+      // Make sure protected fields aren't set.
+      if (isset($protected_fields[$name])) {
+        throw new BadRequestHttpException(strtr('Field @name cannot be changed', ['@name' => $name]));
+      }
+
+      if ($name === 'name' || $name === 'description') {
+        $vocabulary->set($name, $values);
+        $updated_fields[] = $name;
+      }
+      else {
+        throw new BadRequestHttpException(strtr('Field @name does not exists', ['@name' => $name]));
+      }
+    }
+
+    // Remove all fields not part of params.
+    if ($request->getMethod() === 'PUT') {
+      if (!in_array('description', $updated_fields)) {
+        $vocabulary->set('description', NULL);
+      }
+    }
+
+    $vocabulary->save();
+
+    $data = [
+      'message' => 'Vocabulary updated',
+      'uuid' => $vocabulary->uuid(),
+    ];
+
+    $response = new JsonResponse($data);
+
+    return $response;
+  }
+
+  /**
+   * Delete vocabulary.
+   */
+  public function deleteVocabulary($id, Request $request) {
+    // Load term.
+    $vocabulary = $this->loadVocabulary($id);
+
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Provider can only update own vocabulary.
+    if ($vocabulary->getThirdPartySetting('docstore', 'base_provider_uuid') !== $provider->uuid()) {
+      throw new BadRequestHttpException('Vocabulary is not owned by you');
+    }
+
+    $data = [
+      'message' => 'Vocabulary deleted',
+      'uuid' => $vocabulary->uuid(),
+    ];
+
+    $vocabulary->delete();
+
+    $response = new JsonResponse($data);
 
     return $response;
   }
@@ -1310,6 +1453,12 @@ class ApiController extends ControllerBase {
 
   /**
    * Load a vocabulary.
+   *
+   * @param string $id
+   *   The vocabulary uuid or entity_id.
+   *
+   * @return \Drupal\taxonomy\Entity\Vocabulary
+   *   Vocabulary.
    */
   protected function loadVocabulary($id) {
     if (Uuid::isValid($id)) {
@@ -1329,6 +1478,9 @@ class ApiController extends ControllerBase {
 
   /**
    * Load all vocabularies.
+   *
+   * @return \Drupal\taxonomy\Entity\Vocabulary[]
+   *   Vocabularies.
    */
   protected function loadVocabularies() {
     $vocabularies = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple();

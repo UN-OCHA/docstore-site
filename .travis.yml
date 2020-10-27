@@ -72,7 +72,6 @@ script:
   - sleep 5
 
   # Test
-  - ../vendor/bin/drush eval "_docstore_setup_testing()"
   - cd ${TRAVIS_BUILD_DIR}/tests
   - ./travis_run.sh
 

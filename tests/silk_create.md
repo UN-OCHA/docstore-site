@@ -10,7 +10,8 @@ Create vocabulary.
 
 ```json
 {
-  "label": "City"
+  "label": "City",
+  "author": "hid_123456789"
 }
 ```
 ===
@@ -63,9 +64,11 @@ Create vocabulary.
 
 ```json
 {
-  "label": "Organization"
+  "label": "Organization",
+  "author": "hid_123456789"
 }
 ```
+
 ===
 
 Example output.
@@ -75,8 +78,6 @@ Example output.
   "message": "Vocabulary created"
 }
 ```
-
-===
 
 * Status: `201`
 * Content-Type: "application/json"
