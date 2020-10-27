@@ -1,5 +1,5 @@
-#DRUSH=fin drush
-#API=http://docstore.local.docksal/api
+DRUSH=${DRUSH:-"fin drush"}
+API=${API:-"http://docstore.local.docksal/api"}
 
 # Clear docstore, test vocabulary CRUD
 $DRUSH eval "_docstore_setup_testing()"
