@@ -1,3 +1,5 @@
+DRUSH=""../vendor/bin/drush" API="http://127.0.0.1:8080/api"
+
 # Clear docstore, test vocabulary CRUD
 ../vendor/bin/drush eval "_docstore_setup_testing()"
 ../vendor/bin/drush cr
