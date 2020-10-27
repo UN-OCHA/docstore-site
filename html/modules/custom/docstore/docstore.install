@@ -1,0 +1,13 @@
+<?php
+
+/**
+ * @file
+ * Contains Document Store code.
+ */
+
+/**
+ * Enable entity_usage.
+ */
+function docstore_update_8001() {
+  \Drupal::service('module_installer')->install(['entity_usage']);
+}
