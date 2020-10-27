@@ -163,12 +163,42 @@ class ApiController extends ControllerBase {
   /**
    * Get documents.
    */
-  public function getDocuments() {
+  public function getDocuments(Request $request) {
     $data = [];
+
+    // Parse parameters.
+    // @see html/core/modules/jsonapi/src/Controller/EntityResource.php:1209
+
+    // curl -g "http://docstore.local.docksal/api/documents?filter[rock-group][group][conjunction]=OR&filter[janis-filter][condition][path]=silk_my_id&filter[janis-filter][condition][operator]=%3D&filter[janis-filter][condition][value]=42&filter[janis-filter][condition][memberOf]=rock-group&filter[joan-filter][condition][path]=silk_my_id&filter[joan-filter][condition][operator]=%3D&filter[joan-filter][condition][value]=7&filter[joan-filter][condition][memberOf]=rock-group&filter[last-name-filter][condition][path]=silk_organizations&filter[last-name-filter][condition][operator]=STARTS_WITH&filter[last-name-filter][condition][value]=Q3" | jq
+    $filters = [];
+    if ($request->query->has('filter')) {
+      $filters = docstore_query_to_filters($request->query->get('filter'));
+    }
+    \Drupal::logger('tree')->notice('<pre>' . print_r($filters, TRUE) . '</pre>');
 
     // Query index.
     $index = Index::load('documents');
     $query = $index->query();
+
+    // Append filters, make it recursive.
+    if (!empty($filters)) {
+      $conditions = $query->createConditionGroup($filters['group']['conjunction']);
+      foreach ($filters['group']['members'] as $filter) {
+        \Drupal::logger('l184')->notice('<pre>' . print_r($filter, TRUE) . '</pre>');
+        if (isset($filter['group'])) {
+          $subgroup = $query->createConditionGroup($filter['group']['conjunction']);
+          foreach ($filter['group']['members'] as $sub) {
+            $subgroup->addCondition($sub['condition']['path'], $sub['condition']['value'], $sub['condition']['operator']);
+          }
+          $conditions->addConditionGroup($subgroup);
+        }
+        else {
+          $conditions->addCondition($filter['condition']['path'], $filter['condition']['value'], $filter['condition']['operator']);
+        }
+      }
+      $query->addConditionGroup($conditions);
+    }
+
     $results = $query->execute();
 
     // Use solr response directly.
@@ -194,7 +224,7 @@ class ApiController extends ControllerBase {
     }
 
     $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts(['url.query_args:filter']));
 
     return $response;
   }

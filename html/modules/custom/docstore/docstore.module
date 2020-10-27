@@ -487,3 +487,145 @@ function _docstore_setup_testing() {
   Cache::invalidateTags(['documents']);
   Cache::invalidateTags(['document_fields']);
 }
+
+/**
+ * Convert query string to search api filter.
+ */
+function docstore_query_to_filters($filters) {
+  $items = expand($filters);
+
+  $root = [
+    'id' => docstore_ROOT_ID,
+    docstore_GROUP_KEY => [
+      'conjunction' => 'AND',
+    ],
+  ];
+
+  return buildTree($root, $items);
+}
+
+const docstore_VALUE_KEY = 'value';
+const docstore_PATH_KEY = 'path';
+const docstore_OPERATOR_KEY = 'operator';
+const docstore_ROOT_ID = '@root';
+const docstore_CONDITION_KEY = 'condition';
+const docstore_MEMBER_KEY = 'memberOf';
+const docstore_GROUP_KEY = 'group';
+
+  /**
+   * Expands any filter parameters using shorthand notation.
+   *
+   * @param array $original
+   *   The unexpanded filter data.
+   *
+   * @return array
+   *   The expanded filter data.
+   */
+  function expand(array $original) {
+    $expanded = [];
+    foreach ($original as $key => $item) {
+      // Allow extreme shorthand filters, f.e. `?filter[promote]=1`.
+      if (!is_array($item)) {
+        $item = [
+          docstore_VALUE_KEY => $item,
+        ];
+      }
+
+      // Throw an exception if the query uses the reserved filter id for the
+      // root group.
+      if ($key == docstore_ROOT_ID) {
+        $msg = sprintf("'%s' is a reserved filter id.", docstore_ROOT_ID);
+        throw new \UnexpectedValueException($msg);
+      }
+
+      // Add a memberOf key to all items.
+      if (isset($item[docstore_CONDITION_KEY][docstore_MEMBER_KEY])) {
+        $item[docstore_MEMBER_KEY] = $item[docstore_CONDITION_KEY][docstore_MEMBER_KEY];
+        unset($item[docstore_CONDITION_KEY][docstore_MEMBER_KEY]);
+      }
+      elseif (isset($item[docstore_GROUP_KEY][docstore_MEMBER_KEY])) {
+        $item[docstore_MEMBER_KEY] = $item[docstore_GROUP_KEY][docstore_MEMBER_KEY];
+        unset($item[docstore_GROUP_KEY][docstore_MEMBER_KEY]);
+      }
+      else {
+        $item[docstore_MEMBER_KEY] = docstore_ROOT_ID;
+      }
+
+      // Add the filter id to all items.
+      $item['id'] = $key;
+
+      // Expands shorthand filters.
+      $expanded[$key] = expandItem($key, $item);
+    }
+
+    return $expanded;
+  }
+
+  /**
+   * Expands a filter item in case a shortcut was used.
+   *
+   * Possible cases for the conditions:
+   *   1. filter[uuid][value]=1234.
+   *   2. filter[0][condition][field]=uuid&filter[0][condition][value]=1234.
+   *   3. filter[uuid][condition][value]=1234.
+   *   4. filter[uuid][value]=1234&filter[uuid][group]=my_group.
+   *
+   * @param string $filter_index
+   *   The index.
+   * @param array $filter_item
+   *   The raw filter item.
+   *
+   * @return array
+   *   The expanded filter item.
+   */
+  function expandItem($filter_index, array $filter_item) {
+    if (isset($filter_item[docstore_VALUE_KEY])) {
+      if (!isset($filter_item[docstore_PATH_KEY])) {
+        $filter_item[docstore_PATH_KEY] = $filter_index;
+      }
+
+      $filter_item = [
+        docstore_CONDITION_KEY => $filter_item,
+        docstore_MEMBER_KEY => $filter_item[docstore_MEMBER_KEY],
+      ];
+    }
+
+    if (!isset($filter_item[docstore_CONDITION_KEY][docstore_OPERATOR_KEY])) {
+      $filter_item[docstore_CONDITION_KEY][docstore_OPERATOR_KEY] = '=';
+    }
+
+    return $filter_item;
+  }
+
+  /**
+   * Organizes the flat, normalized filter items into a tree structure.
+   *
+   * @param array $root
+   *   The root of the tree to build.
+   * @param array $items
+   *   The normalized entity conditions and groups.
+   *
+   * @return \Drupal\jsonapi\Query\EntityConditionGroup
+   *   The entity condition group
+   */
+  function buildTree(array $root, array $items) {
+    $id = $root['id'];
+
+    // Recursively build a tree of denormalized conditions and condition groups.
+    $members = [];
+    foreach ($items as $item) {
+      if ($item[docstore_MEMBER_KEY] == $id) {
+        if (isset($item[docstore_GROUP_KEY])) {
+          array_push($members, buildTree($item, $items));
+        }
+        elseif (isset($item[docstore_CONDITION_KEY])) {
+          array_push($members, $item);
+        }
+      }
+    }
+
+    $root[docstore_GROUP_KEY]['members'] = $members;
+
+    // Denormalize the root into a condition group.
+    return $root;
+  }
