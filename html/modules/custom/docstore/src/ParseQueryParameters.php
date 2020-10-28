@@ -69,7 +69,7 @@ class ParseQueryParameters {
   protected $root;
 
   /**
-   * Parse query parameters.
+   * Parse filter parameters.
    *
    * @param array $filters
    *   The filter query string.
@@ -88,6 +88,30 @@ class ParseQueryParameters {
     ];
 
     return $this->buildTree($root, $items);
+  }
+
+  /**
+   * Parse sort parameters.
+   *
+   * @param array $filters
+   *   The sort query string.
+   *
+   * @return []
+   *   The sort.
+   */
+  public function parseSort($filters) {
+  }
+
+  /**
+   * Parse paging parameters.
+   *
+   * @param array $filters
+   *   The paging query string.
+   *
+   * @return []
+   *   The paging info.
+   */
+  public function parsePaging($filters) {
   }
 
   /**
@@ -115,6 +139,28 @@ class ParseQueryParameters {
       }
       $query->addConditionGroup($conditions);
     }
+  }
+
+  /**
+   * Apply sorters to search Api query.
+   *
+   * @param array $sorters.
+   *   The sorters as a tree.
+   * @param \Drupal\search_api\Query\QueryInterface $query
+   *   The query to append to.
+   */
+  public function applySortToIndex($sorters, &$query) {
+  }
+
+  /**
+   * Apply pagers to search Api query.
+   *
+   * @param array $pagers.
+   *   The pagers as a tree.
+   * @param \Drupal\search_api\Query\QueryInterface $query
+   *   The query to append to.
+   */
+  public function applyPagerToIndex($pagers, &$query) {
   }
 
   /**

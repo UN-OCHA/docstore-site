@@ -16,6 +16,24 @@
 curl -X GET "http://docstore.local.docksal/api/documents" -H  "accept: application/json" -H  "API-KEY: abcd" | jq
 ```
 
+```bash
+curl -g "http://docstore.local.docksal/api/documents?filter[f1][group][conjunction]=OR&filter[p1][condition][path]=silk_my_id&filter[p1][condition][operator]=%3D&filter[p1][condition][value]=42&filter[p1][condition][memberOf]=f1" | jq
+
+curl -g "http://docstore.local.docksal/api/documents?filter[f1][group][conjunction]=OR&filter[p1][condition][path]=silk_my_id&filter[p1][condition][operator]=%3D&filter[p1][condition][value]=42&filter[p1][condition][memberOf]=f1&filter[p2][condition][path]=silk_my_id&filter[p2][condition][operator]=%3D&filter[p2][condition][value]=7&filter[p2][condition][memberOf]=f1" | jq
+
+curl -g "http://docstore.local.docksal/api/documents?filter[f1][group][conjunction]=OR&filter[org][condition][memberOf]=f1&filter[org][condition][path]=silk_organizations_label&filter[org][condition][operator]=%3D&filter[org][condition][value]=WFP" | jq
+
+curl -g "http://docstore.local.docksal/api/documents?filter[f1][group][conjunction]=OR&filter[org][condition][memberOf]=f1&filter[org][condition][path]=silk_organizations_label&filter[org][condition][value]=WF*" | jq
+
+# to be tested
+
+curl -g "http://docstore.local.docksal/api/documents?filter[f1][group][conjunction]=OR&filter[org][condition][memberOf]=f1&filter[org][condition][path]=silk_organizations_label&filter[org][condition][operator]=STARTS_WITH&filter[org][condition][value]=U" | jq
+
+curl -g "http://docstore.local.docksal/api/documents?filter[f1][group][conjunction]=OR&filter[p2][condition][memberOf]=f1&filter[org][condition][path]=silk_organizations&filter[org][condition][operator]=%3D&filter[org][condition][value]=caaa5a37-9717-4fbc-a732-c2ff6da4f1fa" | jq
+
+curl -g "http://docstore.local.docksal/api/documents?filter[f1][group][conjunction]=OR&filter[p1][condition][path]=silk_my_id&filter[p1][condition][operator]=%3D&filter[p1][condition][value]=42&filter[p1][condition][memberOf]=f1&filter[p2][condition][path]=silk_my_id&filter[p2][condition][operator]=%3D&filter[p2][condition][value]=7&filter[p2][condition][memberOf]=f1&filter[org][condition][path]=silk_organizations_label&filter[org][condition][operator]=STARTS_WITH&filter[org][condition][value]=U" | jq
+```
+
 ### Create document
 
 ```bash

@@ -487,3 +487,24 @@ function _docstore_setup_testing() {
   Cache::invalidateTags(['documents']);
   Cache::invalidateTags(['document_fields']);
 }
+
+/**
+ * Implements hook_search_api_solr_converted_query_alter().
+ */
+function docstore_search_api_solr_converted_query_alter(\Solarium\Core\Query\QueryInterface $solarium_query, \Drupal\search_api\Query\QueryInterface $query) {
+  /** @var \Solarium\QueryType\Select\Query\Query $solarium_query */
+  foreach ($solarium_query->getFilterQueries() as &$filter) {
+    $parts = explode(':', $filter->getQuery());
+    // Has to be a label.
+    if (strpos($parts[0], '_label')) {
+      // Is is a wildcard?
+      if (strpos($parts[1], '*"')) {
+        // No spaces allowed
+        if (!strpos($parts[1], ' ')) {
+          $parts[1] = str_replace('"', '', $parts[1]);
+          $filter->setQuery(implode(':', $parts));
+        }
+      }
+    }
+  }
+}
