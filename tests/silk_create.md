@@ -911,6 +911,24 @@ Test limit.
 
 ## GET /documents
 
+Test offset.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+* ?page[offset]=4
+
+===
+
+```json
+[]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /documents
+
 Test illegal sort.
 
 * Content-Type: "application/json"

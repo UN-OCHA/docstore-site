@@ -228,7 +228,7 @@ class ParseQueryParameters {
    *   The query to append to.
    */
   public function applyPagerToIndex(array $pagers, QueryInterface &$query) {
-    $query->range($pagers['page'] * $pagers['limit'], $pagers['limit']);
+    $query->range($pagers['offset'] * $pagers['limit'], $pagers['limit']);
   }
 
   /**
