@@ -2,6 +2,8 @@
 
 namespace Drupal\docstore;
 
+use Drupal\search_api\Query\QueryInterface;
+
 /**
  * Provides helper methods for parsing query parameters.
  */
@@ -74,10 +76,10 @@ class ParseQueryParameters {
    * @param array $filters
    *   The filter query string.
    *
-   * @return []
+   * @return array
    *   The tree of all the filters.
    */
-  public function parseFilters($filters) {
+  public function parseFilters(array $filters) {
     $items = $this->expand($filters);
 
     $root = [
@@ -93,36 +95,38 @@ class ParseQueryParameters {
   /**
    * Parse sort parameters.
    *
-   * @param array $filters
+   * @param array $sorters
    *   The sort query string.
    *
-   * @return []
+   * @return array
    *   The sort.
    */
-  public function parseSort($filters) {
+  public function parseSort(array $sorters) {
+    return $sorters;
   }
 
   /**
    * Parse paging parameters.
    *
-   * @param array $filters
+   * @param array $pagers
    *   The paging query string.
    *
-   * @return []
+   * @return array
    *   The paging info.
    */
-  public function parsePaging($filters) {
+  public function parsePaging(array $pagers) {
+    return $pagers;
   }
 
   /**
    * Apply filters to search Api query.
    *
-   * @param array $filters.
+   * @param array $filters
    *   The filters as a tree.
    * @param \Drupal\search_api\Query\QueryInterface $query
    *   The query to append to.
    */
-  public function applyFiltersToIndex($filters, &$query) {
+  public function applyFiltersToIndex(array $filters, QueryInterface &$query) {
     if (!empty($filters)) {
       $conditions = $query->createConditionGroup($filters['group']['conjunction']);
       foreach ($filters['group']['members'] as $filter) {
@@ -144,23 +148,23 @@ class ParseQueryParameters {
   /**
    * Apply sorters to search Api query.
    *
-   * @param array $sorters.
+   * @param array $sorters
    *   The sorters as a tree.
    * @param \Drupal\search_api\Query\QueryInterface $query
    *   The query to append to.
    */
-  public function applySortToIndex($sorters, &$query) {
+  public function applySortToIndex(array $sorters, QueryInterface &$query) {
   }
 
   /**
    * Apply pagers to search Api query.
    *
-   * @param array $pagers.
+   * @param array $pagers
    *   The pagers as a tree.
    * @param \Drupal\search_api\Query\QueryInterface $query
    *   The query to append to.
    */
-  public function applyPagerToIndex($pagers, &$query) {
+  public function applyPagerToIndex(array $pagers, QueryInterface &$query) {
   }
 
   /**

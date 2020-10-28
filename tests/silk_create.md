@@ -861,3 +861,20 @@ Example output.
 * Status: `400`
 * Content-Type: "application/json"
 * Data.message: "Term is in use and can not be deleted"
+
+## GET /documents
+
+Test filters.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+* ?filter[f1][group][conjunction]=OR
+* ?filter[p1][condition][path]={field_id}
+* ?filter[p1][condition][value]=42
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].uuid: {doc1}

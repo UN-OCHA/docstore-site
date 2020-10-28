@@ -171,28 +171,18 @@ class ApiController extends ControllerBase {
     $index = Index::load('documents');
     $query = $index->query();
 
-    $parse_mode = \Drupal::service('plugin.manager.search_api.parse_mode')->createInstance('terms');
-    $parse_mode->setConjunction('OR');
-    $query->setParseMode($parse_mode);
-    $query->setFulltextFields(['title']);
-
-    // curl -g "http://docstore.local.docksal/api/documents?filter[rock-group][group][conjunction]=OR&filter[janis-filter][condition][path]=silk_my_id&filter[janis-filter][condition][operator]=%3D&filter[janis-filter][condition][value]=42&filter[janis-filter][condition][memberOf]=rock-group&filter[joan-filter][condition][path]=silk_my_id&filter[joan-filter][condition][operator]=%3D&filter[joan-filter][condition][value]=7&filter[joan-filter][condition][memberOf]=rock-group&filter[last-name-filter][condition][path]=silk_organizations&filter[last-name-filter][condition][operator]=STARTS_WITH&filter[last-name-filter][condition][value]=Q3" | jq
-    $parser = new ParseQueryParameters();
-
     // Append filters.
+    $parser = new ParseQueryParameters();
     if ($request->query->has('filter')) {
       $filters = $parser->parseFilters($request->query->get('filter'));
-      \Drupal::logger('filters')->notice('<pre>' . print_r($filters, TRUE) . '</pre>');
       $parser->applyFiltersToIndex($filters, $query);
     }
     if ($request->query->has('sort')) {
       $sorters = $parser->parseSort($request->query->get('sort'));
-      \Drupal::logger('sorters')->notice('<pre>' . print_r($sorters, TRUE) . '</pre>');
       $parser->applySortToIndex($sorters, $query);
     }
     if ($request->query->has('page')) {
       $pagers = $parser->parsePaging($request->query->get('page'));
-      \Drupal::logger('pagers')->notice('<pre>' . print_r($pagers, TRUE) . '</pre>');
       $parser->applyPagerToIndex($pagers, $query);
     }
 
