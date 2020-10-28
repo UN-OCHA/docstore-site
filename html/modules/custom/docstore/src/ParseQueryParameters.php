@@ -186,6 +186,7 @@ class ParseQueryParameters {
    *   The query to append to.
    */
   public function applyFiltersToIndex(array $filters, QueryInterface &$query) {
+    // TODO make it recursive.
     if (!empty($filters)) {
       $conditions = $query->createConditionGroup($filters['group']['conjunction']);
       foreach ($filters['group']['members'] as $filter) {
