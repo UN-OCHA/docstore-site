@@ -908,3 +908,18 @@ Test limit.
 * Status: `200`
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
+
+## GET /documents
+
+Test illegal sort.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+* ?sort=-createdxx
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Sort \"createdxx\" is not valid solr field."
