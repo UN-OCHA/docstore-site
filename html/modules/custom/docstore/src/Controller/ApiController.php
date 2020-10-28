@@ -186,8 +186,13 @@ class ApiController extends ControllerBase {
       $parser->applyPagerToIndex($pagers, $query);
     }
 
-    // Execute.
-    $results = $query->execute();
+    try {
+      // Execute.
+      $results = $query->execute();
+    }
+    catch (\Drupal\search_api_solr\SearchApiSolrException $exception) {
+      throw new BadRequestHttpException($exception->getMessage());
+    }
 
     // Use solr response directly.
     $solr_response = $results->getExtraData('search_api_solr_response', []);
