@@ -17,6 +17,7 @@ use Drupal\Core\File\FileSystem;
 use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\State\State;
+use Drupal\docstore\ParseQueryParameters;
 use Drupal\entity_usage\EntityUsage;
 use Drupal\file\Entity\File;
 use Drupal\file\FileUsage\FileUsageInterface;
@@ -163,12 +164,29 @@ class ApiController extends ControllerBase {
   /**
    * Get documents.
    */
-  public function getDocuments() {
+  public function getDocuments(Request $request) {
     $data = [];
 
     // Query index.
     $index = Index::load('documents');
     $query = $index->query();
+
+    // Append filters.
+    $parser = new ParseQueryParameters();
+    if ($request->query->has('filter')) {
+      $filters = $parser->parseFilters($request->query->get('filter'));
+      $parser->applyFiltersToIndex($filters, $query);
+    }
+    if ($request->query->has('sort')) {
+      $sorters = $parser->parseSort($request->query->get('sort'));
+      $parser->applySortToIndex($sorters, $query);
+    }
+    if ($request->query->has('page')) {
+      $pagers = $parser->parsePaging($request->query->get('page'));
+      $parser->applyPagerToIndex($pagers, $query);
+    }
+
+    // Execute.
     $results = $query->execute();
 
     // Use solr response directly.
@@ -194,7 +212,11 @@ class ApiController extends ControllerBase {
     }
 
     $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
+      'url.query_args:filter',
+      'url.query_args:sort',
+      'url.query_args:page',
+    ]));
 
     return $response;
   }
