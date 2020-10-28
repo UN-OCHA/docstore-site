@@ -25,6 +25,8 @@ curl -g "http://docstore.local.docksal/api/documents?filter[f1][group][conjuncti
 
 curl -g "http://docstore.local.docksal/api/documents?filter[f1][group][conjunction]=OR&filter[org][condition][memberOf]=f1&filter[org][condition][path]=silk_organizations_label&filter[org][condition][value]=WF*" | jq
 
+curl -g "http://docstore.local.docksal/api/documents?page[limit]=7&page[offset]=2" | jq
+
 # to be tested
 
 curl -g "http://docstore.local.docksal/api/documents?filter[f1][group][conjunction]=OR&filter[org][condition][memberOf]=f1&filter[org][condition][path]=silk_organizations_label&filter[org][condition][operator]=STARTS_WITH&filter[org][condition][value]=U" | jq

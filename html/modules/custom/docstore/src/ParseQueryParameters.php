@@ -3,11 +3,54 @@
 namespace Drupal\docstore;
 
 use Drupal\search_api\Query\QueryInterface;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
  * Provides helper methods for parsing query parameters.
  */
 class ParseQueryParameters {
+
+  /**
+   * The offset key in the page parameter: page[offset].
+   *
+   * @var string
+   */
+  const OFFSET_KEY = 'offset';
+
+  /**
+   * The size key in the page parameter: page[limit].
+   *
+   * @var string
+   */
+  const SIZE_KEY = 'limit';
+
+  /**
+   * Default offset.
+   *
+   * @var int
+   */
+  const DEFAULT_OFFSET = 0;
+
+  /**
+   * Max size.
+   *
+   * @var int
+   */
+  const SIZE_MAX = 100;
+
+  /**
+   * The direction key in the sort parameter: sort[lorem][<direction>].
+   *
+   * @var string
+   */
+  const DIRECTION_KEY = 'direction';
+
+  /**
+   * The langcode key in the sort parameter: sort[lorem][<langcode>].
+   *
+   * @var string
+   */
+  const LANGUAGE_KEY = 'langcode';
 
   /**
    * The value key name.
@@ -29,13 +72,6 @@ class ParseQueryParameters {
    * @var string
    */
   const OPERATOR_KEY = 'operator';
-
-  /**
-   * The filter key name.
-   *
-   * @var string
-   */
-  const KEY_NAME = 'filter';
 
   /**
    * The key for the implicit root group.
@@ -95,14 +131,25 @@ class ParseQueryParameters {
   /**
    * Parse sort parameters.
    *
-   * @param array $sorters
+   * @param mixed $sorters
    *   The sort query string.
    *
    * @return array
    *   The sort.
    */
-  public function parseSort(array $sorters) {
-    return $sorters;
+  public function parseSort($sorters) {
+    // Expand sort into a more expressive sort parameter.
+    if (is_string($sorters)) {
+      $sorters = $this->expandSortFieldString($sorters);
+    }
+
+    // Expand any defaults into the sort array.
+    $expanded = [];
+    foreach ($sorters as $sort_index => $sort_item) {
+      $expanded[$sort_index] = $this->expandSortItem($sort_item);
+    }
+
+    return $expanded;
   }
 
   /**
@@ -115,7 +162,19 @@ class ParseQueryParameters {
    *   The paging info.
    */
   public function parsePaging(array $pagers) {
-    return $pagers;
+    $expanded = $pagers + [
+      static::OFFSET_KEY => static::DEFAULT_OFFSET,
+      static::SIZE_KEY => static::SIZE_MAX,
+    ];
+
+    if ($expanded[static::SIZE_KEY] > static::SIZE_MAX) {
+      $expanded[static::SIZE_KEY] = static::SIZE_MAX;
+    }
+
+    return [
+      'offset' => $expanded[static::OFFSET_KEY],
+      'limit' => $expanded[static::SIZE_KEY],
+    ];
   }
 
   /**
@@ -154,6 +213,9 @@ class ParseQueryParameters {
    *   The query to append to.
    */
   public function applySortToIndex(array $sorters, QueryInterface &$query) {
+    foreach ($sorters as $sorter) {
+      $query->sort($sorter['path'], $sorter['direction']);
+    }
   }
 
   /**
@@ -165,6 +227,7 @@ class ParseQueryParameters {
    *   The query to append to.
    */
   public function applyPagerToIndex(array $pagers, QueryInterface &$query) {
+    $query->range($pagers['page'] * $pagers['limit'], $pagers['limit']);
   }
 
   /**
@@ -282,6 +345,67 @@ class ParseQueryParameters {
     $root[static::GROUP_KEY]['members'] = $members;
 
     return $root;
+  }
+
+  /**
+   * Expands a simple string sort into a more expressive sort that we can use.
+   *
+   * @param string $fields
+   *   The comma separated list of fields to expand into an array.
+   *
+   * @return array
+   *   The expanded sort.
+   */
+  protected static function expandSortFieldString($fields) {
+    return array_map(function ($field) {
+      $sort = [];
+
+      if ($field[0] == '-') {
+        $sort[static::DIRECTION_KEY] = 'DESC';
+        $sort[static::PATH_KEY] = substr($field, 1);
+      }
+      else {
+        $sort[static::DIRECTION_KEY] = 'ASC';
+        $sort[static::PATH_KEY] = $field;
+      }
+
+      return $sort;
+    }, explode(',', $fields));
+  }
+
+  /**
+   * Expands a sort item in case a shortcut was used.
+   *
+   * @param array $sort_item
+   *   The raw sort item.
+   *
+   * @return array
+   *   The expanded sort item.
+   */
+  protected function expandSortItem(array $sort_item) {
+    $defaults = [
+      static::DIRECTION_KEY => 'ASC',
+      static::LANGUAGE_KEY => NULL,
+    ];
+
+    if (!isset($sort_item[static::PATH_KEY])) {
+      throw new BadRequestHttpException('You need to provide a field name for the sort parameter.');
+    }
+
+    $expected_keys = [
+      static::PATH_KEY,
+      static::DIRECTION_KEY,
+      static::LANGUAGE_KEY,
+    ];
+
+    $expanded = array_merge($defaults, $sort_item);
+
+    // Verify correct sort keys.
+    if (count(array_diff($expected_keys, array_keys($expanded))) > 0) {
+      throw new BadRequestHttpException('You have provided an invalid set of sort keys.');
+    }
+
+    return $expanded;
   }
 
 }

@@ -878,3 +878,33 @@ Test filters.
 * Status: `200`
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
+
+## GET /documents
+
+Test sort.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+* ?sort=-created
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].uuid: {doc2}
+
+## GET /documents
+
+Test limit.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+* ?page[limit]=1
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].uuid: {doc1}

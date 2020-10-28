@@ -212,7 +212,11 @@ class ApiController extends ControllerBase {
     }
 
     $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts(['url.query_args:filter']));
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
+      'url.query_args:filter',
+      'url.query_args:sort',
+      'url.query_args:page',
+    ]));
 
     return $response;
   }
