@@ -25,6 +25,7 @@ use Drupal\file\FileUsage\FileUsageInterface;
 use Drupal\media\Entity\Media;
 use Drupal\node\Entity\Node;
 use Drupal\search_api\Entity\Index;
+use Drupal\search_api_solr\SearchApiSolrException;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -191,7 +192,7 @@ class ApiController extends ControllerBase {
       // Execute.
       $results = $query->execute();
     }
-    catch (\Drupal\search_api_solr\SearchApiSolrException $exception) {
+    catch (SearchApiSolrException $exception) {
       throw new BadRequestHttpException($exception->getMessage());
     }
 
@@ -772,7 +773,7 @@ class ApiController extends ControllerBase {
     }
 
     $data = [
-      'message' => 'Vocabulary deleted'
+      'message' => 'Vocabulary deleted',
     ];
 
     // Invalidate cache.
@@ -835,17 +836,17 @@ class ApiController extends ControllerBase {
     $provider = $this->getProvider();
 
     // Id is either UUID or machine name.
-    $vocabulary = $this->getVocabularyMachineName($id, $provider->get('prefix')->value);
+    $vocabulary = $this->loadVocabulary($id);
 
-    // Check field parameters.
-    $this->validFieldParameters($params, $provider);
+    // Create vocabulary field.
+    $manager = new ManageFields($provider, $this->entityFieldManager);
 
     // Create field.
-    if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
-      $field_name = docstore_create_vocabulary_reference_field_for_provider($vocabulary->id(), $params['label'], $params['target'], $params['multiple'], $provider->get('prefix')->value);
+    try {
+      $field_name = $manager->addVocabularyField($vocabulary, $params);
     }
-    else {
-      $field_name = docstore_create_vocabulary_field_for_provider($vocabulary->id(), $params['label'], $params['type'], $params['multiple'], $provider->get('prefix')->value);
+    catch (\Exception $exception) {
+      throw new BadRequestHttpException($exception->getMessage());
     }
 
     $data = [
@@ -885,10 +886,6 @@ class ApiController extends ControllerBase {
    * Get vocabulary machine name.
    */
   protected function getVocabularyMachineName($id, $provider_prefix) {
-    if (!docstore_vocabulary_is_valid($id, $provider_prefix)) {
-      throw new BadRequestHttpException('Invalid vocabulary');
-    }
-
     if (Uuid::isValid($id)) {
       $vocabulary = $this->entityRepository->loadEntityByUuid('taxonomy_vocabulary', $id);
     }
@@ -1700,48 +1697,6 @@ class ApiController extends ControllerBase {
    */
   protected function entityInUse($entity) {
     return !empty($this->entityUsage->listSources($entity));
-  }
-
-  /**
-   * Check field parameters.
-   */
-  protected function validFieldParameters(&$params, $provider) {
-    // Multi value field.
-    if (!isset($params['multiple'])) {
-      $params['multiple'] = FALSE;
-    }
-
-    // Check required fields.
-    if (empty($params['label'])) {
-      throw new \Exception('Label is required');
-    }
-
-    // If target is specified, type is not needed.
-    if (isset($params['target'])) {
-      $params['type'] = 'entity_reference_uuid';
-    }
-    else {
-      if (empty($params['type'])) {
-        throw new \Exception('Type is required');
-      }
-
-      $allowed_types = docstore_allowed_field_types();
-      if (!isset($allowed_types[$params['type']])) {
-        throw new \Exception('Unknown type');
-      }
-    }
-
-    // Reference fields need a target as well.
-    if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
-      if (empty($params['target'])) {
-        throw new \Exception('Target is required for reference fields');
-      }
-
-      // Make sure bundle is valid.
-      if (!docstore_vocabulary_is_valid($params['target'], $provider->get('prefix')->value)) {
-        throw new \Exception('Target does not exist or is invalid');
-      }
-    }
   }
 
 }

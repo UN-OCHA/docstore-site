@@ -92,7 +92,7 @@ class ManageFields {
   /**
    * Add field to index.
    */
-  function addDocumentFieldToIndex($field_name, $field_type, $label) {
+  protected function addDocumentFieldToIndex($field_name, $field_type, $label) {
     $field_type_mapping = $this->allowedFieldTypes();
 
     // Skip unknown field types.
@@ -153,7 +153,7 @@ class ManageFields {
         throw new \Exception('Type is required');
       }
 
-      $allowed_types = docstore_allowed_field_types();
+      $allowed_types = $this->allowedFieldTypes();
       if (!isset($allowed_types[$params['type']])) {
         throw new \Exception('Unknown type');
       }
@@ -175,7 +175,7 @@ class ManageFields {
   /**
    * Check is a vocabulary does exist.
    */
-  function vocabularyIsValid($machine_name) {
+  protected function vocabularyIsValid($machine_name) {
     if (Uuid::isValid($machine_name)) {
       $vocabulary = \Drupal::service('entity.repository')->loadEntityByUuid('taxonomy_vocabulary', $machine_name);
     }
@@ -209,6 +209,8 @@ class ManageFields {
     foreach ($map as $field_name => $field_info) {
       $data[$field_name] = $field_info->getType();
     }
+
+    return $data;
   }
 
   /**
@@ -358,12 +360,12 @@ class ManageFields {
    * Create vocabulary.
    *
    * @param array $params
-   *  Label and author.
+   *   Label and author.
    *
    * @return \Drupal\taxonomy\Entity\Vocabulary
    *   Newly created vocabulary.
    */
-  public function createVocabulary($params) {
+  public function createVocabulary(array $params) {
     // Check required fields.
     if (empty($params['label'])) {
       throw new \Exception('Label is required');
@@ -390,7 +392,7 @@ class ManageFields {
     $this->createVocabularyBaseFieldCreated($machine_name);
 
     // Add provider uuid.
-    $this->createVocabularyBaseFieldProvider_uuid($machine_name);
+    $this->createVocabularyBaseFieldProviderUuid($machine_name);
 
     // Add author HID.
     $this->createVocabularyBaseFieldHidId($machine_name);
@@ -398,22 +400,20 @@ class ManageFields {
     return $vocabulary;
   }
 
-/**
+  /**
    * Update vocabulary.
    *
    * @param \Drupal\taxonomy\Entity\Vocabulary $vocabulary
-   *  Vocabulary to update.
-   *
+   *   Vocabulary to update.
    * @param array $params
-   *  Label, description.
-   *
+   *   Label, description.
    * @param string $method
-   *  Either PUT or PATCH.
+   *   Either PUT or PATCH.
    *
    * @return \Drupal\taxonomy\Entity\Vocabulary
    *   Newly created vocabulary.
    */
-  public function updateVocabulary($vocabulary, $params, $method) {
+  public function updateVocabulary(Vocabulary $vocabulary, array $params, string $method) {
     $protected_fields = [
       'base_author_hid',
       'base_provider_uuid',
@@ -486,9 +486,9 @@ class ManageFields {
    * Delete vocabulary.
    *
    * @param \Drupal\taxonomy\Entity\Vocabulary $vocabulary
-   *  Vocabulary to delete.
+   *   Vocabulary to delete.
    */
-  public function deleteVocabulary($vocabulary) {
+  public function deleteVocabulary(Vocabulary $vocabulary) {
     // Provider can only update own vocabulary.
     if ($vocabulary->getThirdPartySetting('docstore', 'base_provider_uuid') !== $this->provider->uuid()) {
       throw new \Exception('Vocabulary is not owned by you');
@@ -498,9 +498,98 @@ class ManageFields {
   }
 
   /**
-   * Add created field to a vocabulary.
+   * Create vocabulary fields.
+   *
+   * @param \Drupal\taxonomy\Entity\Vocabulary $vocabulary
+   *   Vocabulary.
    */
-  function createVocabularyBaseFieldCreated($bundle) {
+  public function addVocabularyField($vocabulary, $params) {
+    // Check field parameters.
+    $this->validFieldParameters($params);
+
+    // Create field.
+    if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
+      $field_name = $this->createVocabularyReferenceField($vocabulary->id(), $params['label'], $params['target'], $params['multiple']);
+    }
+    else {
+      $field_name = $this->createVocabularyField($vocabulary->id(), $params['label'], $params['type'], $params['multiple']);
+    }
+
+    return $field_name;
+  }
+
+  /**
+   * Create a vocabulary field for a provider.
+   */
+  protected function createVocabularyField($bundle, $label, $field_type, $multiple = FALSE) {
+    $provider_prefix = $bundle . '_';
+    $field_name = $this->generateUniqueMachineName($label, 'taxonomy_term', $provider_prefix);
+
+    // Create storage.
+    $field_storage = FieldStorageConfig::create([
+      'field_name' => $field_name,
+      'entity_type' => 'taxonomy_term',
+      'type' => $field_type,
+      'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
+    ]);
+    $field_storage->save();
+
+    // Create instance.
+    FieldConfig::create([
+      'field_storage' => $field_storage,
+      'bundle' => $bundle,
+      'label' => $label,
+    ])->save();
+
+    return $field_name;
+  }
+
+  /**
+   * Create a reference field on a vocabulary for a provider.
+   */
+  protected function createVocabularyReferenceField($bundle, $label, $target, $multiple = FALSE) {
+    $field_type = 'entity_reference_uuid';
+
+    $provider_prefix = $bundle . '_';
+    $field_name = $this->generateUniqueMachineName($label, 'taxonomy_term', $provider_prefix);
+
+    // Create storage.
+    $field_storage = FieldStorageConfig::create([
+      'field_name' => $field_name,
+      'entity_type' => 'taxonomy_term',
+      'type' => $field_type,
+      'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
+      'settings' => [
+        'target_type' => 'taxonomy_term',
+      ],
+    ]);
+    $field_storage->save();
+
+    // Create instance.
+    FieldConfig::create([
+      'field_storage' => $field_storage,
+      'bundle' => $bundle,
+      'label' => $label,
+      'settings' => [
+        'handler' => 'default:taxonomy_term',
+        'handler_settings' => [
+          'target_bundles' => [
+            $target => $target,
+          ],
+        ],
+      ],
+    ])->save();
+
+    return $field_name;
+  }
+
+  /**
+   * Add created field to a vocabulary.
+   *
+   * @param string $bundle
+   *   Vocabulary bundle.
+   */
+  protected function createVocabularyBaseFieldCreated(string $bundle) {
     $label = 'Created';
     $field_name = 'created';
     $field_type = 'timestamp';
@@ -526,8 +615,11 @@ class ManageFields {
 
   /**
    * Add provider uuid field to a vocabulary.
+   *
+   * @param string $bundle
+   *   Vocabulary bundle.
    */
-  function createVocabularyBaseFieldProvider_uuid($bundle) {
+  protected function createVocabularyBaseFieldProviderUuid(string $bundle) {
     $label = 'Provider UUID';
     $field_name = 'base_provider_uuid';
     $field_type = 'entity_reference_uuid';
@@ -565,8 +657,11 @@ class ManageFields {
 
   /**
    * Add HID id field to a vocabulary.
+   *
+   * @param string $bundle
+   *   Vocabulary bundle.
    */
-  function createVocabularyBaseFieldHidId($bundle) {
+  protected function createVocabularyBaseFieldHidId(string $bundle) {
     $label = 'Author (HID)';
     $field_name = 'base_author_hid';
     $field_type = 'string';
