@@ -470,12 +470,12 @@ class ApiController extends ControllerBase {
    * Get document fields.
    */
   public function getDocumentFields() {
-    $data = [];
+    // Load provider.
+    $provider = $this->getProvider();
 
-    $map = $this->entityFieldManager->getFieldDefinitions('node', 'document');
-    foreach ($map as $field_name => $field_info) {
-      $data[$field_name] = $field_info->getType();
-    }
+    // Create field.
+    $manager = new ManageFields($provider, $this->entityFieldManager);
+    $data = $manager->getDocumentFields();
 
     // Add cache tags.
     $cache_tags['#cache'] = [
@@ -486,8 +486,6 @@ class ApiController extends ControllerBase {
 
     $response = new CacheableJsonResponse($data);
     $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
-
-    $response = new CacheableJsonResponse($data);
 
     return $response;
   }
@@ -502,21 +500,24 @@ class ApiController extends ControllerBase {
     // Load provider.
     $provider = $this->getProvider();
 
-    // Check field parameters.
-    $this->validFieldParameters($params, $provider);
+    // Create field.
+    $manager = new ManageFields($provider, $this->entityFieldManager);
 
     // Create field.
-    if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
-      $field_name = docstore_create_document_reference_field_for_provider($params['label'], $params['target'], $params['multiple'], $provider->get('prefix')->value);
+    try {
+      $field_name = $manager->addDocumentField($params);
     }
-    else {
-      $field_name = docstore_create_document_field_for_provider($params['label'], $params['type'], $params['multiple'], $provider->get('prefix')->value);
+    catch (\Exception $exception) {
+      throw new BadRequestHttpException($exception->getMessage());
     }
 
     $data = [
       'message' => 'Field created',
       'field_name' => $field_name,
     ];
+
+    // Invalidate cache.
+    Cache::invalidateTags(['document_fields']);
 
     $response = new JsonResponse($data);
     $response->setStatusCode(201);
@@ -528,26 +529,18 @@ class ApiController extends ControllerBase {
    * Get document field.
    */
   public function getDocumentField($id, Request $request) {
-    $info = FALSE;
+    // Get provider.
+    $provider = $this->getProvider();
 
-    $map = $this->entityFieldManager->getFieldDefinitions('node', 'document');
-    foreach ($map as $field_name => $field_info) {
-      if ($field_name === $id) {
-        $info = $field_info;
-      }
+    // Get field config.
+    $manager = new ManageFields($provider, $this->entityFieldManager);
+
+    try {
+      $data = $manager->getDocumentField($id);
     }
-
-    if (!$info) {
-      throw new BadRequestHttpException("Field does not exist");
+    catch (\Exception $exception) {
+      throw new BadRequestHttpException($exception->getMessage());
     }
-
-    $data = [
-      'name' => $info->getName(),
-      'label' => $info->getLabel(),
-      'description' => $info->getDescription(),
-      'type' => $info->getType(),
-      'multiple' => $info->getFieldStorageDefinition()->isMultiple(),
-    ];
 
     // Add cache tags.
     $cache_tags['#cache'] = [
@@ -566,36 +559,32 @@ class ApiController extends ControllerBase {
    * Update document field.
    */
   public function updateDocumentField($id, Request $request) {
-    $info = FALSE;
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
 
-    $map = $this->entityFieldManager->getFieldDefinitions('node', 'document');
-    foreach ($map as $field_name => $field_info) {
-      if ($field_name === $id) {
-        $info = $field_info;
-      }
+    // Load provider.
+    $provider = $this->getProvider();
+
+    // Get manager.
+    $manager = new ManageFields($provider, $this->entityFieldManager);
+
+    // Update field.
+    try {
+      $field_name = $manager->updateDocumentField($id, $params);
     }
-
-    if (!$info) {
-      throw new BadRequestHttpException("Field does not exist");
+    catch (\Exception $exception) {
+      throw new BadRequestHttpException($exception->getMessage());
     }
 
     $data = [
-      'name' => $info->getName(),
-      'label' => $info->getLabel(),
-      'description' => $info->getDescription(),
-      'type' => $info->getType(),
-      'multiple' => $info->getFieldStorageDefinition()->isMultiple(),
+      'message' => 'Field updated',
+      'field_name' => $field_name,
     ];
 
-    // Add cache tags.
-    $cache_tags['#cache'] = [
-      'tags' => [
-        'document_fields',
-      ],
-    ];
+    // Invalidate cache.
+    Cache::invalidateTags(['document_fields']);
 
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+    $response = new JsonResponse($data);
 
     return $response;
   }
@@ -604,28 +593,25 @@ class ApiController extends ControllerBase {
    * Delete document field.
    */
   public function deleteDocumentField($id, Request $request) {
-    $info = FALSE;
-
-    $map = $this->entityFieldManager->getFieldDefinitions('node', 'document');
-    foreach ($map as $field_name => $field_info) {
-      if ($field_name === $id) {
-        $info = $field_info;
-      }
-    }
-
-    if (!$info) {
-      throw new BadRequestHttpException("Field does not exist");
-    }
-
     // Get provider.
     $provider = $this->getProvider();
-    $manager = new ManageFields($provider);
-    $manager->deleteDocumentField($info->getName());
 
+    // Delete field storage and config.
+    $manager = new ManageFields($provider, $this->entityFieldManager);
+
+    // Create field.
+    try {
+      $manager->deleteDocumentField($id);
+    }
+    catch (\Exception $exception) {
+      throw new BadRequestHttpException($exception->getMessage());
+    }
+
+    // Invalidate cache.
     Cache::invalidateTags(['document_fields']);
 
     $data = [
-      'message' => 'Field is deleted',
+      'message' => 'Field deleted',
     ];
 
     $response = new JsonResponse($data);
@@ -670,39 +656,26 @@ class ApiController extends ControllerBase {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
 
-    // Check required fields.
-    if (empty($params['label'])) {
-      throw new BadRequestHttpException('Label is required');
-    }
-
-    if (empty($params['author'])) {
-      throw new BadRequestHttpException('Author is required');
-    }
-
     // Get provider.
     $provider = $this->getProvider();
 
+    // Delete field storage and config.
+    $manager = new ManageFields($provider, $this->entityFieldManager);
+
     // Create field.
-    $machine_name = docstore_create_vocabulary_for_provider($params['label'], $provider->get('prefix')->value);
+    try {
+      $vocabulary = $manager->createVocabulary($params);
+    }
+    catch (\Exception $exception) {
+      throw new BadRequestHttpException($exception->getMessage());
+    }
 
-    // Set provider and hid.
-    $vocabulary = $this->loadVocabulary($machine_name);
-    $vocabulary->setThirdPartySetting('docstore', 'base_provider_uuid', $provider->uuid());
-    $vocabulary->setThirdPartySetting('docstore', 'base_author_hid', $params['author']);
-    $vocabulary->save();
-
-    // Add created field.
-    docstore_create_vocabulary_base_field_created($machine_name);
-
-    // Add provider uuid.
-    docstore_create_vocabulary_base_field_provider_uuid($machine_name);
-
-    // Add author HID.
-    docstore_create_vocabulary_base_field_hid_id($machine_name);
+    // Invalidate cache.
+    Cache::invalidateTags(['vocabularies']);
 
     $data = [
       'message' => 'Vocabulary created',
-      'machine_name' => $machine_name,
+      'machine_name' => $vocabulary->id(),
       'uuid' => $vocabulary->uuid(),
     ];
 
@@ -727,7 +700,7 @@ class ApiController extends ControllerBase {
 
     // Add cache tags.
     $cache_tags['#cache'] = [
-      'tags' => $vocabulary->getCacheTags(),
+      'tags' => $vocabulary->getCacheTags() + ['vocabularies'],
     ];
 
     $response = new CacheableJsonResponse($data);
@@ -740,26 +713,6 @@ class ApiController extends ControllerBase {
    * Update vocabulary.
    */
   public function updateVocabulary($id, Request $request) {
-    $protected_fields = [
-      'base_author_hid',
-      'base_provider_uuid',
-      'changed',
-      'created',
-      'default_langcode',
-      'langcode',
-      'parent',
-      'revision_created',
-      'revision_id',
-      'revision_log_message',
-      'revision_user',
-      'status',
-      'tid',
-      'uuid',
-      'vid',
-      'vocabulary',
-      'weight',
-    ];
-
     // Load vocabulary.
     $vocabulary = $this->loadVocabulary($id);
 
@@ -769,55 +722,24 @@ class ApiController extends ControllerBase {
     // Get provider.
     $provider = $this->getProvider();
 
-    // Provider can only update own vocabulary.
-    if ($vocabulary->getThirdPartySetting('docstore', 'base_provider_uuid') !== $provider->uuid()) {
-      throw new BadRequestHttpException('Vocabulary is not owned by you');
+    // Delete field storage and config.
+    $manager = new ManageFields($provider, $this->entityFieldManager);
+
+    // Update vocabulary.
+    try {
+      $vocabulary = $manager->updateVocabulary($vocabulary, $params, $request->getMethod());
     }
-
-    // Check required fields.
-    if ($request->getMethod() === 'PUT') {
-      if (empty($params['label'])) {
-        throw new BadRequestHttpException('Label is required');
-      }
+    catch (\Exception $exception) {
+      throw new BadRequestHttpException($exception->getMessage());
     }
-
-    // Label is actually name.
-    if (isset($params['label'])) {
-      $params['name'] = $params['label'];
-      unset($params['label']);
-    }
-
-    $updated_fields = [];
-
-    // Update all fields specified in params.
-    foreach ($params as $name => $values) {
-      // Make sure protected fields aren't set.
-      if (isset($protected_fields[$name])) {
-        throw new BadRequestHttpException(strtr('Field @name cannot be changed', ['@name' => $name]));
-      }
-
-      if ($name === 'name' || $name === 'description') {
-        $vocabulary->set($name, $values);
-        $updated_fields[] = $name;
-      }
-      else {
-        throw new BadRequestHttpException(strtr('Field @name does not exists', ['@name' => $name]));
-      }
-    }
-
-    // Remove all fields not part of params.
-    if ($request->getMethod() === 'PUT') {
-      if (!in_array('description', $updated_fields)) {
-        $vocabulary->set('description', NULL);
-      }
-    }
-
-    $vocabulary->save();
 
     $data = [
       'message' => 'Vocabulary updated',
       'uuid' => $vocabulary->uuid(),
     ];
+
+    // Invalidate cache.
+    Cache::invalidateTags(['vocabularies']);
 
     $response = new JsonResponse($data);
 
@@ -828,28 +750,33 @@ class ApiController extends ControllerBase {
    * Delete vocabulary.
    */
   public function deleteVocabulary($id, Request $request) {
-    // Load term.
+    // Load vocabulary.
     $vocabulary = $this->loadVocabulary($id);
-
-    // Get provider.
-    $provider = $this->getProvider();
-
-    // Provider can only update own vocabulary.
-    if ($vocabulary->getThirdPartySetting('docstore', 'base_provider_uuid') !== $provider->uuid()) {
-      throw new BadRequestHttpException('Vocabulary is not owned by you');
-    }
 
     // Check if term is in use.
     if ($this->entityInUse($vocabulary)) {
       throw new BadRequestHttpException('Vocabulary is in use and can not be deleted');
     }
 
+    // Get provider.
+    $provider = $this->getProvider();
+
+    $manager = new ManageFields($provider, $this->entityFieldManager);
+
+    // Delete.
+    try {
+      $vocabulary = $manager->deleteVocabulary($vocabulary);
+    }
+    catch (\Exception $exception) {
+      throw new BadRequestHttpException($exception->getMessage());
+    }
+
     $data = [
-      'message' => 'Vocabulary deleted',
-      'uuid' => $vocabulary->uuid(),
+      'message' => 'Vocabulary deleted'
     ];
 
-    $vocabulary->delete();
+    // Invalidate cache.
+    Cache::invalidateTags(['vocabularies']);
 
     $response = new JsonResponse($data);
 
@@ -943,7 +870,7 @@ class ApiController extends ControllerBase {
    * Get provider.
    */
   protected function getProvider() {
-    /** @var Drupal\Core\Session\AccountProxyInterface; */
+    /** @var Drupal\Core\Session\AccountProxy $current_user */
     $current_user = $this->currentUser();
     $provider = $current_user->getAccount();
 
@@ -974,48 +901,6 @@ class ApiController extends ControllerBase {
     }
 
     return $vocabulary;
-  }
-
-  /**
-   * Check field parameters.
-   */
-  protected function validFieldParameters(&$params, $provider) {
-    // Multi value field.
-    if (!isset($params['multiple'])) {
-      $params['multiple'] = FALSE;
-    }
-
-    // Check required fields.
-    if (empty($params['label'])) {
-      throw new BadRequestHttpException('Label is required');
-    }
-
-    // If target is specified, type is not needed.
-    if (isset($params['target'])) {
-      $params['type'] = 'entity_reference_uuid';
-    }
-    else {
-      if (empty($params['type'])) {
-        throw new BadRequestHttpException('Type is required');
-      }
-
-      $allowed_types = docstore_allowed_field_types();
-      if (!isset($allowed_types[$params['type']])) {
-        throw new BadRequestHttpException('Unknown type');
-      }
-    }
-
-    // Reference fields need a target as well.
-    if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
-      if (empty($params['target'])) {
-        throw new BadRequestHttpException('Target is required for reference fields');
-      }
-
-      // Make sure bundle is valid.
-      if (!docstore_vocabulary_is_valid($params['target'], $provider->get('prefix')->value)) {
-        throw new BadRequestHttpException('Target does not exist or is invalid');
-      }
-    }
   }
 
   /**
@@ -1815,6 +1700,48 @@ class ApiController extends ControllerBase {
    */
   protected function entityInUse($entity) {
     return !empty($this->entityUsage->listSources($entity));
+  }
+
+  /**
+   * Check field parameters.
+   */
+  protected function validFieldParameters(&$params, $provider) {
+    // Multi value field.
+    if (!isset($params['multiple'])) {
+      $params['multiple'] = FALSE;
+    }
+
+    // Check required fields.
+    if (empty($params['label'])) {
+      throw new \Exception('Label is required');
+    }
+
+    // If target is specified, type is not needed.
+    if (isset($params['target'])) {
+      $params['type'] = 'entity_reference_uuid';
+    }
+    else {
+      if (empty($params['type'])) {
+        throw new \Exception('Type is required');
+      }
+
+      $allowed_types = docstore_allowed_field_types();
+      if (!isset($allowed_types[$params['type']])) {
+        throw new \Exception('Unknown type');
+      }
+    }
+
+    // Reference fields need a target as well.
+    if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
+      if (empty($params['target'])) {
+        throw new \Exception('Target is required for reference fields');
+      }
+
+      // Make sure bundle is valid.
+      if (!docstore_vocabulary_is_valid($params['target'], $provider->get('prefix')->value)) {
+        throw new \Exception('Target does not exist or is invalid');
+      }
+    }
   }
 
 }
