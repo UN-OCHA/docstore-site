@@ -271,6 +271,42 @@ docstore_vocabulary_create_fields:
     _auth: ['docstore_auth']
     docstore_crud: 'C'
     docstore_access_level: 'A'
+docstore_vocabulary_get_field:
+  path: '/api/vocabularies/{id}/fields/{field_id}'
+  defaults:
+    _controller: 'docstore.api_controller:getVocabularyField'
+    _title: 'Get vocabulary field'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'U'
+    docstore_access_level: 'A'
+docstore_vocabulary_update_fields:
+  path: '/api/vocabularies/{id}/fields/{field_id}'
+  defaults:
+    _controller: 'docstore.api_controller:updateVocabularyField'
+    _title: 'Update vocabulary field'
+  methods: [PUT, PATCH]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'U'
+    docstore_access_level: 'A'
+docstore_vocabulary_delete_fields:
+  path: '/api/vocabularies/{id}/fields/{field_id}'
+  defaults:
+    _controller: 'docstore.api_controller:deleteVocabularyField'
+    _title: 'Delete vocabulary field'
+  methods: [DELETE]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'D'
+    docstore_access_level: 'A'
 
 # Terms
 docstore_get_terms:
