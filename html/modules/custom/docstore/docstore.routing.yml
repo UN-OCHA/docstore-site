@@ -123,6 +123,42 @@ docstore_document_create_fields:
     _auth: ['docstore_auth']
     docstore_crud: 'C'
     docstore_access_level: 'A'
+docstore_document_get_field:
+  path: '/api/document/fields/{id}'
+  defaults:
+    _controller: 'docstore.api_controller:getDocumentField'
+    _title: 'Get document field'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_document_update_field:
+  path: '/api/document/fields/{id}'
+  defaults:
+    _controller: 'docstore.api_controller:updateDocumentField'
+    _title: 'Update document field'
+  methods: [PUT, PATCH]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_document_delete_field:
+  path: '/api/document/fields/{id}'
+  defaults:
+    _controller: 'docstore.api_controller:deleteDocumentField'
+    _title: 'Delete document field'
+  methods: [DELETE]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
 
 # Vocabularies
 docstore_get_vocabularies:
@@ -190,19 +226,7 @@ docstore_update_vocabulary:
   defaults:
     _controller: 'docstore.api_controller:updateVocabulary'
     _title: 'Update vocabulary'
-  methods: [PUT]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'U'
-    docstore_access_level: 'B'
-docstore_patch_vocabulary:
-  path: '/api/vocabularies/{id}'
-  defaults:
-    _controller: 'docstore.api_controller:updateVocabulary'
-    _title: 'Update vocabulary'
-  methods: [PATCH]
+  methods: [PUT, PATCH]
   requirements:
     _docstore_access_check: 'TRUE'
   options:
@@ -302,19 +326,7 @@ docstore_update_term:
   defaults:
     _controller: 'docstore.api_controller:updateTerm'
     _title: 'Update term'
-  methods: [PUT]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'U'
-    docstore_access_level: 'B'
-docstore_patch_term:
-  path: '/api/terms/{id}'
-  defaults:
-    _controller: 'docstore.api_controller:updateTerm'
-    _title: 'Update term'
-  methods: [PATCH]
+  methods: [PUT, PATCH]
   requirements:
     _docstore_access_check: 'TRUE'
   options:
