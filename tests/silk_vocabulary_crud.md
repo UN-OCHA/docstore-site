@@ -323,7 +323,6 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.message: "Vocabulary deleted"
-* Data.uuid: {uuid}
 
 ## `GET /vocabularies/{machine_name}`
 

@@ -118,6 +118,7 @@ Add iso3 field to vocabulary.
 ```json
 {
   "label": "ISO 3 code",
+  "author": "hid_123456789",
   "type": "string"
 }
 ```
@@ -593,6 +594,7 @@ Add city field.
 ```json
 {
   "label": "My hometown",
+  "author": "hid_123456789",
   "target": "{city}"
 }
 ```
@@ -623,6 +625,7 @@ Add organizations field.
 ```json
 {
   "label": "Organizations",
+  "author": "hid_123456789",
   "target": "{organization}"
 }
 ```
@@ -653,6 +656,7 @@ Add id field.
 ```json
 {
   "label": "My Id",
+  "author": "hid_123456789",
   "type": "integer"
 }
 ```
