@@ -81,6 +81,8 @@ function docstore_create_document_field_for_provider($label, $field_type, $multi
   ]);
   $field_storage->save();
 
+  // TODO: $field_storage->setThirdPartySetting().
+
   // Create instance.
   FieldConfig::create([
     'field_storage' => $field_storage,

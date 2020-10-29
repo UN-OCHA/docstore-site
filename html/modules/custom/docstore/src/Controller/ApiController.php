@@ -18,6 +18,7 @@ use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\State\State;
 use Drupal\docstore\ParseQueryParameters;
+use Drupal\docstore\ManageFields;
 use Drupal\entity_usage\EntityUsage;
 use Drupal\file\Entity\File;
 use Drupal\file\FileUsage\FileUsageInterface;
@@ -524,10 +525,112 @@ class ApiController extends ControllerBase {
   }
 
   /**
+   * Get document field.
+   */
+  public function getDocumentField($id, Request $request) {
+    $info = FALSE;
+
+    $map = $this->entityFieldManager->getFieldDefinitions('node', 'document');
+    foreach ($map as $field_name => $field_info) {
+      if ($field_name === $id) {
+        $info = $field_info;
+      }
+    }
+
+    if (!$info) {
+      throw new BadRequestHttpException("Field does not exist");
+    }
+
+    $data = [
+      'name' => $info->getName(),
+      'label' => $info->getLabel(),
+      'description' => $info->getDescription(),
+      'type' => $info->getType(),
+      'multiple' => $info->getFieldStorageDefinition()->isMultiple(),
+    ];
+
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => [
+        'document_fields',
+      ],
+    ];
+
+    $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+
+    return $response;
+  }
+
+  /**
+   * Update document field.
+   */
+  public function updateDocumentField($id, Request $request) {
+    $info = FALSE;
+
+    $map = $this->entityFieldManager->getFieldDefinitions('node', 'document');
+    foreach ($map as $field_name => $field_info) {
+      if ($field_name === $id) {
+        $info = $field_info;
+      }
+    }
+
+    if (!$info) {
+      throw new BadRequestHttpException("Field does not exist");
+    }
+
+    $data = [
+      'name' => $info->getName(),
+      'label' => $info->getLabel(),
+      'description' => $info->getDescription(),
+      'type' => $info->getType(),
+      'multiple' => $info->getFieldStorageDefinition()->isMultiple(),
+    ];
+
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => [
+        'document_fields',
+      ],
+    ];
+
+    $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+
+    return $response;
+  }
+
+  /**
    * Delete document field.
    */
-  public function deleteDocumentField(Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  public function deleteDocumentField($id, Request $request) {
+    $info = FALSE;
+
+    $map = $this->entityFieldManager->getFieldDefinitions('node', 'document');
+    foreach ($map as $field_name => $field_info) {
+      if ($field_name === $id) {
+        $info = $field_info;
+      }
+    }
+
+    if (!$info) {
+      throw new BadRequestHttpException("Field does not exist");
+    }
+
+    // Get provider.
+    $provider = $this->getProvider();
+    $manager = new ManageFields($provider);
+    $manager->deleteDocumentField($info->getName());
+
+    Cache::invalidateTags(['document_fields']);
+
+    $data = [
+      'message' => 'Field is deleted',
+    ];
+
+    $response = new JsonResponse($data);
+
+    return $response;
   }
 
   /**
