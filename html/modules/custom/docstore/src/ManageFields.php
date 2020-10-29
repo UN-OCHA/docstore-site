@@ -502,8 +502,10 @@ class ManageFields {
    *
    * @param \Drupal\taxonomy\Entity\Vocabulary $vocabulary
    *   Vocabulary.
+   * @param array $params
+   *   Parameters to create the field.
    */
-  public function addVocabularyField($vocabulary, $params) {
+  public function addVocabularyField(Vocabulary $vocabulary, array $params) {
     // Check field parameters.
     $this->validFieldParameters($params);
 

@@ -5,15 +5,9 @@
  * Contains Document Store code.
  */
 
-use Drupal\Component\Uuid\Uuid;
 use Drupal\Core\Cache\Cache;
-use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
-use Drupal\taxonomy\Entity\Vocabulary;
-use Drupal\search_api\Entity\Index;
-use Drupal\search_api\Item\Field;
 use Drupal\user\Entity\User;
 use Symfony\Component\Yaml\Yaml;
 
