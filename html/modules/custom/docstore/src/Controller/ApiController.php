@@ -801,18 +801,7 @@ class ApiController extends ControllerBase {
    * Get vocabulary fields.
    */
   public function getVocabularyFields($id) {
-    $vocabulary = FALSE;
-    if (Uuid::isValid($id)) {
-      $vocabulary = $this->entityRepository->loadEntityByUuid('taxonomy_vocabulary', $id);
-    }
-    else {
-      // Assume it's the machine name.
-      $vocabulary = Vocabulary::load($id);
-    }
-
-    if (!$vocabulary) {
-      throw new NotFoundHttpException();
-    }
+    $vocabulary = $this->loadVocabulary($id);
 
     $data = [];
     $map = $this->entityFieldManager->getFieldDefinitions('taxonomy_term', $vocabulary->id());
@@ -821,6 +810,38 @@ class ApiController extends ControllerBase {
     }
 
     $response = new CacheableJsonResponse($data);
+
+    return $response;
+  }
+
+  /**
+   * Get vocabulary field.
+   */
+  public function getVocabularyField($id, $field_id) {
+    $vocabulary = $this->loadVocabulary($id);
+
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Get field config.
+    $manager = new ManageFields($provider, $this->entityFieldManager);
+
+    try {
+      $data = $manager->getVocabularyField($vocabulary, $field_id);
+    }
+    catch (\Exception $exception) {
+      throw new BadRequestHttpException($exception->getMessage());
+    }
+
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => [
+        'vocabulary_fields',
+      ],
+    ];
+
+    $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
 
     return $response;
   }
@@ -854,6 +875,9 @@ class ApiController extends ControllerBase {
       'field_name' => $field_name,
     ];
 
+    // Invalidate cache.
+    Cache::invalidateTags(['vocabulary_fields']);
+
     $response = new JsonResponse($data);
     $response->setStatusCode(201);
 
@@ -861,10 +885,74 @@ class ApiController extends ControllerBase {
   }
 
   /**
+   * Update vocabulary fields.
+   */
+  public function updateVocabularyField($id, $field_id, Request $request) {
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+
+    // Load provider.
+    $provider = $this->getProvider();
+
+    // Id is either UUID or machine name.
+    $vocabulary = $this->loadVocabulary($id);
+
+    // Create vocabulary field.
+    $manager = new ManageFields($provider, $this->entityFieldManager);
+
+    // Create field.
+    try {
+      $manager->updateVocabularyField($vocabulary, $field_id, $params);
+    }
+    catch (\Exception $exception) {
+      throw new BadRequestHttpException($exception->getMessage());
+    }
+
+    $data = [
+      'message' => 'Field updated',
+    ];
+
+    // Invalidate cache.
+    Cache::invalidateTags(['vocabulary_fields']);
+
+    $response = new JsonResponse($data);
+    $response->setStatusCode(200);
+
+    return $response;
+  }
+
+  /**
    * Delete vocabulary fields.
    */
-  public function deleteVocabularyField($id, Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+  public function deleteVocabularyField($id, $field_id, Request $request) {
+    // Load provider.
+    $provider = $this->getProvider();
+
+    // Id is either UUID or machine name.
+    $vocabulary = $this->loadVocabulary($id);
+
+    // Create vocabulary field.
+    $manager = new ManageFields($provider, $this->entityFieldManager);
+
+    // Create field.
+    try {
+      $manager->deleteVocabularyField($vocabulary, $field_id);
+    }
+    catch (\Exception $exception) {
+      throw new BadRequestHttpException($exception->getMessage());
+    }
+
+    $data = [
+      'message' => 'Field deleted',
+    ];
+
+    // Invalidate cache.
+    Cache::invalidateTags(['vocabulary_fields']);
+
+    $response = new JsonResponse($data);
+    $response->setStatusCode(200);
+
+    return $response;
   }
 
   /**

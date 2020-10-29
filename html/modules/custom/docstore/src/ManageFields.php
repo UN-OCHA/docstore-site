@@ -342,6 +342,8 @@ class ManageFields {
     if (isset($params['description'])) {
       $field->setDescription($params['description']);
     }
+
+    $field->save();
   }
 
   /**
@@ -518,6 +520,73 @@ class ManageFields {
     }
 
     return $field_name;
+  }
+
+  /**
+   * Get vocabulary field.
+   *
+   * @param \Drupal\taxonomy\Entity\Vocabulary $vocabulary
+   *   Vocabulary.
+   * @param string $field_name
+   *   Field name.
+   */
+  public function getVocabularyField(Vocabulary $vocabulary, string $field_name) {
+    $field = FieldConfig::loadByName('taxonomy_term', $vocabulary->id(), $field_name);
+    if (!$field) {
+      throw new \Exception('Field does not exist');
+    }
+
+    return [
+      'name' => $field->getName(),
+      'label' => $field->getLabel(),
+      'description' => $field->getDescription(),
+      'type' => $field->getType(),
+      'multiple' => $field->getFieldStorageDefinition()->isMultiple(),
+    ];
+  }
+
+  /**
+   * Update vocabulary field.
+   *
+   * @param \Drupal\taxonomy\Entity\Vocabulary $vocabulary
+   *   Vocabulary.
+   * @param string $field_name
+   *   Field name.
+   * @param array $params
+   *   Parameters to create the field.
+   */
+  public function updateVocabularyField(Vocabulary $vocabulary, string $field_name, array $params) {
+    $field = FieldConfig::loadByName('taxonomy_term', $vocabulary->id(), $field_name);
+    if (!$field) {
+      throw new \Exception('Field does not exist');
+    }
+
+    if (isset($params['label'])) {
+      $field->setLabel($params['label']);
+    }
+
+    if (isset($params['description'])) {
+      $field->setDescription($params['description']);
+    }
+
+    $field->save();
+  }
+
+  /**
+   * Delete vocabulary field.
+   *
+   * @param \Drupal\taxonomy\Entity\Vocabulary $vocabulary
+   *   Vocabulary.
+   * @param string $field_name
+   *   Field name.
+   */
+  public function deleteVocabularyField(Vocabulary $vocabulary, string $field_name) {
+    $field = FieldConfig::loadByName('taxonomy_term', $vocabulary->id(), $field_name);
+    if (!$field) {
+      throw new \Exception('Field does not exist');
+    }
+
+    $field->delete();
   }
 
   /**

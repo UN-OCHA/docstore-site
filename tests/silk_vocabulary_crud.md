@@ -213,6 +213,140 @@ Example output.
 * Data.uuid: {uuid}
 * Data.machine_name: {machine_name}
 
+## POST /vocabularies/{machine_name}/fields
+
+Add iso3 field to vocabulary.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "ISO 3 code",
+  "author": "hid_123456789",
+  "type": "string"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Field created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Field created"
+* Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_iso3}
+
+## GET /vocabularies/{machine_name}/fields
+
+Get fields.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+{
+  "uuid": "uuid",
+  "name": "string",
+  "description": "text_long",
+  "base_author_hid": "string",
+  "base_provider_uuid": "entity_reference_uuid",
+  "created": "timestamp",
+  "silk_iso_3_code": "string"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## PATCH /vocabularies/{machine_name}/fields/{field_iso3}
+
+Update field.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "description": "ISO3 term collection"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Field updated"
+
+## GET /vocabularies/{machine_name}/fields/{field_iso3}
+
+Get field.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "name": "silk_iso_3_code",
+  "label": "ISO 3 code",
+  "description": "ISO3 term collection",
+  "type": "string",
+  "multiple": false
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## DELETE /vocabularies/{machine_name}/fields/{field_iso3}
+
+Delete field.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Field deleted"
+
+## GET /vocabularies/{machine_name}/fields/{field_iso3}
+
+Get field.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "message": "Field does not exist"
+}
+```
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+
 ## POST /vocabularies/{machine_name}/terms
 
 Create city term.
@@ -237,8 +371,6 @@ Example output.
   "message": "Term created"
 }
 ```
-
-===
 
 * Status: `201`
 * Content-Type: "application/json"
