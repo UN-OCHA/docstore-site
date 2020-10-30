@@ -49,6 +49,30 @@ docstore_get_document:
     _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'B'
+docstore_get_document_revisions:
+  path: '/api/documents/{id}/revisions'
+  defaults:
+    _controller: 'docstore.api_controller:getDocumentRevisions'
+    _title: 'Get document revisions'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_get_document_revision:
+  path: '/api/documents/{id}/revisions/{vid}'
+  defaults:
+    _controller: 'docstore.api_controller:getDocumentRevision'
+    _title: 'Get document revision'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
 docstore_get_document_files:
   path: '/api/documents/{id}/files'
   defaults:

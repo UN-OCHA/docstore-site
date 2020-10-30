@@ -449,6 +449,111 @@ class ApiController extends ControllerBase {
   }
 
   /**
+   * Get document revisions
+   */
+  public function getDocumentRevisions($id, Request $request) {
+    $data = [];
+
+    // Query index.
+    $index = Index::load('documents');
+    $query = $index->query();
+    $query->addCondition('uuid', $id);
+    $results = $query->execute();
+
+    // Use solr response directly.
+    $solr_response = $results->getExtraData('search_api_solr_response', []);
+
+    // Build output data.
+    // TODO: Check if backend is solr.
+    $server = $index->getServerInstance();
+    $solr = $server->getBackend();
+    $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index, $request->getSchemeAndHttpHost());
+
+    if (empty($data)) {
+      throw new NotFoundHttpException(strtr('Document @uuid does not exist', ['@uuid' => $id]));
+    }
+
+    $data = reset($data);
+
+    $query = $this->database->select('node_revision', 'nr')
+      ->fields('nr', [
+        'vid',
+        'revision_timestamp',
+        'revision_default',
+        'revision_uid',
+        'revision_log',
+      ]);
+    $query->innerJoin('node', 'n', 'nr.nid = n.nid');
+    $revisions = $query->condition('n.uuid', $id)
+      ->orderBy('vid', 'DESC')
+      ->execute()
+      ->fetchAll();
+
+    $data['revisions'] = $revisions;
+
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => [
+        'documents',
+        $data['search_api_id'],
+      ],
+    ];
+    unset($data['search_api_id']);
+
+    $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+
+    return $response;
+  }
+
+  /**
+   * Get document revisions
+   */
+  public function getDocumentRevision($id, $vid, Request $request) {
+    /** @var \Drupal\node\Entity\Node $document */
+    $document = $this->entityTypeManager->getStorage('node')->loadRevision($vid);
+    if ($document->uuid() !== $id) {
+      throw new BadRequestHttpException('Revision not found');
+    }
+
+    $data = [];
+    $document_fields = $document->getFields(FALSE);
+    foreach ($document_fields as $document_field) {
+      $field_item_list = isset($document->{$document_field->getName()}) ? $document->{$document_field->getName()} : NULL;
+      $field_item_definition = $field_item_list->getFieldDefinition();
+
+      $values = [];
+      foreach ($field_item_list as $field_item) {
+        if ($main_property_name = $field_item->mainPropertyName()) {
+          $values[] = $field_item->getValue()[$main_property_name];
+        }
+        else {
+          $values[] = $field_item->getValue();
+        }
+      }
+
+      if ($field_item_definition->getFieldStorageDefinition()->getCardinality() == 1) {
+        $data[$document_field->getName()] = reset($values);
+      }
+      else {
+        $data[$document_field->getName()] = $values;
+      }
+    }
+
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => [
+        'documents',
+      ] + $document->getCacheTags(),
+    ];
+
+    $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+
+    return $response;
+  }
+
+  /**
    * Get document files.
    */
   public function getDocumentFiles($id, Request $request) {
@@ -1761,14 +1866,16 @@ class ApiController extends ControllerBase {
         $field_item_list = isset($term->{$term_field->getName()}) ? $term->{$term_field->getName()} : NULL;
         $field_item_definition = $field_item_list->getFieldDefinition();
         $values = [];
+
         foreach ($field_item_list as $field_item) {
           if ($main_property_name = $field_item->mainPropertyName()) {
-            $values[] = $field_item->{$main_property_name};
+            $values[] = $field_item->getValue()[$main_property_name];
           }
           else {
-            $values[] = $field_item->value;
+            $values[] = $field_item->getValue();
           }
         }
+
         if ($field_item_definition->getFieldStorageDefinition()->getCardinality() == 1) {
           $row[$term_field->getName()] = reset($values);
         }
