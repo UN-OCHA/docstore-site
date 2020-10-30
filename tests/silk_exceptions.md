@@ -2,7 +2,6 @@
 
 ## GET /documents/12321321313
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 
