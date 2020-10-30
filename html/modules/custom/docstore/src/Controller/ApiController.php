@@ -1376,7 +1376,7 @@ class ApiController extends ControllerBase {
         'changed' => $media->getChangedTime(),
         'mimetype' => $file->getMimeType(),
         'file_uuid' => $file->uuid(),
-        'uri' => $file->createFileUrl(),
+        'uri' => $request->getSchemeAndHttpHost() . $file->createFileUrl(),
       ];
     }
 
@@ -1405,7 +1405,7 @@ class ApiController extends ControllerBase {
       'changed' => $media->getChangedTime(),
       'mimetype' => $file->getMimeType(),
       'file_uuid' => $file->uuid(),
-      'uri' => $file->createFileUrl(),
+      'uri' => $request->getSchemeAndHttpHost() . $file->createFileUrl(),
     ];
 
     $response = new JsonResponse($data);
