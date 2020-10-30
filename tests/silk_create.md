@@ -31,11 +31,10 @@ Example output.
 * Data.message: "Vocabulary created"
 * Data.machine_name: /^[0-9a-z_]+$/ // Machine_name {city}
 
-## `GET /vocabularies/{city}`
+## GET /vocabularies/{city}
 
 Get a vocabulary.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 
 ===
@@ -88,7 +87,6 @@ Example output.
 
 Get a vocabulary.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 
 ===
@@ -204,11 +202,21 @@ Example output.
 
 ## GET /terms/{city_brussels}
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 
 ===
+
+```json
+{
+  "label": "Brussels",
+  "vocabulary_name": "silk_city",
+  "langcode": "en",
+  "status": "1",
+  "name": "Brussels",
+  "base_author_hid": "23cdf322"
+}
+```
 
 Example output.
 
@@ -249,7 +257,6 @@ Example output.
 
 ## GET /terms/{city_borgerhout}
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 
@@ -304,7 +311,6 @@ Example output.
 
 ## GET /terms/{city_borgerhout}
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 
@@ -379,7 +385,6 @@ Example output.
 
 ## GET /terms/{city_brussels}
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 
@@ -491,7 +496,6 @@ Example output.
 
 ## GET /terms/{organization_wfp}
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 
@@ -553,7 +557,6 @@ Example output.
 
 ## GET /terms/{organization_wfp}
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 
@@ -728,7 +731,6 @@ Example output.
 
 ## GET /wait
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 
@@ -746,7 +748,6 @@ Example output.
 
 ## GET /documents
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 
@@ -760,7 +761,6 @@ Example output.
 
 ## GET /media
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 
@@ -814,7 +814,6 @@ Example output.
 
 ## GET /wait
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 
@@ -832,7 +831,6 @@ Example output.
 
 ## GET /documents/{doc2}
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 
@@ -870,7 +868,6 @@ Example output.
 
 Test filters.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 * ?filter[f1][group][conjunction]=OR
@@ -887,7 +884,6 @@ Test filters.
 
 Test sort.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 * ?sort=-created
@@ -902,7 +898,6 @@ Test sort.
 
 Test limit.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 * ?page[limit]=1
@@ -917,7 +912,6 @@ Test limit.
 
 Test offset.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 * ?page[offset]=4
@@ -935,7 +929,6 @@ Test offset.
 
 Test illegal sort.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 * ?sort=-createdxx
