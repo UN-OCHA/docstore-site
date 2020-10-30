@@ -270,10 +270,10 @@ class ApiController extends ControllerBase {
 
       // Rename base fields.
       $row['provider'] = $row['base_provider_uuid'];
-      unset ($row['base_provider_uuid']);
+      unset($row['base_provider_uuid']);
 
       $row['author'] = $row['base_author_hid'];
-      unset ($row['base_author_hid']);
+      unset($row['base_author_hid']);
 
       // Re-write file information.
       $row['files'] = [];
