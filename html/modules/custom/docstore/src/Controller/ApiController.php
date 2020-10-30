@@ -203,7 +203,9 @@ class ApiController extends ControllerBase {
     // TODO: Check if backend is solr.
     $server = $index->getServerInstance();
     $solr = $server->getBackend();
-    $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index);
+
+    // Massage the data.
+    $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index, $request->getSchemeAndHttpHost());
 
     // Add cache tags.
     $cache_tags['#cache'] = [
@@ -231,7 +233,7 @@ class ApiController extends ControllerBase {
   /**
    * Build document output.
    */
-  protected function buildDocumentOutputFromSolr($docs, $solr, $index) {
+  protected function buildDocumentOutputFromSolr($docs, $solr, $index, $base_url) {
     $data = [];
 
     $field_mapping = $solr->getSolrFieldNames($index);
@@ -266,6 +268,13 @@ class ApiController extends ControllerBase {
         }
       }
 
+      // Rename base fields.
+      $row['provider'] = $row['base_provider_uuid'];
+      unset ($row['base_provider_uuid']);
+
+      $row['author'] = $row['base_author_hid'];
+      unset ($row['base_author_hid']);
+
       // Re-write file information.
       $row['files'] = [];
       if (isset($row['files_media_uuid'])) {
@@ -273,9 +282,9 @@ class ApiController extends ControllerBase {
           $row['files'][] = [
             'media_uuid' => $value,
             'file_uuid' => $row['files_file_uuid'][$key] ?? '',
-            'file_filename' => $row['files_file_filename'][$key] ?? '',
-            'files_file_uri' => $row['files_file_uri'][$key] ?? '',
-            'files_file_filemime' => $row['files_file_filemime'][$key] ?? '',
+            'filename' => $row['files_file_filename'][$key] ?? '',
+            'uri' => $base_url . $row['files_file_uri'][$key] ?? '',
+            'mime' => $row['files_file_filemime'][$key] ?? '',
           ];
         }
       }
@@ -416,7 +425,7 @@ class ApiController extends ControllerBase {
     // TODO: Check if backend is solr.
     $server = $index->getServerInstance();
     $solr = $server->getBackend();
-    $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index);
+    $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index, $request->getSchemeAndHttpHost());
 
     if (empty($data)) {
       throw new NotFoundHttpException(strtr('Document @uuid does not exist', ['@uuid' => $id]));
