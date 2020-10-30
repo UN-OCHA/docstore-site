@@ -1135,7 +1135,7 @@ class ApiController extends ControllerBase {
   /**
    * Get term.
    */
-  public function getTerm($id, Request $request) {
+  public function getTerm($id) {
     // Load term.
     $term = $this->loadTerm($id);
     $terms = $this->loadTerms([], $term->id());
@@ -1748,7 +1748,7 @@ class ApiController extends ControllerBase {
         'machine_name' => $term->id(),
         'vocabulary_name' => $term->getVocabularyId(),
         'vocabulary_uuid' => $vocabulary->uuid(),
-        'changed' => $term->getChangedTime(),
+        'changed' => date(DATE_ATOM, $term->getChangedTime()),
       ];
 
       // Add all fields.
@@ -1776,6 +1776,9 @@ class ApiController extends ControllerBase {
           $row[$term_field->getName()] = $values;
         }
       }
+
+      // Format timestamp.
+      $row['created'] = date(DATE_ATOM, $row['created']);
 
       $data[] = $row;
     }
