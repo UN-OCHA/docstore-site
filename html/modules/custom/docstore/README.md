@@ -247,5 +247,11 @@ core.entity_view_display.node.document.default
 ### SILK
 
 ```bash
-./silk -test.v -silk.url http://docstore.local.docksal/api README.md
+ ./run.sh
+```
+
+Test using proxy
+
+```bash
+API=http://0.0.0.0:4010 ./run.sh
 ```
