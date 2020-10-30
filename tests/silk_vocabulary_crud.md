@@ -36,7 +36,6 @@ Example output.
 
 Get a vocabulary.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 
 ===
@@ -59,7 +58,6 @@ Example output.
 
 Get a vocabulary.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 
 ===
@@ -142,7 +140,6 @@ Example output.
 
 Get a vocabulary.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 
 ===
@@ -194,7 +191,6 @@ Example output.
 
 Get a vocabulary.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 
 ===
@@ -248,7 +244,6 @@ Example output.
 
 Get fields.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 
@@ -295,9 +290,10 @@ Update field.
 
 Get field.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
+
+===
 
 ```json
 {
@@ -309,8 +305,6 @@ Get field.
 }
 ```
 
-===
-
 * Status: `200`
 * Content-Type: "application/json"
 
@@ -318,7 +312,6 @@ Get field.
 
 Delete field.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 
@@ -332,17 +325,16 @@ Delete field.
 
 Get field.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
+
+===
 
 ```json
 {
   "message": "Field does not exist"
 }
 ```
-
-===
 
 * Status: `400`
 * Content-Type: "application/json"
@@ -381,7 +373,6 @@ Example output.
 
 Get a vocabulary.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 
 ===
@@ -394,7 +385,6 @@ Get a vocabulary.
 
 Delete vocabulary.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
 
@@ -460,7 +450,6 @@ Example output.
 
 Get a vocabulary.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 
 ===
@@ -472,7 +461,6 @@ Get a vocabulary.
 
 Get all terms.
 
-* Content-Type: "application/json"
 * Accept: "application/json"
 
 ===
