@@ -449,7 +449,7 @@ class ApiController extends ControllerBase {
   }
 
   /**
-   * Get document revisions
+   * Get document revisions.
    */
   public function getDocumentRevisions($id, Request $request) {
     $data = [];
@@ -507,7 +507,7 @@ class ApiController extends ControllerBase {
   }
 
   /**
-   * Get document revisions
+   * Get 1 document revision.
    */
   public function getDocumentRevision($id, $vid, Request $request) {
     /** @var \Drupal\node\Entity\Node $document */
