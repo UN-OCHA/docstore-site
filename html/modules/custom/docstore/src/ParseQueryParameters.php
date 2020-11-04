@@ -186,23 +186,38 @@ class ParseQueryParameters {
    *   The query to append to.
    */
   public function applyFiltersToIndex(array $filters, QueryInterface &$query) {
-    // TODO make it recursive.
     if (!empty($filters)) {
-      $conditions = $query->createConditionGroup($filters['group']['conjunction']);
-      foreach ($filters['group']['members'] as $filter) {
-        if (isset($filter['group'])) {
-          $subgroup = $query->createConditionGroup($filter['group']['conjunction']);
-          foreach ($filter['group']['members'] as $sub) {
-            $subgroup->addCondition($sub['condition']['path'], $sub['condition']['value'], $sub['condition']['operator']);
-          }
-          $conditions->addConditionGroup($subgroup);
-        }
-        else {
-          $conditions->addCondition($filter['condition']['path'], $filter['condition']['value'], $filter['condition']['operator']);
-        }
-      }
+      $conditions = $this->buildConditionGroup($filters['group']['members'], $filters['group']['conjunction'], $query);
       $query->addConditionGroup($conditions);
     }
+  }
+
+  /**
+   * Build condition group.
+   *
+   * @param array $members
+   *   The members of a group.
+   * @param string $conjunction
+   *   The conjunction to use.
+   * @param \Drupal\search_api\Query\QueryInterface $query
+   *   The query to append to.
+   *
+   * @return \Drupal\search_api\Query\ConditionGroupInterface
+   *   A condition group.
+   */
+  protected function buildConditionGroup(array $members, string $conjunction, QueryInterface &$query) {
+    $conditions = $query->createConditionGroup($conjunction);
+    foreach ($members as $filter) {
+      if (isset($filter['group'])) {
+        $subgroup = $this->buildConditionGroup($filter['group']['members'], $filter['group']['conjunction'], $query);
+        $conditions->addConditionGroup($subgroup);
+      }
+      else {
+        $conditions->addCondition($filter['condition']['path'], $filter['condition']['value'], $filter['condition']['operator']);
+      }
+    }
+
+    return $conditions;
   }
 
   /**
