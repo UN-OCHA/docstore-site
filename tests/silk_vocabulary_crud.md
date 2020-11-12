@@ -2,6 +2,62 @@
 
 ## POST /vocabularies
 
+Create vocabulary without label.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "author": "hid_123456789"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Label is required"
+}
+```
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Label is required"
+
+## POST /vocabularies
+
+Create vocabulary without author.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "City"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Author is required"
+}
+```
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Author is required"
+
+## POST /vocabularies
+
 Create vocabulary.
 
 * Content-Type: "application/json"
@@ -14,6 +70,7 @@ Create vocabulary.
   "author": "hid_123456789"
 }
 ```
+
 ===
 
 Example output.
@@ -24,13 +81,49 @@ Example output.
 }
 ```
 
-===
-
 * Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Vocabulary created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // UUID {uuid}
 * Data.machine_name: /^[0-9a-z_]+$/ // Machine_name {machine_name}
+
+## `GET /vocabularies/abc`
+
+Get a non existing vocabulary.
+
+* Accept: "application/json"
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Vocabulary does not exist"
+}
+```
+
+* Status: `404`
+* Content-Type: "application/json"
+
+## `GET /vocabularies/1321`
+
+Get a non existing vocabulary.
+
+* Accept: "application/json"
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Vocabulary does not exist"
+}
+```
+
+* Status: `404`
+* Content-Type: "application/json"
 
 ## `GET /vocabularies/{machine_name}`
 
@@ -75,6 +168,34 @@ Example output.
 * Data.label: /./
 * Data.uuid: {uuid}
 * Data.machine_name: {machine_name}
+
+## PUT /vocabularies/213313123
+
+Update non-existing vocabulary.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Organization",
+  "description": "An example vocabulary"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Vocabulary does not exist"
+}
+```
+
+* Status: `404`
+* Content-Type: "application/json"
 
 ## PUT /vocabularies/{machine_name}
 
@@ -158,6 +279,33 @@ Example output.
 * Data.uuid: {uuid}
 * Data.machine_name: {machine_name}
 
+## PATCH /vocabularies/dsfds-sdfsdf
+
+Update non-existing vocabulary.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "description": "A vocabulary for organizations"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Vocabulary does not exist"
+}
+```
+
+* Status: `404`
+* Content-Type: "application/json"
+
 ## PATCH /vocabularies/{uuid}
 
 Update vocabulary.
@@ -209,6 +357,123 @@ Example output.
 * Data.uuid: {uuid}
 * Data.machine_name: {machine_name}
 
+## POST /vocabularies/435435435435/fields
+
+Add iso3 field to non-existing vocabulary.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "ISO 3 code",
+  "author": "hid_123456789",
+  "type": "string"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Vocabulary does not exist"
+}
+```
+
+* Status: `404`
+* Content-Type: "application/json"
+
+## POST /vocabularies/{machine_name}/fields
+
+Add iso3 field using wrong type.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "ISO 3 code",
+  "author": "hid_123456789",
+  "type": "xyzzy"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Unknown type"
+}
+```
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Unknown type"
+
+## POST /vocabularies/{machine_name}/fields
+
+Add iso3 field without author.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "ISO 3 code",
+  "type": "string"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Author is required"
+}
+```
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Author is required"
+
+## POST /vocabularies/{machine_name}/fields
+
+Add iso3 field without label.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "author": "hid_123456789",
+  "type": "string"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Label is required"
+}
+```
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Label is required"
+
 ## POST /vocabularies/{machine_name}/fields
 
 Add iso3 field to vocabulary.
@@ -240,6 +505,26 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_iso3}
 
+## GET /vocabularies/xx-dd-sgd/fields
+
+Get fields of unknown vocabulary.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Vocabulary does not exist"
+}
+```
+
+* Status: `404`
+* Content-Type: "application/json"
+
 ## GET /vocabularies/{machine_name}/fields
 
 Get fields.
@@ -265,6 +550,47 @@ Example output.
 
 * Status: `200`
 * Content-Type: "application/json"
+
+## PATCH /vocabularies/{machine_name}/fields/xyzzy
+
+Update non existing field.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "description": "Field does not exist"
+}
+```
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Field does not exist"
+
+## PATCH /vocabularies/{machine_name}/fields/{field_iso3}
+
+Update field type.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "description": "ISO3 term collection",
+  "type": "integer"
+}
+```
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Type can not be changed"
 
 ## PATCH /vocabularies/{machine_name}/fields/{field_iso3}
 
@@ -308,36 +634,170 @@ Get field.
 * Status: `200`
 * Content-Type: "application/json"
 
-## DELETE /vocabularies/{machine_name}/fields/{field_iso3}
+## POST /vocabularies/xx/terms
 
-Delete field.
+Create term in non-existing vocabulary.
 
-* Accept: "application/json"
-* API-KEY: abcd
-
-===
-
-* Status: `200`
 * Content-Type: "application/json"
-* Data.message: "Field deleted"
-
-## GET /vocabularies/{machine_name}/fields/{field_iso3}
-
-Get field.
-
 * Accept: "application/json"
 * API-KEY: abcd
-
-===
 
 ```json
 {
-  "message": "Field does not exist"
+  "label": "Antwerp",
+  "author": "23cdf322"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Vocabulary does not exist"
+}
+```
+
+* Status: `404`
+* Content-Type: "application/json"
+* Data.message: "Vocabulary does not exist"
+
+## POST /vocabularies/{machine_name}/terms
+
+Create term without label.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "author": "23cdf322"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Label is required"
 }
 ```
 
 * Status: `400`
 * Content-Type: "application/json"
+* Data.message: "Label is required"
+
+## POST /vocabularies/{machine_name}/terms
+
+Create term without author.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Antwerp"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Author is required"
+}
+```
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Author is required"
+
+## POST /vocabularies/{machine_name}/terms
+
+Create term with wrong metadata.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Antwerp",
+  "author": "23cdf322",
+  "metadata": {
+    "field": "not like this"
+  }
+}
+```
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Metadata has to be an array"
+
+## POST /vocabularies/{machine_name}/terms
+
+Create term with wrong metadata.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Antwerp",
+  "author": "23cdf322",
+  "metadata": "not like this either"
+}
+```
+
+===
+
+* Status: `404`
+* Content-Type: "application/json"
+* Data.message: "Metadata has to be an array"
+
+## POST /vocabularies/{machine_name}/terms
+
+Create term with extra fields.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Antwerp",
+  "author": "23cdf322",
+  "metadata": [
+    {
+      "field": "3242342"
+    }
+  ]
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Unknown field"
+}
+```
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Unknown field"
 
 ## POST /vocabularies/{machine_name}/terms
 
@@ -350,7 +810,12 @@ Create city term.
 ```json
 {
   "label": "Antwerp",
-  "author": "23cdf322"
+  "author": "23cdf322",
+  "metadata": [
+    {
+      "{field_iso3}": "BEL"
+    }
+  ]
 }
 ```
 
@@ -380,6 +845,50 @@ Get a vocabulary.
 * Status: `200`
 * Content-Type: "application/json"
 * Data[0].label: "Antwerp"
+
+## DELETE /vocabularies/{machine_name}/fields/{field_iso3}
+
+Delete field.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Field deleted"
+
+## DELETE /vocabularies/{machine_name}/fields/{field_iso3}
+
+Delete already deleted field.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Field does not exist"
+
+## GET /vocabularies/{machine_name}/fields/{field_iso3}
+
+Get field.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+```json
+{
+  "message": "Field does not exist"
+}
+```
+
+* Status: `400`
+* Content-Type: "application/json"
 
 ## DELETE /vocabularies/{uuid}
 
@@ -423,6 +932,22 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.message: "Term deleted"
+
+## DELETE /terms/{term_uuid}
+
+Delete deleted term.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+* Status: `404`
+* Content-Type: "application/json"
+* Data.message: "Term does not exist"
 
 ## DELETE /vocabularies/{uuid}
 
