@@ -1229,7 +1229,7 @@ class ApiController extends ControllerBase {
 
     $term = Term::create($item);
 
-    foreach ($item as $key => $data){
+    foreach ($item as $key => $data) {
       if (!$term->hasField($key)) {
         throw new BadRequestHttpException('Unknown field');
       }
@@ -1923,4 +1923,5 @@ class ApiController extends ControllerBase {
   protected function arrayIsAssociative(array $array) {
     return count(array_filter(array_keys($array), 'is_string')) > 0;
   }
+
 }
