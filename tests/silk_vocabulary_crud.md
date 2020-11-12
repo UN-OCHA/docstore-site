@@ -761,7 +761,7 @@ Create term with wrong metadata.
 
 ===
 
-* Status: `404`
+* Status: `400`
 * Content-Type: "application/json"
 * Data.message: "Metadata has to be an array"
 
