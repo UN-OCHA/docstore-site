@@ -1173,6 +1173,17 @@ class ApiController extends ControllerBase {
     // Load vocabulary.
     $vocabulary = $this->loadVocabulary($params['vocabulary']);
 
+    if ($vocabulary->getThirdPartySetting('docstore', 'base_allow_duplicates') === FALSE) {
+      // Check for duplicate labels.
+      $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
+        'name' => $params['label'],
+        'vid' => $vocabulary->id(),
+      ]);
+      if ($terms) {
+        throw new BadRequestHttpException('Term with same label already exists');
+      }
+    }
+
     // Term.
     $item = [
       'name' => $params['label'],
@@ -1352,13 +1363,35 @@ class ApiController extends ControllerBase {
     if (isset($params['label'])) {
       $params['name'] = $params['label'];
       unset($params['label']);
+
+      $vocabulary = $this->loadVocabulary($term->getVocabularyId());
+      if ($vocabulary->getThirdPartySetting('docstore', 'base_allow_duplicates') === FALSE) {
+        // Check for duplicate labels.
+        $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
+          'name' => $params['name'],
+          'vid' => $vocabulary->id(),
+        ]);
+
+        if ($term->label() === $params['name'] && count($terms) > 1) {
+          throw new BadRequestHttpException('Term with same label already exists');
+        }
+
+        if ($term->label() !== $params['name'] && count($terms) >= 1) {
+          throw new BadRequestHttpException('Term with same label already exists');
+        }
+      }
     }
 
     $updated_fields = [];
 
     // Update all fields specified in metadata.
     if (isset($params['metadata'])) {
-      foreach ($params['metadata'] as $metaitem) {
+      $metadata = $params['metadata'];
+      if (!is_array($metadata) || $this->arrayIsAssociative($metadata)) {
+        throw new BadRequestHttpException('Metadata has to be an array');
+      }
+
+      foreach ($metadata as $metaitem) {
         foreach ($metaitem as $name => $values) {
           // Make sure protected fields aren't set.
           if (isset($protected_fields[$name])) {

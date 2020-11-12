@@ -388,6 +388,7 @@ class ManageFields {
 
     $vocabulary->setThirdPartySetting('docstore', 'base_provider_uuid', $this->provider->uuid());
     $vocabulary->setThirdPartySetting('docstore', 'base_author_hid', $params['author']);
+    $vocabulary->setThirdPartySetting('docstore', 'base_allow_duplicates', $params['allow_duplicates'] ?? TRUE);
     $vocabulary->save();
 
     // Add created field.
