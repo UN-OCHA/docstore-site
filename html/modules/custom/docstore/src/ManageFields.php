@@ -561,6 +561,10 @@ class ManageFields {
       throw new \Exception('Field does not exist');
     }
 
+    if (isset($params['type'])) {
+      throw new \Exception('Type can not be changed');
+    }
+
     if (isset($params['label'])) {
       $field->setLabel($params['label']);
     }

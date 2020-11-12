@@ -1201,6 +1201,10 @@ class ApiController extends ControllerBase {
     // Check for meta tags.
     if (isset($params['metadata']) && $params['metadata']) {
       $metadata = $params['metadata'];
+      if (!is_array($metadata) || $this->arrayIsAssociative($metadata)) {
+        throw new BadRequestHttpException('Metadata has to be an array');
+      }
+
       foreach ($metadata as $metaitem) {
         foreach ($metaitem as $key => $values) {
           if (!is_array($values)) {
@@ -1224,6 +1228,13 @@ class ApiController extends ControllerBase {
     }
 
     $term = Term::create($item);
+
+    foreach ($item as $key => $data) {
+      if (!$term->hasField($key)) {
+        throw new BadRequestHttpException('Unknown field');
+      }
+    }
+
     $term->save();
 
     $data = [
@@ -1904,6 +1915,13 @@ class ApiController extends ControllerBase {
    */
   protected function entityInUse($entity) {
     return !empty($this->entityUsage->listSources($entity));
+  }
+
+  /**
+   * Check if an array is associative.
+   */
+  protected function arrayIsAssociative(array $array) {
+    return count(array_filter(array_keys($array), 'is_string')) > 0;
   }
 
 }
