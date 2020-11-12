@@ -1301,3 +1301,60 @@ Rename term.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.message: "Term updated"
+
+## PUT /vocabularies/{machine_name}
+
+Update vocabulary to disallow duplicate terms.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Dupes no longer allowed",
+  "base_allow_duplicates": false
+}
+```
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Vocabulary contains duplicate terms"
+
+## DELETE /terms/{term_uuid}
+
+Delete term.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term deleted"
+
+## PUT /vocabularies/{machine_name}
+
+Update vocabulary to disallow duplicate terms.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Dupes no longer allowed",
+  "base_allow_duplicates": false
+}
+```
+
+===
+
+Example output.
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Vocabulary updated"
