@@ -3,6 +3,7 @@
 namespace Drupal\docstore;
 
 use Drupal\Component\Uuid\Uuid;
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -32,13 +33,22 @@ class ManageFields {
   protected $entityFieldManager;
 
   /**
+   * The database connection.
+   *
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected $database;
+
+  /**
    * {@inheritdoc}
    */
   public function __construct(AccountInterface $provider,
-    EntityFieldManagerInterface $entityFieldManager
+    EntityFieldManagerInterface $entityFieldManager,
+    Connection $database
     ) {
     $this->provider = $provider;
     $this->entityFieldManager = $entityFieldManager;
+    $this->database = $database;
   }
 
   /**
@@ -388,6 +398,7 @@ class ManageFields {
 
     $vocabulary->setThirdPartySetting('docstore', 'base_provider_uuid', $this->provider->uuid());
     $vocabulary->setThirdPartySetting('docstore', 'base_author_hid', $params['author']);
+    $vocabulary->setThirdPartySetting('docstore', 'base_allow_duplicates', $params['allow_duplicates'] ?? TRUE);
     $vocabulary->save();
 
     // Add created field.
@@ -455,6 +466,28 @@ class ManageFields {
     }
 
     $updated_fields = [];
+
+    // Check allow_duplicate changes.
+    if (isset($params['base_allow_duplicates']) && $params['base_allow_duplicates'] === FALSE && $vocabulary->getThirdPartySetting('docstore', 'base_allow_duplicates') === TRUE) {
+      // Check all existing terms.
+      $query = $this->database->select('taxonomy_term_field_data', 't')
+        ->fields('t', [
+          'name',
+        ]);
+      $query->condition('vid', $vocabulary->id());
+      $query->condition('status', 1);
+      $query->groupBy('vid');
+      $query->groupBy('name');
+      $query->having('count(tid) > 1');
+
+      $terms = $query->execute()->fetchAll();
+      if (!empty($terms)) {
+        throw new \Exception('Vocabulary contains duplicate terms');
+      }
+
+      $vocabulary->setThirdPartySetting('docstore', 'base_allow_duplicates', $params['allow_duplicates'] ?? TRUE);
+      unset($params['base_allow_duplicates']);
+    }
 
     // Update all fields specified in params.
     foreach ($params as $name => $values) {

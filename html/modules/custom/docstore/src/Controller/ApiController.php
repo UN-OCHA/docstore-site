@@ -473,8 +473,10 @@ class ApiController extends ControllerBase {
       throw new NotFoundHttpException(strtr('Document @uuid does not exist', ['@uuid' => $id]));
     }
 
+    // Get first item.
     $data = reset($data);
 
+    // Get all revisions.
     $query = $this->database->select('node_revision', 'nr')
       ->fields('nr', [
         'vid',
@@ -589,7 +591,7 @@ class ApiController extends ControllerBase {
     $provider = $this->getProvider();
 
     // Create field.
-    $manager = new ManageFields($provider, $this->entityFieldManager);
+    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
     $data = $manager->getDocumentFields();
 
     // Add cache tags.
@@ -616,7 +618,7 @@ class ApiController extends ControllerBase {
     $provider = $this->getProvider();
 
     // Create field.
-    $manager = new ManageFields($provider, $this->entityFieldManager);
+    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
 
     // Create field.
     try {
@@ -648,7 +650,7 @@ class ApiController extends ControllerBase {
     $provider = $this->getProvider();
 
     // Get field config.
-    $manager = new ManageFields($provider, $this->entityFieldManager);
+    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
 
     try {
       $data = $manager->getDocumentField($id);
@@ -681,7 +683,7 @@ class ApiController extends ControllerBase {
     $provider = $this->getProvider();
 
     // Get manager.
-    $manager = new ManageFields($provider, $this->entityFieldManager);
+    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
 
     // Update field.
     try {
@@ -712,7 +714,7 @@ class ApiController extends ControllerBase {
     $provider = $this->getProvider();
 
     // Delete field storage and config.
-    $manager = new ManageFields($provider, $this->entityFieldManager);
+    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
 
     // Create field.
     try {
@@ -775,7 +777,7 @@ class ApiController extends ControllerBase {
     $provider = $this->getProvider();
 
     // Delete field storage and config.
-    $manager = new ManageFields($provider, $this->entityFieldManager);
+    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
 
     // Create field.
     try {
@@ -838,7 +840,7 @@ class ApiController extends ControllerBase {
     $provider = $this->getProvider();
 
     // Delete field storage and config.
-    $manager = new ManageFields($provider, $this->entityFieldManager);
+    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
 
     // Update vocabulary.
     try {
@@ -876,7 +878,7 @@ class ApiController extends ControllerBase {
     // Get provider.
     $provider = $this->getProvider();
 
-    $manager = new ManageFields($provider, $this->entityFieldManager);
+    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
 
     // Delete.
     try {
@@ -938,7 +940,7 @@ class ApiController extends ControllerBase {
     $provider = $this->getProvider();
 
     // Get field config.
-    $manager = new ManageFields($provider, $this->entityFieldManager);
+    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
 
     try {
       $data = $manager->getVocabularyField($vocabulary, $field_id);
@@ -974,7 +976,7 @@ class ApiController extends ControllerBase {
     $vocabulary = $this->loadVocabulary($id);
 
     // Create vocabulary field.
-    $manager = new ManageFields($provider, $this->entityFieldManager);
+    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
 
     // Create field.
     try {
@@ -1012,7 +1014,7 @@ class ApiController extends ControllerBase {
     $vocabulary = $this->loadVocabulary($id);
 
     // Create vocabulary field.
-    $manager = new ManageFields($provider, $this->entityFieldManager);
+    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
 
     // Create field.
     try {
@@ -1046,7 +1048,7 @@ class ApiController extends ControllerBase {
     $vocabulary = $this->loadVocabulary($id);
 
     // Create vocabulary field.
-    $manager = new ManageFields($provider, $this->entityFieldManager);
+    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
 
     // Create field.
     try {
@@ -1172,6 +1174,17 @@ class ApiController extends ControllerBase {
 
     // Load vocabulary.
     $vocabulary = $this->loadVocabulary($params['vocabulary']);
+
+    if ($vocabulary->getThirdPartySetting('docstore', 'base_allow_duplicates') === FALSE) {
+      // Check for duplicate labels.
+      $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
+        'name' => $params['label'],
+        'vid' => $vocabulary->id(),
+      ]);
+      if ($terms) {
+        throw new BadRequestHttpException('Term with same label already exists');
+      }
+    }
 
     // Term.
     $item = [
@@ -1352,13 +1365,35 @@ class ApiController extends ControllerBase {
     if (isset($params['label'])) {
       $params['name'] = $params['label'];
       unset($params['label']);
+
+      $vocabulary = $this->loadVocabulary($term->getVocabularyId());
+      if ($vocabulary->getThirdPartySetting('docstore', 'base_allow_duplicates') === FALSE) {
+        // Check for duplicate labels.
+        $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
+          'name' => $params['name'],
+          'vid' => $vocabulary->id(),
+        ]);
+
+        if ($term->label() === $params['name'] && count($terms) > 1) {
+          throw new BadRequestHttpException('Term with same label already exists');
+        }
+
+        if ($term->label() !== $params['name'] && count($terms) >= 1) {
+          throw new BadRequestHttpException('Term with same label already exists');
+        }
+      }
     }
 
     $updated_fields = [];
 
     // Update all fields specified in metadata.
     if (isset($params['metadata'])) {
-      foreach ($params['metadata'] as $metaitem) {
+      $metadata = $params['metadata'];
+      if (!is_array($metadata) || $this->arrayIsAssociative($metadata)) {
+        throw new BadRequestHttpException('Metadata has to be an array');
+      }
+
+      foreach ($metadata as $metaitem) {
         foreach ($metaitem as $name => $values) {
           // Make sure protected fields aren't set.
           if (isset($protected_fields[$name])) {

@@ -998,3 +998,363 @@ Example output.
 
 * Status: `200`
 * Content-Type: "application/json"
+
+## POST /vocabularies
+
+Create vocabulary disallowing duplicate terms.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Dupes",
+  "author": "hid_123456789",
+  "allow_duplicates": false
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Vocabulary created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Vocabulary created"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // UUID {uuid}
+* Data.machine_name: /^[0-9a-z_]+$/ // Machine_name {machine_name}
+
+## POST /vocabularies/{machine_name}/terms
+
+Create term.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Antwerp",
+  "author": "23cdf322"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Term created"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {term_uuid}
+
+## POST /vocabularies/{machine_name}/terms
+
+Create term.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "London",
+  "author": "23cdf322"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Term created"
+
+## POST /vocabularies/{machine_name}/terms
+
+Create term again.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Antwerp",
+  "author": "23cdf322"
+}
+```
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Term with same label already exists"
+
+## PUT /terms/{term_uuid}
+
+Rename term.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Antwerp"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term updated"
+
+## PUT /terms/{term_uuid}
+
+Rename term.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "London"
+}
+```
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Term with same label already exists"
+
+## POST /vocabularies
+
+Create vocabulary allowing duplicate terms.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Dupes allowed",
+  "author": "hid_123456789"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Vocabulary created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Vocabulary created"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // UUID {uuid}
+* Data.machine_name: /^[0-9a-z_]+$/ // Machine_name {machine_name}
+
+## POST /vocabularies/{machine_name}/terms
+
+Create term.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Antwerp",
+  "author": "23cdf322"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Term created"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {term_uuid}
+
+## POST /vocabularies/{machine_name}/terms
+
+Create term.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "London",
+  "author": "23cdf322"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Term created"
+
+## POST /vocabularies/{machine_name}/terms
+
+Create term again.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Antwerp",
+  "author": "23cdf322"
+}
+```
+
+===
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Term created"
+
+## PUT /terms/{term_uuid}
+
+Rename term.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Antwerp"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term updated"
+
+## PUT /terms/{term_uuid}
+
+Rename term.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "London"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term updated"
+
+## PUT /vocabularies/{machine_name}
+
+Update vocabulary to disallow duplicate terms.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Dupes no longer allowed",
+  "base_allow_duplicates": false
+}
+```
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Vocabulary contains duplicate terms"
+
+## DELETE /terms/{term_uuid}
+
+Delete term.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term deleted"
+
+## PUT /vocabularies/{machine_name}
+
+Update vocabulary to disallow duplicate terms.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Dupes no longer allowed",
+  "base_allow_duplicates": false
+}
+```
+
+===
+
+Example output.
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Vocabulary updated"
