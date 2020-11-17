@@ -729,6 +729,52 @@ Example output.
 * Data.message: "Document created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc1}
 
+## POST /documents
+
+Add a document using term labels.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "title": "Doc with term labels, no files",
+  "author": "hid_123456789",
+  "metadata": [
+    {
+      "{field_id}": 42
+    },
+    {
+      "{field_city}_label": "Paris"
+    },
+    {
+      "{field_organization}_label": [
+        "WFP",
+        "UNHCR"
+      ]
+    }
+  ]
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Document created"
+}
+```
+
+===
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Document created"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc2}
+
 ## GET /wait
 
 * Accept: "application/json"
@@ -810,7 +856,7 @@ Example output.
 * Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Document created"
-* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc2}
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc3}
 
 ## GET /wait
 
@@ -829,7 +875,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc2}
+## GET /documents/{doc3}
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -838,7 +884,7 @@ Example output.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data.uuid: {doc2}
+* Data.uuid: {doc3}
 * Data.title: "Doc term and file"
 * Data.files[0].media_uuid: "{media1}"
 
@@ -892,7 +938,7 @@ Test sort.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc2}
+* Data[0].uuid: {doc3}
 
 ## GET /documents
 
