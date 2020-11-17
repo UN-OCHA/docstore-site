@@ -752,7 +752,7 @@ class ApiController extends ControllerBase {
         'description' => $vocabulary->getDescription(),
       ];
 
-      $cache_tags[] = $vocabulary->getCacheTags();
+      $cache_tags = array_merge($cache_tags, $vocabulary->getCacheTags());
     }
 
     // Add cache tags.
