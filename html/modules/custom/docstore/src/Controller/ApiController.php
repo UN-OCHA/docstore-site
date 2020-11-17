@@ -20,6 +20,7 @@ use Drupal\Core\State\State;
 use Drupal\docstore\ParseQueryParameters;
 use Drupal\docstore\ManageFields;
 use Drupal\entity_usage\EntityUsage;
+use Drupal\field\Entity\FieldConfig;
 use Drupal\file\Entity\File;
 use Drupal\file\FileUsage\FileUsageInterface;
 use Drupal\media\Entity\Media;
@@ -368,6 +369,12 @@ class ApiController extends ControllerBase {
       $metadata = $params['metadata'];
       foreach ($metadata as $metaitem) {
         foreach ($metaitem as $key => $values) {
+          // Check for label keys.
+          if (strpos($key, '_label')) {
+            $key = str_replace('_label', '', $key);
+            $values = $this->mapOrCreateTerms($key, $values, $provider, $params['author']);
+          }
+
           if (!is_array($values)) {
             $item[$key][] = [
               'value' => $values,
@@ -1957,6 +1964,83 @@ class ApiController extends ControllerBase {
    */
   protected function arrayIsAssociative(array $array) {
     return count(array_filter(array_keys($array), 'is_string')) > 0;
+  }
+
+  /**
+   * Map or create terms based on field and label.
+   */
+  protected function mapOrCreateTerms($field_name, $values, $provider, $author) {
+    $field = FieldConfig::loadByName('node', 'document', $field_name);
+
+    if (!$field) {
+      throw new \Exception(strtr('Field @field does not exist', ['@field' => $field]));
+    }
+
+    if ($field->getType() !== 'entity_reference_uuid') {
+      throw new \Exception(strtr('Field @field is not a reference field', ['@field' => $field]));
+    }
+
+    if ($field->getSetting('target_type') !== 'taxonomy_term') {
+      throw new \Exception(strtr('Field @field does not reference a vocabulary', ['@field' => $field]));
+    }
+
+    $handler_settings = $field->getSetting('handler_settings') ;
+    $bundles = array_values($handler_settings['target_bundles']);
+    $bundle = reset($bundles);
+
+    // Load vocabulary.
+    $vocabulary = $this->loadVocabulary($bundle);
+
+    // Loop values.
+    if (!is_array($values)) {
+      $values = [$values];
+    }
+
+    foreach ($values as &$value) {
+      $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
+        'name' => $value,
+        'vid' => $vocabulary->id(),
+      ]);
+
+      if ($terms) {
+        $term = reset($terms);
+        $value = $term->uuid();
+
+        continue;
+      }
+
+      // Create term.
+      $item = [
+        'name' => $value,
+        'vid' => $vocabulary->id(),
+        'created' => [],
+        'base_provider_uuid' => [],
+        'parent' => [],
+        'description' => $params['description'] ?? '',
+      ];
+
+      // Set creation time.
+      $item['created'][] = [
+        'value' => time(),
+      ];
+
+      // Set owner.
+      $item['base_provider_uuid'][] = [
+        'target_uuid' => $provider->uuid(),
+      ];
+
+      // Store HID Id.
+      $item['base_author_hid'][] = [
+        'value' => $author,
+      ];
+
+      $term = Term::create($item);
+      $term->save();
+
+      $value = $term->uuid();
+    }
+
+    return $values;
   }
 
 }
