@@ -1984,7 +1984,7 @@ class ApiController extends ControllerBase {
       throw new \Exception(strtr('Field @field does not reference a vocabulary', ['@field' => $field]));
     }
 
-    $handler_settings = $field->getSetting('handler_settings') ;
+    $handler_settings = $field->getSetting('handler_settings');
     $bundles = array_values($handler_settings['target_bundles']);
     $bundle = reset($bundles);
 
@@ -2009,14 +2009,14 @@ class ApiController extends ControllerBase {
         continue;
       }
 
-      // Create term.
+      // TODO: Refactor create term.
       $item = [
         'name' => $value,
         'vid' => $vocabulary->id(),
         'created' => [],
         'base_provider_uuid' => [],
         'parent' => [],
-        'description' => $params['description'] ?? '',
+        'description' => '',
       ];
 
       // Set creation time.
