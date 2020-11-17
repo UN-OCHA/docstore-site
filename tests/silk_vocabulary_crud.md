@@ -791,13 +791,13 @@ Example output.
 
 ```json
 {
-  "message": "Unknown field"
+  "message": "Unknown field field"
 }
 ```
 
 * Status: `400`
 * Content-Type: "application/json"
-* Data.message: "Unknown field"
+* Data.message: "Unknown field field"
 
 ## POST /vocabularies/{machine_name}/terms
 
