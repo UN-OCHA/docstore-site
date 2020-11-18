@@ -17,6 +17,7 @@ use Drupal\Core\File\FileSystem;
 use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\State\State;
+use Drupal\user\Entity\User;
 use Drupal\docstore\ParseQueryParameters;
 use Drupal\docstore\ManageFields;
 use Drupal\entity_usage\EntityUsage;
@@ -1147,7 +1148,7 @@ class ApiController extends ControllerBase {
     $params = json_decode($request->getContent(), TRUE);
 
     $params['vocabulary'] = $vocabulary->uuid();
-    return $this->createTermFromParameters($params);
+    return $this->createTermFromUserParameters($params);
   }
 
   /**
@@ -1156,13 +1157,13 @@ class ApiController extends ControllerBase {
   public function createTerm(Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
-    return $this->createTermFromParameters($params);
+    return $this->createTermFromUserParameters($params);
   }
 
   /**
    * Create term.
    */
-  protected function createTermFromParameters($params) {
+  protected function createTermFromUserParameters($params) {
     // Get provider.
     $provider = $this->getProvider();
 
@@ -1193,6 +1194,33 @@ class ApiController extends ControllerBase {
       }
     }
 
+    $term = $this->createTermFromParameters($params, $vocabulary, $provider);
+
+    $data = [
+      'message' => 'Term created',
+      'uuid' => $term->uuid(),
+    ];
+
+    $response = new JsonResponse($data);
+    $response->setStatusCode(201);
+
+    return $response;
+  }
+
+  /**
+   * Create a term.
+   *
+   * @param array $params
+   *   Array of values.
+   * @param \Drupal\taxonomy\Entity\Vocabulary $vocabulary
+   *   Vocabulary.
+   * @param \Drupal\user\Entity\User $provider
+   *   Provider.
+   *
+   * @return \Drupal\taxonomy\Entity\Term
+   *   Newly created term.
+   */
+  protected function createTermFromParameters(array $params, Vocabulary $vocabulary, User $provider) {
     // Term.
     $item = [
       'name' => $params['label'],
@@ -1247,25 +1275,77 @@ class ApiController extends ControllerBase {
       }
     }
 
+    // Create term.
     $term = Term::create($item);
 
+    // Check for invalid fields.
     foreach ($item as $key => $data) {
       if (!$term->hasField($key)) {
-        throw new BadRequestHttpException('Unknown field');
+        throw new BadRequestHttpException(strtr('Unknown field @field', [
+          '@field' => $key,
+        ]));
       }
     }
 
+    // Save.
     $term->save();
 
-    $data = [
-      'message' => 'Term created',
-      'uuid' => $term->uuid(),
-    ];
+    return $term;
+  }
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(201);
+  /**
+   * Map or create terms based on field and label.
+   */
+  protected function mapOrCreateTerms($field_name, $values, $provider, $author) {
+    $field = FieldConfig::loadByName('node', 'document', $field_name);
 
-    return $response;
+    if (!$field) {
+      throw new \Exception(strtr('Field @field does not exist', ['@field' => $field]));
+    }
+
+    if ($field->getType() !== 'entity_reference_uuid') {
+      throw new \Exception(strtr('Field @field is not a reference field', ['@field' => $field]));
+    }
+
+    if ($field->getSetting('target_type') !== 'taxonomy_term') {
+      throw new \Exception(strtr('Field @field does not reference a vocabulary', ['@field' => $field]));
+    }
+
+    $handler_settings = $field->getSetting('handler_settings');
+    $bundles = array_values($handler_settings['target_bundles']);
+    $bundle = reset($bundles);
+
+    // Load vocabulary.
+    $vocabulary = $this->loadVocabulary($bundle);
+
+    // Loop values.
+    if (!is_array($values)) {
+      $values = [$values];
+    }
+
+    foreach ($values as &$value) {
+      $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
+        'name' => $value,
+        'vid' => $vocabulary->id(),
+      ]);
+
+      if ($terms) {
+        $term = reset($terms);
+        $value = $term->uuid();
+
+        continue;
+      }
+
+      // Create term.
+      $params = [
+        'label' => $value,
+      ];
+
+      $term = $this->createTermFromParameters($params, $vocabulary, $provider);
+      $value = $term->uuid();
+    }
+
+    return $values;
   }
 
   /**
@@ -1964,83 +2044,6 @@ class ApiController extends ControllerBase {
    */
   protected function arrayIsAssociative(array $array) {
     return count(array_filter(array_keys($array), 'is_string')) > 0;
-  }
-
-  /**
-   * Map or create terms based on field and label.
-   */
-  protected function mapOrCreateTerms($field_name, $values, $provider, $author) {
-    $field = FieldConfig::loadByName('node', 'document', $field_name);
-
-    if (!$field) {
-      throw new \Exception(strtr('Field @field does not exist', ['@field' => $field]));
-    }
-
-    if ($field->getType() !== 'entity_reference_uuid') {
-      throw new \Exception(strtr('Field @field is not a reference field', ['@field' => $field]));
-    }
-
-    if ($field->getSetting('target_type') !== 'taxonomy_term') {
-      throw new \Exception(strtr('Field @field does not reference a vocabulary', ['@field' => $field]));
-    }
-
-    $handler_settings = $field->getSetting('handler_settings');
-    $bundles = array_values($handler_settings['target_bundles']);
-    $bundle = reset($bundles);
-
-    // Load vocabulary.
-    $vocabulary = $this->loadVocabulary($bundle);
-
-    // Loop values.
-    if (!is_array($values)) {
-      $values = [$values];
-    }
-
-    foreach ($values as &$value) {
-      $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
-        'name' => $value,
-        'vid' => $vocabulary->id(),
-      ]);
-
-      if ($terms) {
-        $term = reset($terms);
-        $value = $term->uuid();
-
-        continue;
-      }
-
-      // TODO: Refactor create term.
-      $item = [
-        'name' => $value,
-        'vid' => $vocabulary->id(),
-        'created' => [],
-        'base_provider_uuid' => [],
-        'parent' => [],
-        'description' => '',
-      ];
-
-      // Set creation time.
-      $item['created'][] = [
-        'value' => time(),
-      ];
-
-      // Set owner.
-      $item['base_provider_uuid'][] = [
-        'target_uuid' => $provider->uuid(),
-      ];
-
-      // Store HID Id.
-      $item['base_author_hid'][] = [
-        'value' => $author,
-      ];
-
-      $term = Term::create($item);
-      $term->save();
-
-      $value = $term->uuid();
-    }
-
-    return $values;
   }
 
 }
