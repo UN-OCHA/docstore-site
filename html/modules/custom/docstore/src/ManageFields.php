@@ -56,6 +56,7 @@ class ManageFields {
    */
   public function allowedFieldTypes() {
     return [
+      'boolean' => 'boolean',
       'string' => 'string',
       'entity_reference' => 'integer',
       'entity_reference_uuid' => 'string',
@@ -279,7 +280,7 @@ class ManageFields {
   /**
    * Create reference document field.
    */
-  protected function createDocumentReferenceField($author, $label, $bundle, $field_type, $multiple = FALSE) {
+  protected function createDocumentReferenceField($author, $label, $bundle, $multiple = FALSE) {
     $field_type = 'entity_reference_uuid';
     $field_name = $this->generateUniqueMachineName($label, 'node');
 
