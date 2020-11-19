@@ -136,6 +136,37 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_iso3}
 
+## POST /vocabularies/{organization}/fields
+
+Add active field to vocabulary.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Active",
+  "author": "hid_123456789",
+  "type": "boolean"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Field created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Field created"
+* Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_active}
+
 # Create terms
 
 Create city terms.
