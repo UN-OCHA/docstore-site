@@ -9,6 +9,7 @@ use Drupal\Core\Cache\Cache;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\user\Entity\User;
+use Drupal\webhooks\Webhook;
 use Symfony\Component\Yaml\Yaml;
 
 use Solarium\Core\Query\QueryInterface;
@@ -118,6 +119,15 @@ function _docstore_setup_testing() {
   $data = Yaml::parseFile($config_path);
   \Drupal::configFactory()->getEditable('search_api.index.documents')->setData($data)->save(TRUE);
 
+  // Remove webhooks.
+  /** @var \Drupal\webhooks\WebhooksService $webhooks_service */
+  $webhooks_service = \Drupal::service('webhooks.service');
+  $webhook_configs = $webhooks_service->loadMultipleByEvent(':');
+
+  foreach ($webhook_configs as $webhook_config) {
+    $webhook_config->delete();
+  }
+
   // Create user if needed.
   if (!User::load(2)) {
     User::create([
@@ -140,5 +150,69 @@ function _docstore_setup_testing() {
 
   // Invalidate caches.
   Cache::invalidateTags(['documents']);
+  Cache::invalidateTags(['webhooks']);
   Cache::invalidateTags(['document_fields']);
+}
+
+/**
+ * Implements hook_webhooks_event_info_alter().
+ */
+function docstore_webhooks_event_info_alter(&$options) {
+  $entities = [
+    'document',
+    'vocabulary',
+    'term',
+    'media',
+    'file',
+    'field:document',
+    'field:vocabulary',
+  ];
+
+  $actions = [
+    'create',
+    'read',
+    'update',
+    'delete',
+  ];
+
+  $options = [];
+  foreach ($entities as $entity) {
+    foreach ($actions as $action) {
+      $options[$entity . ':' . $action] = [
+        'type' => 'Hook: ' . ucfirst($entity),
+        'event' => $entity . ':' . $action,
+      ];
+    }
+  }
+}
+
+/**
+ * Notify webhooks.
+ */
+function docstore_notify_webhooks($event, $payload) {
+  drupal_register_shutdown_function('_docstore_trigger_webhooks', $event, $payload);
+}
+
+/**
+ * Trigger webhooks.
+ */
+function _docstore_trigger_webhooks($event, $payload) {
+  /** @var \Drupal\webhooks\WebhooksService $webhooks_service */
+  $webhooks_service = \Drupal::service('webhooks.service');
+  $webhook_configs = $webhooks_service->loadMultipleByEvent($event);
+
+  /** @var \Drupal\webhooks\Entity\WebhookConfig $webhook_config */
+  foreach ($webhook_configs as $webhook_config) {
+    $webhook = new Webhook(
+      [
+        'event' => $event,
+        'payload' => $payload,
+      ],
+      [],
+      $event,
+      'application/json'
+    );
+
+    $webhooks_service->send($webhook_config, $webhook);
+  }
 }
