@@ -20,6 +20,9 @@ services:
   docstore.api_controller:
     class: \Drupal\docstore\Controller\ApiController
     arguments: ['@config.factory', '@database', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@transliteration', '@file.mime_type.guesser', '@file_system', '@file.usage', '@logger.factory', '@state', '@entity_usage.usage']
+  docstore.webhook_controller:
+    class: \Drupal\docstore\Controller\WebhookController
+    arguments: ['@logger.factory']
   docstore.config_sync.event_subscriber:
     class: Drupal\docstore\EventSubscriber\DocstoreConfigEventSubscriber
     arguments: ['@config.storage', '@settings', '@config.manager']

@@ -24,12 +24,14 @@ module:
   path_alias: 0
   search_api: 0
   search_api_solr: 0
+  serialization: 0
   system: 0
   taxonomy: 0
   text: 0
   toolbar: 0
   user: 0
   user_bundle: 0
+  webhooks: 0
   minimal: 1000
 theme:
   stark: 0

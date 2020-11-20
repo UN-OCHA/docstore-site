@@ -274,6 +274,7 @@ class ManageFields {
     // Add to index.
     $this->addDocumentFieldToIndex($field_name, $field_type, $label);
 
+    docstore_notify_webhooks('field:document:create', $field_name);
     return $field_name;
   }
 
@@ -316,6 +317,7 @@ class ManageFields {
     // Add to index.
     $this->addDocumentFieldToIndex($field_name, $field_type, $label);
 
+    docstore_notify_webhooks('field:document:create', $field_name);
     return $field_name;
   }
 
@@ -354,6 +356,7 @@ class ManageFields {
       $field->setDescription($params['description']);
     }
 
+    docstore_notify_webhooks('field:document:update', $field_name);
     $field->save();
   }
 
@@ -366,6 +369,7 @@ class ManageFields {
       throw new \Exception('Field does not exist');
     }
 
+    docstore_notify_webhooks('field:document:delete', $field_name);
     $field->delete();
   }
 
@@ -411,6 +415,7 @@ class ManageFields {
     // Add author HID.
     $this->createVocabularyBaseFieldHidId($machine_name);
 
+    docstore_notify_webhooks('vocabulary:create', $machine_name);
     return $vocabulary;
   }
 
@@ -515,6 +520,7 @@ class ManageFields {
 
     $vocabulary->save();
 
+    docstore_notify_webhooks('vocabulary:update', $vocabulary->id());
     return $vocabulary;
   }
 
@@ -530,6 +536,7 @@ class ManageFields {
       throw new \Exception('Vocabulary is not owned by you');
     }
 
+    docstore_notify_webhooks('vocabulary:delete', $vocabulary->id());
     $vocabulary->delete();
   }
 
@@ -607,6 +614,7 @@ class ManageFields {
       $field->setDescription($params['description']);
     }
 
+    docstore_notify_webhooks('field:vocabulary:update', $field_name);
     $field->save();
   }
 
@@ -624,6 +632,7 @@ class ManageFields {
       throw new \Exception('Field does not exist');
     }
 
+    docstore_notify_webhooks('field:vocabulary:delete', $field_name);
     $field->delete();
   }
 
@@ -650,6 +659,7 @@ class ManageFields {
       'label' => $label,
     ])->save();
 
+    docstore_notify_webhooks('field:vocabulary:create', $field_name);
     return $field_name;
   }
 
@@ -689,6 +699,7 @@ class ManageFields {
       ],
     ])->save();
 
+    docstore_notify_webhooks('field:vocabulary:create', $field_name);
     return $field_name;
   }
 

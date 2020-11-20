@@ -352,6 +352,7 @@ class ApiController extends ControllerBase {
         $files = [$files];
       }
 
+      // TODO: allow file content and/or file name.
       foreach ($files as $uuid) {
         /** @var \Drupal\media\Entity\Media $media */
         $media = $this->entityRepository->loadEntityByUuid('media', $uuid);
