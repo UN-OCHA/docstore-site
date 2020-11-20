@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2b2645a034306dd4194ee5acc209b327",
+    "content-hash": "fd6aa697e3f27e8f394dd3046b84bef3",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -2384,6 +2384,7 @@
             "keywords": [
                 "reflection"
             ],
+            "abandoned": "roave/better-reflection",
             "time": "2018-06-14T14:45:07+00:00"
         },
         {
@@ -4158,6 +4159,58 @@
             "support": {
                 "source": "https://git.drupalcode.org/project/user_bundle"
             }
+        },
+        {
+            "name": "drupal/webhooks",
+            "version": "dev-1.x",
+            "source": {
+                "type": "git",
+                "url": "https://git.drupalcode.org/project/webhooks.git",
+                "reference": "44c0f03187bc193b2510631d3cfc44de1f2af270"
+            },
+            "require": {
+                "drupal/core": "^8 || ^9",
+                "ext-json": "*"
+            },
+            "type": "drupal-module",
+            "extra": {
+                "branch-alias": {
+                    "dev-1.x": "1.x-dev"
+                },
+                "drupal": {
+                    "version": "8.x-1.0-alpha8+2-dev",
+                    "datestamp": "1600867962",
+                    "security-coverage": {
+                        "status": "not-covered",
+                        "message": "Dev releases are not covered by Drupal security advisories."
+                    }
+                },
+                "drush": {
+                    "services": {
+                        "drush.services.yml": "^10"
+                    }
+                }
+            },
+            "notification-url": "https://packages.drupal.org/8/downloads",
+            "license": [
+                "GPL-2.0+"
+            ],
+            "authors": [
+                {
+                    "name": "sanduhrs",
+                    "homepage": "https://www.drupal.org/user/28074"
+                }
+            ],
+            "description": "User-defined HTTP callbacks",
+            "homepage": "https://www.drupal.org/project/webhooks",
+            "keywords": [
+                "Drupal"
+            ],
+            "support": {
+                "source": "http://cgit.drupalcode.org/webhooks",
+                "issues": "https://www.drupal.org/project/issues/webhooks"
+            },
+            "time": "2020-09-23T13:22:25+00:00"
         },
         {
             "name": "drush/drush",
@@ -13833,6 +13886,7 @@
         "drupal/config_ignore": 20,
         "drupal/entity_usage": 10,
         "drupal/stage_file_proxy": 5,
+        "drupal/webhooks": 20,
         "drupal/upgrade_rector": 15
     },
     "prefer-stable": true,

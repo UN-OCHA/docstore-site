@@ -46,6 +46,7 @@
         "drupal/social_auth_hid": "^2.4",
         "drupal/stage_file_proxy": "^1.0@RC",
         "drupal/user_bundle": "^1.0",
+        "drupal/webhooks": "1.x-dev@dev",
         "drush/drush": "^9.0.0"
     },
     "require-dev": {
