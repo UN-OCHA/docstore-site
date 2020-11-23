@@ -148,6 +148,26 @@ function _docstore_setup_testing() {
     ])->save();
   }
 
+  // Create user if needed.
+  if (!User::load(3)) {
+    User::create([
+      'uid' => 3,
+      'status' => 1,
+      'name' => 'Another test',
+      'type' => 'provider',
+      'pass' => '',
+      'prefix' => [
+        'value' => 'another_',
+      ],
+      'api_keys' => [
+        'value' => 'dcba',
+      ],
+      'api_keys_read_only' => [
+        'value' => 'yzzyx',
+      ],
+    ])->save();
+  }
+
   // Invalidate caches.
   Cache::invalidateTags(['documents']);
   Cache::invalidateTags(['webhooks']);
