@@ -5,6 +5,7 @@ namespace Drupal\docstore\Controller;
 use Drupal\webhooks\Entity\WebhookConfig;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,6 +17,13 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 class WebhookController extends ControllerBase {
 
   /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
    * The logger factory.
    *
    * @var \Drupal\Core\Logger\LoggerChannelFactory
@@ -25,14 +33,49 @@ class WebhookController extends ControllerBase {
   /**
    * {@inheritdoc}
    */
-  public function __construct(LoggerChannelFactoryInterface $logger_factory) {
+  public function __construct(EntityTypeManagerInterface $entityTypeManager,
+    LoggerChannelFactoryInterface $logger_factory
+  ) {
+    $this->entityTypeManager = $entityTypeManager;
     $this->loggerFactory = $logger_factory;
+  }
+
+  /**
+   * Get hooks.
+   */
+  public function getWebhooks(Request $request) {
+    $data = [];
+
+    // Get provider.
+    $provider = $this->getProvider();
+
+    $query = $this->entityTypeManager->getStorage('webhook_config')->getQuery();
+    $ids = $query->execute();
+    $webhooks_configs = WebhookConfig::loadMultiple($ids);
+    /** @var \Drupal\webhooks\Entity\WebhookConfigInterface $webhook_config */
+    foreach ($webhooks_configs as $webhook_config) {
+      if ($webhook_config->getThirdPartySetting('docstore', 'base_provider_uuid') === $provider->uuid()) {
+        $data[] = [
+          'display_name' => $webhook_config->label(),
+          'machine_name' => $webhook_config->id(),
+          'type' => $this->t('@type', ['@type' => $webhook_config->getType()]),
+          'status' => $webhook_config->status() ? $this->t('active') : $this->t('inactive'),
+          'payload_url' => $webhook_config->getPayloadUrl(),
+          'events' => array_keys($webhook_config->getEvents()),
+        ];
+      }
+    }
+
+    $response = new JsonResponse($data);
+    $response->setStatusCode(200);
+
+    return $response;
   }
 
   /**
    * Create hook.
    */
-  public function createHook(Request $request) {
+  public function createWebhook(Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
 
@@ -88,6 +131,7 @@ class WebhookController extends ControllerBase {
 
     /** @var \Drupal\webhooks\Entity\WebhookConfig $webhook_config */
     $webhook_config = WebhookConfig::create($item);
+    $webhook_config->setThirdPartySetting('docstore', 'base_provider_uuid', $provider->uuid());
     $webhook_config->save();
 
     // Invalidate cache.
@@ -95,11 +139,39 @@ class WebhookController extends ControllerBase {
 
     $data = [
       'message' => 'Webhook created',
-      'uuid' => $webhook_config->uuid(),
+      'machine_name' => $id,
     ];
 
     $response = new JsonResponse($data);
     $response->setStatusCode(201);
+
+    return $response;
+  }
+
+  /**
+   * Delete a hook.
+   */
+  public function deleteWebhook($id, Request $request) {
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Check for duplicate.
+    $webhook_config = WebhookConfig::load($id);
+
+    if ($webhook_config->getThirdPartySetting('docstore', 'base_provider_uuid') !== $provider->uuid()) {
+      throw new BadRequestHttpException('Webhook is not owned by you');
+    }
+
+    $webhook_config->delete();
+
+    $data = [
+      'message' => 'Webhook deleted',
+    ];
+
+    // Invalidate cache.
+    Cache::invalidateTags(['webhooks']);
+
+    $response = new JsonResponse($data);
 
     return $response;
   }

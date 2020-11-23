@@ -13,22 +13,22 @@ docstore_wait:
     docstore_access_level: 'B'
 
 # hooks
-#docstore_get_hooks:
-#  path: '/api/hooks'
-#  defaults:
-#    _controller: 'docstore.webhook_controller:getHooks'
-#    _title: 'Get hooks'
-#  methods: [GET]
-#  requirements:
-#    _docstore_access_check: 'TRUE'
-#  options:
-#    _auth: ['docstore_auth']
-#    docstore_crud: 'R'
-#    docstore_access_level: 'B'
-docstore_create_hook:
-  path: '/api/hooks'
+docstore_get_hooks:
+  path: '/api/webhooks'
   defaults:
-    _controller: 'docstore.webhook_controller:createHook'
+    _controller: 'docstore.webhook_controller:getWebhooks'
+    _title: 'Get hooks'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_create_hook:
+  path: '/api/webhooks'
+  defaults:
+    _controller: 'docstore.webhook_controller:createWebhook'
     _title: 'Create hook'
   methods: [POST]
   requirements:
@@ -37,18 +37,18 @@ docstore_create_hook:
     _auth: ['docstore_auth']
     docstore_crud: 'C'
     docstore_access_level: 'B'
-#docstore_delete_hook:
-#  path: '/api/hooks'
-#  defaults:
-#    _controller: 'docstore.webhook_controller:deleteHook'
-#    _title: 'Delete hook'
-#  methods: [DELETE]
-#  requirements:
-#    _docstore_access_check: 'TRUE'
-#  options:
-#    _auth: ['docstore_auth']
-#    docstore_crud: 'C'
-#    docstore_access_level: 'B'
+docstore_delete_hook:
+  path: '/api/webhooks/{id}'
+  defaults:
+    _controller: 'docstore.webhook_controller:deleteWebhook'
+    _title: 'Delete hook'
+  methods: [DELETE]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'C'
+    docstore_access_level: 'B'
 
 # Documents
 docstore_get_documents:
