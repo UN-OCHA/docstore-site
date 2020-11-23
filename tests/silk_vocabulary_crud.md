@@ -1,6 +1,6 @@
 # Create vocabularies
 
-## POST /hooks
+## POST /webhooks
 
 Register a [webhook](https://webhook.site/#!/596df11a-21f8-4790-bb90-f79ba4ef9df6/6bbb526f-3610-459d-8c46-370aa8e9f695/1).
 

@@ -5,6 +5,7 @@ API=${API:-"http://docstore.local.docksal/api"}
 $DRUSH eval "_docstore_setup_testing()"
 $DRUSH cr
 
+./silk -test.v -silk.url $API silk_webhooks.md || exit 1;
 ./silk -test.v -silk.url $API silk_vocabulary_crud.md || exit 1;
 ./silk -test.v -silk.url $API silk_vocabulary_anon_cud.md || exit 1;
 ./silk -test.v -silk.url $API silk_vocabulary_anon_r.md || exit 1;
