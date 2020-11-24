@@ -1646,6 +1646,15 @@ class ApiController extends ControllerBase {
     /** @var \Drupal\media\Entity\File $file */
     $file = $this->entityTypeManager->getStorage('file')->load($media->getSource()->getSourceFieldValue($media));
 
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Provider can only get own private files.
+    $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
+    if ($private && $file->getOwnerId() !== $provider->id()) {
+      throw new BadRequestHttpException('Media is not owned by you');
+    }
+
     $data = [
       'uuid' => $media->uuid(),
       'name' => $media->getName(),
@@ -1654,11 +1663,140 @@ class ApiController extends ControllerBase {
       'mimetype' => $file->getMimeType(),
       'file_uuid' => $file->uuid(),
       'uri' => $request->getSchemeAndHttpHost() . $file->createFileUrl(),
+      'revisions' => [],
+    ];
+
+    $revisions = $this->entityTypeManager->getStorage('media')->getQuery()
+      ->allRevisions()
+      ->condition('mid', $media->id())
+      ->sort('vid', 'DESC')
+      ->pager(50)
+      ->execute();
+
+    $data['revisions'] = array_keys($revisions);
+
+    $response = new JsonResponse($data);
+
+    return $response;
+  }
+
+  /**
+   * Get media revision.
+   */
+  public function getMediaRevision($id, $vid, Request $request) {
+    /** @var \Drupal\media\Entity\Media $media */
+    $media = $this->entityRepository->loadEntityByUuid('media', $id);
+    if (!$media) {
+      throw new BadRequestHttpException('Media does not exist');
+    }
+
+    /** @var \Drupal\media\Entity\Media $revision */
+    $revision = $this->entityTypeManager->getStorage('media')->loadRevision($vid);
+    if (!$revision) {
+      throw new BadRequestHttpException('Revision does not exist');
+    }
+
+    if ($revision->id() !== $media->id()) {
+      throw new BadRequestHttpException('Illegal revision detected');
+    }
+
+    /** @var \Drupal\media\Entity\File $file */
+    $file = $this->entityTypeManager->getStorage('file')->load($revision->getSource()->getSourceFieldValue($revision));
+
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Provider can only get own private files.
+    $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
+    if ($private && $file->getOwnerId() !== $provider->id()) {
+      throw new BadRequestHttpException('File is not owned by you');
+    }
+
+    $data = [
+      'uuid' => $revision->uuid(),
+      'name' => $revision->getName(),
+      'created' => date(DATE_ATOM, $revision->getCreatedTime()),
+      'changed' => date(DATE_ATOM, $revision->getChangedTime()),
+      'mimetype' => $file->getMimeType(),
+      'file_uuid' => $file->uuid(),
+      'uri' => $request->getSchemeAndHttpHost() . $file->createFileUrl(),
     ];
 
     $response = new JsonResponse($data);
 
     return $response;
+  }
+
+  /**
+   * Get media content.
+   */
+  public function getMediaContent($id, Request $request) {
+    /** @var \Drupal\media\Entity\Media $media */
+    $media = $this->entityRepository->loadEntityByUuid('media', $id);
+    if (!$media) {
+      throw new BadRequestHttpException('Media does not exist');
+    }
+
+    /** @var \Drupal\media\Entity\File $file */
+    $file = $this->entityTypeManager->getStorage('file')->load($media->getSource()->getSourceFieldValue($media));
+
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Provider can only get own private files.
+    $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
+    if ($private && $file->getOwnerId() !== $provider->id()) {
+      throw new BadRequestHttpException('Media is not owned by you');
+    }
+
+    $headers = [
+      'Content-Type' => $file->getMimeType(),
+      'Content-Disposition' => 'attachment; filename="' . Unicode::mimeHeaderEncode($media->getName()) . '"',
+      'Cache-Control' => 'private',
+    ];
+
+    return new BinaryFileResponse($file->getFileUri(), 200, $headers);
+  }
+
+  /**
+   * Get media revision content.
+   */
+  public function getMediaRevisionContent($id, $vid, Request $request) {
+    /** @var \Drupal\media\Entity\Media $media */
+    $media = $this->entityRepository->loadEntityByUuid('media', $id);
+    if (!$media) {
+      throw new BadRequestHttpException('Media does not exist');
+    }
+
+    /** @var \Drupal\media\Entity\Media $revision */
+    $revision = $this->entityTypeManager->getStorage('media')->loadRevision($vid);
+    if (!$revision) {
+      throw new BadRequestHttpException('Revision does not exist');
+    }
+
+    if ($revision->id() !== $media->id()) {
+      throw new BadRequestHttpException('Illegal revision detected');
+    }
+
+    /** @var \Drupal\media\Entity\File $file */
+    $file = $this->entityTypeManager->getStorage('file')->load($revision->getSource()->getSourceFieldValue($revision));
+
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Provider can only get own private files.
+    $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
+    if ($private && $file->getOwnerId() !== $provider->id()) {
+      throw new BadRequestHttpException('File is not owned by you');
+    }
+
+    $headers = [
+      'Content-Type' => $file->getMimeType(),
+      'Content-Disposition' => 'attachment; filename="' . Unicode::mimeHeaderEncode($revision->getName()) . '"',
+      'Cache-Control' => 'private',
+    ];
+
+    return new BinaryFileResponse($file->getFileUri(), 200, $headers);
   }
 
   /**
@@ -1882,7 +2020,7 @@ class ApiController extends ControllerBase {
     }
 
     $headers = [
-      'Content-Type' => $file->getMimeType() . '; name="' . Unicode::mimeHeaderEncode($file->getFilename()) . '"',
+      'Content-Type' => $file->getMimeType(),
       'Content-Disposition' => 'attachment; filename="' . Unicode::mimeHeaderEncode($file->getFilename()) . '"',
       'Cache-Control' => 'private',
     ];
@@ -2015,7 +2153,6 @@ class ApiController extends ControllerBase {
    */
   protected function saveFileToDisk(File &$file, $content, User $provider, $new_revision) {
     $is_new = TRUE;
-    $this->getLogger('debug revision')->notice('<pre>' . bin2hex($content) . '</pre>');
 
     // Extract path from file.
     $destination = pathinfo($file->getFileUri(), PATHINFO_DIRNAME);
@@ -2043,17 +2180,35 @@ class ApiController extends ControllerBase {
       $usage_list = isset($usage_list['media']) ? $usage_list['media'] : [];
       $usage_list = array_keys($usage_list);
 
-      $this->getLogger('debug')->notice(print_r($usage_list, TRUE));
       $media_entity = Media::load(reset($usage_list));
+
+      // Swap filenames.
+      $swap_uri = $file->getFileUri();
+      $file->setFileUri($new_file->getFileUri());
+      $new_file->setFileUri($swap_uri);
+
+      $file->save();
+      $new_file->save();
+
+      // Move old file to revisions.
       $media_entity->field_media_file_revisions[] = [
+        'target_id' => $file->id(),
+      ];
+
+      // Add new file.
+      $media_entity->field_media_file = [
         'target_id' => $new_file->id(),
       ];
+
+      // Force new revision and save.
       $media_entity->setNewRevision();
       $media_entity->save();
+
+      // Swap files so it gets the new content.
+      $file = $new_file;
     }
 
     if ($uri = $this->fileSystem->saveData($content, $file->getFileUri(), $is_new ? $this->fileSystem::EXISTS_RENAME : $this->fileSystem::EXISTS_REPLACE)) {
-      $this->getLogger('debug save')->notice(print_r($uri, TRUE));
       $file->setFileUri($uri);
       $file->setPermanent();
 
