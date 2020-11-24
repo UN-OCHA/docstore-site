@@ -158,6 +158,9 @@ function _docstore_setup_testing() {
       'api_keys_read_only' => [
         'value' => 'xyzzy',
       ],
+      'dropfolder' => [
+        'value' => '../drop_folders/silk',
+      ],
     ])->save();
   }
 

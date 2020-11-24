@@ -1876,6 +1876,22 @@ class ApiController extends ControllerBase {
       $content = base64_decode($params['data']);
       $this->saveFileToDisk($file, $content, $provider, FALSE);
     }
+    elseif (isset($params['use_dropfolder']) && $params['use_dropfolder']) {
+      if (!$provider->get('dropfolder')->value) {
+        throw new BadRequestHttpException('Dropfolder is not enabled');
+      }
+
+      $files = $this->fileSystem->scanDirectory($provider->get('dropfolder')->value, '/^' . $params['filename'] . '$/');
+      if ($files) {
+        $files = array_keys($files);
+        $first = reset($files);
+        $content = file_get_contents($first);
+        $this->saveFileToDisk($file, $content, $provider, FALSE);
+      }
+      else {
+        throw new BadRequestHttpException('File not found in dropfolder');
+      }
+    }
     else {
       $file->save();
     }
