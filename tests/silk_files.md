@@ -38,3 +38,221 @@ Get private file as anonymous.
 * Status: `400`
 * Content-Type: "application/json"
 * Data.message: "File is not owned by you"
+
+## GET /files/{FILEPUBLIC}
+
+Get public file as owner.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /files/{FILEPUBLIC}
+
+Get public file as anonymous.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /media
+
+Get media.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[2].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Private {media_private}
+* Data[3].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Public {media_public}
+
+## GET /media/{media_private}
+
+Get private media as owner.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /media/{media_private}
+
+Get private media as anonymous.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Media is not owned by you"
+
+## GET /media/{media_public}
+
+Get public media as owner.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.revisions[0]: /^[0-9]*$/ // Public {current_revision}
+* Data.revisions[1]: /^[0-9]*$/ // Public {previous_revision}
+
+## GET /media/{media_public}/revisions/{current_revision}
+
+Get public media as owner.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /media/{media_public}/revisions/{previous_revision}
+
+Get public media as owner.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /media/{media_public}
+
+Get public media as anonymous.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /media/{media_private}/content
+
+Get private media content as owner.
+
+* Content-Type: "application/json"
+* Accept: "text/plain"
+* API-KEY: abcd
+
+===
+
+```txt
+Private txt - Updated
+
+```
+
+* Status: `200`
+* Content-Type: "text/plain;charset=UTF-8"
+
+## GET /media/{media_private}/content
+
+Get private media content as anonymous.
+
+* Content-Type: "application/json"
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Media is not owned by you"
+
+## GET /media/{media_public}/content
+
+Get public media content as owner.
+
+* Content-Type: "application/json"
+* API-KEY: abcd
+
+===
+
+```txt
+Public txt - Updated
+
+```
+
+* Status: `200`
+* Content-Type: "text/plain;charset=UTF-8"
+
+## GET /media/{media_public}/content
+
+Get public media content as anonymous.
+
+* Content-Type: "application/json"
+
+===
+
+```txt
+Public txt - Updated
+
+```
+
+* Status: `200`
+* Content-Type: "text/plain;charset=UTF-8"
+
+## GET /media/{media_public}/revisions/{current_revision}/content
+
+Get public media as owner.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+```txt
+Public txt - Updated
+
+```
+
+* Status: `200`
+* Content-Type: "text/plain;charset=UTF-8"
+
+## GET /media/{media_public}/revisions/{previous_revision}/content
+
+Get public media as owner.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+```txt
+Public txt
+
+```
+
+* Status: `200`
+* Content-Type: "text/plain;charset=UTF-8"
