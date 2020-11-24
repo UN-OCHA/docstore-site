@@ -2190,35 +2190,38 @@ class ApiController extends ControllerBase {
         $new_file->save();
       }
 
-      // Update media.
-      $usage_list = $this->fileUsage->listUsage($file);
-      $usage_list = isset($usage_list['file']) ? $usage_list['file'] : [];
-      $usage_list = isset($usage_list['media']) ? $usage_list['media'] : [];
-      $usage_list = array_keys($usage_list);
-
-      $media_entity = Media::load(reset($usage_list));
-
       // Swap filenames.
       $swap_uri = $file->getFileUri();
       $file->setFileUri($new_file->getFileUri());
       $new_file->setFileUri($swap_uri);
 
+      // Save both.
       $file->save();
       $new_file->save();
 
-      // Move old file to revisions.
-      $media_entity->field_media_file_revisions[] = [
-        'target_id' => $file->id(),
-      ];
+      // Update media referencing this file.
+      $usage_list = $this->fileUsage->listUsage($file);
+      $usage_list = isset($usage_list['file']) ? $usage_list['file'] : [];
+      $usage_list = isset($usage_list['media']) ? $usage_list['media'] : [];
+      $usage_list = array_keys($usage_list);
 
-      // Add new file.
-      $media_entity->field_media_file = [
-        'target_id' => $new_file->id(),
-      ];
+      foreach ($usage_list as $media_id) {
+        $media_entity = Media::load($media_id);
 
-      // Force new revision and save.
-      $media_entity->setNewRevision();
-      $media_entity->save();
+        // Move old file to revisions.
+        $media_entity->field_media_file_revisions[] = [
+          'target_id' => $file->id(),
+        ];
+
+        // Add new file.
+        $media_entity->field_media_file = [
+          'target_id' => $new_file->id(),
+        ];
+
+        // Force new revision and save.
+        $media_entity->setNewRevision();
+        $media_entity->save();
+      }
 
       // Swap files so it gets the new content.
       $file = $new_file;
