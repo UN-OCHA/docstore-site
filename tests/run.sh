@@ -15,7 +15,22 @@ $DRUSH eval "_docstore_setup_testing()"
 $DRUSH cr
 
 # Add files
-(echo -n '{"filename":"test.pdf","mime":"application/pdf","data": "'; base64 ./files/test_xyzzy.pdf; echo '"}') | curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" -H "Content-Type: application/json" -d @-  $API/files
+(echo -n '{"private":true,"filename":"private.pdf","mime":"application/pdf","data": "'; base64 ./files/private.pdf; echo '"}') | curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" -H "Content-Type: application/json" -d @-  $API/files > newfile_private.json
+export FILEPRIVATE=$(cat newfile_private.json | awk -F '"' '{print $8}')
+curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" --data-binary "@./files/private_updated.pdf" $API/files/$FILEPRIVATE/content
 
+(echo -n '{"private":false,"filename":"public.pdf","mime":"application/pdf","data": "'; base64 ./files/public.pdf; echo '"}') | curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" -H "Content-Type: application/json" -d @-  $API/files > newfile_public.json
+export FILEPUBLIC=$(cat newfile_public.json | awk -F '"' '{print $8}')
+curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" --data-binary "@./files/public_updated.pdf" $API/files/$FILEPUBLIC/content
+
+(echo -n '{"private":true,"filename":"private.txt","mime":"application/txt","data": "'; base64 ./files/private.txt; echo '"}') | curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" -H "Content-Type: application/json" -d @-  $API/files > newfile_private_txt.json
+export FILEPRIVATETXT=$(cat newfile_private_txt.json | awk -F '"' '{print $8}')
+curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" --data-binary "@./files/private_updated.txt" $API/files/$FILEPRIVATETXT/content
+
+(echo -n '{"private":false,"filename":"public.txt","mime":"application/txt","data": "'; base64 ./files/public.txt; echo '"}') | curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" -H "Content-Type: application/json" -d @-  $API/files > newfile_public_txt.json
+export FILEPUBLICTXT=$(cat newfile_public_txt.json | awk -F '"' '{print $8}')
+curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" --data-binary "@./files/public_updated.txt" $API/files/$FILEPUBLICTXT/content
+
+./silk -test.v -silk.url $API silk_files.md || exit 1;
 ./silk -test.v -silk.url $API silk_create.md || exit 1;
 ./silk -test.v -silk.url $API silk_exceptions.md || exit 1;
