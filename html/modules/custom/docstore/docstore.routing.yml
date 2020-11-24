@@ -445,7 +445,7 @@ docstore_delete_term:
     docstore_access_level: 'B'
 
 # Media
-docstore_get_media:
+docstore_get_all_media:
   path: '/api/media'
   defaults:
     _controller: 'docstore.api_controller:getAllMedia'
@@ -462,6 +462,42 @@ docstore_get_media:
   defaults:
     _controller: 'docstore.api_controller:getMedia'
     _title: 'Get media'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_get_media_revisions:
+  path: '/api/media/{id}/revisions/{vid}'
+  defaults:
+    _controller: 'docstore.api_controller:getMediaRevision'
+    _title: 'Get media revision'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_get_media_content:
+  path: '/api/media/{id}/content'
+  defaults:
+    _controller: 'docstore.api_controller:getMediaContent'
+    _title: 'Get media content'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_get_media_revisions_content:
+  path: '/api/media/{id}/revisions/{vid}/content'
+  defaults:
+    _controller: 'docstore.api_controller:getMediaRevisionContent'
+    _title: 'Get media revision content'
   methods: [GET]
   requirements:
     _docstore_access_check: 'TRUE'

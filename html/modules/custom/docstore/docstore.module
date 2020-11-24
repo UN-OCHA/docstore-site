@@ -7,13 +7,26 @@
 
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\StreamWrapper\StreamWrapperManager;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\user\Entity\User;
 use Drupal\webhooks\Webhook;
 use Symfony\Component\Yaml\Yaml;
-
 use Solarium\Core\Query\QueryInterface;
 use Drupal\search_api\Query\QueryInterface as search_apiQueryInterface;
+
+/**
+ * Implements hook_file_download().
+ */
+function docstore_file_download($uri) {
+  if (StreamWrapperManager::getScheme($uri) == 'private') {
+    if (Drupal::currentUser()->isAnonymous()) {
+      return -1;
+    }
+  }
+
+  return NULL;
+}
 
 /**
  * Implements hook_form_FORM_ID_alter().
@@ -144,6 +157,9 @@ function _docstore_setup_testing() {
       ],
       'api_keys_read_only' => [
         'value' => 'xyzzy',
+      ],
+      'dropfolder' => [
+        'value' => '../drop_folders/silk',
       ],
     ])->save();
   }

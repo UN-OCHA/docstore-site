@@ -1,0 +1,19 @@
+uuid: 0dac0ae5-804f-4466-878e-e4df45ee97c4
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.dropfolder
+    - user_bundle.user_type.provider
+id: user.provider.dropfolder
+field_name: dropfolder
+entity_type: user
+bundle: provider
+label: Dropfolder
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

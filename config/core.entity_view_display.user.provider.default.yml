@@ -5,6 +5,7 @@ dependencies:
   config:
     - field.field.user.provider.api_keys
     - field.field.user.provider.api_keys_read_only
+    - field.field.user.provider.dropfolder
     - field.field.user.provider.prefix
     - user_bundle.user_type.provider
 id: user.provider.default
@@ -22,6 +23,14 @@ content:
     region: content
   api_keys_read_only:
     weight: 7
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  dropfolder:
+    weight: 9
     label: above
     settings:
       link_to_entity: false
