@@ -756,4 +756,4 @@ $settings['entity_update_backup'] = TRUE;
 #   include $app_root . '/' . $site_path . '/settings.local.php';
 # }
 
-$settings['file_private_path'] = 'sites/default/private/files';
+$settings['file_private_path'] = '../private_files';

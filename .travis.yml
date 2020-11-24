@@ -59,6 +59,7 @@ script:
 
   - cd ${TRAVIS_BUILD_DIR}
   - mkdir -p ./html/sites/default
+  - mkdir -p ./private_files
   - cp ./tests/default.se* ./html/sites/default/
   - cp ./tests/config/* ./config/
 
@@ -81,3 +82,5 @@ after_success:
 after_failure:
   - echo "The tests failed. Please check the output above for problems."
   - ../vendor/bin/drush watchdog:show --extended
+  - cat ${TRAVIS_BUILD_DIR}/tests/*.json
+  - cat ${TRAVIS_BUILD_DIR}/html/sites/default/settings.php
