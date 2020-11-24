@@ -61,6 +61,7 @@ script:
   - mkdir -p ./html/sites/default
   - mkdir -p ./private_files
   - cp ./tests/default.se* ./html/sites/default/
+  - cp ./tests/default.settings.php ./html/sites/default/settings.php
   - cp ./tests/settings.local.php ./html/sites/default/
   - cp ./tests/config/* ./config/
 
