@@ -84,5 +84,3 @@ after_success:
 after_failure:
   - echo "The tests failed. Please check the output above for problems."
   - ../vendor/bin/drush watchdog:show --extended
-  - cat ${TRAVIS_BUILD_DIR}/tests/*.json
-  - cat ${TRAVIS_BUILD_DIR}/html/sites/default/settings.php
