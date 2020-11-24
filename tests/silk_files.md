@@ -256,3 +256,63 @@ Public txt
 
 * Status: `200`
 * Content-Type: "text/plain;charset=UTF-8"
+
+## POST /files
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "private": false,
+  "filename": "test_file.txt",
+  "use_dropfolder": true
+}
+```
+
+===
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "File created"
+
+## POST /files
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "private": false,
+  "filename": "unknown.txt",
+  "use_dropfolder": true
+}
+```
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "File not found in dropfolder"
+
+## POST /files
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: dcba
+
+```json
+{
+  "private": false,
+  "filename": "test_file.txt",
+  "use_dropfolder": true
+}
+```
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Dropfolder is not enabled"
