@@ -220,6 +220,18 @@ curl -X POST "http://docstore.local.docksal/api/files" -H  "accept: application/
 curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" --data-binary "@updated.pdf" http://docstore.local.docksal/api/files/b51bf47c-b9f1-4fb2-addc-66127ee82c39/content | jq
 ```
 
+## Private files
+
+- Add visibility to file entity API
+- Store in private file system
+- /private/provider/ts/hash/path-to-file
+- Controller to get provider
+- Hash = key + path + ts
+- Straight db select for speed
+
+- https://www.chapterthree.com/blog/drupal-8-9-media-entities-private-files-and-broken-access-control
+- https://www.drupal.org/project/media_revisions_ui
+
 ## Ignore config
 
 ```yaml

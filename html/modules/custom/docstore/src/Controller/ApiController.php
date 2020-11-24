@@ -3,6 +3,7 @@
 namespace Drupal\docstore\Controller;
 
 use Drupal\Component\Transliteration\TransliterationInterface;
+use Drupal\Component\Utility\Unicode;
 use Drupal\Component\Uuid\Uuid;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Cache\CacheableJsonResponse;
@@ -17,6 +18,7 @@ use Drupal\Core\File\FileSystem;
 use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\State\State;
+use Drupal\Core\StreamWrapper\StreamWrapperManager;
 use Drupal\user\Entity\User;
 use Drupal\docstore\ParseQueryParameters;
 use Drupal\docstore\ManageFields;
@@ -31,6 +33,7 @@ use Drupal\search_api_solr\SearchApiSolrException;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -186,6 +189,12 @@ class ApiController extends ControllerBase {
       $parser->applySortToIndex($sorters, $query);
     }
     if ($request->query->has('page')) {
+      $pagers = $parser->parsePaging($request->query->get('page'));
+      $parser->applyPagerToIndex($pagers, $query);
+    }
+
+    // Todo: Add full text search.
+    if ($request->query->has('search')) {
       $pagers = $parser->parsePaging($request->query->get('page'));
       $parser->applyPagerToIndex($pagers, $query);
     }
@@ -1640,8 +1649,8 @@ class ApiController extends ControllerBase {
     $data = [
       'uuid' => $media->uuid(),
       'name' => $media->getName(),
-      'created' => $media->getCreatedTime(),
-      'changed' => $media->getChangedTime(),
+      'created' => date(DATE_ATOM, $media->getCreatedTime()),
+      'changed' => date(DATE_ATOM, $media->getChangedTime()),
       'mimetype' => $file->getMimeType(),
       'file_uuid' => $file->uuid(),
       'uri' => $request->getSchemeAndHttpHost() . $file->createFileUrl(),
@@ -1656,7 +1665,24 @@ class ApiController extends ControllerBase {
    * Get files.
    */
   public function getFiles(Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    $files = $this->entityTypeManager->getStorage('file')->loadMultiple();
+    $data = [];
+
+    /** @var \Drupal\media\Entity\File $file */
+    foreach ($files as $file) {
+      // TODO: Check for private files.
+      $data[] = [
+        'file' => $file->uuid(),
+        'url' => $file->createFileUrl(),
+        'created' => date(DATE_ATOM, $file->getCreatedTime()),
+        'changed' => date(DATE_ATOM, $file->getChangedTime()),
+        'mimetype' => $file->getMimeType(),
+      ];
+    }
+
+    $response = new JsonResponse($data);
+
+    return $response;
   }
 
   /**
@@ -1682,18 +1708,35 @@ class ApiController extends ControllerBase {
       $params['alt'] = $params['filename'];
     }
 
-    // TODO: Support public vs private.
+    // Support private files.
+    $private = FALSE;
+    if (isset($params['private']) && $params['private']) {
+      $private = TRUE;
+    }
+
+    // Create URI.
+    $destination = $this->config('system.file')->get('default_scheme') . '://';
+    if ($private) {
+      $destination = 'private://';
+    }
+
+    $destination .= 'files/';
+    $destination .= substr(md5($params['filename']), 0, 3);
+    $destination .= '/' . substr(md5($params['filename']), 3, 3);
+    $destination .= '/' . $params['filename'];
+
+    // Store files in sub directories.
     $file = File::create();
     $file->setOwnerId($provider->id());
     $file->setMimeType($params['mimetype']);
     $file->setFileName($params['filename']);
-    $file->setFileUri($params['filename']);
+    $file->setFileUri($destination);
     $file->setTemporary();
 
     if (isset($params['data'])) {
       // Decode data.
       $content = base64_decode($params['data']);
-      $this->saveFileToDisk($file, $content, $provider);
+      $this->saveFileToDisk($file, $content, $provider, FALSE);
     }
     else {
       $file->save();
@@ -1720,11 +1763,20 @@ class ApiController extends ControllerBase {
       throw new BadRequestHttpException('File does not exist');
     }
 
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Provider can only get own private files.
+    $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
+    if ($private && $file->getOwnerId() !== $provider->id()) {
+      throw new BadRequestHttpException('File is not owned by you');
+    }
+
     $data = [
       'file' => $file->uuid(),
       'url' => $file->createFileUrl(),
-      'created' => $file->getCreatedTime(),
-      'changed' => $file->getChangedTime(),
+      'created' => date(DATE_ATOM, $file->getCreatedTime()),
+      'changed' => date(DATE_ATOM, $file->getChangedTime()),
       'mimetype' => $file->getMimeType(),
     ];
 
@@ -1748,6 +1800,14 @@ class ApiController extends ControllerBase {
     $file = $this->entityRepository->loadEntityByUuid('file', $id);
     if (!$file) {
       throw new BadRequestHttpException('File does not exist');
+    }
+
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Provider can only delete own files.
+    if ($file->getOwnerId() !== $provider->id()) {
+      throw new BadRequestHttpException('File is not owned by you');
     }
 
     $usage_list = $this->fileUsage->listUsage($file);
@@ -1777,6 +1837,15 @@ class ApiController extends ControllerBase {
       throw new BadRequestHttpException('File does not exist');
     }
 
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Provider can only get own private files.
+    $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
+    if ($private && $file->getOwnerId() !== $provider->id()) {
+      throw new BadRequestHttpException('File is not owned by you');
+    }
+
     $data = [];
     $usage_list = $this->fileUsage->listUsage($file);
     $usage_list = isset($usage_list['file']) ? $usage_list['file'] : [];
@@ -1797,7 +1866,28 @@ class ApiController extends ControllerBase {
    * Get file content.
    */
   public function getFileContent($id, Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    /** @var \Drupal\file\Entity\File $file */
+    $file = $this->entityRepository->loadEntityByUuid('file', $id);
+    if (!$file) {
+      throw new BadRequestHttpException('File does not exist');
+    }
+
+    // Get provider.
+    $provider = $this->getProvider();
+
+    // Provider can only get own private files.
+    $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
+    if ($private && $file->getOwnerId() !== $provider->id()) {
+      throw new BadRequestHttpException('File is not owned by you');
+    }
+
+    $headers = [
+      'Content-Type' => $file->getMimeType() . '; name="' . Unicode::mimeHeaderEncode($file->getFilename()) . '"',
+      'Content-Disposition' => 'attachment; filename="' . Unicode::mimeHeaderEncode($file->getFilename()) . '"',
+      'Cache-Control' => 'private',
+    ];
+
+    return new BinaryFileResponse($file->getFileUri(), 200, $headers);
   }
 
   /**
@@ -1818,15 +1908,26 @@ class ApiController extends ControllerBase {
       throw new BadRequestHttpException('File is not owned by you');
     }
 
-    $this->saveFileToDisk($file, $request->getContent(), $provider);
+    $status = $this->saveFileToDisk($file, $request->getContent(), $provider, TRUE);
 
-    $data = [
-      'message' => 'File content created',
-      'uuid' => $file->uuid(),
-    ];
+    if ($status === 'created') {
+      $data = [
+        'message' => 'File content created',
+        'uuid' => $file->uuid(),
+      ];
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(201);
+      $response = new JsonResponse($data);
+      $response->setStatusCode(201);
+    }
+    else {
+      $data = [
+        'message' => 'File content updated',
+        'uuid' => $file->uuid(),
+      ];
+
+      $response = new JsonResponse($data);
+      $response->setStatusCode(201);
+    }
 
     return $response;
   }
@@ -1902,18 +2003,57 @@ class ApiController extends ControllerBase {
 
   /**
    * Save file content to disk.
+   *
+   * @param \Drupal\file\Entity\File $file
+   *   File entity.
+   * @param string $content
+   *   Full content of the file.
+   * @param \Drupal\user\Entity\User $provider
+   *   Provider.
+   * @param bool $new_revision
+   *   Create a new revision.
    */
-  protected function saveFileToDisk(&$file, $content, $provider) {
-    // Create destination.
-    $destination = $this->config('system.file')->get('default_scheme') . '://';
-    $destination .= substr(md5($file->getFilename()), 0, 3);
-    $destination .= '/' . substr(md5($file->getFilename()), 3, 3);
+  protected function saveFileToDisk(File &$file, $content, User $provider, $new_revision) {
+    $is_new = TRUE;
+    $this->getLogger('debug revision')->notice('<pre>' . bin2hex($content) . '</pre>');
+
+    // Extract path from file.
+    $destination = pathinfo($file->getFileUri(), PATHINFO_DIRNAME);
     $this->fileSystem->prepareDirectory($destination, $this->fileSystem::CREATE_DIRECTORY);
 
-    // Append filename.
-    $destination .= '/' . $file->getFilename();
+    // If file exists, copy existing and overwrite original.
+    if ($new_revision && file_exists($file->getFileUri())) {
+      $is_new = FALSE;
 
-    if ($uri = $this->fileSystem->saveData($content, $destination, $this->fileSystem::EXISTS_RENAME)) {
+      // Create new file entity.
+      /** @var \Drupal\file\Entity\File $new_file */
+      $new_file = file_copy($file, $file->getFileUri(), $this->fileSystem::EXISTS_RENAME);
+
+      // Detect mime type.
+      if ($new_file->getMimeType() == 'undefined') {
+        $new_file->setMimeType($this->mimeTypeGuesser->guess($new_file->getFileUri()));
+
+        // Save file.
+        $new_file->save();
+      }
+
+      // Update media.
+      $usage_list = $this->fileUsage->listUsage($file);
+      $usage_list = isset($usage_list['file']) ? $usage_list['file'] : [];
+      $usage_list = isset($usage_list['media']) ? $usage_list['media'] : [];
+      $usage_list = array_keys($usage_list);
+
+      $this->getLogger('debug')->notice(print_r($usage_list, TRUE));
+      $media_entity = Media::load(reset($usage_list));
+      $media_entity->field_media_file_revisions[] = [
+        'target_id' => $new_file->id(),
+      ];
+      $media_entity->setNewRevision();
+      $media_entity->save();
+    }
+
+    if ($uri = $this->fileSystem->saveData($content, $file->getFileUri(), $is_new ? $this->fileSystem::EXISTS_RENAME : $this->fileSystem::EXISTS_REPLACE)) {
+      $this->getLogger('debug save')->notice(print_r($uri, TRUE));
       $file->setFileUri($uri);
       $file->setPermanent();
 
@@ -1925,21 +2065,25 @@ class ApiController extends ControllerBase {
       // Save file.
       $file->save();
 
-      // Create media.
-      $media_entity = Media::create([
-        'bundle' => 'file',
-        'uid' => $provider->id(),
-        'name' => $file->getFilename(),
-        'status' => TRUE,
-        'field_media_file' => [
-          'target_id' => $file->id(),
-        ],
-      ]);
-      $media_entity->save();
+      // Create media if it's a new file.
+      if ($is_new) {
+        $media_entity = Media::create([
+          'bundle' => 'file',
+          'uid' => $provider->id(),
+          'name' => $file->getFilename(),
+          'status' => TRUE,
+          'field_media_file' => [
+            'target_id' => $file->id(),
+          ],
+        ]);
+        $media_entity->save();
+      }
     }
     else {
       throw new BadRequestHttpException('Unable to write file');
     }
+
+    return $is_new ? 'created' : 'updated';
   }
 
   /**
