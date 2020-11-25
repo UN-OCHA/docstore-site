@@ -224,10 +224,9 @@ curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" --data-binary "@
 
 - ~~Add visibility to file entity API~~
 - ~~Store in private file system~~
-- /private/provider/ts/hash/path-to-file
-- Controller to get provider
-- Hash = key + path + ts
-- Straight db select for speed
+- ~~/private/provider/ts/hash/path-to-file~~
+- ~~Controller to get provider~~
+- ~~Hash = key + path + ts~~
 
 - https://www.chapterthree.com/blog/drupal-8-9-media-entities-private-files-and-broken-access-control
 - https://www.drupal.org/project/media_revisions_ui
