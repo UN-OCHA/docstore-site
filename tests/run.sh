@@ -32,6 +32,9 @@ curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" --data-binary "@
 export FILEPUBLICTXT=$(cat newfile_public_txt.json | awk -F '"' '{print $8}')
 curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" --data-binary "@./files/public_updated.txt" $API/files/$FILEPUBLICTXT/content
 
+## Set shared secret.
+(echo -n '{"shared_secret":"verysecret"}') | curl -X PATCH -H  "accept: application/json" -H  "API-KEY: abcd" -H "Content-Type: application/json" -d @-  $API/me
+
 curl -X GET -H  "accept: application/json" -H  "API-KEY: abcd" $API/me > me.json
 export ME_UUID=$(cat me.json | awk -F '"' '{print $4}')
 export ME_SHARED=$(cat me.json | awk -F '"' '{print $16}')

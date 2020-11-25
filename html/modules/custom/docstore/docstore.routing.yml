@@ -13,7 +13,7 @@ docstore_wait:
     docstore_access_level: 'B'
 
 # me
-docstore_get_hooks:
+docstore_get_me:
   path: '/api/me'
   defaults:
     _controller: 'docstore.provider_controller:getInfo'
@@ -24,6 +24,18 @@ docstore_get_hooks:
   options:
     _auth: ['docstore_auth']
     docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_update_me:
+  path: '/api/me'
+  defaults:
+    _controller: 'docstore.provider_controller:UpdateInfo'
+    _title: 'Update provider info'
+  methods: [PUT, PATCH]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'U'
     docstore_access_level: 'B'
 
     # hooks

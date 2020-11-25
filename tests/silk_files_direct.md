@@ -66,3 +66,34 @@ Get private file, wrong hash.
 ===
 
 * Status: `400`
+
+## PATCH /api/me
+
+Update shared secret
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "shared_secret": "AnotherSecret"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Provider updated"
+
+## GET /files/{FILEPRIVATETXT}/{ME_UUID}/{HASH}/not_really_used.txt
+
+Get private file.
+
+* Content-Type: "application/json"
+* Accept: "text/plain"
+
+===
+
+* Status: `400`

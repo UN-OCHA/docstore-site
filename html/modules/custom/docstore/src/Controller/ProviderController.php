@@ -6,6 +6,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
@@ -49,6 +50,30 @@ class ProviderController extends ControllerBase {
       'dropfolder' => $provider->get('dropfolder')->value ?? '',
       'prefix' => $provider->get('prefix')->value ?? '',
       'shared_secret' => $provider->get('shared_secret')->value ?? '',
+    ];
+
+    $response = new JsonResponse($data);
+
+    return $response;
+  }
+
+  /**
+   * Update info.
+   */
+  public function UpdateInfo(Request $request) {
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+
+    /** @var \Drupal\user\Entity\User $provider */
+    $provider = $this->requireProvider();
+
+    if (isset($params['shared_secret'])) {
+      $provider->set('shared_secret', $params['shared_secret']);
+      $provider->save();
+    }
+
+    $data = [
+      'message' => 'Provider updated',
     ];
 
     $response = new JsonResponse($data);
