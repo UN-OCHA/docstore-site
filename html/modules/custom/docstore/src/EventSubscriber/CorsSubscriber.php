@@ -2,6 +2,7 @@
 
 namespace Drupal\docstore\EventSubscriber;
 
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
@@ -67,7 +68,7 @@ class CorsSubscriber implements EventSubscriberInterface {
     $response->headers->set('Access-Control-Allow-Headers', 'Authorization, Accept, Accept-Language, Content-Language, Content-Type, Origin, X-Requested-With');
     $response->headers->set('Access-Control-Allow-Credentials', 'true');
     $response->headers->set('Access-Control-Expose-Headers', '');
-    $response->headers->set('Access-Control-Allow-Methods', 'OPTIONS, GET');
+    $response->headers->set('Access-Control-Allow-Methods', '*');
     $response->headers->set('Access-Control-Max-Age', '3600');
   }
 

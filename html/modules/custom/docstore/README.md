@@ -222,8 +222,8 @@ curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" --data-binary "@
 
 ## Private files
 
-- Add visibility to file entity API
-- Store in private file system
+- ~~Add visibility to file entity API~~
+- ~~Store in private file system~~
 - /private/provider/ts/hash/path-to-file
 - Controller to get provider
 - Hash = key + path + ts
