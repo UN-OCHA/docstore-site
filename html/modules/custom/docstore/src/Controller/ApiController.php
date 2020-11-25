@@ -247,6 +247,10 @@ class ApiController extends ControllerBase {
   protected function buildDocumentOutputFromSolr($docs, $solr, $index, $base_url) {
     $data = [];
 
+    // Load provider.
+    $current_user = $this->currentUser();
+    $provider = $current_user->getAccount();
+
     $field_mapping = $solr->getSolrFieldNames($index);
     $language_field = $field_mapping['search_api_language'];
 
@@ -290,13 +294,24 @@ class ApiController extends ControllerBase {
       $row['files'] = [];
       if (isset($row['files_media_uuid'])) {
         foreach ($row['files_media_uuid'] as $key => $value) {
-          $row['files'][] = [
+          $file_record = [
+            'private' => FALSE,
             'media_uuid' => $value,
             'file_uuid' => $row['files_file_uuid'][$key] ?? '',
             'filename' => $row['files_file_filename'][$key] ?? '',
             'uri' => $base_url . $row['files_file_uri'][$key] ?? '',
             'mime' => $row['files_file_filemime'][$key] ?? '',
           ];
+
+          // Hide private files, unless it's the owner.
+          if (strpos($row['files_file_uri'][$key], '/system/files') === 0) {
+            if ($current_user->isAnonymous() || $row['provider'] !== $provider->uuid()) {
+              $file_record['private'] = TRUE;
+              unset($file_record['uri']);
+            }
+          }
+
+          $row['files'][] = $file_record;
         }
       }
 
