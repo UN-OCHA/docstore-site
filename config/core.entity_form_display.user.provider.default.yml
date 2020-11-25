@@ -7,6 +7,7 @@ dependencies:
     - field.field.user.provider.api_keys_read_only
     - field.field.user.provider.dropfolder
     - field.field.user.provider.prefix
+    - field.field.user.provider.shared_secret
     - user_bundle.user_type.provider
 id: user.provider.default
 targetEntityType: user
@@ -49,6 +50,14 @@ content:
     region: content
   prefix:
     weight: 9
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  shared_secret:
+    weight: 11
     settings:
       size: 60
       placeholder: ''

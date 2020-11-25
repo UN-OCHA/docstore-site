@@ -908,6 +908,8 @@ Example output.
 
 ## GET /documents/{doc3}
 
+Get document as owner.
+
 * Accept: "application/json"
 * API-KEY: abcd
 
@@ -918,6 +920,41 @@ Example output.
 * Data.uuid: {doc3}
 * Data.title: "Doc term and file"
 * Data.files[0].media_uuid: "{media1}"
+* Data.files[0].private: true
+* Data.files[0].uri: /.*/
+
+## GET /documents/{doc3}
+
+Get document as anonymous
+
+* Accept: "application/json"
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: {doc3}
+* Data.title: "Doc term and file"
+* Data.files[0].media_uuid: "{media1}"
+* Data.files[0].private: true
+* Data.files[0].uri: null
+
+## GET /documents/{doc3}
+
+Get document as other user
+
+* Accept: "application/json"
+* API-KEY: dcba
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: {doc3}
+* Data.title: "Doc term and file"
+* Data.files[0].media_uuid: "{media1}"
+* Data.files[0].private: true
+* Data.files[0].uri: null
 
 ## DELETE /terms/{organization_wfp}
 

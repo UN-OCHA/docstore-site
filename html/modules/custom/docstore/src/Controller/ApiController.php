@@ -233,6 +233,7 @@ class ApiController extends ControllerBase {
 
     $response = new CacheableJsonResponse($data);
     $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
+      'user',
       'url.query_args:filter',
       'url.query_args:sort',
       'url.query_args:page',
@@ -246,6 +247,10 @@ class ApiController extends ControllerBase {
    */
   protected function buildDocumentOutputFromSolr($docs, $solr, $index, $base_url) {
     $data = [];
+
+    // Load provider.
+    $current_user = $this->currentUser();
+    $provider = $current_user->getAccount();
 
     $field_mapping = $solr->getSolrFieldNames($index);
     $language_field = $field_mapping['search_api_language'];
@@ -290,13 +295,24 @@ class ApiController extends ControllerBase {
       $row['files'] = [];
       if (isset($row['files_media_uuid'])) {
         foreach ($row['files_media_uuid'] as $key => $value) {
-          $row['files'][] = [
+          $file_record = [
+            'private' => FALSE,
             'media_uuid' => $value,
             'file_uuid' => $row['files_file_uuid'][$key] ?? '',
             'filename' => $row['files_file_filename'][$key] ?? '',
             'uri' => $base_url . $row['files_file_uri'][$key] ?? '',
             'mime' => $row['files_file_filemime'][$key] ?? '',
           ];
+
+          // Hide private files, unless it's the owner.
+          if (strpos($row['files_file_uri'][$key], '/system/files') === 0) {
+            $file_record['private'] = TRUE;
+            if ($current_user->isAnonymous() || $row['provider'] !== $provider->uuid()) {
+              unset($file_record['uri']);
+            }
+          }
+
+          $row['files'][] = $file_record;
         }
       }
 
@@ -461,7 +477,9 @@ class ApiController extends ControllerBase {
     unset($data['search_api_id']);
 
     $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
+      'user',
+    ]));
 
     return $response;
   }
@@ -2190,35 +2208,38 @@ class ApiController extends ControllerBase {
         $new_file->save();
       }
 
-      // Update media.
-      $usage_list = $this->fileUsage->listUsage($file);
-      $usage_list = isset($usage_list['file']) ? $usage_list['file'] : [];
-      $usage_list = isset($usage_list['media']) ? $usage_list['media'] : [];
-      $usage_list = array_keys($usage_list);
-
-      $media_entity = Media::load(reset($usage_list));
-
       // Swap filenames.
       $swap_uri = $file->getFileUri();
       $file->setFileUri($new_file->getFileUri());
       $new_file->setFileUri($swap_uri);
 
+      // Save both.
       $file->save();
       $new_file->save();
 
-      // Move old file to revisions.
-      $media_entity->field_media_file_revisions[] = [
-        'target_id' => $file->id(),
-      ];
+      // Update media referencing this file.
+      $usage_list = $this->fileUsage->listUsage($file);
+      $usage_list = isset($usage_list['file']) ? $usage_list['file'] : [];
+      $usage_list = isset($usage_list['media']) ? $usage_list['media'] : [];
+      $usage_list = array_keys($usage_list);
 
-      // Add new file.
-      $media_entity->field_media_file = [
-        'target_id' => $new_file->id(),
-      ];
+      foreach ($usage_list as $media_id) {
+        $media_entity = Media::load($media_id);
 
-      // Force new revision and save.
-      $media_entity->setNewRevision();
-      $media_entity->save();
+        // Move old file to revisions.
+        $media_entity->field_media_file_revisions[] = [
+          'target_id' => $file->id(),
+        ];
+
+        // Add new file.
+        $media_entity->field_media_file = [
+          'target_id' => $new_file->id(),
+        ];
+
+        // Force new revision and save.
+        $media_entity->setNewRevision();
+        $media_entity->save();
+      }
 
       // Swap files so it gets the new content.
       $file = $new_file;

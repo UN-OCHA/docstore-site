@@ -20,6 +20,12 @@ services:
   docstore.api_controller:
     class: \Drupal\docstore\Controller\ApiController
     arguments: ['@config.factory', '@database', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@transliteration', '@file.mime_type.guesser', '@file_system', '@file.usage', '@logger.factory', '@state', '@entity_usage.usage']
+  docstore.download_controller:
+    class: \Drupal\docstore\Controller\DownloadController
+    arguments: ['@entity.repository', '@logger.factory']
+  docstore.provider_controller:
+    class: \Drupal\docstore\Controller\ProviderController
+    arguments: ['@entity.repository', '@logger.factory']
   docstore.webhook_controller:
     class: \Drupal\docstore\Controller\WebhookController
     arguments: ['@entity_type.manager', '@logger.factory']
@@ -35,5 +41,10 @@ services:
       - { name: event_subscriber }
   docstore.exception_subscriber:
     class: Drupal\docstore\EventSubscriber\DocstoreExceptionSubscriber
+    tags:
+      - { name: event_subscriber }
+  dcostore.cors_subscriber:
+    class: Drupal\docstore\EventSubscriber\CorsSubscriber
+    arguments: []
     tags:
       - { name: event_subscriber }
