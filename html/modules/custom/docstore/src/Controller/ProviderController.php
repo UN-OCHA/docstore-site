@@ -60,7 +60,7 @@ class ProviderController extends ControllerBase {
   /**
    * Update info.
    */
-  public function UpdateInfo(Request $request) {
+  public function updateInfo(Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
 

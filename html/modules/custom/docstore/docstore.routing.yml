@@ -28,7 +28,7 @@ docstore_get_me:
 docstore_update_me:
   path: '/api/me'
   defaults:
-    _controller: 'docstore.provider_controller:UpdateInfo'
+    _controller: 'docstore.provider_controller:updateInfo'
     _title: 'Update provider info'
   methods: [PUT, PATCH]
   requirements:
