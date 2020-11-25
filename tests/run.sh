@@ -1,5 +1,6 @@
 DRUSH=${DRUSH:-"fin drush"}
-API=${API:-"http://docstore.local.docksal/api"}
+HOST=${HOST:-"http://docstore.local.docksal"}
+API=${API:-"$HOST/api"}
 
 # Clear docstore, test vocabulary CRUD
 $DRUSH eval "_docstore_setup_testing()"
@@ -31,6 +32,13 @@ curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" --data-binary "@
 export FILEPUBLICTXT=$(cat newfile_public_txt.json | awk -F '"' '{print $8}')
 curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" --data-binary "@./files/public_updated.txt" $API/files/$FILEPUBLICTXT/content
 
+curl -X GET -H  "accept: application/json" -H  "API-KEY: abcd" $API/me > me.json
+export ME_UUID=$(cat me.json | awk -F '"' '{print $4}')
+export ME_SHARED=$(cat me.json | awk -F '"' '{print $16}')
+export HASH=$(php -r "print md5('$ME_SHARED$FILEPRIVATETXT$ME_UUID');")
+
+./silk -test.v -silk.url $HOST silk_files_direct.md || exit 1;
 ./silk -test.v -silk.url $API silk_files.md || exit 1;
 ./silk -test.v -silk.url $API silk_create.md || exit 1;
 ./silk -test.v -silk.url $API silk_exceptions.md || exit 1;
+
