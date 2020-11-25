@@ -76,7 +76,7 @@ script:
 
   # Test
   - cd ${TRAVIS_BUILD_DIR}/tests
-  - DRUSH="../vendor/bin/drush" API="http://127.0.0.1:8080/api" ./run.sh
+  - DRUSH="../vendor/bin/drush" HOST="http://127.0.0.1:8080" ./run.sh
 
 after_success:
   - echo "The tests completed without errors."

@@ -12,7 +12,21 @@ docstore_wait:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 
-# hooks
+# me
+docstore_get_hooks:
+  path: '/api/me'
+  defaults:
+    _controller: 'docstore.provider_controller:getInfo'
+    _title: 'Get provider info'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+
+    # hooks
 docstore_get_hooks:
   path: '/api/webhooks'
   defaults:
@@ -615,3 +629,13 @@ docstore_update_file_content:
     _auth: ['docstore_auth']
     docstore_crud: 'U'
     docstore_access_level: 'B'
+
+# Download private file
+docstore_download_private_file:
+  path: '/files/{file_uuid}/{provider_uuid}/{hash}/{filename}'
+  defaults:
+    _controller: 'docstore.download_controller:download'
+    _title: 'Download a file'
+  methods: [GET]
+  requirements:
+    _access: 'TRUE'

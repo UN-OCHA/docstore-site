@@ -161,6 +161,9 @@ function _docstore_setup_testing() {
       'dropfolder' => [
         'value' => '../drop_folders/silk',
       ],
+      'shared_secret' => [
+        'value' => 'verysecret',
+      ],
     ])->save();
   }
 
