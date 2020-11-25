@@ -233,6 +233,7 @@ class ApiController extends ControllerBase {
 
     $response = new CacheableJsonResponse($data);
     $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
+      'user',
       'url.query_args:filter',
       'url.query_args:sort',
       'url.query_args:page',
@@ -305,8 +306,8 @@ class ApiController extends ControllerBase {
 
           // Hide private files, unless it's the owner.
           if (strpos($row['files_file_uri'][$key], '/system/files') === 0) {
+            $file_record['private'] = TRUE;
             if ($current_user->isAnonymous() || $row['provider'] !== $provider->uuid()) {
-              $file_record['private'] = TRUE;
               unset($file_record['uri']);
             }
           }
@@ -476,7 +477,9 @@ class ApiController extends ControllerBase {
     unset($data['search_api_id']);
 
     $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
+      'user',
+    ]));
 
     return $response;
   }
