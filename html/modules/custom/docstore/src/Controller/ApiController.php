@@ -199,6 +199,21 @@ class ApiController extends ControllerBase {
       $parser->applyPagerToIndex($pagers, $query);
     }
 
+    // Check published and private.
+    $provider = $this->getProvider();
+    if ($provider->isAnonymous()) {
+      $query->addCondition('published', 1);
+      $query->addCondition('private', 0);
+    }
+    else {
+      // Return private documents of provider.
+      $group_published = $query->createConditionGroup('OR');
+      $group_published->addCondition('published', 1);
+      $group_published->addCondition('private', 0);
+      $group_published->addCondition('provider', $provider->uuid());
+      $query->addConditionGroup($group_published);
+    }
+
     try {
       // Execute.
       $results = $query->execute();
@@ -249,8 +264,7 @@ class ApiController extends ControllerBase {
     $data = [];
 
     // Load provider.
-    $current_user = $this->currentUser();
-    $provider = $current_user->getAccount();
+    $provider = $this->getProvider();
 
     $field_mapping = $solr->getSolrFieldNames($index);
     $language_field = $field_mapping['search_api_language'];
@@ -284,13 +298,6 @@ class ApiController extends ControllerBase {
         }
       }
 
-      // Rename base fields.
-      $row['provider'] = $row['base_provider_uuid'];
-      unset($row['base_provider_uuid']);
-
-      $row['author'] = $row['base_author_hid'];
-      unset($row['base_author_hid']);
-
       // Re-write file information.
       $row['files'] = [];
       if (isset($row['files_media_uuid'])) {
@@ -307,7 +314,7 @@ class ApiController extends ControllerBase {
           // Hide private files, unless it's the owner.
           if (strpos($row['files_file_uri'][$key], '/system/files') === 0) {
             $file_record['private'] = TRUE;
-            if ($current_user->isAnonymous() || $row['provider'] !== $provider->uuid()) {
+            if ($provider->isAnonymous() || $row['provider'] !== $provider->uuid()) {
               unset($file_record['uri']);
             }
           }
@@ -354,7 +361,7 @@ class ApiController extends ControllerBase {
     }
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Create node.
     $item = [
@@ -363,7 +370,14 @@ class ApiController extends ControllerBase {
       'uid' => $provider->id(),
       'base_author_hid' => [],
       'base_files' => [],
+      'private' => [],
+      'status' => Node::PUBLISHED,
     ];
+
+    // Mark document as private.
+    if (isset($params['private']) && $params['private']) {
+      $item['status'] = Node::NOT_PUBLISHED;
+    }
 
     // Store HID Id.
     $item['base_author_hid'][] = [
@@ -450,6 +464,22 @@ class ApiController extends ControllerBase {
     $index = Index::load('documents');
     $query = $index->query();
     $query->addCondition('uuid', $id);
+
+    // Check published and private.
+    $provider = $this->getProvider();
+    if ($provider->isAnonymous()) {
+      $query->addCondition('published', 1);
+      $query->addCondition('private', 0);
+    }
+    else {
+      // Return private documents of provider.
+      $group_published = $query->createConditionGroup('OR');
+      $group_published->addCondition('published', 1);
+      $group_published->addCondition('private', 0);
+      $group_published->addCondition('provider', $provider->uuid());
+      $query->addConditionGroup($group_published);
+    }
+
     $results = $query->execute();
 
     // Use solr response directly.
@@ -624,7 +654,7 @@ class ApiController extends ControllerBase {
    */
   public function getDocumentFields() {
     // Load provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Create field.
     $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
@@ -651,7 +681,7 @@ class ApiController extends ControllerBase {
     $params = json_decode($request->getContent(), TRUE);
 
     // Load provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Create field.
     $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
@@ -683,7 +713,7 @@ class ApiController extends ControllerBase {
    */
   public function getDocumentField($id, Request $request) {
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Get field config.
     $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
@@ -716,7 +746,7 @@ class ApiController extends ControllerBase {
     $params = json_decode($request->getContent(), TRUE);
 
     // Load provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Get manager.
     $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
@@ -747,7 +777,7 @@ class ApiController extends ControllerBase {
    */
   public function deleteDocumentField($id, Request $request) {
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Delete field storage and config.
     $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
@@ -810,7 +840,7 @@ class ApiController extends ControllerBase {
     $params = json_decode($request->getContent(), TRUE);
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Delete field storage and config.
     $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
@@ -873,7 +903,7 @@ class ApiController extends ControllerBase {
     $params = json_decode($request->getContent(), TRUE);
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Delete field storage and config.
     $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
@@ -912,7 +942,7 @@ class ApiController extends ControllerBase {
     }
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
 
@@ -973,7 +1003,7 @@ class ApiController extends ControllerBase {
     $vocabulary = $this->loadVocabulary($id);
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Get field config.
     $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
@@ -1006,7 +1036,7 @@ class ApiController extends ControllerBase {
     $params = json_decode($request->getContent(), TRUE);
 
     // Load provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Id is either UUID or machine name.
     $vocabulary = $this->loadVocabulary($id);
@@ -1044,7 +1074,7 @@ class ApiController extends ControllerBase {
     $params = json_decode($request->getContent(), TRUE);
 
     // Load provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Id is either UUID or machine name.
     $vocabulary = $this->loadVocabulary($id);
@@ -1078,7 +1108,7 @@ class ApiController extends ControllerBase {
    */
   public function deleteVocabularyField($id, $field_id, Request $request) {
     // Load provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Id is either UUID or machine name.
     $vocabulary = $this->loadVocabulary($id);
@@ -1109,13 +1139,28 @@ class ApiController extends ControllerBase {
 
   /**
    * Get provider.
+   *
+   * @return Drupal\Core\Session\AccountProxy|FALSE
+   *   The provider if found.
    */
   protected function getProvider() {
     /** @var Drupal\Core\Session\AccountProxy $current_user */
     $current_user = $this->currentUser();
     $provider = $current_user->getAccount();
 
-    if (!$provider) {
+    return $provider;
+  }
+
+  /**
+   * Require provider.
+   *
+   * @return Drupal\Core\Session\AccountProxy|FALSE
+   *   The provider if found.
+   */
+  protected function requireProvider() {
+    $provider = $this->getProvider();
+
+    if (!$provider || $provider->isAnonymous()) {
       throw new BadRequestHttpException('Provider is required');
     }
 
@@ -1193,7 +1238,7 @@ class ApiController extends ControllerBase {
    */
   protected function createTermFromUserParameters($params) {
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Check required fields.
     if (empty($params['label'])) {
@@ -1462,7 +1507,7 @@ class ApiController extends ControllerBase {
     $params = json_decode($request->getContent(), TRUE);
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Provider can only update own terms.
     if ($term->base_provider_uuid->entity->uuid() !== $provider->uuid()) {
@@ -1598,7 +1643,7 @@ class ApiController extends ControllerBase {
     $term = $this->loadTerm($id);
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Provider can only update own terms.
     if ($term->base_provider_uuid->entity->uuid() !== $provider->uuid()) {
@@ -1665,7 +1710,7 @@ class ApiController extends ControllerBase {
     $file = $this->entityTypeManager->getStorage('file')->load($media->getSource()->getSourceFieldValue($media));
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Provider can only get own private files.
     $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
@@ -1722,7 +1767,7 @@ class ApiController extends ControllerBase {
     $file = $this->entityTypeManager->getStorage('file')->load($revision->getSource()->getSourceFieldValue($revision));
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Provider can only get own private files.
     $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
@@ -1759,7 +1804,7 @@ class ApiController extends ControllerBase {
     $file = $this->entityTypeManager->getStorage('file')->load($media->getSource()->getSourceFieldValue($media));
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Provider can only get own private files.
     $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
@@ -1800,7 +1845,7 @@ class ApiController extends ControllerBase {
     $file = $this->entityTypeManager->getStorage('file')->load($revision->getSource()->getSourceFieldValue($revision));
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Provider can only get own private files.
     $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
@@ -1824,16 +1869,28 @@ class ApiController extends ControllerBase {
     $files = $this->entityTypeManager->getStorage('file')->loadMultiple();
     $data = [];
 
-    /** @var \Drupal\media\Entity\File $file */
+    // Load provider.
+    $provider = $this->getProvider();
+
+    /** @var \Drupal\file\Entity\File $file */
     foreach ($files as $file) {
-      // TODO: Check for private files.
-      $data[] = [
+      $file_record = [
         'file' => $file->uuid(),
-        'url' => $file->createFileUrl(),
+        'uri' => $request->getSchemeAndHttpHost() . $file->createFileUrl(),
         'created' => date(DATE_ATOM, $file->getCreatedTime()),
         'changed' => date(DATE_ATOM, $file->getChangedTime()),
         'mimetype' => $file->getMimeType(),
       ];
+
+      // Hide private files, unless it's the owner.
+      if (StreamWrapperManager::getScheme($file->getFileUri()) === 'private') {
+        $file_record['private'] = TRUE;
+        if ($provider->isAnonymous() || $file->getOwnerId() !== $provider->uuid()) {
+          unset($file_record['uri']);
+        }
+      }
+
+      $data[] = $file_record;
     }
 
     $response = new JsonResponse($data);
@@ -1849,7 +1906,7 @@ class ApiController extends ControllerBase {
     $params = json_decode($request->getContent(), TRUE);
 
     // Load provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Filename is required.
     if (!isset($params['filename'])) {
@@ -1936,7 +1993,7 @@ class ApiController extends ControllerBase {
     }
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Provider can only get own private files.
     $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
@@ -1975,7 +2032,7 @@ class ApiController extends ControllerBase {
     }
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Provider can only delete own files.
     if ($file->getOwnerId() !== $provider->id()) {
@@ -2010,7 +2067,7 @@ class ApiController extends ControllerBase {
     }
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Provider can only get own private files.
     $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
@@ -2045,7 +2102,7 @@ class ApiController extends ControllerBase {
     }
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Provider can only get own private files.
     $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
@@ -2073,7 +2130,7 @@ class ApiController extends ControllerBase {
     }
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Provider can only update own files.
     if ($file->getOwnerId() !== $provider->id()) {
