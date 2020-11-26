@@ -6,12 +6,12 @@ use Drupal\Component\Uuid\Uuid;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
-use Drupal\Core\Session\AccountInterface;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\search_api\Entity\Index;
 use Drupal\search_api\Item\Field;
 use Drupal\taxonomy\Entity\Vocabulary;
+use Drupal\user_bundle\Entity\TypedUser;
 
 /**
  * Provides helper methods for parsing query parameters.
@@ -21,7 +21,7 @@ class ManageFields {
   /**
    * The provider.
    *
-   * @var \Drupal\Core\Session\AccountInterface
+   * @var \Drupal\user_bundle\Entity\TypedUser
    */
   protected $provider;
 
@@ -42,7 +42,7 @@ class ManageFields {
   /**
    * {@inheritdoc}
    */
-  public function __construct(AccountInterface $provider,
+  public function __construct(TypedUser $provider,
     EntityFieldManagerInterface $entityFieldManager,
     Connection $database
     ) {

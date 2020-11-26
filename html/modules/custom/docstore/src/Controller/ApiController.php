@@ -651,6 +651,7 @@ class ApiController extends ControllerBase {
    * Update document.
    */
   public function updateDocument($id, Request $request) {
+    // TODO
     throw new PreconditionFailedHttpException('Not implemented (yet)');
   }
 
@@ -658,6 +659,7 @@ class ApiController extends ControllerBase {
    * Delete document.
    */
   public function deleteDocument($id, Request $request) {
+    // TODO
     throw new PreconditionFailedHttpException('Not implemented (yet)');
   }
 
@@ -1152,7 +1154,7 @@ class ApiController extends ControllerBase {
   /**
    * Get provider.
    *
-   * @return Drupal\Core\Session\AccountProxy|false
+   * @return \Drupal\user_bundle\Entity\TypedUser|false
    *   The provider if found.
    */
   protected function getProvider() {
@@ -1166,7 +1168,7 @@ class ApiController extends ControllerBase {
   /**
    * Require provider.
    *
-   * @return Drupal\Core\Session\AccountProxy|false
+   * @return \Drupal\user_bundle\Entity\TypedUser|false
    *   The provider if found.
    */
   protected function requireProvider() {
