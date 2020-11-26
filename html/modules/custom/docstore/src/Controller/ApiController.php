@@ -370,13 +370,25 @@ class ApiController extends ControllerBase {
       'uid' => $provider->id(),
       'base_author_hid' => [],
       'base_files' => [],
-      'private' => [],
+      'base_private' => [],
       'status' => Node::PUBLISHED,
     ];
 
-    // Mark document as private.
-    if (isset($params['private']) && $params['private']) {
+    // Published.
+    if (isset($params['published']) && !$params['published']) {
       $item['status'] = Node::NOT_PUBLISHED;
+    }
+
+    // Private.
+    if (isset($params['private']) && $params['private']) {
+      $item['base_private'][] = [
+        'value' => TRUE,
+      ];
+    }
+    else {
+      $item['base_private'][] = [
+        'value' => FALSE,
+      ];
     }
 
     // Store HID Id.
@@ -1710,7 +1722,7 @@ class ApiController extends ControllerBase {
     $file = $this->entityTypeManager->getStorage('file')->load($media->getSource()->getSourceFieldValue($media));
 
     // Get provider.
-    $provider = $this->requireProvider();
+    $provider = $this->getProvider();
 
     // Provider can only get own private files.
     $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
@@ -1767,7 +1779,7 @@ class ApiController extends ControllerBase {
     $file = $this->entityTypeManager->getStorage('file')->load($revision->getSource()->getSourceFieldValue($revision));
 
     // Get provider.
-    $provider = $this->requireProvider();
+    $provider = $this->getProvider();
 
     // Provider can only get own private files.
     $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
@@ -1804,7 +1816,7 @@ class ApiController extends ControllerBase {
     $file = $this->entityTypeManager->getStorage('file')->load($media->getSource()->getSourceFieldValue($media));
 
     // Get provider.
-    $provider = $this->requireProvider();
+    $provider = $this->getProvider();
 
     // Provider can only get own private files.
     $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
@@ -1993,7 +2005,7 @@ class ApiController extends ControllerBase {
     }
 
     // Get provider.
-    $provider = $this->requireProvider();
+    $provider = $this->getProvider();
 
     // Provider can only get own private files.
     $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
