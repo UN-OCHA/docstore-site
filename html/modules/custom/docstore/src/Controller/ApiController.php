@@ -1152,7 +1152,7 @@ class ApiController extends ControllerBase {
   /**
    * Get provider.
    *
-   * @return Drupal\Core\Session\AccountProxy|FALSE
+   * @return Drupal\Core\Session\AccountProxy|false
    *   The provider if found.
    */
   protected function getProvider() {
@@ -1166,7 +1166,7 @@ class ApiController extends ControllerBase {
   /**
    * Require provider.
    *
-   * @return Drupal\Core\Session\AccountProxy|FALSE
+   * @return Drupal\Core\Session\AccountProxy|false
    *   The provider if found.
    */
   protected function requireProvider() {
