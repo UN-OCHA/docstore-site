@@ -710,10 +710,6 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_id}
 
-# Document
-
-(echo -n '{"title":"Doc with term, no files","author":"hid_123456789","metadata":[{"peter_city":"2a6ef841-eafa-41e4-9933-afe33671a7d2"}, {"peter_organizations":["95ac1ef7-c637-448c-9b3d-336ac85bffe8","41e1ef47-e5bb-4f89-b01b-fc0f34092073"]}]}') | curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" -H "Content-Type: application/json" -d @-  http://docstore.local.docksal/api/documents | jq
-
 ## POST /documents
 
 Add a document without a file.
@@ -759,6 +755,23 @@ Example output.
 * Content-Type: "application/json"
 * Data.message: "Document created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc1}
+
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
 
 ## POST /documents
 

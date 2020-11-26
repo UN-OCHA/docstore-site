@@ -5,9 +5,20 @@
  * Contains Document Store code.
  */
 
+use Drupal\search_api\Entity\Index;
+
 /**
  * Enable entity_usage.
  */
 function docstore_update_8001() {
   \Drupal::service('module_installer')->install(['entity_usage']);
+}
+
+/**
+ * Re-index.
+ */
+function docstore_update_8002() {
+  // Re-index.
+  $index = Index::load('documents');
+  $index->reindex();
 }
