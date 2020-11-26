@@ -30,6 +30,7 @@ use Drupal\media\Entity\Media;
 use Drupal\node\Entity\Node;
 use Drupal\search_api\Entity\Index;
 use Drupal\search_api_solr\SearchApiSolrException;
+use Drupal\search_api_solr\SolrBackendInterface;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -188,6 +189,10 @@ class ApiController extends ControllerBase {
       $sorters = $parser->parseSort($request->query->get('sort'));
       $parser->applySortToIndex($sorters, $query);
     }
+    else {
+      // Add default sort.
+      $query->sort('created', 'ASC');
+    }
     if ($request->query->has('page')) {
       $pagers = $parser->parsePaging($request->query->get('page'));
       $parser->applyPagerToIndex($pagers, $query);
@@ -202,14 +207,14 @@ class ApiController extends ControllerBase {
     // Check published and private.
     $provider = $this->getProvider();
     if ($provider->isAnonymous()) {
-      $query->addCondition('published', 1);
-      $query->addCondition('private', 0);
+      $query->addCondition('published', TRUE);
+      $query->addCondition('private', TRUE, '<>');
     }
     else {
       // Return private documents of provider.
       $group_published = $query->createConditionGroup('OR');
-      $group_published->addCondition('published', 1);
-      $group_published->addCondition('private', 0);
+      $group_published->addCondition('published', TRUE);
+      $group_published->addCondition('private', TRUE, '<>');
       $group_published->addCondition('provider', $provider->uuid());
       $query->addConditionGroup($group_published);
     }
@@ -226,11 +231,16 @@ class ApiController extends ControllerBase {
     $solr_response = $results->getExtraData('search_api_solr_response', []);
 
     // Build output data.
-    // TODO: Check if backend is solr.
     $server = $index->getServerInstance();
     $solr = $server->getBackend();
 
+    // Make sure backend is solr.
+    if (!($solr instanceof SolrBackendInterface)) {
+      throw new BadRequestHttpException('Only solr backend is supported');
+    }
+
     // Massage the data.
+    $this->getLogger('solr')->notice(count($solr_response['response']['docs']));
     $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index, $request->getSchemeAndHttpHost());
 
     // Add cache tags.
@@ -498,9 +508,14 @@ class ApiController extends ControllerBase {
     $solr_response = $results->getExtraData('search_api_solr_response', []);
 
     // Build output data.
-    // TODO: Check if backend is solr.
     $server = $index->getServerInstance();
     $solr = $server->getBackend();
+
+    // Make sure backend is solr.
+    if (!($solr instanceof SolrBackendInterface)) {
+      throw new BadRequestHttpException('Only solr backend is supported');
+    }
+
     $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index, $request->getSchemeAndHttpHost());
 
     if (empty($data)) {
@@ -651,7 +666,7 @@ class ApiController extends ControllerBase {
    * Update document.
    */
   public function updateDocument($id, Request $request) {
-    // TODO
+    // TODO.
     throw new PreconditionFailedHttpException('Not implemented (yet)');
   }
 
@@ -659,7 +674,7 @@ class ApiController extends ControllerBase {
    * Delete document.
    */
   public function deleteDocument($id, Request $request) {
-    // TODO
+    // TODO.
     throw new PreconditionFailedHttpException('Not implemented (yet)');
   }
 
