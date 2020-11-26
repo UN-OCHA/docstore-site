@@ -6,6 +6,7 @@ dependencies:
     - core.entity_view_mode.node.teaser
     - field.field.node.document.base_author_hid
     - field.field.node.document.base_files
+    - field.field.node.document.base_private
     - node.type.document
   module:
     - user
@@ -22,5 +23,6 @@ content:
 hidden:
   base_author_hid: true
   base_files: true
+  base_private: true
   langcode: true
   search_api_excerpt: true

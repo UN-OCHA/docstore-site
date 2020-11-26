@@ -956,6 +956,158 @@ Get document as other user
 * Data.files[0].private: true
 * Data.files[0].uri: null
 
+## POST /documents
+
+Add an unpublished document.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "title": "Unpublished doc",
+  "author": "hid_123456789",
+  "published": false
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Document created"
+}
+```
+
+===
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Document created"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc4}
+
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## POST /documents
+
+Add a private document.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "title": "Private doc",
+  "author": "hid_123456789",
+  "private": true
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Document created"
+}
+```
+
+===
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Document created"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc5}
+
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /documents/{doc4}
+
+Get unpublished document as owner.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: {doc4}
+* Data.published: false
+
+## GET /documents/{doc5}
+
+Get private document as owner.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: {doc5}
+* Data.private: true
+
+## GET /documents/{doc4}
+
+Get unpublished document as anonymous.
+
+* Accept: "application/json"
+
+===
+
+* Status: `404`
+* Content-Type: "application/json"
+* Data.message: "Document {doc4} does not exist"
+
+## GET /documents/{doc5}
+
+Get private document as anonymous.
+
+* Accept: "application/json"
+
+===
+
+* Status: `404`
+* Content-Type: "application/json"
+* Data.message: "Document {doc5} does not exist"
+
 ## DELETE /terms/{organization_wfp}
 
 Delete a term which is in use.
@@ -1006,6 +1158,19 @@ Test sort.
 
 * Status: `200`
 * Content-Type: "application/json"
+* Data[0].uuid: {doc5}
+
+## GET /documents
+
+Test sort as anonymous.
+
+* Accept: "application/json"
+* ?sort=-created
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
 * Data[0].uuid: {doc3}
 
 ## GET /documents
@@ -1028,6 +1193,22 @@ Test offset.
 
 * Accept: "application/json"
 * API-KEY: abcd
+* ?page[offset]=77
+
+===
+
+```json
+[]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /documents
+
+Test offset as anonymous.
+
+* Accept: "application/json"
 * ?page[offset]=4
 
 ===
