@@ -989,6 +989,23 @@ Example output.
 * Data.message: "Document created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc4}
 
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
 ## POST /documents
 
 Add a private document.
@@ -1141,7 +1158,20 @@ Test sort.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc4}
+* Data[0].uuid: {doc5}
+
+## GET /documents
+
+Test sort as anonymous.
+
+* Accept: "application/json"
+* ?sort=-created
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].uuid: {doc3}
 
 ## GET /documents
 
@@ -1164,6 +1194,22 @@ Test offset.
 * Accept: "application/json"
 * API-KEY: abcd
 * ?page[offset]=77
+
+===
+
+```json
+[]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /documents
+
+Test offset as anonymous.
+
+* Accept: "application/json"
+* ?page[offset]=4
 
 ===
 
