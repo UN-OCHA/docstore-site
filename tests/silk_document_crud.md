@@ -1,5 +1,107 @@
 # Create documents
 
+## POST /document/fields
+
+Test empty post.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+```
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "You have to pass a JSON object"
+
+## POST /document/fields
+
+Test empty post.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+[]
+```
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "You have to pass a JSON object"
+
+## POST /document/fields
+
+Test empty post.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{}
+```
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "You have to pass a JSON object"
+
+## POST /document/fields
+
+Test illegal json post.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+345345345
+```
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "You have to pass a JSON object"
+
+## POST /document/fields
+
+Add id field.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "My Id",
+  "author": "hid_123456789",
+  "type": "integer"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Field created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Field created"
+* Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_id}
+
 ## POST /documents
 
 Add a document as anonymous.
@@ -70,7 +172,12 @@ Add a minimal document.
 ```json
 {
   "title": "Minimal",
-  "author": "hid_123456789"
+  "author": "hid_123456789",
+  "metadata": [
+    {
+      "{field_id}": 42
+    }
+  ]
 }
 ```
 
@@ -119,6 +226,20 @@ Test filters.
 * Accept: "application/json"
 * API-KEY: abcd
 * ?filter[title]=Minimal
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].uuid: {doc1}
+
+## GET /documents
+
+Test filters.
+
+* Accept: "application/json"
+* API-KEY: abcd
+* ?filter[silk_my_id]=42
 
 ===
 
@@ -191,7 +312,12 @@ Add a private document.
 {
   "title": "Private",
   "author": "hid_123456789",
-  "private": true
+  "private": true,
+  "metadata": [
+    {
+      "{field_id}": 42
+    }
+  ]
 }
 ```
 
@@ -232,7 +358,12 @@ Add an unpublished document.
 {
   "title": "Unpublished",
   "author": "hid_123456789",
-  "published": false
+  "published": false,
+  "metadata": [
+    {
+      "{field_id}": 42
+    }
+  ]
 }
 ```
 
@@ -274,7 +405,12 @@ Add an unpublished private document.
   "title": "Private unpublished",
   "author": "hid_123456789",
   "published": false,
-  "private": true
+  "private": true,
+  "metadata": [
+    {
+      "{field_id}": 42
+    }
+  ]
 }
 ```
 
@@ -516,7 +652,12 @@ Update private document.
 
 ```json
 {
-  "title": "Private - updated"
+  "title": "Private - updated",
+  "metadata": [
+    {
+      "{field_id}": 7
+    }
+  ]
 }
 ```
 
@@ -543,6 +684,21 @@ Example output.
 
 * Status: `200`
 * Content-Type: "application/json"
+
+
+## GET /documents
+
+Test filters.
+
+* Accept: "application/json"
+* API-KEY: abcd
+* ?filter[silk_my_id]=7
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].uuid: {doc2}
 
 ## GET /documents/{doc2}
 
