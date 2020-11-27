@@ -855,7 +855,6 @@ class ApiController extends ControllerBase {
     // Get provider.
     $provider = $this->requireProvider();
 
-    // Provider can only update own documents.
     // Provider can only update own document.
     if ($document->getOwnerId() !== $provider->id()) {
       throw new BadRequestHttpException('Document is not owned by you');

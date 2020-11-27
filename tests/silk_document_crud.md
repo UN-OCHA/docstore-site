@@ -734,3 +734,180 @@ Get private document as other provider.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
+
+## PATCH /documents/{doc3}
+
+Make unpublished document public.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "title": "Unpublished - made public",
+  "published": true
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Document updated"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Document updated"
+
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /documents/{doc3}
+
+Get unpublished document.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+{
+  "title": "Unpublished - made public"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /documents/{doc3}
+
+Get unpublished document as owner.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: {doc3}
+
+## GET /documents/{doc3}
+
+Get unpublished document as anonymous.
+
+* Accept: "application/json"
+
+===
+
+* Status: `404`
+* Content-Type: "application/json"
+
+## GET /documents/{doc3}
+
+Get unpublished document as other provider.
+
+* Accept: "application/json"
+* API-KEY: dcba
+
+===
+
+* Status: `404`
+* Content-Type: "application/json"
+
+## DELETE /documents/{doc3}
+
+Delete private document as anonymous.
+
+* Accept: "application/json"
+
+===
+
+* Status: `403`
+* Content-Type: "application/json"
+
+## DELETE /documents/{doc3}
+
+Delete private document as other provider.
+
+* Accept: "application/json"
+* API-KEY: dcba
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+
+## DELETE /documents/{doc3}
+
+Delete private document as owner.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Document deleted"
+
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /documents/{doc3}
+
+Get deleted unpublished document as owner.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `404`
+* Content-Type: "application/json"
+
+## GET /documents/{doc3}
+
+Get deleted unpublished document as anonymous.
+
+* Accept: "application/json"
+
+===
+
+* Status: `404`
+* Content-Type: "application/json"
+
+## GET /documents/{doc3}
+
+Get deleted unpublished document as other provider.
+
+* Accept: "application/json"
+* API-KEY: dcba
+
+===
+
+* Status: `404`
+* Content-Type: "application/json"
