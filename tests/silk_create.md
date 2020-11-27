@@ -749,8 +749,6 @@ Example output.
 }
 ```
 
-===
-
 * Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Document created"
