@@ -561,11 +561,34 @@ class ApiController extends ControllerBase {
     $query->addCondition('uuid', $id);
     $results = $query->execute();
 
+    // Check published and private.
+    $provider = $this->getProvider();
+    if ($provider->isAnonymous()) {
+      $query->addCondition('published', TRUE);
+      $query->addCondition('private', TRUE, '<>');
+    }
+    else {
+      // Return private documents of provider.
+      $group_provider = $query->createConditionGroup('OR');
+      $group_provider->addCondition('provider', $provider->uuid());
+      // Or public published documents.
+      $group_published = $query->createConditionGroup('AND');
+      $group_published->addCondition('published', TRUE);
+      $group_published->addCondition('private', TRUE, '<>');
+
+      $group_provider->addConditionGroup($group_published);
+      $query->addConditionGroup($group_provider);
+    }
+
     // Use solr response directly.
     $solr_response = $results->getExtraData('search_api_solr_response', []);
 
+    // Make sure backend is solr.
+    if (!($solr instanceof SolrBackendInterface)) {
+      throw new BadRequestHttpException('Only solr backend is supported');
+    }
+
     // Build output data.
-    // TODO: Check if backend is solr.
     $server = $index->getServerInstance();
     $solr = $server->getBackend();
     $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index, $request->getSchemeAndHttpHost());
@@ -687,13 +710,20 @@ class ApiController extends ControllerBase {
       'revision_log_message',
       'revision_user',
       'status',
+      'promote',
+      'sticky',
+      'type',
       'nid',
       'uuid',
       'vid',
+      'uid',
     ];
 
     // Load document.
     $document = $this->loadDocument($id);
+    if (!$document) {
+      throw new NotFoundHttpException(strtr('Document @uuid does not exist', ['@uuid' => $id]));
+    }
 
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
@@ -702,7 +732,7 @@ class ApiController extends ControllerBase {
     $provider = $this->requireProvider();
 
     // Provider can only update own document.
-    if ($document->getOwnerId() !== $provider->uuid()) {
+    if ($document->getOwnerId() !== $provider->id()) {
       throw new BadRequestHttpException('Document is not owned by you');
     }
 
@@ -713,8 +743,18 @@ class ApiController extends ControllerBase {
       }
     }
 
-    $updated_fields = [];
+    // Re-map fields.
+    if (isset($params['private'])) {
+      $params['base_private'] = $params['private'];
+      unset($params['private']);
+    }
 
+    if (isset($params['published'])) {
+      $params['published'] = $params['published'];
+      unset($params['published']);
+    }
+
+    $updated_fields = [];
     // Update all fields specified in metadata.
     if (isset($params['metadata'])) {
       $metadata = $params['metadata'];
@@ -762,7 +802,7 @@ class ApiController extends ControllerBase {
       $document_fields = $document->getFields(FALSE);
       foreach ($document_fields as $document_field) {
         // Skip name field.
-        if ($document_field->getName() === 'name') {
+        if ($document_field->getName() === 'title') {
           continue;
         }
 
@@ -815,12 +855,13 @@ class ApiController extends ControllerBase {
     $provider = $this->requireProvider();
 
     // Provider can only update own documents.
-    if ($document->getOwnerId() !== $provider->uuid()) {
+    // Provider can only update own document.
+    if ($document->getOwnerId() !== $provider->id()) {
       throw new BadRequestHttpException('Document is not owned by you');
     }
 
     $data = [
-      'message' => 'document deleted',
+      'message' => 'Document deleted',
       'uuid' => $document->uuid(),
     ];
 
