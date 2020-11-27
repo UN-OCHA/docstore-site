@@ -212,11 +212,15 @@ class ApiController extends ControllerBase {
     }
     else {
       // Return private documents of provider.
-      $group_published = $query->createConditionGroup('OR');
+      $group_provider = $query->createConditionGroup('OR');
+      $group_provider->addCondition('provider', $provider->uuid());
+      // Or public published documents.
+      $group_published = $query->createConditionGroup('AND');
       $group_published->addCondition('published', TRUE);
       $group_published->addCondition('private', TRUE, '<>');
-      $group_published->addCondition('provider', $provider->uuid());
-      $query->addConditionGroup($group_published);
+
+      $group_provider->addConditionGroup($group_published);
+      $query->addConditionGroup($group_provider);
     }
 
     try {
@@ -490,16 +494,20 @@ class ApiController extends ControllerBase {
     // Check published and private.
     $provider = $this->getProvider();
     if ($provider->isAnonymous()) {
-      $query->addCondition('published', 1);
-      $query->addCondition('private', 0);
+      $query->addCondition('published', TRUE);
+      $query->addCondition('private', TRUE, '<>');
     }
     else {
       // Return private documents of provider.
-      $group_published = $query->createConditionGroup('OR');
-      $group_published->addCondition('published', 1);
-      $group_published->addCondition('private', 0);
-      $group_published->addCondition('provider', $provider->uuid());
-      $query->addConditionGroup($group_published);
+      $group_provider = $query->createConditionGroup('OR');
+      $group_provider->addCondition('provider', $provider->uuid());
+      // Or public published documents.
+      $group_published = $query->createConditionGroup('AND');
+      $group_published->addCondition('published', TRUE);
+      $group_published->addCondition('private', TRUE, '<>');
+
+      $group_provider->addConditionGroup($group_published);
+      $query->addConditionGroup($group_provider);
     }
 
     $results = $query->execute();
