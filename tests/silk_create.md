@@ -1270,3 +1270,17 @@ Test illegal sort.
 * Status: `400`
 * Content-Type: "application/json"
 * Data.message: "Sort \"createdxx\" is not valid solr field."
+
+## GET /documents
+
+Test full text search.
+
+* Accept: "application/json"
+* API-KEY: abcd
+* ?s=Paris
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].uuid: {doc2}
