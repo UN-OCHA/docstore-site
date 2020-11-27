@@ -362,8 +362,14 @@ class ApiController extends ControllerBase {
    * Create document.
    */
   public function createDocument(Request $request) {
+    // Get provider.
+    $provider = $this->requireProvider();
+
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
 
     // Check required fields.
     if (empty($params['title'])) {
@@ -373,9 +379,6 @@ class ApiController extends ControllerBase {
     if (empty($params['author'])) {
       throw new BadRequestHttpException('Author is required');
     }
-
-    // Get provider.
-    $provider = $this->requireProvider();
 
     // Create node.
     $item = [
@@ -561,13 +564,37 @@ class ApiController extends ControllerBase {
     $query->addCondition('uuid', $id);
     $results = $query->execute();
 
+    // Check published and private.
+    $provider = $this->getProvider();
+    if ($provider->isAnonymous()) {
+      $query->addCondition('published', TRUE);
+      $query->addCondition('private', TRUE, '<>');
+    }
+    else {
+      // Return private documents of provider.
+      $group_provider = $query->createConditionGroup('OR');
+      $group_provider->addCondition('provider', $provider->uuid());
+      // Or public published documents.
+      $group_published = $query->createConditionGroup('AND');
+      $group_published->addCondition('published', TRUE);
+      $group_published->addCondition('private', TRUE, '<>');
+
+      $group_provider->addConditionGroup($group_published);
+      $query->addConditionGroup($group_provider);
+    }
+
     // Use solr response directly.
     $solr_response = $results->getExtraData('search_api_solr_response', []);
 
     // Build output data.
-    // TODO: Check if backend is solr.
     $server = $index->getServerInstance();
     $solr = $server->getBackend();
+
+    // Make sure backend is solr.
+    if (!($solr instanceof SolrBackendInterface)) {
+      throw new BadRequestHttpException('Only solr backend is supported');
+    }
+
     $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index, $request->getSchemeAndHttpHost());
 
     if (empty($data)) {
@@ -674,16 +701,181 @@ class ApiController extends ControllerBase {
    * Update document.
    */
   public function updateDocument($id, Request $request) {
-    // TODO.
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    $protected_fields = [
+      'base_author_hid',
+      'base_provider_uuid',
+      'changed',
+      'created',
+      'default_langcode',
+      'langcode',
+      'parent',
+      'revision_created',
+      'revision_id',
+      'revision_log_message',
+      'revision_user',
+      'status',
+      'promote',
+      'sticky',
+      'type',
+      'nid',
+      'uuid',
+      'vid',
+      'uid',
+    ];
+
+    // Load document.
+    $document = $this->loadDocument($id);
+    if (!$document) {
+      throw new NotFoundHttpException(strtr('Document @uuid does not exist', ['@uuid' => $id]));
+    }
+
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
+
+    // Get provider.
+    $provider = $this->requireProvider();
+
+    // Provider can only update own document.
+    if ($document->getOwnerId() !== $provider->id()) {
+      throw new BadRequestHttpException('Document is not owned by you');
+    }
+
+    // Check required fields.
+    if ($request->getMethod() === 'PUT') {
+      if (empty($params['title'])) {
+        throw new BadRequestHttpException('Title is required');
+      }
+    }
+
+    // Re-map fields.
+    if (isset($params['private'])) {
+      $params['base_private'] = $params['private'];
+      unset($params['private']);
+    }
+
+    if (isset($params['published'])) {
+      $params['published'] = $params['published'];
+      unset($params['published']);
+    }
+
+    $updated_fields = [];
+    // Update all fields specified in metadata.
+    if (isset($params['metadata'])) {
+      $metadata = $params['metadata'];
+      if (!is_array($metadata) || $this->arrayIsAssociative($metadata)) {
+        throw new BadRequestHttpException('Metadata has to be an array');
+      }
+
+      foreach ($metadata as $metaitem) {
+        foreach ($metaitem as $name => $values) {
+          // Make sure protected fields aren't set.
+          if (isset($protected_fields[$name])) {
+            throw new BadRequestHttpException(strtr('Field @name cannot be changed', ['@name' => $name]));
+          }
+
+          if ($document->hasField($name)) {
+            $document->set($name, $values);
+            $updated_fields[] = $name;
+          }
+          else {
+            throw new BadRequestHttpException(strtr('Field @name does not exists', ['@name' => $name]));
+          }
+        }
+      }
+      unset($params['metadata']);
+    }
+
+    // Update all fields specified in params.
+    foreach ($params as $name => $values) {
+      // Make sure protected fields aren't set.
+      if (isset($protected_fields[$name])) {
+        throw new BadRequestHttpException(strtr('Field @name cannot be changed', ['@name' => $name]));
+      }
+
+      if ($document->hasField($name)) {
+        $document->set($name, $values);
+        $updated_fields[] = $name;
+      }
+      else {
+        throw new BadRequestHttpException(strtr('Field @name does not exists', ['@name' => $name]));
+      }
+    }
+
+    // Remove all fields not part of params.
+    if ($request->getMethod() === 'PUT') {
+      $document_fields = $document->getFields(FALSE);
+      foreach ($document_fields as $document_field) {
+        // Skip name field.
+        if ($document_field->getName() === 'title') {
+          continue;
+        }
+
+        if (in_array($document_field->getName(), $updated_fields)) {
+          continue;
+        }
+
+        if (in_array($document_field->getName(), $protected_fields)) {
+          continue;
+        }
+
+        if (!$document_field->isEmpty()) {
+          $document->set($document_field->getName(), NULL);
+        }
+      }
+    }
+
+    $document->setNewRevision();
+    $document->revision_log = 'Document updated';
+    $document->setRevisionCreationTime(time());
+    $document->isDefaultRevision(TRUE);
+    $document->setRevisionUserId($provider->id());
+
+    $document->save();
+
+    $data = [
+      'message' => 'Document updated',
+      'uuid' => $document->uuid(),
+    ];
+
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => $document->getCacheTags(),
+    ];
+
+    $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+
+    return $response;
   }
 
   /**
    * Delete document.
    */
   public function deleteDocument($id, Request $request) {
-    // TODO.
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    // Load document.
+    $document = $this->loadDocument($id);
+
+    // Get provider.
+    $provider = $this->requireProvider();
+
+    // Provider can only update own document.
+    if ($document->getOwnerId() !== $provider->id()) {
+      throw new BadRequestHttpException('Document is not owned by you');
+    }
+
+    $data = [
+      'message' => 'Document deleted',
+      'uuid' => $document->uuid(),
+    ];
+
+    $document->delete();
+
+    $response = new JsonResponse($data);
+
+    return $response;
   }
 
   /**
@@ -716,6 +908,9 @@ class ApiController extends ControllerBase {
   public function createDocumentField(Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
 
     // Load provider.
     $provider = $this->requireProvider();
@@ -781,6 +976,9 @@ class ApiController extends ControllerBase {
   public function updateDocumentField($id, Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
 
     // Load provider.
     $provider = $this->requireProvider();
@@ -875,6 +1073,9 @@ class ApiController extends ControllerBase {
   public function createVocabulary(Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
 
     // Get provider.
     $provider = $this->requireProvider();
@@ -933,11 +1134,14 @@ class ApiController extends ControllerBase {
    * Update vocabulary.
    */
   public function updateVocabulary($id, Request $request) {
-    // Load vocabulary.
-    $vocabulary = $this->loadVocabulary($id);
-
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
+
+    // Load vocabulary.
+    $vocabulary = $this->loadVocabulary($id);
 
     // Get provider.
     $provider = $this->requireProvider();
@@ -1071,6 +1275,9 @@ class ApiController extends ControllerBase {
   public function createVocabularyField($id, Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
 
     // Load provider.
     $provider = $this->requireProvider();
@@ -1109,6 +1316,9 @@ class ApiController extends ControllerBase {
   public function updateVocabularyField($id, $field_id, Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
 
     // Load provider.
     $provider = $this->requireProvider();
@@ -1252,10 +1462,13 @@ class ApiController extends ControllerBase {
    * Create term on vocabulary.
    */
   public function createTermOnVocabulary($id, Request $request) {
-    $vocabulary = $this->loadVocabulary($id);
-
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
+
+    $vocabulary = $this->loadVocabulary($id);
 
     $params['vocabulary'] = $vocabulary->uuid();
     return $this->createTermFromUserParameters($params);
@@ -1267,6 +1480,10 @@ class ApiController extends ControllerBase {
   public function createTerm(Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
+
     return $this->createTermFromUserParameters($params);
   }
 
@@ -1537,11 +1754,14 @@ class ApiController extends ControllerBase {
       'weight',
     ];
 
-    // Load term.
-    $term = $this->loadTerm($id);
-
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
+
+    // Load term.
+    $term = $this->loadTerm($id);
 
     // Get provider.
     $provider = $this->requireProvider();
@@ -1941,6 +2161,9 @@ class ApiController extends ControllerBase {
   public function createFile(Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
 
     // Load provider.
     $provider = $this->requireProvider();
@@ -2265,6 +2488,27 @@ class ApiController extends ControllerBase {
     }
 
     return $term;
+  }
+
+  /**
+   * Load a document.
+   *
+   * @param string $id
+   *   The document uuid.
+   *
+   * @return \Drupal\node\Entity\Node
+   *   document.
+   */
+  protected function loadDocument($id) {
+    if (Uuid::isValid($id)) {
+      $document = $this->entityRepository->loadEntityByUuid('node', $id);
+    }
+
+    if (!$document) {
+      throw new NotFoundHttpException('Document does not exist');
+    }
+
+    return $document;
   }
 
   /**
