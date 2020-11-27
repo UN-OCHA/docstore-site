@@ -198,10 +198,10 @@ class ApiController extends ControllerBase {
       $parser->applyPagerToIndex($pagers, $query);
     }
 
-    // Todo: Add full text search.
-    if ($request->query->has('search')) {
-      $pagers = $parser->parsePaging($request->query->get('page'));
-      $parser->applyPagerToIndex($pagers, $query);
+    // Add full text search.
+    if ($request->query->has('s')) {
+      $query->setFulltextFields(['title', 'rendered_item']);
+      $query->keys($request->query->get('s'));
     }
 
     // Check published and private.
@@ -350,6 +350,9 @@ class ApiController extends ControllerBase {
       }
       if (isset($row['search_api_language'])) {
         unset($row['search_api_language']);
+      }
+      if (isset($row['rendered_item'])) {
+        unset($row['rendered_item']);
       }
 
       $data[] = $row;
