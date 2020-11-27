@@ -1121,6 +1121,32 @@ Get private document as anonymous.
 * Content-Type: "application/json"
 * Data.message: "Document {doc5} does not exist"
 
+## GET /documents/{doc4}
+
+Get unpublished document as other provider.
+
+* Accept: "application/json"
+* API-KEY: dcba
+
+===
+
+* Status: `404`
+* Content-Type: "application/json"
+* Data.message: "Document {doc4} does not exist"
+
+## GET /documents/{doc5}
+
+Get private document as other provider.
+
+* Accept: "application/json"
+* API-KEY: dcba
+
+===
+
+* Status: `404`
+* Content-Type: "application/json"
+* Data.message: "Document {doc5} does not exist"
+
 ## DELETE /terms/{organization_wfp}
 
 Delete a term which is in use.
