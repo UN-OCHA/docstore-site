@@ -367,6 +367,9 @@ class ApiController extends ControllerBase {
 
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
 
     // Check required fields.
     if (empty($params['title'])) {
@@ -728,6 +731,9 @@ class ApiController extends ControllerBase {
 
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
 
     // Get provider.
     $provider = $this->requireProvider();
@@ -902,6 +908,9 @@ class ApiController extends ControllerBase {
   public function createDocumentField(Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
 
     // Load provider.
     $provider = $this->requireProvider();
@@ -967,6 +976,9 @@ class ApiController extends ControllerBase {
   public function updateDocumentField($id, Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
 
     // Load provider.
     $provider = $this->requireProvider();
@@ -1061,6 +1073,9 @@ class ApiController extends ControllerBase {
   public function createVocabulary(Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
 
     // Get provider.
     $provider = $this->requireProvider();
@@ -1119,11 +1134,14 @@ class ApiController extends ControllerBase {
    * Update vocabulary.
    */
   public function updateVocabulary($id, Request $request) {
-    // Load vocabulary.
-    $vocabulary = $this->loadVocabulary($id);
-
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
+
+    // Load vocabulary.
+    $vocabulary = $this->loadVocabulary($id);
 
     // Get provider.
     $provider = $this->requireProvider();
@@ -1257,6 +1275,9 @@ class ApiController extends ControllerBase {
   public function createVocabularyField($id, Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
 
     // Load provider.
     $provider = $this->requireProvider();
@@ -1295,6 +1316,9 @@ class ApiController extends ControllerBase {
   public function updateVocabularyField($id, $field_id, Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
 
     // Load provider.
     $provider = $this->requireProvider();
@@ -1438,10 +1462,13 @@ class ApiController extends ControllerBase {
    * Create term on vocabulary.
    */
   public function createTermOnVocabulary($id, Request $request) {
-    $vocabulary = $this->loadVocabulary($id);
-
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
+
+    $vocabulary = $this->loadVocabulary($id);
 
     $params['vocabulary'] = $vocabulary->uuid();
     return $this->createTermFromUserParameters($params);
@@ -1453,6 +1480,10 @@ class ApiController extends ControllerBase {
   public function createTerm(Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
+
     return $this->createTermFromUserParameters($params);
   }
 
@@ -1723,11 +1754,14 @@ class ApiController extends ControllerBase {
       'weight',
     ];
 
-    // Load term.
-    $term = $this->loadTerm($id);
-
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
+
+    // Load term.
+    $term = $this->loadTerm($id);
 
     // Get provider.
     $provider = $this->requireProvider();
@@ -2127,6 +2161,9 @@ class ApiController extends ControllerBase {
   public function createFile(Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
 
     // Load provider.
     $provider = $this->requireProvider();
