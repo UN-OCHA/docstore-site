@@ -583,14 +583,15 @@ class ApiController extends ControllerBase {
     // Use solr response directly.
     $solr_response = $results->getExtraData('search_api_solr_response', []);
 
+    // Build output data.
+    $server = $index->getServerInstance();
+    $solr = $server->getBackend();
+
     // Make sure backend is solr.
     if (!($solr instanceof SolrBackendInterface)) {
       throw new BadRequestHttpException('Only solr backend is supported');
     }
 
-    // Build output data.
-    $server = $index->getServerInstance();
-    $solr = $server->getBackend();
     $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index, $request->getSchemeAndHttpHost());
 
     if (empty($data)) {
