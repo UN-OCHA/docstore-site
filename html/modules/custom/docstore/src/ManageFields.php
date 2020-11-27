@@ -275,8 +275,8 @@ class ManageFields {
     $storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
     $view_display = $storage->load('node.document.search_index');
     $view_display->setComponent($field_name, [
-       'type' => 'number_unformatted',
-       'settings' => [],
+      'type' => 'number_unformatted',
+      'settings' => [],
     ])->save();
 
     // Add to index.
@@ -326,8 +326,8 @@ class ManageFields {
     $storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
     $view_display = $storage->load('node.document.search_index');
     $view_display->setComponent($field_name, [
-       'type' => 'entity_reference_label',
-       'settings' => [],
+      'type' => 'entity_reference_label',
+      'settings' => [],
     ])->save();
 
     // Add to index.
