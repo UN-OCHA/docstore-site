@@ -1,6 +1,6 @@
 # Create documents
 
-## POST /document/fields
+## POST /fields/documents
 
 Test empty post.
 
@@ -17,7 +17,7 @@ Test empty post.
 * Content-Type: "application/json"
 * Data.message: "You have to pass a JSON object"
 
-## POST /document/fields
+## POST /fields/documents
 
 Test empty post.
 
@@ -35,7 +35,7 @@ Test empty post.
 * Content-Type: "application/json"
 * Data.message: "You have to pass a JSON object"
 
-## POST /document/fields
+## POST /fields/documents
 
 Test empty post.
 
@@ -53,7 +53,7 @@ Test empty post.
 * Content-Type: "application/json"
 * Data.message: "You have to pass a JSON object"
 
-## POST /document/fields
+## POST /fields/documents
 
 Test illegal json post.
 
@@ -71,7 +71,7 @@ Test illegal json post.
 * Content-Type: "application/json"
 * Data.message: "You have to pass a JSON object"
 
-## POST /document/fields
+## POST /fields/documents
 
 Add id field.
 

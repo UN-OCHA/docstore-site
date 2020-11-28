@@ -617,7 +617,7 @@ Example output.
 
 # Add fields to documents
 
-## POST /document/fields
+## POST /fields/documents
 
 Add city field.
 
@@ -648,7 +648,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_city}
 
-## POST /document/fields
+## POST /fields/documents
 
 Add organizations field.
 
@@ -679,7 +679,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_organization}
 
-## POST /document/fields
+## POST /fields/documents
 
 Add id field.
 
