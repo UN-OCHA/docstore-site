@@ -43,7 +43,7 @@ backend_config:
     optimize_timeout: 10
     finalize_timeout: 30
     commit_within: 1000
-    solr_version: ''
+    solr_version: '7'
     http_method: AUTO
     jmx: false
     solr_install_dir: ''
