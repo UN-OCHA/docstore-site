@@ -254,12 +254,12 @@ function docstore_create_node_type($type = 'document') {
     $view_display = $storage->load('node.' . $type . '.search_index');
 
     if (!$view_display) {
-      $view_display = EntityViewDisplay::create(array(
+      $view_display = EntityViewDisplay::create([
         'targetEntityType' => 'node',
         'bundle' => $type,
         'mode' => 'search_index',
         'status' => TRUE,
-      ));
+      ]);
     }
 
     $view_display->setComponent($base_field, [

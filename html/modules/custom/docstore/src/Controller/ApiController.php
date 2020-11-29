@@ -1028,7 +1028,7 @@ class ApiController extends ControllerBase {
   /**
    * Update document field.
    */
-  public function updateDocumentField($field, $id, Request $request) {
+  public function updateDocumentField($type, $field, $id, Request $request) {
     // Check if type is allowed.
     $node_type = $this->typeAllowed($type, 'field');
 
@@ -2782,6 +2782,9 @@ class ApiController extends ControllerBase {
     return count(array_filter(array_keys($array), 'is_string')) > 0;
   }
 
+  /**
+   * Get allowed endpoints.
+   */
   protected function typeAllowed($type, $mode = 'read') {
     // TODO: read from config.
     $config = _docstore_get_allowed_api_endpoints();

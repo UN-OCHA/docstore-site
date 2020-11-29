@@ -31,7 +31,7 @@ class ManageFields {
    *
    * @var string
    */
-  protected $node_type;
+  protected $nodeType;
 
   /**
    * The entity field manager service.
@@ -51,12 +51,12 @@ class ManageFields {
    * {@inheritdoc}
    */
   public function __construct(TypedUser $provider,
-    $node_type,
+    $nodeType,
     EntityFieldManagerInterface $entityFieldManager,
     Connection $database
     ) {
     $this->provider = $provider;
-    $this->node_type = $node_type;
+    $this->nodeType = $nodeType;
     $this->entityFieldManager = $entityFieldManager;
     $this->database = $database;
   }
@@ -232,7 +232,7 @@ class ManageFields {
    * Get document fields.
    */
   public function getDocumentFields() {
-    $map = $this->entityFieldManager->getFieldDefinitions('node', $this->node_type);
+    $map = $this->entityFieldManager->getFieldDefinitions('node', $this->nodeType);
     foreach ($map as $field_name => $field_info) {
       $data[$field_name] = $field_info->getType();
     }
@@ -291,21 +291,21 @@ class ManageFields {
     // Create instance.
     FieldConfig::create([
       'field_storage' => $field_storage,
-      'bundle' => $this->node_type,
+      'bundle' => $this->nodeType,
       'label' => $label,
     ])->save();
 
     // Add to search index display.
     $storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
-    $view_display = $storage->load('node.' . $this->node_type . '.search_index');
+    $view_display = $storage->load('node.' . $this->nodeType . '.search_index');
 
     if (!$view_display) {
-      $view_display = EntityViewDisplay::create(array(
+      $view_display = EntityViewDisplay::create([
         'targetEntityType' => 'node',
-        'bundle' => $this->node_type,
+        'bundle' => $this->nodeType,
         'mode' => 'search_index',
         'status' => TRUE,
-      ));
+      ]);
     }
 
     $view_display->setComponent($field_name, [
@@ -355,7 +355,7 @@ class ManageFields {
     // Create instance.
     FieldConfig::create([
       'field_storage' => $field_storage,
-      'bundle' => $this->node_type,
+      'bundle' => $this->nodeType,
       'label' => $label,
       'settings' => [
         'handler' => 'default:taxonomy_term',
@@ -369,7 +369,7 @@ class ManageFields {
 
     // Add to search index display.
     $storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
-    $view_display = $storage->load('node.' . $this->node_type . '.search_index');
+    $view_display = $storage->load('node.' . $this->nodeType . '.search_index');
     $view_display->setComponent($field_name, [
       'type' => 'entity_reference_label',
       'settings' => [],
@@ -388,7 +388,7 @@ class ManageFields {
    * Get document field.
    */
   public function getDocumentField($field_name) {
-    $field = FieldConfig::loadByName('node', $this->node_type, $field_name);
+    $field = FieldConfig::loadByName('node', $this->nodeType, $field_name);
     if (!$field) {
       throw new \Exception('Field does not exist');
     }
@@ -406,7 +406,7 @@ class ManageFields {
    * Update document field.
    */
   public function updateDocumentField($field_name, $params) {
-    $field = FieldConfig::loadByName('node', $this->node_type, $field_name);
+    $field = FieldConfig::loadByName('node', $this->nodeType, $field_name);
     if (!$field) {
       throw new \Exception('Field does not exist');
     }
