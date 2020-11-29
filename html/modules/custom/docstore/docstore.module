@@ -6,9 +6,12 @@
  */
 
 use Drupal\Core\Cache\Cache;
+use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StreamWrapper\StreamWrapperManager;
+use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\node\Entity\NodeType;
 use Drupal\search_api\Entity\Index;
 use Drupal\search_api_solr\SolrBackendInterface;
 use Drupal\user\Entity\User;
@@ -78,8 +81,8 @@ function docstore_search_api_solr_converted_query_alter(QueryInterface $solarium
  * Setup testing.
  */
 function _docstore_setup_testing() {
-  // Delete all documents.
-  $documents = \Drupal::entityTypeManager()->getStorage('node')->loadByProperties(['type' => 'document']);
+  // Delete all nodes.
+  $documents = \Drupal::entityTypeManager()->getStorage('node')->loadMultiple();
   \Drupal::entityTypeManager()->getStorage('node')->delete($documents);
 
   // Delete all terms.
@@ -101,33 +104,39 @@ function _docstore_setup_testing() {
   // Delete document fields.
   /* @var $entityFieldManager Drupal\Core\Entity\EntityFieldManager */
   $entityFieldManager = Drupal::service('entity_field.manager');
-  $fields = $entityFieldManager->getFieldDefinitions('node', 'document');
 
-  // Remove fields we need.
-  unset($fields['nid']);
-  unset($fields['uuid']);
-  unset($fields['vid']);
-  unset($fields['langcode']);
-  unset($fields['type']);
-  unset($fields['revision_timestamp']);
-  unset($fields['revision_uid']);
-  unset($fields['revision_log']);
-  unset($fields['status']);
-  unset($fields['uid']);
-  unset($fields['title']);
-  unset($fields['created']);
-  unset($fields['changed']);
-  unset($fields['promote']);
-  unset($fields['sticky']);
-  unset($fields['default_langcode']);
-  unset($fields['revision_default']);
-  unset($fields['revision_translation_affected']);
-  unset($fields['base_author_hid']);
-  unset($fields['base_files']);
-  unset($fields['base_private']);
+  // TODO: Get from config.
+  $node_types = _docstore_get_defined_node_types();
 
-  foreach ($fields as $field_name => $field_info) {
-    FieldStorageConfig::loadByName('node', $field_name)->delete();
+  foreach ($node_types as $node_type) {
+    $fields = $entityFieldManager->getFieldDefinitions('node', $node_type);
+
+    // Remove fields we need.
+    unset($fields['nid']);
+    unset($fields['uuid']);
+    unset($fields['vid']);
+    unset($fields['langcode']);
+    unset($fields['type']);
+    unset($fields['revision_timestamp']);
+    unset($fields['revision_uid']);
+    unset($fields['revision_log']);
+    unset($fields['status']);
+    unset($fields['uid']);
+    unset($fields['title']);
+    unset($fields['created']);
+    unset($fields['changed']);
+    unset($fields['promote']);
+    unset($fields['sticky']);
+    unset($fields['default_langcode']);
+    unset($fields['revision_default']);
+    unset($fields['revision_translation_affected']);
+    unset($fields['base_author_hid']);
+    unset($fields['base_files']);
+    unset($fields['base_private']);
+
+    foreach ($fields as $field_name => $field_info) {
+      FieldStorageConfig::loadByName('node', $field_name)->delete();
+    }
   }
 
   // Reset index.
@@ -209,11 +218,62 @@ function _docstore_setup_testing() {
 }
 
 /**
+ * Create node type.
+ */
+function docstore_create_node_type($type = 'document') {
+  if (NodeType::load($type)) {
+    return;
+  }
+
+  $node_type = NodeType::create([
+    'type' => $type,
+    'name' => ucfirst($type),
+  ]);
+
+  $node_type->save();
+
+  // Add base fields.
+  $base_fields = [
+    'base_author_hid',
+    'base_files',
+    'base_private',
+  ];
+
+  foreach ($base_fields as $base_field) {
+    $field_storage = FieldStorageConfig::loadByName('node', $base_field);
+
+    // Create instance.
+    FieldConfig::create([
+      'field_storage' => $field_storage,
+      'bundle' => $type,
+      'label' => $base_field,
+    ])->save();
+
+    // Add to search index display.
+    $storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
+    $view_display = $storage->load('node.' . $type . '.search_index');
+
+    if (!$view_display) {
+      $view_display = EntityViewDisplay::create(array(
+        'targetEntityType' => 'node',
+        'bundle' => $type,
+        'mode' => 'search_index',
+        'status' => TRUE,
+      ));
+    }
+
+    $view_display->setComponent($base_field, [
+      'type' => 'number_unformatted',
+      'settings' => [],
+    ])->save();
+  }
+}
+
+/**
  * Implements hook_webhooks_event_info_alter().
  */
 function docstore_webhooks_event_info_alter(&$options) {
   $entities = [
-    'document',
     'vocabulary',
     'term',
     'media',
@@ -221,6 +281,8 @@ function docstore_webhooks_event_info_alter(&$options) {
     'field:document',
     'field:vocabulary',
   ];
+
+  $entities = array_merge($entities, _docstore_get_defined_node_types());
 
   $actions = [
     'create',
@@ -269,4 +331,43 @@ function _docstore_trigger_webhooks($event, $payload) {
 
     $webhooks_service->send($webhook_config, $webhook);
   }
+}
+
+/**
+ * Get allowed API end points.
+ */
+function _docstore_get_allowed_api_endpoints() {
+  // TODO: read from config.
+  $config = [
+    'any' => [
+      'read' => 'document',
+      'write' => FALSE,
+      'field' => FALSE,
+    ],
+    'documents' => [
+      'read' => 'document',
+      'write' => 'document',
+      'field' => 'document',
+    ],
+    'assessments' => [
+      'read' => 'assessment',
+      'write' => 'assessment',
+      'field' => 'assessment',
+    ],
+  ];
+
+  return $config;
+}
+
+/**
+ * Get allowed node types.
+ */
+function _docstore_get_defined_node_types() {
+  // TODO: read from config.
+  $config = [
+    'document',
+    'assessment',
+  ];
+
+  return $config;
 }

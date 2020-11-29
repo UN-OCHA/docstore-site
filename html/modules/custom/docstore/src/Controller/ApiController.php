@@ -487,7 +487,7 @@ class ApiController extends ControllerBase {
     Cache::invalidateTags(['documents']);
 
     $data = [
-      'message' => 'Document created',
+      'message' => strtr('@type created', ['@type' => ucfirst($node_type)]),
       'uuid' => $document->uuid(),
     ];
 
@@ -871,7 +871,7 @@ class ApiController extends ControllerBase {
     }
 
     $document->setNewRevision();
-    $document->revision_log = 'Document updated';
+    $document->revision_log = 'Updated';
     $document->setRevisionCreationTime(time());
     $document->isDefaultRevision(TRUE);
     $document->setRevisionUserId($provider->id());
@@ -879,7 +879,7 @@ class ApiController extends ControllerBase {
     $document->save();
 
     $data = [
-      'message' => 'Document updated',
+      'message' => strtr('@type updated', ['@type' => ucfirst($node_type)]),
       'uuid' => $document->uuid(),
     ];
 
@@ -913,7 +913,7 @@ class ApiController extends ControllerBase {
     }
 
     $data = [
-      'message' => 'Document deleted',
+      'message' => strtr('@type deleted', ['@type' => ucfirst($node_type)]),
       'uuid' => $document->uuid(),
     ];
 
@@ -2784,18 +2784,7 @@ class ApiController extends ControllerBase {
 
   protected function typeAllowed($type, $mode = 'read') {
     // TODO: read from config.
-    $config = [
-      'any' => [
-        'read' => 'document',
-        'write' => FALSE,
-        'field' => FALSE,
-      ],
-      'documents' => [
-        'read' => 'document',
-        'write' => 'document',
-        'field' => 'document',
-      ]
-    ];
+    $config = _docstore_get_allowed_api_endpoints();
 
     if (!isset($config[$type])) {
       throw new BadRequestHttpException('Type not supported.');
