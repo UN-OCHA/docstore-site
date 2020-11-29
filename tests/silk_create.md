@@ -617,7 +617,7 @@ Example output.
 
 # Add fields to documents
 
-## POST /document/fields
+## POST /fields/documents
 
 Add city field.
 
@@ -648,7 +648,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_city}
 
-## POST /document/fields
+## POST /fields/documents
 
 Add organizations field.
 
@@ -679,7 +679,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_organization}
 
-## POST /document/fields
+## POST /fields/documents
 
 Add id field.
 
@@ -1270,3 +1270,17 @@ Test illegal sort.
 * Status: `400`
 * Content-Type: "application/json"
 * Data.message: "Sort \"createdxx\" is not valid solr field."
+
+## GET /documents
+
+Test full text search.
+
+* Accept: "application/json"
+* API-KEY: abcd
+* ?s=Paris
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].uuid: {doc2}

@@ -15,6 +15,7 @@ dependencies:
     - field.storage.node.base_files
     - field.storage.node.base_private
     - search_api.server.solr
+    - core.entity_view_mode.node.search_index
 third_party_settings:
   search_api_solr:
     finalize: true
@@ -173,10 +174,28 @@ field_settings:
     dependencies:
       module:
         - node
+  rendered_item:
+    label: 'Rendered HTML output'
+    property_path: rendered_item
+    type: text
+    configuration:
+      roles:
+        authenticated: authenticated
+      view_mode:
+        'entity:node':
+          document: search_index
   title:
     label: Title
     datasource_id: 'entity:node'
     property_path: title
+    type: string
+    dependencies:
+      module:
+        - node
+  type:
+    label: 'Content type'
+    datasource_id: 'entity:node'
+    property_path: type
     type: string
     dependencies:
       module:
@@ -208,9 +227,28 @@ datasource_settings:
 processor_settings:
   add_url: {  }
   aggregated_field: {  }
+  html_filter:
+    all_fields: false
+    fields:
+      - rendered_item
+    title: false
+    alt: false
+    tags:
+      b: 2
+      em: 1
+      h1: 5
+      h2: 3
+      h3: 2
+      strong: 2
+      u: 1
+    weights:
+      preprocess_index: -15
+      preprocess_query: -15
   language_with_fallback: {  }
   rendered_item: {  }
-  solr_date_range: {  }
+  solr_date_range:
+    weights:
+      preprocess_index: 0
 tracker_settings:
   default:
     indexing_order: fifo

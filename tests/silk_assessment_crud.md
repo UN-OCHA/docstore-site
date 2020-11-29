@@ -1,6 +1,6 @@
-# Create documents
+# Create assessments
 
-## POST /fields/documents
+## POST /fields/assessments
 
 Test empty post.
 
@@ -17,7 +17,7 @@ Test empty post.
 * Content-Type: "application/json"
 * Data.message: "You have to pass a JSON object"
 
-## POST /fields/documents
+## POST /fields/assessments
 
 Test empty post.
 
@@ -35,7 +35,7 @@ Test empty post.
 * Content-Type: "application/json"
 * Data.message: "You have to pass a JSON object"
 
-## POST /fields/documents
+## POST /fields/assessments
 
 Test empty post.
 
@@ -53,7 +53,7 @@ Test empty post.
 * Content-Type: "application/json"
 * Data.message: "You have to pass a JSON object"
 
-## POST /fields/documents
+## POST /fields/assessments
 
 Test illegal json post.
 
@@ -71,7 +71,7 @@ Test illegal json post.
 * Content-Type: "application/json"
 * Data.message: "You have to pass a JSON object"
 
-## POST /fields/documents
+## POST /fields/assessments
 
 Add id field.
 
@@ -102,9 +102,9 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_id}
 
-## POST /documents
+## POST /assessments
 
-Add a document as anonymous.
+Add a assessment as anonymous.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -121,9 +121,9 @@ Add a document as anonymous.
 * Status: `403`
 * Content-Type: "application/json"
 
-## POST /documents
+## POST /assessments
 
-Add a document without title.
+Add a assessment without title.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -141,9 +141,9 @@ Add a document without title.
 * Content-Type: "application/json"
 * Data.message: "Title is required"
 
-## POST /documents
+## POST /assessments
 
-Add a document without author.
+Add a assessment without author.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -161,9 +161,9 @@ Add a document without author.
 * Content-Type: "application/json"
 * Data.message: "Author is required"
 
-## POST /documents
+## POST /assessments
 
-Add a minimal document.
+Add a minimal assessment.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -187,13 +187,13 @@ Example output.
 
 ```json
 {
-  "message": "Document created"
+  "message": "Assessment created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Document created"
+* Data.message: "Assessment created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc1}
 
 ## GET /wait
@@ -206,7 +206,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents
+## GET /assessments
 
 Test filters.
 
@@ -219,7 +219,7 @@ Test filters.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
 
-## GET /documents
+## GET /assessments
 
 Test filters.
 
@@ -233,7 +233,7 @@ Test filters.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
 
-## GET /documents
+## GET /assessments
 
 Test filters.
 
@@ -247,7 +247,7 @@ Test filters.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
 
-## GET /documents
+## GET /assessments
 
 Test filters.
 
@@ -264,7 +264,7 @@ Test filters.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents
+## GET /assessments
 
 Test filters.
 
@@ -280,7 +280,7 @@ Test filters.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
 
-## GET /documents
+## GET /assessments
 
 Test filters.
 
@@ -300,9 +300,9 @@ Test filters.
 * Status: `200`
 * Content-Type: "application/json"
 
-## POST /documents
+## POST /assessments
 
-Add a private document.
+Add a private assessment.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -327,13 +327,13 @@ Example output.
 
 ```json
 {
-  "message": "Document created"
+  "message": "Assessment created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Document created"
+* Data.message: "Assessment created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc2}
 
 ## GET /wait
@@ -346,9 +346,9 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## POST /documents
+## POST /assessments
 
-Add an unpublished document.
+Add an unpublished assessment.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -373,13 +373,13 @@ Example output.
 
 ```json
 {
-  "message": "Document created"
+  "message": "Assessment created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Document created"
+* Data.message: "Assessment created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc3}
 
 ## GET /wait
@@ -392,9 +392,9 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## POST /documents
+## POST /assessments
 
-Add an unpublished private document.
+Add an unpublished private assessment.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -420,13 +420,13 @@ Example output.
 
 ```json
 {
-  "message": "Document created"
+  "message": "Assessment created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Document created"
+* Data.message: "Assessment created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc4}
 
 ## GET /wait
@@ -439,9 +439,9 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc2}
+## GET /assessments/{doc2}
 
-Get private document as owner.
+Get private assessment as owner.
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -452,9 +452,9 @@ Get private document as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
 
-## GET /documents/{doc2}
+## GET /assessments/{doc2}
 
-Get private document as anonymous.
+Get private assessment as anonymous.
 
 * Accept: "application/json"
 
@@ -463,9 +463,9 @@ Get private document as anonymous.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /documents/{doc2}
+## GET /assessments/{doc2}
 
-Get private document as other provider.
+Get private assessment as other provider.
 
 * Accept: "application/json"
 * API-KEY: dcba
@@ -475,9 +475,9 @@ Get private document as other provider.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /documents/{doc3}
+## GET /assessments/{doc3}
 
-Get unpublished document as owner.
+Get unpublished assessment as owner.
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -488,9 +488,9 @@ Get unpublished document as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc3}
 
-## GET /documents/{doc3}
+## GET /assessments/{doc3}
 
-Get unpublished document as anonymous.
+Get unpublished assessment as anonymous.
 
 * Accept: "application/json"
 
@@ -499,9 +499,9 @@ Get unpublished document as anonymous.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /documents/{doc3}
+## GET /assessments/{doc3}
 
-Get unpublished document as other provider.
+Get unpublished assessment as other provider.
 
 * Accept: "application/json"
 * API-KEY: dcba
@@ -511,9 +511,9 @@ Get unpublished document as other provider.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /documents/{doc4}
+## GET /assessments/{doc4}
 
-Get private unpublished document as owner.
+Get private unpublished assessment as owner.
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -524,9 +524,9 @@ Get private unpublished document as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc4}
 
-## GET /documents/{doc4}
+## GET /assessments/{doc4}
 
-Get unpublished document as anonymous.
+Get unpublished assessment as anonymous.
 
 * Accept: "application/json"
 
@@ -535,9 +535,9 @@ Get unpublished document as anonymous.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /documents/{doc4}
+## GET /assessments/{doc4}
 
-Get unpublished document as other provider.
+Get unpublished assessment as other provider.
 
 * Accept: "application/json"
 * API-KEY: dcba
@@ -547,9 +547,9 @@ Get unpublished document as other provider.
 * Status: `404`
 * Content-Type: "application/json"
 
-## PUT /documents/{doc1}
+## PUT /assessments/{doc1}
 
-Update minimal document.
+Update minimal assessment.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -567,13 +567,13 @@ Example output.
 
 ```json
 {
-  "message": "Document updated"
+  "message": "Assessment updated"
 }
 ```
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data.message: "Document updated"
+* Data.message: "Assessment updated"
 
 ## GET /wait
 
@@ -585,9 +585,9 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc1}
+## GET /assessments/{doc1}
 
-Get minimal document.
+Get minimal assessment.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -606,9 +606,9 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## PUT /documents/{doc1}
+## PUT /assessments/{doc1}
 
-Update minimal document as anonymous.
+Update minimal assessment as anonymous.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -624,9 +624,9 @@ Update minimal document as anonymous.
 * Status: `403`
 * Content-Type: "application/json"
 
-## PUT /documents/{doc1}
+## PUT /assessments/{doc1}
 
-Update minimal document as other provider.
+Update minimal assessment as other provider.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -642,9 +642,9 @@ Update minimal document as other provider.
 * Status: `403`
 * Content-Type: "application/json"
 
-## PATCH /documents/{doc2}
+## PATCH /assessments/{doc2}
 
-Update private document.
+Update private assessment.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -667,13 +667,13 @@ Example output.
 
 ```json
 {
-  "message": "Document updated"
+  "message": "Assessment updated"
 }
 ```
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data.message: "Document updated"
+* Data.message: "Assessment updated"
 
 ## GET /wait
 
@@ -686,7 +686,7 @@ Example output.
 * Content-Type: "application/json"
 
 
-## GET /documents
+## GET /assessments
 
 Test filters.
 
@@ -700,9 +700,9 @@ Test filters.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc2}
 
-## GET /documents/{doc2}
+## GET /assessments/{doc2}
 
-Get Private document.
+Get Private assessment.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -721,9 +721,9 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## PATCH /documents/{doc2}
+## PATCH /assessments/{doc2}
 
-Update private document as anonymous.
+Update private assessment as anonymous.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -739,9 +739,9 @@ Update private document as anonymous.
 * Status: `403`
 * Content-Type: "application/json"
 
-## PATCH /documents/{doc2}
+## PATCH /assessments/{doc2}
 
-Update private document as other provider.
+Update private assessment as other provider.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -757,9 +757,9 @@ Update private document as other provider.
 * Status: `403`
 * Content-Type: "application/json"
 
-## GET /documents/{doc2}
+## GET /assessments/{doc2}
 
-Get private document as owner.
+Get private assessment as owner.
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -770,9 +770,9 @@ Get private document as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
 
-## GET /documents/{doc2}
+## GET /assessments/{doc2}
 
-Get private document as anonymous.
+Get private assessment as anonymous.
 
 * Accept: "application/json"
 
@@ -781,9 +781,9 @@ Get private document as anonymous.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /documents/{doc2}
+## GET /assessments/{doc2}
 
-Get private document as other provider.
+Get private assessment as other provider.
 
 * Accept: "application/json"
 * API-KEY: dcba
@@ -793,9 +793,9 @@ Get private document as other provider.
 * Status: `404`
 * Content-Type: "application/json"
 
-## PATCH /documents/{doc2}
+## PATCH /assessments/{doc2}
 
-Make private document public.
+Make private assessment public.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -814,13 +814,13 @@ Example output.
 
 ```json
 {
-  "message": "Document updated"
+  "message": "Assessment updated"
 }
 ```
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data.message: "Document updated"
+* Data.message: "Assessment updated"
 
 ## GET /wait
 
@@ -832,9 +832,9 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc2}
+## GET /assessments/{doc2}
 
-Get Private document.
+Get Private assessment.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -853,9 +853,9 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc2}
+## GET /assessments/{doc2}
 
-Get private document as owner.
+Get private assessment as owner.
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -866,9 +866,9 @@ Get private document as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
 
-## GET /documents/{doc2}
+## GET /assessments/{doc2}
 
-Get private document as anonymous.
+Get private assessment as anonymous.
 
 * Accept: "application/json"
 
@@ -878,9 +878,9 @@ Get private document as anonymous.
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
 
-## GET /documents/{doc2}
+## GET /assessments/{doc2}
 
-Get private document as other provider.
+Get private assessment as other provider.
 
 * Accept: "application/json"
 * API-KEY: dcba
@@ -891,9 +891,9 @@ Get private document as other provider.
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
 
-## PATCH /documents/{doc3}
+## PATCH /assessments/{doc3}
 
-Make unpublished document public.
+Make unpublished assessment public.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -912,13 +912,13 @@ Example output.
 
 ```json
 {
-  "message": "Document updated"
+  "message": "Assessment updated"
 }
 ```
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data.message: "Document updated"
+* Data.message: "Assessment updated"
 
 ## GET /wait
 
@@ -930,9 +930,9 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc3}
+## GET /assessments/{doc3}
 
-Get unpublished document.
+Get unpublished assessment.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -951,9 +951,9 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc3}
+## GET /assessments/{doc3}
 
-Get unpublished document as owner.
+Get unpublished assessment as owner.
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -964,9 +964,9 @@ Get unpublished document as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc3}
 
-## GET /documents/{doc3}
+## GET /assessments/{doc3}
 
-Get unpublished document as anonymous.
+Get unpublished assessment as anonymous.
 
 * Accept: "application/json"
 
@@ -975,9 +975,9 @@ Get unpublished document as anonymous.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /documents/{doc3}
+## GET /assessments/{doc3}
 
-Get unpublished document as other provider.
+Get unpublished assessment as other provider.
 
 * Accept: "application/json"
 * API-KEY: dcba
@@ -987,9 +987,9 @@ Get unpublished document as other provider.
 * Status: `404`
 * Content-Type: "application/json"
 
-## DELETE /documents/{doc3}
+## DELETE /assessments/{doc3}
 
-Delete private document as anonymous.
+Delete private assessment as anonymous.
 
 * Accept: "application/json"
 
@@ -998,9 +998,9 @@ Delete private document as anonymous.
 * Status: `403`
 * Content-Type: "application/json"
 
-## DELETE /documents/{doc3}
+## DELETE /assessments/{doc3}
 
-Delete private document as other provider.
+Delete private assessment as other provider.
 
 * Accept: "application/json"
 * API-KEY: dcba
@@ -1010,9 +1010,9 @@ Delete private document as other provider.
 * Status: `400`
 * Content-Type: "application/json"
 
-## DELETE /documents/{doc3}
+## DELETE /assessments/{doc3}
 
-Delete private document as owner.
+Delete private assessment as owner.
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -1021,7 +1021,7 @@ Delete private document as owner.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data.message: "Document deleted"
+* Data.message: "Assessment deleted"
 
 ## GET /wait
 
@@ -1033,9 +1033,9 @@ Delete private document as owner.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc3}
+## GET /assessments/{doc3}
 
-Get deleted unpublished document as owner.
+Get deleted unpublished assessment as owner.
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -1045,9 +1045,9 @@ Get deleted unpublished document as owner.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /documents/{doc3}
+## GET /assessments/{doc3}
 
-Get deleted unpublished document as anonymous.
+Get deleted unpublished assessment as anonymous.
 
 * Accept: "application/json"
 
@@ -1056,9 +1056,9 @@ Get deleted unpublished document as anonymous.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /documents/{doc3}
+## GET /assessments/{doc3}
 
-Get deleted unpublished document as other provider.
+Get deleted unpublished assessment as other provider.
 
 * Accept: "application/json"
 * API-KEY: dcba

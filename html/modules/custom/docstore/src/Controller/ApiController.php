@@ -172,7 +172,10 @@ class ApiController extends ControllerBase {
   /**
    * Get documents.
    */
-  public function getDocuments(Request $request) {
+  public function getDocuments($type, Request $request) {
+    // Check if type is allowed.
+    $node_type = $this->typeAllowed($type, 'read');
+
     $data = [];
 
     // Query index.
@@ -198,10 +201,15 @@ class ApiController extends ControllerBase {
       $parser->applyPagerToIndex($pagers, $query);
     }
 
-    // Todo: Add full text search.
-    if ($request->query->has('search')) {
-      $pagers = $parser->parsePaging($request->query->get('page'));
-      $parser->applyPagerToIndex($pagers, $query);
+    // Add full text search.
+    if ($request->query->has('s')) {
+      $query->setFulltextFields(['title', 'rendered_item']);
+      $query->keys($request->query->get('s'));
+    }
+
+    // Add node_type if not any.
+    if ($node_type !== 'any') {
+      $query->addCondition('type', $node_type);
     }
 
     // Check published and private.
@@ -351,6 +359,9 @@ class ApiController extends ControllerBase {
       if (isset($row['search_api_language'])) {
         unset($row['search_api_language']);
       }
+      if (isset($row['rendered_item'])) {
+        unset($row['rendered_item']);
+      }
 
       $data[] = $row;
     }
@@ -361,7 +372,10 @@ class ApiController extends ControllerBase {
   /**
    * Create document.
    */
-  public function createDocument(Request $request) {
+  public function createDocument($type, Request $request) {
+    // Check if type is allowed.
+    $node_type = $this->typeAllowed($type, 'write');
+
     // Get provider.
     $provider = $this->requireProvider();
 
@@ -382,7 +396,7 @@ class ApiController extends ControllerBase {
 
     // Create node.
     $item = [
-      'type' => 'document',
+      'type' => $node_type,
       'title' => $params['title'],
       'uid' => $provider->id(),
       'base_author_hid' => [],
@@ -473,7 +487,7 @@ class ApiController extends ControllerBase {
     Cache::invalidateTags(['documents']);
 
     $data = [
-      'message' => 'Document created',
+      'message' => strtr('@type created', ['@type' => ucfirst($node_type)]),
       'uuid' => $document->uuid(),
     ];
 
@@ -486,13 +500,21 @@ class ApiController extends ControllerBase {
   /**
    * Get document.
    */
-  public function getDocument($id, Request $request) {
+  public function getDocument($type, $id, Request $request) {
+    // Check if type is allowed.
+    $node_type = $this->typeAllowed($type, 'read');
+
     $data = [];
 
     // Query index.
     $index = Index::load('documents');
     $query = $index->query();
     $query->addCondition('uuid', $id);
+
+    // Add node_type if not any.
+    if ($node_type !== 'any') {
+      $query->addCondition('type', $node_type);
+    }
 
     // Check published and private.
     $provider = $this->getProvider();
@@ -555,12 +577,21 @@ class ApiController extends ControllerBase {
   /**
    * Get document revisions.
    */
-  public function getDocumentRevisions($id, Request $request) {
+  public function getDocumentRevisions($type, $id, Request $request) {
+    // Check if type is allowed.
+    $node_type = $this->typeAllowed($type, 'read');
+
     $data = [];
 
     // Query index.
     $index = Index::load('documents');
     $query = $index->query();
+
+    // Add node_type if not any.
+    if ($node_type !== 'any') {
+      $query->addCondition('type', $node_type);
+    }
+
     $query->addCondition('uuid', $id);
     $results = $query->execute();
 
@@ -639,11 +670,18 @@ class ApiController extends ControllerBase {
   /**
    * Get 1 document revision.
    */
-  public function getDocumentRevision($id, $vid, Request $request) {
+  public function getDocumentRevision($type, $id, $vid, Request $request) {
+    // Check if type is allowed.
+    $node_type = $this->typeAllowed($type, 'read');
+
     /** @var \Drupal\node\Entity\Node $document */
     $document = $this->entityTypeManager->getStorage('node')->loadRevision($vid);
     if ($document->uuid() !== $id) {
       throw new BadRequestHttpException('Revision not found');
+    }
+
+    if ($document->bundle() !== $node_type) {
+      throw new BadRequestHttpException('Wrong node type');
     }
 
     $data = [];
@@ -686,21 +724,30 @@ class ApiController extends ControllerBase {
   /**
    * Get document files.
    */
-  public function getDocumentFiles($id, Request $request) {
+  public function getDocumentFiles($type, $id, Request $request) {
+    // Check if type is allowed.
+    $this->typeAllowed($type, 'read');
+
     throw new PreconditionFailedHttpException('Not implemented (yet)');
   }
 
   /**
    * Get document terms.
    */
-  public function getDocumentTerms($id, Request $request) {
+  public function getDocumentTerms($type, $id, Request $request) {
+    // Check if type is allowed.
+    $this->typeAllowed($type, 'read');
+
     throw new PreconditionFailedHttpException('Not implemented (yet)');
   }
 
   /**
    * Update document.
    */
-  public function updateDocument($id, Request $request) {
+  public function updateDocument($type, $id, Request $request) {
+    // Check if type is allowed.
+    $node_type = $this->typeAllowed($type, 'write');
+
     $protected_fields = [
       'base_author_hid',
       'base_provider_uuid',
@@ -828,7 +875,7 @@ class ApiController extends ControllerBase {
     }
 
     $document->setNewRevision();
-    $document->revision_log = 'Document updated';
+    $document->revision_log = 'Updated';
     $document->setRevisionCreationTime(time());
     $document->isDefaultRevision(TRUE);
     $document->setRevisionUserId($provider->id());
@@ -836,7 +883,7 @@ class ApiController extends ControllerBase {
     $document->save();
 
     $data = [
-      'message' => 'Document updated',
+      'message' => strtr('@type updated', ['@type' => ucfirst($node_type)]),
       'uuid' => $document->uuid(),
     ];
 
@@ -854,7 +901,10 @@ class ApiController extends ControllerBase {
   /**
    * Delete document.
    */
-  public function deleteDocument($id, Request $request) {
+  public function deleteDocument($type, $id, Request $request) {
+    // Check if type is allowed.
+    $node_type = $this->typeAllowed($type, 'write');
+
     // Load document.
     $document = $this->loadDocument($id);
 
@@ -867,7 +917,7 @@ class ApiController extends ControllerBase {
     }
 
     $data = [
-      'message' => 'Document deleted',
+      'message' => strtr('@type deleted', ['@type' => ucfirst($node_type)]),
       'uuid' => $document->uuid(),
     ];
 
@@ -881,12 +931,15 @@ class ApiController extends ControllerBase {
   /**
    * Get document fields.
    */
-  public function getDocumentFields() {
+  public function getDocumentFields($type) {
+    // Check if type is allowed.
+    $node_type = $this->typeAllowed($type, 'field');
+
     // Load provider.
     $provider = $this->requireProvider();
 
     // Create field.
-    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
+    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
     $data = $manager->getDocumentFields();
 
     // Add cache tags.
@@ -905,7 +958,10 @@ class ApiController extends ControllerBase {
   /**
    * Create document field.
    */
-  public function createDocumentField(Request $request) {
+  public function createDocumentField($type, Request $request) {
+    // Check if type is allowed.
+    $node_type = $this->typeAllowed($type, 'field');
+
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
     if (empty($params) || !is_array($params)) {
@@ -916,7 +972,7 @@ class ApiController extends ControllerBase {
     $provider = $this->requireProvider();
 
     // Create field.
-    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
+    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
 
     // Create field.
     try {
@@ -943,12 +999,15 @@ class ApiController extends ControllerBase {
   /**
    * Get document field.
    */
-  public function getDocumentField($id, Request $request) {
+  public function getDocumentField($type, $id, Request $request) {
+    // Check if type is allowed.
+    $node_type = $this->typeAllowed($type, 'field');
+
     // Get provider.
     $provider = $this->requireProvider();
 
     // Get field config.
-    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
+    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
 
     try {
       $data = $manager->getDocumentField($id);
@@ -973,7 +1032,10 @@ class ApiController extends ControllerBase {
   /**
    * Update document field.
    */
-  public function updateDocumentField($id, Request $request) {
+  public function updateDocumentField($type, $field, $id, Request $request) {
+    // Check if type is allowed.
+    $node_type = $this->typeAllowed($type, 'field');
+
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
     if (empty($params) || !is_array($params)) {
@@ -984,7 +1046,7 @@ class ApiController extends ControllerBase {
     $provider = $this->requireProvider();
 
     // Get manager.
-    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
+    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
 
     // Update field.
     try {
@@ -1010,12 +1072,15 @@ class ApiController extends ControllerBase {
   /**
    * Delete document field.
    */
-  public function deleteDocumentField($id, Request $request) {
+  public function deleteDocumentField($type, $id, Request $request) {
+    // Check if type is allowed.
+    $node_type = $this->typeAllowed($type, 'field');
+
     // Get provider.
     $provider = $this->requireProvider();
 
     // Delete field storage and config.
-    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
+    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
 
     // Create field.
     try {
@@ -1081,7 +1146,7 @@ class ApiController extends ControllerBase {
     $provider = $this->requireProvider();
 
     // Delete field storage and config.
-    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
+    $manager = new ManageFields($provider, '', $this->entityFieldManager, $this->database);
 
     // Create field.
     try {
@@ -1147,7 +1212,7 @@ class ApiController extends ControllerBase {
     $provider = $this->requireProvider();
 
     // Delete field storage and config.
-    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
+    $manager = new ManageFields($provider, '', $this->entityFieldManager, $this->database);
 
     // Update vocabulary.
     try {
@@ -1185,7 +1250,7 @@ class ApiController extends ControllerBase {
     // Get provider.
     $provider = $this->requireProvider();
 
-    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
+    $manager = new ManageFields($provider, '', $this->entityFieldManager, $this->database);
 
     // Delete.
     try {
@@ -1247,7 +1312,7 @@ class ApiController extends ControllerBase {
     $provider = $this->requireProvider();
 
     // Get field config.
-    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
+    $manager = new ManageFields($provider, '', $this->entityFieldManager, $this->database);
 
     try {
       $data = $manager->getVocabularyField($vocabulary, $field_id);
@@ -1286,7 +1351,7 @@ class ApiController extends ControllerBase {
     $vocabulary = $this->loadVocabulary($id);
 
     // Create vocabulary field.
-    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
+    $manager = new ManageFields($provider, '', $this->entityFieldManager, $this->database);
 
     // Create field.
     try {
@@ -1327,7 +1392,7 @@ class ApiController extends ControllerBase {
     $vocabulary = $this->loadVocabulary($id);
 
     // Create vocabulary field.
-    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
+    $manager = new ManageFields($provider, '', $this->entityFieldManager, $this->database);
 
     // Create field.
     try {
@@ -1361,7 +1426,7 @@ class ApiController extends ControllerBase {
     $vocabulary = $this->loadVocabulary($id);
 
     // Create vocabulary field.
-    $manager = new ManageFields($provider, $this->entityFieldManager, $this->database);
+    $manager = new ManageFields($provider, '', $this->entityFieldManager, $this->database);
 
     // Create field.
     try {
@@ -2719,6 +2784,28 @@ class ApiController extends ControllerBase {
    */
   protected function arrayIsAssociative(array $array) {
     return count(array_filter(array_keys($array), 'is_string')) > 0;
+  }
+
+  /**
+   * Get allowed endpoints.
+   */
+  protected function typeAllowed($type, $mode = 'read') {
+    // TODO: read from config.
+    $config = _docstore_get_allowed_api_endpoints();
+
+    if (!isset($config[$type])) {
+      throw new BadRequestHttpException('Type not supported.');
+    }
+
+    if (!isset($config[$type][$mode])) {
+      throw new BadRequestHttpException('Type not supported.');
+    }
+
+    if (!$config[$type][$mode]) {
+      throw new BadRequestHttpException('Type not supported.');
+    }
+
+    return $config[$type][$mode];
   }
 
 }

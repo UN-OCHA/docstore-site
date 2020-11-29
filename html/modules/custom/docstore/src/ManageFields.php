@@ -4,6 +4,7 @@ namespace Drupal\docstore;
 
 use Drupal\Component\Uuid\Uuid;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\field\Entity\FieldConfig;
@@ -26,6 +27,13 @@ class ManageFields {
   protected $provider;
 
   /**
+   * The node type.
+   *
+   * @var string
+   */
+  protected $nodeType;
+
+  /**
    * The entity field manager service.
    *
    * @var \Drupal\Core\Entity\EntityFieldManagerInterface
@@ -43,10 +51,12 @@ class ManageFields {
    * {@inheritdoc}
    */
   public function __construct(TypedUser $provider,
+    $nodeType,
     EntityFieldManagerInterface $entityFieldManager,
     Connection $database
     ) {
     $this->provider = $provider;
+    $this->nodeType = $nodeType;
     $this->entityFieldManager = $entityFieldManager;
     $this->database = $database;
   }
@@ -70,7 +80,7 @@ class ManageFields {
   /**
    * Generate a unique machine name.
    */
-  protected function generateUniqueMachineName($label, $entity_type) {
+  protected function generateUniqueMachineName($label, $entity_type, $allow_reuse = TRUE) {
     $label = strtolower($label);
     $label = preg_replace('/[^a-z0-9_]+/', '_', $label);
     $label = preg_replace('/_+/', '_', $label);
@@ -79,6 +89,12 @@ class ManageFields {
     $label = trim(substr($label, 0, 31), '_');
     $counter = 0;
     $machine_name = $label;
+
+    // Field can be used on multiple bundles.
+    if ($allow_reuse) {
+      return $machine_name;
+    }
+
     while ($this->machineNameExists($machine_name, $entity_type)) {
       $suffix = '_' . $counter++;
       $machine_name = substr($label, 0, 31 - strlen($suffix)) . $suffix;
@@ -216,7 +232,7 @@ class ManageFields {
    * Get document fields.
    */
   public function getDocumentFields() {
-    $map = $this->entityFieldManager->getFieldDefinitions('node', 'document');
+    $map = $this->entityFieldManager->getFieldDefinitions('node', $this->nodeType);
     foreach ($map as $field_name => $field_info) {
       $data[$field_name] = $field_info->getType();
     }
@@ -249,30 +265,58 @@ class ManageFields {
    * Create basic document field.
    */
   protected function createDocumentField($author, $label, $field_type, $multiple = FALSE) {
+    $new_field = FALSE;
+
     // Create new machine name.
     $field_name = $this->generateUniqueMachineName($label, 'node');
 
-    // Create storage.
-    $field_storage = FieldStorageConfig::create([
-      'field_name' => $field_name,
-      'entity_type' => 'node',
-      'type' => $field_type,
-      'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
-    ]);
+    // Create storage if needed.
+    $field_storage = FieldStorageConfig::loadByName('node', $field_name);
 
-    $field_storage->setThirdPartySetting('docstore', 'base_provider_uuid', $this->provider->uuid());
-    $field_storage->setThirdPartySetting('docstore', 'base_author_hid', $author);
-    $field_storage->save();
+    if (!$field_storage) {
+      $new_field = TRUE;
+
+      $field_storage = FieldStorageConfig::create([
+        'field_name' => $field_name,
+        'entity_type' => 'node',
+        'type' => $field_type,
+        'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
+      ]);
+
+      $field_storage->setThirdPartySetting('docstore', 'base_provider_uuid', $this->provider->uuid());
+      $field_storage->setThirdPartySetting('docstore', 'base_author_hid', $author);
+      $field_storage->save();
+    }
 
     // Create instance.
     FieldConfig::create([
       'field_storage' => $field_storage,
-      'bundle' => 'document',
+      'bundle' => $this->nodeType,
       'label' => $label,
     ])->save();
 
+    // Add to search index display.
+    $storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
+    $view_display = $storage->load('node.' . $this->nodeType . '.search_index');
+
+    if (!$view_display) {
+      $view_display = EntityViewDisplay::create([
+        'targetEntityType' => 'node',
+        'bundle' => $this->nodeType,
+        'mode' => 'search_index',
+        'status' => TRUE,
+      ]);
+    }
+
+    $view_display->setComponent($field_name, [
+      'type' => 'number_unformatted',
+      'settings' => [],
+    ])->save();
+
     // Add to index.
-    $this->addDocumentFieldToIndex($field_name, $field_type, $label);
+    if ($new_field) {
+      $this->addDocumentFieldToIndex($field_name, $field_type, $label);
+    }
 
     docstore_notify_webhooks('field:document:create', $field_name);
     return $field_name;
@@ -282,27 +326,36 @@ class ManageFields {
    * Create reference document field.
    */
   protected function createDocumentReferenceField($author, $label, $bundle, $multiple = FALSE) {
+    $new_field = FALSE;
+
     $field_type = 'entity_reference_uuid';
     $field_name = $this->generateUniqueMachineName($label, 'node');
 
-    $field_storage = FieldStorageConfig::create([
-      'field_name' => $field_name,
-      'entity_type' => 'node',
-      'type' => $field_type,
-      'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
-      'settings' => [
-        'target_type' => 'taxonomy_term',
-      ],
-    ]);
+    // Create storage if needed.
+    $field_storage = FieldStorageConfig::loadByName('node', $field_name);
 
-    $field_storage->setThirdPartySetting('docstore', 'base_provider_uuid', $this->provider->uuid());
-    $field_storage->setThirdPartySetting('docstore', 'base_author_hid', $author);
-    $field_storage->save();
+    if (!$field_storage) {
+      $new_field = TRUE;
+
+      $field_storage = FieldStorageConfig::create([
+        'field_name' => $field_name,
+        'entity_type' => 'node',
+        'type' => $field_type,
+        'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
+        'settings' => [
+          'target_type' => 'taxonomy_term',
+        ],
+      ]);
+
+      $field_storage->setThirdPartySetting('docstore', 'base_provider_uuid', $this->provider->uuid());
+      $field_storage->setThirdPartySetting('docstore', 'base_author_hid', $author);
+      $field_storage->save();
+    }
 
     // Create instance.
     FieldConfig::create([
       'field_storage' => $field_storage,
-      'bundle' => 'document',
+      'bundle' => $this->nodeType,
       'label' => $label,
       'settings' => [
         'handler' => 'default:taxonomy_term',
@@ -314,8 +367,18 @@ class ManageFields {
       ],
     ])->save();
 
+    // Add to search index display.
+    $storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
+    $view_display = $storage->load('node.' . $this->nodeType . '.search_index');
+    $view_display->setComponent($field_name, [
+      'type' => 'entity_reference_label',
+      'settings' => [],
+    ])->save();
+
     // Add to index.
-    $this->addDocumentFieldToIndex($field_name, $field_type, $label);
+    if ($new_field) {
+      $this->addDocumentFieldToIndex($field_name, $field_type, $label);
+    }
 
     docstore_notify_webhooks('field:document:create', $field_name);
     return $field_name;
@@ -325,7 +388,7 @@ class ManageFields {
    * Get document field.
    */
   public function getDocumentField($field_name) {
-    $field = FieldConfig::loadByName('node', 'document', $field_name);
+    $field = FieldConfig::loadByName('node', $this->nodeType, $field_name);
     if (!$field) {
       throw new \Exception('Field does not exist');
     }
@@ -343,7 +406,7 @@ class ManageFields {
    * Update document field.
    */
   public function updateDocumentField($field_name, $params) {
-    $field = FieldConfig::loadByName('node', 'document', $field_name);
+    $field = FieldConfig::loadByName('node', $this->nodeType, $field_name);
     if (!$field) {
       throw new \Exception('Field does not exist');
     }

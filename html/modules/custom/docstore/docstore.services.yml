@@ -43,7 +43,7 @@ services:
     class: Drupal\docstore\EventSubscriber\DocstoreExceptionSubscriber
     tags:
       - { name: event_subscriber }
-  dcostore.cors_subscriber:
+  docstore.cors_subscriber:
     class: Drupal\docstore\EventSubscriber\CorsSubscriber
     arguments: []
     tags:

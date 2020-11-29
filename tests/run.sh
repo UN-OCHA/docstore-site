@@ -49,3 +49,6 @@ $DRUSH eval "_docstore_setup_testing()"
 $DRUSH cr
 
 ./silk -test.v -silk.url $API silk_document_crud.md || exit 1;
+
+$DRUSH eval "docstore_create_node_type('assessment')"
+./silk -test.v -silk.url $API silk_assessment_crud.md || exit 1;
