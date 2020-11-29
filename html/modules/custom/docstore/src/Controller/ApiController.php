@@ -680,6 +680,10 @@ class ApiController extends ControllerBase {
       throw new BadRequestHttpException('Revision not found');
     }
 
+    if ($document->bundle() !== $node_type) {
+      throw new BadRequestHttpException('Wrong node type');
+    }
+
     $data = [];
     $document_fields = $document->getFields(FALSE);
     foreach ($document_fields as $document_field) {
@@ -722,7 +726,7 @@ class ApiController extends ControllerBase {
    */
   public function getDocumentFiles($type, $id, Request $request) {
     // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'read');
+    $this->typeAllowed($type, 'read');
 
     throw new PreconditionFailedHttpException('Not implemented (yet)');
   }
@@ -732,7 +736,7 @@ class ApiController extends ControllerBase {
    */
   public function getDocumentTerms($type, $id, Request $request) {
     // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'read');
+    $this->typeAllowed($type, 'read');
 
     throw new PreconditionFailedHttpException('Not implemented (yet)');
   }
