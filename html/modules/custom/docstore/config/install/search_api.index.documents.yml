@@ -7,6 +7,8 @@ dependencies:
     - node
     - file
     - media
+    - content_moderation
+    - taxonomy
     - user
     - search_api
   config:
@@ -149,6 +151,14 @@ field_settings:
     dependencies:
       module:
         - node
+  moderation_state:
+    label: 'Moderation state'
+    datasource_id: 'entity:node'
+    property_path: moderation_state
+    type: string
+    dependencies:
+      module:
+        - content_moderation
   private:
     label: Private
     datasource_id: 'entity:node'

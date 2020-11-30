@@ -135,7 +135,9 @@ function _docstore_setup_testing() {
     unset($fields['base_private']);
 
     foreach ($fields as $field_name => $field_info) {
-      FieldStorageConfig::loadByName('node', $field_name)->delete();
+      if (FieldStorageConfig::loadByName('node', $field_name)) {
+        FieldStorageConfig::loadByName('node', $field_name)->delete();
+      }
     }
   }
 

@@ -422,6 +422,10 @@ class ApiController extends ControllerBase {
       ];
     }
 
+    if (!empty($params['moderation_state'])) {
+      $item['moderation_state'] = $params['moderation_state'];
+    }
+
     // Store HID Id.
     $item['base_author_hid'][] = [
       'value' => $params['author'],
@@ -481,6 +485,17 @@ class ApiController extends ControllerBase {
 
     /** @var \Drupal\node\Entity\Node $document */
     $document = Node::create($item);
+
+    // Trigger validation.
+    $violations = $document->validate();
+    if (count($violations) > 0) {
+      throw new BadRequestHttpException(strtr('Unable to save document: @error (@path)', [
+        '@error' => strip_tags($violations->get(0)->getMessage()),
+        '@path' => $violations->get(0)->getPropertyPath(),
+      ]));
+    }
+
+    // Save document.
     $document->save();
 
     // Invalidate cache.
@@ -674,6 +689,20 @@ class ApiController extends ControllerBase {
     // Check if type is allowed.
     $node_type = $this->typeAllowed($type, 'read');
 
+    // Check for last.
+    if ($vid === 'last') {
+      // Get last revisions.
+      $query = $this->database->select('node_revision', 'nr')
+        ->fields('nr', ['vid']);
+      $query->innerJoin('node', 'n', 'nr.nid = n.nid');
+      $vid = $query->condition('n.uuid', $id)
+        ->orderBy('vid', 'DESC')
+        ->execute()
+        ->fetchCol(0);
+
+      $vid = reset($vid);
+    }
+
     /** @var \Drupal\node\Entity\Node $document */
     $document = $this->entityTypeManager->getStorage('node')->loadRevision($vid);
     if ($document->uuid() !== $id) {
@@ -685,7 +714,7 @@ class ApiController extends ControllerBase {
     }
 
     $data = [];
-    $document_fields = $document->getFields(FALSE);
+    $document_fields = $document->getFields(TRUE);
     foreach ($document_fields as $document_field) {
       $field_item_list = isset($document->{$document_field->getName()}) ? $document->{$document_field->getName()} : NULL;
       $field_item_definition = $field_item_list->getFieldDefinition();
@@ -707,6 +736,9 @@ class ApiController extends ControllerBase {
         $data[$document_field->getName()] = $values;
       }
     }
+
+    // Add oderation state.
+
 
     // Add cache tags.
     $cache_tags['#cache'] = [
@@ -880,6 +912,16 @@ class ApiController extends ControllerBase {
     $document->isDefaultRevision(TRUE);
     $document->setRevisionUserId($provider->id());
 
+    // Trigger validation.
+    $violations = $document->validate();
+    if (count($violations) > 0) {
+      throw new BadRequestHttpException(strtr('Unable to save document: @error (@path)', [
+        '@error' => strip_tags($violations->get(0)->getMessage()),
+        '@path' => $violations->get(0)->getPropertyPath(),
+      ]));
+    }
+
+    // Save document.
     $document->save();
 
     $data = [
