@@ -252,19 +252,23 @@ class ManageFields {
       throw new \Exception('Field type does not exist');
     }
 
+    // Set defaults.
+    $params['multiple'] = $params['multiple'] ?? FALSE;
+    $params['required'] = $params['required'] ?? FALSE;
+
     // Create field.
     if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
-      return $this->createDocumentReferenceField($params['author'], $params['label'], $params['target'], $params['multiple']);
+      return $this->createDocumentReferenceField($params['author'], $params['label'], $params['target'], $params['multiple'], $params['required']);
     }
     else {
-      return $this->createDocumentField($params['author'], $params['label'], $params['type'], $params['multiple']);
+      return $this->createDocumentField($params['author'], $params['label'], $params['type'], $params['multiple'], $params['required']);
     }
   }
 
   /**
    * Create basic document field.
    */
-  protected function createDocumentField($author, $label, $field_type, $multiple = FALSE) {
+  protected function createDocumentField($author, $label, $field_type, $multiple = FALSE, $required = FALSE) {
     $new_field = FALSE;
 
     // Create new machine name.
@@ -292,6 +296,7 @@ class ManageFields {
     FieldConfig::create([
       'field_storage' => $field_storage,
       'bundle' => $this->nodeType,
+      'required' => $required,
       'label' => $label,
     ])->save();
 
@@ -325,7 +330,7 @@ class ManageFields {
   /**
    * Create reference document field.
    */
-  protected function createDocumentReferenceField($author, $label, $bundle, $multiple = FALSE) {
+  protected function createDocumentReferenceField($author, $label, $bundle, $multiple = FALSE, $required = FALSE) {
     $new_field = FALSE;
 
     $field_type = 'entity_reference_uuid';
@@ -357,6 +362,7 @@ class ManageFields {
       'field_storage' => $field_storage,
       'bundle' => $this->nodeType,
       'label' => $label,
+      'required' => $required,
       'settings' => [
         'handler' => 'default:taxonomy_term',
         'handler_settings' => [
@@ -398,6 +404,7 @@ class ManageFields {
       'label' => $field->getLabel(),
       'description' => $field->getDescription(),
       'type' => $field->getType(),
+      'required' => $field->isRequired(),
       'multiple' => $field->getFieldStorageDefinition()->isMultiple(),
     ];
   }
@@ -615,12 +622,16 @@ class ManageFields {
     // Check field parameters.
     $this->validFieldParameters($params);
 
+    // Set defaults.
+    $params['multiple'] = $params['multiple'] ?? FALSE;
+    $params['required'] = $params['required'] ?? FALSE;
+
     // Create field.
     if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
-      $field_name = $this->createVocabularyReferenceField($vocabulary->id(), $params['label'], $params['target'], $params['multiple']);
+      $field_name = $this->createVocabularyReferenceField($vocabulary->id(), $params['label'], $params['target'], $params['multiple'], $params['required']);
     }
     else {
-      $field_name = $this->createVocabularyField($vocabulary->id(), $params['label'], $params['type'], $params['multiple']);
+      $field_name = $this->createVocabularyField($vocabulary->id(), $params['label'], $params['type'], $params['multiple'], $params['required']);
     }
 
     return $field_name;
@@ -702,7 +713,7 @@ class ManageFields {
   /**
    * Create a vocabulary field for a provider.
    */
-  protected function createVocabularyField($bundle, $label, $field_type, $multiple = FALSE) {
+  protected function createVocabularyField($bundle, $label, $field_type, $multiple = FALSE, $required = FALSE) {
     $provider_prefix = $bundle . '_';
     $field_name = $this->generateUniqueMachineName($label, 'taxonomy_term', $provider_prefix);
 
@@ -720,6 +731,7 @@ class ManageFields {
       'field_storage' => $field_storage,
       'bundle' => $bundle,
       'label' => $label,
+      'required' => $required,
     ])->save();
 
     docstore_notify_webhooks('field:vocabulary:create', $field_name);
@@ -729,7 +741,7 @@ class ManageFields {
   /**
    * Create a reference field on a vocabulary for a provider.
    */
-  protected function createVocabularyReferenceField($bundle, $label, $target, $multiple = FALSE) {
+  protected function createVocabularyReferenceField($bundle, $label, $target, $multiple = FALSE, $required = FALSE) {
     $field_type = 'entity_reference_uuid';
 
     $provider_prefix = $bundle . '_';
@@ -752,6 +764,7 @@ class ManageFields {
       'field_storage' => $field_storage,
       'bundle' => $bundle,
       'label' => $label,
+      'required' => $required,
       'settings' => [
         'handler' => 'default:taxonomy_term',
         'handler_settings' => [
