@@ -1067,3 +1067,137 @@ Get deleted unpublished document as other provider.
 
 * Status: `404`
 * Content-Type: "application/json"
+
+## POST /fields/documents
+
+Add required field.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Needed",
+  "author": "hid_123456789",
+  "type": "integer",
+  "required": true
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Field created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Field created"
+* Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_needed}
+
+## POST /documents
+
+Add a minimal document.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "title": "Minimal",
+  "author": "hid_123456789",
+  "metadata": [
+    {
+      "{field_id}": 42
+    }
+  ]
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Unable to save document: This value should not be null. (silk_needed)"
+}
+```
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Unable to save document: This value should not be null. (silk_needed)"
+
+## POST /documents
+
+Add a minimal document.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "title": "Minimal",
+  "author": "hid_123456789",
+  "metadata": [
+    {
+      "{field_needed}": 42
+    }
+  ]
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Document created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Document created"
+
+## POST /documents
+
+Add a minimal document.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "title": "Minimal",
+  "author": "hid_123456789",
+  "metadata": [
+    {
+      "{field_needed}": "This is not an integer"
+    }
+  ]
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Unable to save document: This value should be of the correct primitive type. (silk_needed.0.value)"
+}
+```
+
+* Content-Type: "application/json"
+* Data.message: "Unable to save document: This value should be of the correct primitive type. (silk_needed.0.value)"
+

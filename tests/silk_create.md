@@ -660,7 +660,8 @@ Add organizations field.
 {
   "label": "Organizations",
   "author": "hid_123456789",
-  "target": "{organization}"
+  "target": "{organization}",
+  "multiple": true
 }
 ```
 
