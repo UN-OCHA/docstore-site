@@ -737,9 +737,6 @@ class ApiController extends ControllerBase {
       }
     }
 
-    // Add oderation state.
-
-
     // Add cache tags.
     $cache_tags['#cache'] = [
       'tags' => [
