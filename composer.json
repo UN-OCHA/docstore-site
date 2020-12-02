@@ -118,7 +118,6 @@
         "composer-exit-on-patch-failure": true
     },
     "scripts": {
-        "drupal-scaffold": "DrupalComposer\\DrupalScaffold\\Plugin::scaffold",
         "git-hooks": "test -d .git && git config core.hooksPath git-hooks || exit 0",
         "gulp-prepare": "test -f html/themes/custom/bootstrap_subtheme_sass/gulpfile.js && cd html/themes/custom/bootstrap_subtheme_sass && npm install || exit 0",
         "gulp-build": "test -f html/themes/custom/bootstrap_subtheme_sass/gulpfile.js && cd html/themes/custom/bootstrap_subtheme_sass && ./node_modules/.bin/gulp build || exit 0",
@@ -129,12 +128,10 @@
             "@gulp-cleanup"
         ],
         "post-install-cmd": [
-            "@git-hooks",
-            "@drupal-scaffold"
+            "@git-hooks"
         ],
         "post-update-cmd": [
-            "@git-hooks",
-            "@drupal-scaffold"
+            "@git-hooks"
         ]
     }
 }
