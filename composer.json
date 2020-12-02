@@ -99,6 +99,9 @@
                 ".editorconfig": "../.editorconfig",
                 ".gitattributes": "../.gitattributes"
             },
+            "locations": {
+                "web-root": "html/"
+            },
             "omit-defaults": false
         },
         "merge-plugin": {
