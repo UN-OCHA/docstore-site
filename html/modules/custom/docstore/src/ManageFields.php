@@ -463,7 +463,12 @@ class ManageFields {
     }
 
     // Create vocabulary.
-    $machine_name = $this->generateUniqueMachineName($params['label'], 'taxonomy_vocabulary');
+    if (isset($params['machine_name'])) {
+      $machine_name = $params['machine_name'];
+    }
+    else {
+      $machine_name = $this->generateUniqueMachineName($params['label'], 'taxonomy_vocabulary');
+    }
 
     $vocabulary = Vocabulary::create([
       'vid' => $machine_name,
@@ -718,21 +723,27 @@ class ManageFields {
     $field_name = $this->generateUniqueMachineName($label, 'taxonomy_term', $provider_prefix);
 
     // Create storage.
-    $field_storage = FieldStorageConfig::create([
-      'field_name' => $field_name,
-      'entity_type' => 'taxonomy_term',
-      'type' => $field_type,
-      'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
-    ]);
-    $field_storage->save();
+    $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
+    if (!$field_storage) {
+      $field_storage = FieldStorageConfig::create([
+        'field_name' => $field_name,
+        'entity_type' => 'taxonomy_term',
+        'type' => $field_type,
+        'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
+      ]);
+      $field_storage->save();
+    }
 
     // Create instance.
-    FieldConfig::create([
-      'field_storage' => $field_storage,
-      'bundle' => $bundle,
-      'label' => $label,
-      'required' => $required,
-    ])->save();
+    $field_config = FieldConfig::load('taxonomy_term.' . $bundle . '.' .$field_name);
+    if (!$field_config) {
+      FieldConfig::create([
+        'field_storage' => $field_storage,
+        'bundle' => $bundle,
+        'label' => $label,
+        'required' => $required,
+      ])->save();
+    }
 
     docstore_notify_webhooks('field:vocabulary:create', $field_name);
     return $field_name;
@@ -785,7 +796,7 @@ class ManageFields {
    * @param string $bundle
    *   Vocabulary bundle.
    */
-  protected function createVocabularyBaseFieldCreated(string $bundle) {
+  public function createVocabularyBaseFieldCreated(string $bundle) {
     $label = 'Created';
     $field_name = 'created';
     $field_type = 'timestamp';
@@ -815,7 +826,7 @@ class ManageFields {
    * @param string $bundle
    *   Vocabulary bundle.
    */
-  protected function createVocabularyBaseFieldProviderUuid(string $bundle) {
+  public function createVocabularyBaseFieldProviderUuid(string $bundle) {
     $label = 'Provider UUID';
     $field_name = 'base_provider_uuid';
     $field_type = 'entity_reference_uuid';
@@ -857,7 +868,7 @@ class ManageFields {
    * @param string $bundle
    *   Vocabulary bundle.
    */
-  protected function createVocabularyBaseFieldHidId(string $bundle) {
+  public function createVocabularyBaseFieldHidId(string $bundle) {
     $label = 'Author (HID)';
     $field_name = 'base_author_hid';
     $field_type = 'string';
