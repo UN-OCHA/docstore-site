@@ -309,4 +309,4 @@ function docstore_disasters_sync($url = '') {
 
 // Auto execute.
 docstore_disaster_types_sync();
-//docstore_disasters_sync();
+docstore_disasters_sync();
