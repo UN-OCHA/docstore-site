@@ -102,6 +102,38 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_id}
 
+## POST /fields/documents
+
+Add country field.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Country",
+  "author": "hid_123456789",
+  "type": "entity_reference_uuid",
+  "target": "shared_countries"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Field created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Field created"
+* Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_country}
+
 ## POST /documents
 
 Add a document as anonymous.
@@ -315,7 +347,8 @@ Add a private document.
   "private": true,
   "metadata": [
     {
-      "{field_id}": 42
+      "{field_id}": 42,
+      "{field_country}_label": "Aruba"
     }
   ]
 }
@@ -451,6 +484,7 @@ Get private document as owner.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
+* Data.silk_country[0].name: "Aruba"
 
 ## GET /documents/{doc2}
 
