@@ -277,6 +277,7 @@ function docstore_create_node_type($type = 'document') {
       ]);
     }
 
+    /** @var \Drupal\Core\Entity\Entity\EntityViewDisplay $view_display */
     $view_display->setComponent($base_field, [
       'type' => 'number_unformatted',
       'settings' => [],
