@@ -5,7 +5,7 @@
  * Sync countries from vocabulary.
  */
 
-use DMore\ChromeDriver\HttpClient;
+use Drupal\Component\Utility\Unicode;
 use Drupal\docstore\ManageFields;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\taxonomy\Entity\Vocabulary;
@@ -16,7 +16,7 @@ use Drupal\taxonomy\Entity\Vocabulary;
 function docstore_countries_vocabularies() {
   return [
     'shared_countries' => 'Countries',
-    'shared_regions' => 'Regions',
+    'shared_territories' => 'Territories',
   ];
 }
 
@@ -39,6 +39,14 @@ function docstore_countries_fields() {
       'unterm-list' => 'boolean',
       'x-alpha-2' => 'string',
       'x-alpha-3' => 'string',
+      'geolocation' => 'geofield',
+      'territoy' => [
+        'type' => 'entity_reference_uuid',
+        'target' => 'shared_territories',
+      ],
+    ],
+    'shared_territories' => [
+      'code' => 'integer',
     ],
   ];
 }
@@ -73,15 +81,111 @@ function docstore_countries_ensure_vocabulary_fields() {
   foreach (docstore_countries_fields() as $machine_name => $fields) {
     $vocabulary = Vocabulary::load($machine_name);
     foreach ($fields as $label => $type) {
-      $field_name = $manager->addVocabularyField($vocabulary, [
-        'label' => $label,
-        'type' => $type,
-        'author' => 'Shared',
-      ]);
+      if (is_array($type)) {
+        $manager->addVocabularyField($vocabulary, [
+          'label' => $label,
+          'type' => $type['type'],
+          'target' => $type['target'],
+          'author' => 'Shared',
+        ]);
+      }
+      else {
+        $manager->addVocabularyField($vocabulary, [
+          'label' => $label,
+          'type' => $type,
+          'author' => 'Shared',
+        ]);
+      }
     }
   }
 }
 
+/**
+ * Create territory terms.
+ */
+function docstore_countries_territory_term($data) {
+  $properties = [
+    'region',
+    'sub-region',
+    'intermediate-region',
+  ];
+
+  $territories = [];
+  foreach ($properties as $property) {
+    if (empty($data->{$property}->code)) {
+      continue;
+    }
+
+    $territories[] = [
+      'code' => $data->{$property}->code,
+      'label' => $data->{$property}->label->default,
+    ];
+  }
+
+  if (empty($territories)) {
+    return FALSE;
+  }
+
+  $parent = FALSE;
+  foreach ($territories as $territory) {
+    // Make sure term name is not too long.
+    $short_name = $territory['label'];
+    if (mb_strlen($territory['label']) > 250) {
+      $short_name = Unicode::truncate($territory['label'], 250, TRUE, TRUE);
+    }
+
+    if (!$parent) {
+      $existing = taxonomy_term_load_multiple_by_name($short_name, 'shared_territories');
+    }
+    else {
+      $parent_tid = 0;
+      $item = $parent->get('tid')->getValue();
+      if (!empty($item[0])) {
+        $parent_tid = $item[0]['value'];
+      }
+      $query = \Drupal::service('entity_type.manager')
+        ->getStorage('taxonomy_term')
+        ->getQuery()
+        ->condition('name', $short_name)
+        ->condition('parent', $parent_tid);
+      $tids = $query->execute();
+      $existing = \Drupal::service('entity_type.manager')
+        ->getStorage('taxonomy_term')
+        ->loadMultiple($tids);
+    }
+
+    if (!empty($existing)) {
+      $term = reset($existing);
+      $parent = $term;
+      continue;
+    }
+
+    $term_data = [
+      'vid' => 'shared_territories',
+      'name' => $short_name,
+      'description' => $territory['label'],
+      'code' => [],
+    ];
+
+    $term_data['code'][] = [
+      'value' => $territory['code'],
+    ];
+
+    if (isset($parent) && isset($parent_tid)) {
+      $term_data['parent'] = $parent_tid;
+    }
+    $term = Term::create($term_data);
+    $term->save();
+
+    $parent = $term;
+  }
+
+  return $term;
+}
+
+/**
+ * Sync countries from vocabulary.
+ */
 function docstore_countries_sync() {
   docstore_countries_ensure_vocabularies();
   docstore_countries_ensure_vocabulary_fields();
@@ -101,38 +205,47 @@ function docstore_countries_sync() {
     $data = json_decode($raw);
 
     foreach ($data->data as $row) {
-      $item = [
-        'name' => $row->label->default,
-        'vid' => $vocabulary->id(),
-        'created' => [],
-        'base_provider_uuid' => [],
-        'parent' => [],
-        'description' => '',
-      ];
+      $term = taxonomy_term_load_multiple_by_name($row->label->default, 'shared_countries');
+      if (!$term) {
+        $item = [
+          'name' => $row->label->default,
+          'vid' => $vocabulary->id(),
+          'created' => [],
+          'base_provider_uuid' => [],
+          'parent' => [],
+          'description' => '',
+        ];
 
-      // Set creation time.
-      $item['created'][] = [
-        'value' => time(),
-      ];
+        // Set creation time.
+        $item['created'][] = [
+          'value' => time(),
+        ];
 
-      // Set owner.
-      $item['base_provider_uuid'][] = [
-        'target_uuid' => $provider->uuid(),
-      ];
+        // Set owner.
+        $item['base_provider_uuid'][] = [
+          'target_uuid' => $provider->uuid(),
+        ];
 
-      // Store HID Id.
-      $item['base_author_hid'][] = [
-        'value' => 'Shared',
-      ];
+        // Store HID Id.
+        $item['base_author_hid'][] = [
+          'value' => 'Shared',
+        ];
 
-      $term = Term::create($item);
+        $term = Term::create($item);
+      }
+      else {
+        $term = reset($term);
+      }
 
       $fields = docstore_countries_fields()['shared_countries'];
       foreach ($fields as $name => $type) {
         $field_name = str_replace('-', '_', $name);
-        if ($term->hasField($field_name) && isset($row->{$name})) {
-          // @todo boolean.
-          $value = $row->{$name};
+        if ($term->hasField($field_name)) {
+          $value = FALSE;
+          if (isset($row->{$name})) {
+            $value = $row->{$name};
+          }
+
           if ($type === 'boolean') {
             if ($value === 'Y') {
               $value = TRUE;
@@ -141,6 +254,32 @@ function docstore_countries_sync() {
               $value = FALSE;
             }
           }
+
+          if ($type === 'geofield') {
+            if (empty($value->lat) || empty($value->lon)) {
+              continue;
+            }
+
+            $value = [
+              'lat' => $value->lat,
+              'lon' => $value->lon,
+              'value' => 'POINT (' . $value->lat . ' ' . $value->lon . ')',
+            ];
+          }
+
+          if ($field_name === 'territoy') {
+            $territoy_term = docstore_countries_territory_term($row);
+            if (!$territoy_term) {
+              continue;
+            }
+
+            $term->territoy = [];
+            $term->territoy[] = [
+              'target_id' => $territoy_term->id(),
+            ];
+            continue;
+          }
+
           $term->set($field_name, $value);
         }
       }

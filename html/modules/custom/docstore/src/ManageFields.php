@@ -74,6 +74,7 @@ class ManageFields {
       'timestamp' => 'date',
       'integer' => 'integer',
       'string_long' => 'text',
+      'geofield' => 'geofield',
     ];
   }
 
@@ -735,7 +736,7 @@ class ManageFields {
     }
 
     // Create instance.
-    $field_config = FieldConfig::load('taxonomy_term.' . $bundle . '.' .$field_name);
+    $field_config = FieldConfig::load('taxonomy_term.' . $bundle . '.' . $field_name);
     if (!$field_config) {
       FieldConfig::create([
         'field_storage' => $field_storage,
@@ -759,32 +760,38 @@ class ManageFields {
     $field_name = $this->generateUniqueMachineName($label, 'taxonomy_term', $provider_prefix);
 
     // Create storage.
-    $field_storage = FieldStorageConfig::create([
-      'field_name' => $field_name,
-      'entity_type' => 'taxonomy_term',
-      'type' => $field_type,
-      'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
-      'settings' => [
-        'target_type' => 'taxonomy_term',
-      ],
-    ]);
-    $field_storage->save();
+    $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
+    if (!$field_storage) {
+      $field_storage = FieldStorageConfig::create([
+        'field_name' => $field_name,
+        'entity_type' => 'taxonomy_term',
+        'type' => $field_type,
+        'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
+        'settings' => [
+          'target_type' => 'taxonomy_term',
+        ],
+      ]);
+      $field_storage->save();
+    }
 
     // Create instance.
-    FieldConfig::create([
-      'field_storage' => $field_storage,
-      'bundle' => $bundle,
-      'label' => $label,
-      'required' => $required,
-      'settings' => [
-        'handler' => 'default:taxonomy_term',
-        'handler_settings' => [
-          'target_bundles' => [
-            $target => $target,
+    $field_config = FieldConfig::load('taxonomy_term.' . $bundle . '.' . $field_name);
+    if (!$field_config) {
+      FieldConfig::create([
+        'field_storage' => $field_storage,
+        'bundle' => $bundle,
+        'label' => $label,
+        'required' => $required,
+        'settings' => [
+          'handler' => 'default:taxonomy_term',
+          'handler_settings' => [
+            'target_bundles' => [
+              $target => $target,
+            ],
           ],
         ],
-      ],
-    ])->save();
+      ])->save();
+    }
 
     docstore_notify_webhooks('field:vocabulary:create', $field_name);
     return $field_name;

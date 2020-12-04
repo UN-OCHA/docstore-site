@@ -105,7 +105,7 @@ function _docstore_setup_testing() {
   /* @var $entityFieldManager Drupal\Core\Entity\EntityFieldManager */
   $entityFieldManager = Drupal::service('entity_field.manager');
 
-  // TODO: Get from config.
+  // @todo Reset node types.
   $node_types = _docstore_get_defined_node_types();
 
   foreach ($node_types as $node_type) {
@@ -352,7 +352,7 @@ function _docstore_trigger_webhooks($event, $payload) {
  * Get allowed API end points.
  */
 function _docstore_get_allowed_api_endpoints() {
-  // TODO: read from config.
+  // @todo read from config.
   $config = [
     'any' => [
       'read' => 'document',
@@ -378,7 +378,7 @@ function _docstore_get_allowed_api_endpoints() {
  * Get allowed node types.
  */
 function _docstore_get_defined_node_types() {
-  // TODO: read from config.
+  // @todo read from config.
   $config = [
     'document',
     'assessment',

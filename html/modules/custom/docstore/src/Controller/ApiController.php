@@ -299,7 +299,7 @@ class ApiController extends ControllerBase {
 
       $row = [];
       foreach ($field_mapping as $name => $solr_name) {
-        // TODO: Only return base, shared and provider fields.
+        // @todo Only return base, shared and provider fields.
         if (isset($solr_row[$solr_name])) {
           $row[$name] = $solr_row[$solr_name];
         }
@@ -438,7 +438,7 @@ class ApiController extends ControllerBase {
         $files = [$files];
       }
 
-      // TODO: allow file content and/or file name.
+      // @todo allow file content and/or file name.
       foreach ($files as $uuid) {
         /** @var \Drupal\media\Entity\Media $media */
         $media = $this->entityRepository->loadEntityByUuid('media', $uuid);
@@ -2641,6 +2641,9 @@ class ApiController extends ControllerBase {
       // Create new file entity.
       /** @var \Drupal\file\Entity\File $new_file */
       $new_file = file_copy($file, $file->getFileUri(), $this->fileSystem::EXISTS_RENAME);
+      if (!$new_file) {
+        throw new BadRequestHttpException('Unable to write file' . $file->getFileUri());
+      }
 
       // Detect mime type.
       if ($new_file->getMimeType() == 'undefined') {
@@ -2829,7 +2832,6 @@ class ApiController extends ControllerBase {
    * Get allowed endpoints.
    */
   protected function typeAllowed($type, $mode = 'read') {
-    // TODO: read from config.
     $config = _docstore_get_allowed_api_endpoints();
 
     if (!isset($config[$type])) {
