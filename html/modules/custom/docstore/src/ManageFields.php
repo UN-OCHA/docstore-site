@@ -303,6 +303,8 @@ class ManageFields {
 
     // Add to search index display.
     $storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
+
+    /** @var \Drupal\Core\Entity\Entity\EntityViewDisplay $view_display */
     $view_display = $storage->load('node.' . $this->nodeType . '.search_index');
 
     if (!$view_display) {
@@ -376,6 +378,8 @@ class ManageFields {
 
     // Add to search index display.
     $storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
+
+    /** @var \Drupal\Core\Entity\Entity\EntityViewDisplay $view_display */
     $view_display = $storage->load('node.' . $this->nodeType . '.search_index');
     $view_display->setComponent($field_name, [
       'type' => 'entity_reference_label',
