@@ -7,7 +7,6 @@ dependencies:
     - node
     - file
     - media
-    - content_moderation
     - taxonomy
     - user
     - search_api

@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
- * Class DownloadController.
+ * Controller for files endpoint.
  */
 class DownloadController extends ControllerBase {
 

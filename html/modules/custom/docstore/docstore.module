@@ -102,10 +102,10 @@ function _docstore_setup_testing() {
   \Drupal::entityTypeManager()->getStorage('file')->delete($file);
 
   // Delete document fields.
-  /* @var $entityFieldManager Drupal\Core\Entity\EntityFieldManager */
+  /** @var Drupal\Core\Entity\EntityFieldManager $entityFieldManager */
   $entityFieldManager = Drupal::service('entity_field.manager');
 
-  // TODO: Get from config.
+  // @todo Reset node types.
   $node_types = _docstore_get_defined_node_types();
 
   foreach ($node_types as $node_type) {
@@ -172,6 +172,19 @@ function _docstore_setup_testing() {
     User::create([
       'uid' => 2,
       'status' => 1,
+      'name' => 'Base provider',
+      'type' => 'provider',
+      'pass' => '',
+      'prefix' => [
+        'value' => '',
+      ],
+    ])->save();
+  }
+
+  if (!User::load(3)) {
+    User::create([
+      'uid' => 3,
+      'status' => 1,
       'name' => 'Silk test',
       'type' => 'provider',
       'pass' => '',
@@ -194,9 +207,9 @@ function _docstore_setup_testing() {
   }
 
   // Create user if needed.
-  if (!User::load(3)) {
+  if (!User::load(4)) {
     User::create([
-      'uid' => 3,
+      'uid' => 4,
       'status' => 1,
       'name' => 'Another test',
       'type' => 'provider',
@@ -339,7 +352,7 @@ function _docstore_trigger_webhooks($event, $payload) {
  * Get allowed API end points.
  */
 function _docstore_get_allowed_api_endpoints() {
-  // TODO: read from config.
+  // @todo read from config.
   $config = [
     'any' => [
       'read' => 'document',
@@ -365,7 +378,7 @@ function _docstore_get_allowed_api_endpoints() {
  * Get allowed node types.
  */
 function _docstore_get_defined_node_types() {
-  // TODO: read from config.
+  // @todo read from config.
   $config = [
     'document',
     'assessment',

@@ -48,6 +48,8 @@ export HASH=$(php -r "print md5('$ME_SHARED$FILEPRIVATETXT$ME_UUID');")
 $DRUSH eval "_docstore_setup_testing()"
 $DRUSH cr
 
+## Add shared vocabularies.
+$DRUSH scr ../html/modules/custom/docstore/syncs/docstore_countries.php
 ./silk -test.v -silk.url $API silk_document_crud.md || exit 1;
 
 $DRUSH eval "docstore_create_node_type('assessment')"
