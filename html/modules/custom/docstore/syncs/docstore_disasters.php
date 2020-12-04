@@ -5,7 +5,6 @@
  * Sync disasters from vocabulary.
  */
 
-use Drupal\Component\Utility\Unicode;
 use Drupal\docstore\ManageFields;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\taxonomy\Entity\Vocabulary;
