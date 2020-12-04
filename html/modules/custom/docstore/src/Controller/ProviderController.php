@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
- * Class ProviderController.
+ * API controller for me endpoint.
  */
 class ProviderController extends ControllerBase {
 

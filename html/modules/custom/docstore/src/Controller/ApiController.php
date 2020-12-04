@@ -41,7 +41,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException;
 
 /**
- * Class ApiController.
+ * Controller for API endpoints.
  */
 class ApiController extends ControllerBase {
 
@@ -1527,7 +1527,7 @@ class ApiController extends ControllerBase {
     }
     else {
       // Assume it's the machine name.
-      $vocabulary = Vocabulary::load($id);
+      $vocabulary = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->load($id);
       if (!$vocabulary) {
         throw new BadRequestHttpException('Invalid vocabulary');
       }
@@ -2669,7 +2669,7 @@ class ApiController extends ControllerBase {
       $usage_list = array_keys($usage_list);
 
       foreach ($usage_list as $media_id) {
-        $media_entity = Media::load($media_id);
+        $media_entity = $this->entityTypeManager->getStorage('media')->load($media_id);
 
         // Move old file to revisions.
         $media_entity->field_media_file_revisions[] = [

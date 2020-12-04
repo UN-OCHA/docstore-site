@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
- * Class WebhookController.
+ * API controller for webhook endpoint.
  */
 class WebhookController extends ControllerBase {
 

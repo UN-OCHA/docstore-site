@@ -102,7 +102,7 @@ function _docstore_setup_testing() {
   \Drupal::entityTypeManager()->getStorage('file')->delete($file);
 
   // Delete document fields.
-  /* @var $entityFieldManager Drupal\Core\Entity\EntityFieldManager */
+  /** @var $entityFieldManager Drupal\Core\Entity\EntityFieldManager */
   $entityFieldManager = Drupal::service('entity_field.manager');
 
   // @todo Reset node types.
