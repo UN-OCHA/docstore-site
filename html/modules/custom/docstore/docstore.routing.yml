@@ -38,7 +38,7 @@ docstore_update_me:
     docstore_crud: 'U'
     docstore_access_level: 'B'
 
-    # hooks
+# hooks
 docstore_get_hooks:
   path: '/api/webhooks'
   defaults:
@@ -642,11 +642,21 @@ docstore_update_file_content:
     docstore_crud: 'U'
     docstore_access_level: 'B'
 
+# Download private media
+docstore_download_private_media:
+  path: '/media/{media_uuid}/{provider_uuid}/{hash}/{filename}'
+  defaults:
+    _controller: 'docstore.download_controller:downloadMedia'
+    _title: 'Download a file attached to media'
+  methods: [GET]
+  requirements:
+    _access: 'TRUE'
+
 # Download private file
 docstore_download_private_file:
   path: '/files/{file_uuid}/{provider_uuid}/{hash}/{filename}'
   defaults:
-    _controller: 'docstore.download_controller:download'
+    _controller: 'docstore.download_controller:downloadFile'
     _title: 'Download a file'
   methods: [GET]
   requirements:

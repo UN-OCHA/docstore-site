@@ -422,10 +422,6 @@ class ApiController extends ControllerBase {
       ];
     }
 
-    if (!empty($params['moderation_state'])) {
-      $item['moderation_state'] = $params['moderation_state'];
-    }
-
     // Store HID Id.
     $item['base_author_hid'][] = [
       'value' => $params['author'],
@@ -2382,6 +2378,8 @@ class ApiController extends ControllerBase {
    * Update file.
    */
   public function updateFile($id, Request $request) {
+    // @todo: Handle state changes
+    // private: false <-> true: move file
     throw new PreconditionFailedHttpException('Not implemented (yet)');
   }
 
