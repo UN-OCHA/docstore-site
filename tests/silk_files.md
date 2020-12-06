@@ -316,3 +316,86 @@ Public txt
 * Status: `400`
 * Content-Type: "application/json"
 * Data.message: "Dropfolder is not enabled"
+
+## PUT /files/{FILEPUBLIC}
+
+Make public file private as anonymous.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+
+```json
+{
+  "private": true
+}
+```
+
+===
+
+* Status: `403`
+* Content-Type: "application/json"
+
+## PUT /files/{FILEPUBLIC}
+
+Make public file private as other provider.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: dcba
+
+```json
+{
+  "private": true
+}
+```
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+
+## PUT /files/{FILEPUBLIC}
+
+Make public file private as owner.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "private": true
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "File updated"
+
+## GET /files/{FILEPUBLIC}
+
+Get now private file as owner.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /files/{FILEPUBLIC}
+
+Get now private file as anonymous.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "File is not owned by you"

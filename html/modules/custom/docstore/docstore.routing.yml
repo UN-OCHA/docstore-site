@@ -586,7 +586,7 @@ docstore_update_file:
   defaults:
     _controller: 'docstore.api_controller:updateFile'
     _title: 'Update file'
-  methods: [PUT]
+  methods: [PUT, PATCH]
   requirements:
     _docstore_access_check: 'TRUE'
   options:
