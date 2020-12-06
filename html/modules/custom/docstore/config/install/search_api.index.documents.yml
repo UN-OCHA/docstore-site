@@ -150,14 +150,6 @@ field_settings:
     dependencies:
       module:
         - node
-  moderation_state:
-    label: 'Moderation state'
-    datasource_id: 'entity:node'
-    property_path: moderation_state
-    type: string
-    dependencies:
-      module:
-        - content_moderation
   private:
     label: Private
     datasource_id: 'entity:node'

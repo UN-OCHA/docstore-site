@@ -252,7 +252,6 @@ class ApiController extends ControllerBase {
     }
 
     // Massage the data.
-    $this->getLogger('solr')->notice(count($solr_response['response']['docs']));
     $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index, $request->getSchemeAndHttpHost());
 
     // Add cache tags.
@@ -420,10 +419,6 @@ class ApiController extends ControllerBase {
       $item['base_private'][] = [
         'value' => FALSE,
       ];
-    }
-
-    if (!empty($params['moderation_state'])) {
-      $item['moderation_state'] = $params['moderation_state'];
     }
 
     // Store HID Id.
@@ -2382,7 +2377,59 @@ class ApiController extends ControllerBase {
    * Update file.
    */
   public function updateFile($id, Request $request) {
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
+
+    /** @var \Drupal\file\Entity\File $file */
+    $file = $this->entityRepository->loadEntityByUuid('file', $id);
+    if (!$file) {
+      throw new BadRequestHttpException('File does not exist');
+    }
+
+    // Get provider.
+    $provider = $this->requireProvider();
+
+    // Provider can only update own files.
+    if ($file->getOwnerId() !== $provider->id()) {
+      throw new BadRequestHttpException('File is not owned by you');
+    }
+
+    // Filename is required.
+    if (isset($params['filename']) && $params['filename'] !== $file->getFilename) {
+      $file->setFilename($params['filename']);
+      $file->save();
+    }
+
+    // See if we need to move the file.
+    if (isset($params['private'])) {
+      $private_state = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
+      $private = FALSE;
+      if ($params['private']) {
+        $private = TRUE;
+      }
+
+      // See if private changed.
+      if ($private_state !== $private) {
+        // Move file.
+        if ($private) {
+          $this->moveFileToPrivate($file);
+        }
+        else {
+          $this->moveFileToPublic($file);
+        }
+      }
+    }
+
+    $data = [
+      'message' => 'File updated',
+    ];
+
+    $response = new JsonResponse($data);
+
+    return $response;
   }
 
   /**
@@ -2847,6 +2894,58 @@ class ApiController extends ControllerBase {
     }
 
     return $config[$type][$mode];
+  }
+
+  /**
+   * Move file to private file system.
+   */
+  protected function moveFileToPrivate($file) {
+    $uri = $file->getFileUri();
+    $new_uri = $uri;
+
+    if (strpos($uri, 'private://') === FALSE) {
+      $new_uri = str_replace('public://', 'private://', $uri);
+    }
+
+    // Make sure we need to move.
+    if ($uri === $new_uri) {
+      return;
+    }
+
+    // Make sure directory exists.
+    $destination = pathinfo($new_uri, PATHINFO_DIRNAME);
+    $this->fileSystem->prepareDirectory($destination, $this->fileSystem::CREATE_DIRECTORY);
+
+    // Move file and update record.
+    if (!file_move($file, $new_uri)) {
+      throw new BadRequestHttpException('File could not be moved');
+    }
+  }
+
+  /**
+   * Move file to public file system.
+   */
+  protected function moveFileToPublic($file) {
+    $uri = $file->getFileUri();
+    $new_uri = $uri;
+
+    if (strpos($uri, 'public://') === FALSE) {
+      $new_uri = str_replace('private://', 'public://', $uri);
+    }
+
+    // Make sure we need to move.
+    if ($uri === $new_uri) {
+      return;
+    }
+
+    // Make sure directory exists.
+    $destination = pathinfo($new_uri, PATHINFO_DIRNAME);
+    $this->fileSystem->prepareDirectory($destination, $this->fileSystem::CREATE_DIRECTORY);
+
+    // Move file and update record.
+    if (!file_move($file, $new_uri)) {
+      throw new BadRequestHttpException('File could not be moved');
+    }
   }
 
 }

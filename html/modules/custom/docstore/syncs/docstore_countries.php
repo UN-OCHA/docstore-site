@@ -40,7 +40,7 @@ function docstore_countries_fields() {
       'x-alpha-2' => 'string',
       'x-alpha-3' => 'string',
       'geolocation' => 'geofield',
-      'territoy' => [
+      'territory' => [
         'type' => 'entity_reference_uuid',
         'target' => 'shared_territories',
       ],
@@ -267,15 +267,15 @@ function docstore_countries_sync() {
             ];
           }
 
-          if ($field_name === 'territoy') {
-            $territoy_term = docstore_countries_territory_term($row);
-            if (!$territoy_term) {
+          if ($field_name === 'territory') {
+            $territory_term = docstore_countries_territory_term($row);
+            if (!$territory_term) {
               continue;
             }
 
-            $term->territoy = [];
-            $term->territoy[] = [
-              'target_id' => $territoy_term->id(),
+            $term->territory = [];
+            $term->territory[] = [
+              'target_id' => $territory_term->id(),
             ];
             continue;
           }
