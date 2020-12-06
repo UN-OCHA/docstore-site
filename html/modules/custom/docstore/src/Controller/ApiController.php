@@ -2362,6 +2362,7 @@ class ApiController extends ControllerBase {
 
     $data = [
       'file' => $file->uuid(),
+      'filename' => $file->getFilename(),
       'url' => $file->createFileUrl(),
       'created' => date(DATE_ATOM, $file->getCreatedTime()),
       'changed' => date(DATE_ATOM, $file->getChangedTime()),
@@ -2398,7 +2399,7 @@ class ApiController extends ControllerBase {
     }
 
     // Filename is required.
-    if (isset($params['filename']) && $params['filename'] !== $file->getFilename) {
+    if (isset($params['filename']) && $params['filename'] !== $file->getFilename()) {
       $file->setFilename($params['filename']);
       $file->save();
     }

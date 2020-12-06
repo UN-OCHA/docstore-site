@@ -399,3 +399,71 @@ Get now private file as anonymous.
 * Status: `400`
 * Content-Type: "application/json"
 * Data.message: "File is not owned by you"
+
+## PUT /files/{FILEPUBLIC}
+
+Update file name.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "filename": "newname.pdf"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "File updated"
+
+## PUT /files/{FILEPRIVATE}
+
+Update file name.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "filename": "newname.pdf"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "File updated"
+
+## GET /files/{FILEPUBLIC}
+
+Get public as owner.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.filename: "newname.pdf"
+
+## GET /files/{FILEPRIVATE}
+
+Get private file as owner.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.filename: "newname.pdf"
