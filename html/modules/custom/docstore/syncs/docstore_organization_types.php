@@ -14,8 +14,7 @@ use Drupal\taxonomy\Entity\Vocabulary;
  */
 function docstore_disasters_vocabularies() {
   return [
-    'shared_disasters' => 'Disasters',
-    'shared_disaster_types' => 'Disaster types',
+    'shared_organization_types' => 'Organization types',
   ];
 }
 
@@ -24,14 +23,11 @@ function docstore_disasters_vocabularies() {
  */
 function docstore_disasters_fields() {
   return [
-    'shared_disasters' => [
+    'shared_organization_types' => [
       'id' => 'integer',
-      'glide' => 'string',
-      'disaster_status' => 'string',
-    ],
-    'shared_disaster_types' => [
-      'id' => 'integer',
-      'code' => 'string',
+      'reliefweb_id' => 'integer',
+      'reliefweb_label' => 'string',
+      'scope' => 'string',
     ],
   ];
 }
@@ -88,15 +84,15 @@ function docstore_disasters_ensure_vocabulary_fields() {
 /**
  * Sync disasters from vocabulary.
  */
-function docstore_disaster_types_sync() {
+function docstore_organization_types_sync() {
   docstore_disasters_ensure_vocabularies();
   docstore_disasters_ensure_vocabulary_fields();
 
   $http_client = \Drupal::httpClient();
-  $url = 'https://api.reliefweb.int/v1/references/disaster-types?appname=vocabulary';
+  $url = 'https://vocabulary.unocha.org/json/beta-v1/organization_types.json';
 
   // Load vocabulary.
-  $vocabulary = Vocabulary::load('shared_disaster_types');
+  $vocabulary = Vocabulary::load('shared_organization_types');
 
   // Load provider.
   $provider = user_load(2);
@@ -107,10 +103,10 @@ function docstore_disaster_types_sync() {
     $data = json_decode($raw);
 
     foreach ($data->data as $row) {
-      $term = taxonomy_term_load_multiple_by_name($row->fields->name, $vocabulary->id());
+      $term = taxonomy_term_load_multiple_by_name($row->label->default, $vocabulary->id());
       if (!$term) {
         $item = [
-          'name' => $row->fields->name,
+          'name' => $row->label->default,
           'vid' => $vocabulary->id(),
           'created' => [],
           'base_provider_uuid' => [],
@@ -139,16 +135,16 @@ function docstore_disaster_types_sync() {
         $term = reset($term);
       }
 
+      $row->reliefweb_label = $row->label->reliefweb;
+
       $fields = docstore_disasters_fields()[$vocabulary->id()];
-      // Add description field.
-      $fields['description'] = 'string';
 
       foreach ($fields as $name => $type) {
         $field_name = str_replace('-', '_', $name);
         if ($term->hasField($field_name)) {
           $value = FALSE;
-          if (isset($row->fields->{$name})) {
-            $value = $row->fields->{$name};
+          if (isset($row->{$name})) {
+            $value = $row->{$name};
           }
 
           if ($type === 'boolean') {
@@ -184,128 +180,9 @@ function docstore_disaster_types_sync() {
       else {
         $term->save();
       }
-    }
-  }
-}
-
-/**
- * Sync disasters from vocabulary.
- */
-function docstore_disasters_sync($url = '') {
-  docstore_disasters_ensure_vocabularies();
-  docstore_disasters_ensure_vocabulary_fields();
-
-  $http_client = \Drupal::httpClient();
-  if (empty($url)) {
-    $url = 'https://api.reliefweb.int/v1/disasters?appname=vocabulary&preset=external&limit=1000';
-  }
-
-  // Load vocabulary.
-  $vocabulary = Vocabulary::load('shared_disasters');
-
-  // Load provider.
-  $provider = user_load(2);
-
-  $response = $http_client->request('GET', $url);
-  if ($response->getStatusCode() === 200) {
-    $raw = $response->getBody()->getContents();
-    $data = json_decode($raw);
-
-    foreach ($data->data as $row) {
-      $term = taxonomy_term_load_multiple_by_name($row->fields->name, $vocabulary->id());
-      if (!$term) {
-        $item = [
-          'name' => $row->fields->name,
-          'vid' => $vocabulary->id(),
-          'created' => [],
-          'base_provider_uuid' => [],
-          'parent' => [],
-          'description' => '',
-        ];
-
-        // Set creation time.
-        $item['created'][] = [
-          'value' => time(),
-        ];
-
-        // Set owner.
-        $item['base_provider_uuid'][] = [
-          'target_uuid' => $provider->uuid(),
-        ];
-
-        // Store HID Id.
-        $item['base_author_hid'][] = [
-          'value' => 'Shared',
-        ];
-
-        $term = Term::create($item);
-      }
-      else {
-        $term = reset($term);
-      }
-
-      $fields = docstore_disasters_fields()[$vocabulary->id()];
-      // Add description field.
-      $fields[] = [
-        'description' => 'string',
-      ];
-
-      foreach ($fields as $name => $type) {
-        $field_name = str_replace('-', '_', $name);
-        if ($term->hasField($field_name)) {
-          // Alias status is disaster_status.
-          if ($field_name === 'disaster_status') {
-            $name = 'status';
-          }
-
-          $value = FALSE;
-          if (isset($row->fields->{$name})) {
-            $value = $row->fields->{$name};
-          }
-
-          if ($type === 'boolean') {
-            if ($value === 'Y') {
-              $value = TRUE;
-            }
-            else {
-              $value = FALSE;
-            }
-          }
-
-          if ($type === 'geofield') {
-            if (empty($value->lat) || empty($value->lon)) {
-              continue;
-            }
-
-            $value = [
-              'lat' => $value->lat,
-              'lon' => $value->lon,
-              'value' => 'POINT (' . $value->lat . ' ' . $value->lon . ')',
-            ];
-          }
-
-          $term->set($field_name, $value);
-        }
-      }
-
-      $violations = $term->validate();
-      if (count($violations) > 0) {
-        print($violations->get(0)->getMessage());
-        print($violations->get(0)->getPropertyPath());
-      }
-      else {
-        $term->save();
-      }
-    }
-
-    // Check for more data.
-    if (isset($data->links) && isset($data->links->next->href)) {
-      print $data->links->next->href;
-      docstore_disasters_sync($data->links->next->href);
     }
   }
 }
 
 // Auto execute.
-docstore_disaster_types_sync();
-docstore_disasters_sync();
+docstore_organization_types_sync();
