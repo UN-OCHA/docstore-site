@@ -372,6 +372,11 @@ function _docstore_get_allowed_api_endpoints() {
       'write' => 'assessment',
       'field' => 'assessment',
     ],
+    'disasters' => [
+      'read' => 'disaster',
+      'write' => 'disaster',
+      'field' => 'disaster',
+    ],
     'assessment-documents' => [
       'read' => 'assessment_document',
       'write' => 'assessment_document',
@@ -394,6 +399,7 @@ function _docstore_get_defined_node_types() {
   // @todo read from config.
   $config = [
     'document',
+    'disaster',
     'assessment',
     'assessment_document',
     'knowledge_management',
