@@ -29,6 +29,7 @@ function createVocabularies() {
     'locations',
     'disasters',
     'units_of_measurement',
+    'assessment_status',
   ];
 
   foreach ($vocabularies as $vocabulary) {
