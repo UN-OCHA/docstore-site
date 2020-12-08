@@ -469,7 +469,7 @@ class ApiController extends ControllerBase {
         }
         else {
           if (isset($uuid['uri'])) {
-            $media = $this->FetchAndCreateFile($uuid['uri'], $provider);
+            $media = $this->fetchAndCreateFile($uuid['uri'], $provider);
             $item['base_files'][] = [
               'target_uuid' => $media->uuid(),
             ];
@@ -537,7 +537,7 @@ class ApiController extends ControllerBase {
   /**
    * Fetch and create a file.
    */
-  protected function FetchAndCreateFile($uri, $provider) {
+  protected function fetchAndCreateFile($uri, $provider) {
     $content = file_get_contents($uri);
 
     // Create URI.
