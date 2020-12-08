@@ -86,10 +86,12 @@ function _docstore_setup_testing() {
   \Drupal::entityTypeManager()->getStorage('node')->delete($documents);
 
   // Delete all terms.
+  // @todo skip shared vocabularies.
   $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadMultiple();
   \Drupal::entityTypeManager()->getStorage('taxonomy_term')->delete($terms);
 
   // Delete all vocabularies.
+  // @todo skip shared vocabularies.
   $vocabularies = \Drupal::entityTypeManager()->getStorage('taxonomy_vocabulary')->loadMultiple();
   \Drupal::entityTypeManager()->getStorage('taxonomy_vocabulary')->delete($vocabularies);
 
@@ -370,6 +372,11 @@ function _docstore_get_allowed_api_endpoints() {
       'write' => 'assessment',
       'field' => 'assessment',
     ],
+    'knowledge-managements' => [
+      'read' => 'knowledge_management',
+      'write' => 'knowledge_management',
+      'field' => 'knowledge_management',
+    ],
   ];
 
   return $config;
@@ -383,7 +390,21 @@ function _docstore_get_defined_node_types() {
   $config = [
     'document',
     'assessment',
+    'knowledge_management',
   ];
 
   return $config;
+}
+
+/**
+ * Implements hook_theme_registry_alter().
+ */
+function docstore_theme_registry_alter(&$theme_registry) {
+  if (!isset($theme_registry['taxonomy_term'])) {
+    return;
+  }
+
+  $module_path = drupal_get_path('module', 'docstore');
+  $theme_registry['taxonomy_term']['path'] = $module_path . '/templates';
+  $theme_registry['taxonomy_term']['theme path'] = $module_path;
 }

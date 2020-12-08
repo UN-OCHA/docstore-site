@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Sync organization_types from vocabulary.
+ * Sync population_types from vocabulary.
  */
 
 use Drupal\docstore\ManageFields;
@@ -12,22 +12,19 @@ use Drupal\taxonomy\Entity\Vocabulary;
 /**
  * List of vocabularies.
  */
-function docstore_organization_types_vocabularies() {
+function docstore_population_types_vocabularies() {
   return [
-    'shared_organization_types' => 'Organization types',
+    'shared_population_types' => 'Population types',
   ];
 }
 
 /**
  * List of fields.
  */
-function docstore_organization_types_fields() {
+function docstore_population_types_fields() {
   return [
-    'shared_organization_types' => [
+    'shared_population_types' => [
       'id' => 'integer',
-      'reliefweb_id' => 'integer',
-      'reliefweb_label' => 'string',
-      'scope' => 'string',
     ],
   ];
 }
@@ -35,11 +32,11 @@ function docstore_organization_types_fields() {
 /**
  * Ensure vocabularies do exist.
  */
-function docstore_organization_types_ensure_vocabularies() {
+function docstore_population_types_ensure_vocabularies() {
   $provider = user_load(2);
   $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('database'));
 
-  foreach (docstore_organization_types_vocabularies() as $machine_name => $label) {
+  foreach (docstore_population_types_vocabularies() as $machine_name => $label) {
     $vocabulary = Vocabulary::load($machine_name);
     if (!$vocabulary) {
       $vocabulary = $manager->createVocabulary([
@@ -55,11 +52,11 @@ function docstore_organization_types_ensure_vocabularies() {
 /**
  * Ensure vocabulary fields do exist.
  */
-function docstore_organization_types_ensure_vocabulary_fields() {
+function docstore_population_types_ensure_vocabulary_fields() {
   $provider = user_load(2);
   $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('database'));
 
-  foreach (docstore_organization_types_fields() as $machine_name => $fields) {
+  foreach (docstore_population_types_fields() as $machine_name => $fields) {
     $vocabulary = Vocabulary::load($machine_name);
     foreach ($fields as $label => $type) {
       if (is_array($type)) {
@@ -82,17 +79,17 @@ function docstore_organization_types_ensure_vocabulary_fields() {
 }
 
 /**
- * Sync organization_types from vocabulary.
+ * Sync population_types from vocabulary.
  */
-function docstore_organization_types_sync() {
-  docstore_organization_types_ensure_vocabularies();
-  docstore_organization_types_ensure_vocabulary_fields();
+function docstore_population_types_sync() {
+  docstore_population_types_ensure_vocabularies();
+  docstore_population_types_ensure_vocabulary_fields();
 
   $http_client = \Drupal::httpClient();
-  $url = 'https://vocabulary.unocha.org/json/beta-v1/organization_types.json';
+  $url = 'https://www.humanitarianresponse.info/en/api/v1.0/population_types';
 
   // Load vocabulary.
-  $vocabulary = Vocabulary::load('shared_organization_types');
+  $vocabulary = Vocabulary::load('shared_population_types');
 
   // Load provider.
   $provider = user_load(2);
@@ -103,10 +100,10 @@ function docstore_organization_types_sync() {
     $data = json_decode($raw);
 
     foreach ($data->data as $row) {
-      $term = taxonomy_term_load_multiple_by_name($row->label->default, $vocabulary->id());
+      $term = taxonomy_term_load_multiple_by_name($row->label, $vocabulary->id());
       if (!$term) {
         $item = [
-          'name' => $row->label->default,
+          'name' => $row->label,
           'vid' => $vocabulary->id(),
           'created' => [],
           'base_provider_uuid' => [],
@@ -135,10 +132,7 @@ function docstore_organization_types_sync() {
         $term = reset($term);
       }
 
-      $row->reliefweb_label = $row->label->reliefweb;
-
-      $fields = docstore_organization_types_fields()[$vocabulary->id()];
-
+      $fields = docstore_population_types_fields()[$vocabulary->id()];
       foreach ($fields as $name => $type) {
         $field_name = str_replace('-', '_', $name);
         if ($term->hasField($field_name)) {
@@ -185,4 +179,4 @@ function docstore_organization_types_sync() {
 }
 
 // Auto execute.
-docstore_organization_types_sync();
+docstore_population_types_sync();
