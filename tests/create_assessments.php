@@ -63,6 +63,11 @@ function createAssessmentDocumentFields() {
 
 function createAssessmentFields() {
   $fields = [
+    'id' => [
+      'label' => 'Id',
+      'type' => 'integer',
+      'multiple' => TRUE,
+    ],
     'contacts' => [
       'label' => 'Contacts',
       'type' => 'string_long',
@@ -112,8 +117,8 @@ function createAssessmentFields() {
     ],
     'disasters' => [
       'label' => 'Disasters',
-      'type' => 'term_reference',
-      'target' => 'silk_disasters',
+      'type' => 'node_reference',
+      'target' => 'disaster',
       'multiple' => TRUE,
     ],
     'assessment_data' => [
@@ -152,6 +157,43 @@ function createAssessmentFields() {
   }
 }
 
+function syncAssesments($url = '') {
+  if (empty($url)) {
+    $url = 'https://www.humanitarianresponse.info/api/v1.0/assessments';
+  }
+
+  $raw = file_get_contents($url);
+  $data = json_decode($raw);
+
+  $assessments = [];
+  foreach ($data->data as $row) {
+    $assessment = [
+      'title' => $row->label,
+      'metadata' => [],
+      'files' => [],
+    ];
+
+    $assessment['metadata'][] = ['silk_id' => $row->id];
+
+    $assessment['author'] = 'AR';
+    $assessments[] = $assessment;
+  }
+
+  $post_data = [
+    'author' => 'AR',
+    'documents' => $assessments,
+  ];
+
+  post('http://docstore.local.docksal/api/assessments/bulk', $post_data);
+
+  // Check for more data.
+  if (isset($data->links) && isset($data->links->next->href)) {
+    print $data->links->next->href;
+//    syncDisasters($data->links->next->href);
+  }
+}
+
 createVocabularies();
 createAssessmentDocumentFields();
 createAssessmentFields();
+syncAssesments();

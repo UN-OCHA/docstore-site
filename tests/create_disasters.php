@@ -109,7 +109,6 @@ function syncDisasters($url = '') {
     print $data->links->next->href;
     syncDisasters($data->links->next->href);
   }
-
 }
 
 createVocabularies();
