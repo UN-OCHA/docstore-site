@@ -180,7 +180,10 @@ function syncAssesments($url = '') {
       $disaster_data = [];
       foreach ($row->disasters as $disaster) {
         $disaster_data[] = [
-          'field' => 'silk_glide_number',
+          '_action' => 'lookup',
+          '_reference' => 'node',
+          '_target' => 'disaster',
+          '_field' => 'silk_glide_number',
           'value' => $disaster->glide,
         ];
       }
@@ -191,7 +194,7 @@ function syncAssesments($url = '') {
     $assessment['author'] = 'AR';
     $assessments[] = $assessment;
   }
-print_r($assessments);
+
   $post_data = [
     'author' => 'AR',
     'documents' => $assessments,

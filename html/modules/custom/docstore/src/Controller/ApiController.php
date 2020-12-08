@@ -454,7 +454,7 @@ class ApiController extends ControllerBase {
         $files = [$files];
       }
 
-      // @todo allow file content and/or file name.
+      // Allow file uuid or file name.
       foreach ($files as $uuid) {
         if (is_string($uuid)) {
           /** @var \Drupal\media\Entity\Media $media */
@@ -481,6 +481,7 @@ class ApiController extends ControllerBase {
     // Check for meta tags.
     if (isset($params['metadata']) && $params['metadata']) {
       $metadata = $params['metadata'];
+
       foreach ($metadata as $metaitem) {
         foreach ($metaitem as $key => $values) {
           // Check for label keys.
@@ -495,15 +496,30 @@ class ApiController extends ControllerBase {
             ];
           }
           else {
-            // @todo allow lookup by field.
             if (!isset($item[$key])) {
               $item[$key] = [];
             }
 
             foreach ($values as $value) {
-              $item[$key][] = [
-                'target_uuid' => $value,
-              ];
+              if (is_array($value)) {
+                if ($value['_action'] === 'lookup') {
+                  // Lookup target.
+                  $entity = $this->findTargetByProperty($value['_reference'], $value['_target'], $value['_field'], $value['value']);
+                  if ($entity) {
+                    $item[$key][] = [
+                      'target_uuid' => $entity->uuid(),
+                    ];
+                  }
+                }
+                elseif ($value['_action'] === 'create') {
+                  // @todo allow on the fly creation of child items.
+                }
+              }
+              else {
+                $item[$key][] = [
+                  'target_uuid' => $value,
+                ];
+              }
             }
           }
         }
@@ -529,6 +545,30 @@ class ApiController extends ControllerBase {
     Cache::invalidateTags(['documents']);
 
     return $document;
+  }
+
+  /**
+   * Look up target by property.
+   */
+  protected function findTargetByProperty($reference, $target, $field, $value) {
+    $entities = [];
+
+    if ($reference === 'node') {
+      $entities = $this->entityTypeManager->getStorage($reference)->loadByProperties([
+        $field => $value,
+        'type' => $target,
+      ]);
+    }
+    else {
+      $entities = $this->entityTypeManager->getStorage($reference)->loadByProperties([
+        $field => $value,
+        'vid' => $target,
+      ]);
+    }
+
+    if ($entities) {
+      return reset($entities);
+    }
   }
 
   /**
