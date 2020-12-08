@@ -132,10 +132,7 @@ function docstore_population_types_sync() {
         $term = reset($term);
       }
 
-      $row->reliefweb_label = $row->label->reliefweb;
-
       $fields = docstore_population_types_fields()[$vocabulary->id()];
-
       foreach ($fields as $name => $type) {
         $field_name = str_replace('-', '_', $name);
         if ($term->hasField($field_name)) {
