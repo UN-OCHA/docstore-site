@@ -395,3 +395,16 @@ function _docstore_get_defined_node_types() {
 
   return $config;
 }
+
+/**
+ * Implements hook_theme_registry_alter().
+ */
+function docstore_theme_registry_alter(&$theme_registry) {
+  if (!isset($theme_registry['taxonomy_term'])) {
+    return;
+  }
+
+  $module_path = drupal_get_path('module', 'docstore');
+  $theme_registry['taxonomy_term']['path'] = $module_path . '/templates';
+  $theme_registry['taxonomy_term']['theme path'] = $module_path;
+}
