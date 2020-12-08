@@ -495,6 +495,7 @@ class ApiController extends ControllerBase {
             ];
           }
           else {
+            // @todo allow lookup by field.
             if (!isset($item[$key])) {
               $item[$key] = [];
             }

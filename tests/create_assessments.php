@@ -176,10 +176,22 @@ function syncAssesments($url = '') {
 
     $assessment['metadata'][] = ['silk_id' => $row->id];
 
+    if (isset($row->disasters) && !empty($row->disasters)) {
+      $disaster_data = [];
+      foreach ($row->disasters as $disaster) {
+        $disaster_data[] = [
+          'field' => 'silk_glide_number',
+          'value' => $disaster->glide,
+        ];
+      }
+
+      $assessment['metadata'][] = ['silk_disasters' => $disaster_data];
+    }
+
     $assessment['author'] = 'AR';
     $assessments[] = $assessment;
   }
-
+print_r($assessments);
   $post_data = [
     'author' => 'AR',
     'documents' => $assessments,
@@ -190,7 +202,7 @@ function syncAssesments($url = '') {
   // Check for more data.
   if (isset($data->links) && isset($data->links->next->href)) {
     print $data->links->next->href;
-//    syncDisasters($data->links->next->href);
+//    syncAssesments($data->links->next->href);
   }
 }
 
