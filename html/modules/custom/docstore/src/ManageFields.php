@@ -70,6 +70,8 @@ class ManageFields {
       'string' => 'string',
       'entity_reference' => 'integer',
       'entity_reference_uuid' => 'string',
+      'node_reference' => 'string',
+      'term_reference' => 'string',
       'email' => 'string',
       'timestamp' => 'date',
       'integer' => 'integer',
@@ -137,6 +139,16 @@ class ManageFields {
     $field->setLabel($label);
     $index->addField($field);
 
+    // Add node title if needed.
+    if ($field_type === 'node_reference') {
+      $field = new Field($index, $field_name . '_label');
+      $field->setType('string');
+      $field->setPropertyPath($field_name . ':entity:title');
+      $field->setDatasourceId('entity:node');
+      $field->setLabel($label . ' (title)');
+      $index->addField($field);
+    }
+
     // Add term name if needed.
     if ($field_type == 'entity_reference' || $field_type == 'entity_reference_uuid') {
       $field = new Field($index, $field_name . '_label');
@@ -173,7 +185,7 @@ class ManageFields {
     }
 
     // If target is specified, type is not needed.
-    if (isset($params['target'])) {
+    if (isset($params['target']) && empty($params['type'])) {
       $params['type'] = 'entity_reference_uuid';
     }
     else {
@@ -194,8 +206,20 @@ class ManageFields {
       }
 
       // Make sure bundle is valid.
-      if (!$this->vocabularyIsValid($params['target'])) {
-        throw new \Exception('Target does not exist or is invalid');
+      if ($params['type'] === 'node_reference') {
+        $node_types = _docstore_get_defined_node_types();
+        if (!in_array($params['target'], $node_types)) {
+          throw new \Exception(strtr('Target document @target does not exist or is invalid', [
+            '@target' => $params['target'],
+          ]));
+        }
+      }
+      else {
+        if (!$this->vocabularyIsValid($params['target'])) {
+          throw new \Exception(strtr('Target vocabulary @target does not exist or is invalid', [
+            '@target' => $params['target'],
+          ]));
+        }
       }
     }
   }
@@ -258,8 +282,8 @@ class ManageFields {
     $params['required'] = $params['required'] ?? FALSE;
 
     // Create field.
-    if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
-      return $this->createDocumentReferenceField($params['author'], $params['label'], $params['target'], $params['multiple'], $params['required']);
+    if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid', 'node_reference', 'term_reference'])) {
+      return $this->createDocumentReferenceField($params['author'], $params['label'], $params['type'], $params['target'], $params['multiple'], $params['required']);
     }
     else {
       return $this->createDocumentField($params['author'], $params['label'], $params['type'], $params['multiple'], $params['required']);
@@ -333,11 +357,17 @@ class ManageFields {
   /**
    * Create reference document field.
    */
-  protected function createDocumentReferenceField($author, $label, $bundle, $multiple = FALSE, $required = FALSE) {
+  protected function createDocumentReferenceField($author, $label, $type, $bundle, $multiple = FALSE, $required = FALSE) {
     $new_field = FALSE;
 
     $field_type = 'entity_reference_uuid';
     $field_name = $this->generateUniqueMachineName($label, 'node');
+
+    // Target type.
+    $target_type = 'taxonomy_term';
+    if ($type === 'node_reference') {
+      $target_type = 'node';
+    }
 
     // Create storage if needed.
     $field_storage = FieldStorageConfig::loadByName('node', $field_name);
@@ -351,7 +381,7 @@ class ManageFields {
         'type' => $field_type,
         'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
         'settings' => [
-          'target_type' => 'taxonomy_term',
+          'target_type' => $target_type,
         ],
       ]);
 
@@ -367,7 +397,7 @@ class ManageFields {
       'label' => $label,
       'required' => $required,
       'settings' => [
-        'handler' => 'default:taxonomy_term',
+        'handler' => 'default:' . $target_type,
         'handler_settings' => [
           'target_bundles' => [
             $bundle => $bundle,
@@ -388,7 +418,7 @@ class ManageFields {
 
     // Add to index.
     if ($new_field) {
-      $this->addDocumentFieldToIndex($field_name, $field_type, $label);
+      $this->addDocumentFieldToIndex($field_name, $type, $label);
     }
 
     docstore_notify_webhooks('field:document:create', $field_name);
