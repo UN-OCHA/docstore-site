@@ -384,6 +384,27 @@ class ApiController extends ControllerBase {
       throw new BadRequestHttpException('You have to pass a JSON object');
     }
 
+    // Create document.
+    $document = $this->createDocumentForProvider($type, $params, $provider);
+
+    $data = [
+      'message' => strtr('@type created', ['@type' => ucfirst($node_type)]),
+      'uuid' => $document->uuid(),
+    ];
+
+    $response = new JsonResponse($data);
+    $response->setStatusCode(201);
+
+    return $response;
+  }
+
+  /**
+   * Create document for provider.
+   */
+  protected function createDocumentForProvider($type, $params, $provider) {
+    // Check if type is allowed.
+    $node_type = $this->typeAllowed($type, 'write');
+
     // Check required fields.
     if (empty($params['title'])) {
       throw new BadRequestHttpException('Title is required');
@@ -435,15 +456,25 @@ class ApiController extends ControllerBase {
 
       // @todo allow file content and/or file name.
       foreach ($files as $uuid) {
-        /** @var \Drupal\media\Entity\Media $media */
-        $media = $this->entityRepository->loadEntityByUuid('media', $uuid);
-        if (!$media) {
-          throw new BadRequestHttpException(strtr('Media @uuid does not exist', ['@uuid' => $uuid]));
-        }
+        if (is_string($uuid)) {
+          /** @var \Drupal\media\Entity\Media $media */
+          $media = $this->entityRepository->loadEntityByUuid('media', $uuid);
+          if (!$media) {
+            throw new BadRequestHttpException(strtr('Media @uuid does not exist', ['@uuid' => $uuid]));
+          }
 
-        $item['base_files'][] = [
-          'target_uuid' => $media->uuid(),
-        ];
+          $item['base_files'][] = [
+            'target_uuid' => $media->uuid(),
+          ];
+        }
+        else {
+          if (isset($uuid['uri'])) {
+            $media = $this->FetchAndCreateFile($uuid['uri'], $provider);
+            $item['base_files'][] = [
+              'target_uuid' => $media->uuid(),
+            ];
+          }
+        }
       }
     }
 
@@ -451,11 +482,15 @@ class ApiController extends ControllerBase {
     if (isset($params['metadata']) && $params['metadata']) {
       $metadata = $params['metadata'];
       foreach ($metadata as $metaitem) {
+        $this->getLogger('metaitem')->notice('<pre>' . print_r($metaitem, TRUE) . '</pre>');
+
         foreach ($metaitem as $key => $values) {
+          $this->getLogger('metaitem-key')->notice('<pre>' . print_r($key, TRUE) . '</pre>');
+          $this->getLogger('metaitem-value')->notice('<pre>' . print_r($values, TRUE) . '</pre>');
           // Check for label keys.
           if (strpos($key, '_label')) {
             $key = str_replace('_label', '', $key);
-            $values = $this->mapOrCreateTerms($key, $values, $provider, $params['author']);
+            $values = $this->mapOrCreateTerms($key, $values, $node_type, $provider, $params['author']);
           }
 
           if (!is_array($values)) {
@@ -496,13 +531,67 @@ class ApiController extends ControllerBase {
     // Invalidate cache.
     Cache::invalidateTags(['documents']);
 
+    return $document;
+  }
+
+  /**
+   * Fetch and create a file.
+   */
+  protected function FetchAndCreateFile($uri, $provider) {
+    $content = file_get_contents($uri);
+
+    // Create URI.
+    $destination = $this->config('system.file')->get('default_scheme') . '://';
+
+    $destination .= 'files/';
+    $destination .= substr(md5(basename($uri)), 0, 3);
+    $destination .= '/' . substr(md5(basename($uri)), 3, 3);
+    $destination .= '/' . basename($uri);
+
+    // Store files in sub directories.
+    $file = File::create();
+    $file->setOwnerId($provider->id());
+    $file->setFileName(basename($uri));
+    $file->setFileUri($destination);
+    $file->setTemporary();
+
+    $media = $this->saveFileToDisk($file, $content, $provider, FALSE);
+
+    return $media;
+  }
+
+  /**
+   * Create document.
+   */
+  public function createDocumentInBulk($type, Request $request) {
+    // Get provider.
+    $provider = $this->requireProvider();
+
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
+
+    if (empty($params['documents'])) {
+      throw new BadRequestHttpException('documents is required');
+    }
+
+    $documents = $params['documents'];
+    foreach ($documents as $document) {
+      // Add common fields.
+      $document['author'] = $params['author'];
+
+      // Create document.
+      $this->createDocumentForProvider($type, $document, $provider);
+    }
+
     $data = [
-      'message' => strtr('@type created', ['@type' => ucfirst($node_type)]),
-      'uuid' => $document->uuid(),
+      'message' => 'Processed',
     ];
 
     $response = new JsonResponse($data);
-    $response->setStatusCode(201);
+    $response->setStatusCode(200);
 
     return $response;
   }
@@ -1722,11 +1811,14 @@ class ApiController extends ControllerBase {
   /**
    * Map or create terms based on field and label.
    */
-  protected function mapOrCreateTerms($field_name, $values, $provider, $author) {
-    $field = FieldConfig::loadByName('node', 'document', $field_name);
+  protected function mapOrCreateTerms($field_name, $values, $type, $provider, $author) {
+    $field = FieldConfig::loadByName('node', $type, $field_name);
 
     if (!$field) {
-      throw new \Exception(strtr('Field @field does not exist', ['@field' => $field]));
+      throw new \Exception(strtr('Field @field does not exist on @type', [
+        '@field' => $field_name,
+        '@type' => $type,
+      ]));
     }
 
     if ($field->getType() !== 'entity_reference_uuid') {
@@ -2549,26 +2641,15 @@ class ApiController extends ControllerBase {
       throw new BadRequestHttpException('File is not owned by you');
     }
 
-    $status = $this->saveFileToDisk($file, $request->getContent(), $provider, TRUE);
+    $this->saveFileToDisk($file, $request->getContent(), $provider, TRUE);
 
-    if ($status === 'created') {
-      $data = [
-        'message' => 'File content created',
-        'uuid' => $file->uuid(),
-      ];
+    $data = [
+      'message' => 'File content created',
+      'uuid' => $file->uuid(),
+    ];
 
-      $response = new JsonResponse($data);
-      $response->setStatusCode(201);
-    }
-    else {
-      $data = [
-        'message' => 'File content updated',
-        'uuid' => $file->uuid(),
-      ];
-
-      $response = new JsonResponse($data);
-      $response->setStatusCode(201);
-    }
+    $response = new JsonResponse($data);
+    $response->setStatusCode(201);
 
     return $response;
   }
@@ -2768,7 +2849,7 @@ class ApiController extends ControllerBase {
       throw new BadRequestHttpException('Unable to write file');
     }
 
-    return $is_new ? 'created' : 'updated';
+    return $media_entity;
   }
 
   /**
