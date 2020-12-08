@@ -25,7 +25,7 @@ function docstore_disasters_fields() {
   return [
     'shared_disaster_types' => [
       'id' => 'integer',
-      'code' => 'string',
+      'disaster_type_code' => 'string',
     ],
   ];
 }
@@ -140,6 +140,11 @@ function docstore_disaster_types_sync() {
       foreach ($fields as $name => $type) {
         $field_name = str_replace('-', '_', $name);
         if ($term->hasField($field_name)) {
+          // disaster_type_code is actually code.
+          if ($field_name === 'disaster_type_code') {
+            $name = 'code';
+          }
+
           $value = FALSE;
           if (isset($row->fields->{$name})) {
             $value = $row->fields->{$name};
