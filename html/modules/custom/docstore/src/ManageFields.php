@@ -676,7 +676,7 @@ class ManageFields {
     $params['required'] = $params['required'] ?? FALSE;
 
     // Create field.
-    if (in_array($params['type'], ['term_reference', 'entity_reference', 'entity_reference_uuid'])) {
+    if ($params['type'] === 'term_reference') {
       $field_name = $this->createVocabularyReferenceField($vocabulary->id(), $params['label'], $params['target'], $params['multiple'], $params['required']);
     }
     else {
