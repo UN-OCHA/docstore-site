@@ -150,7 +150,7 @@ class ManageFields {
     }
 
     // Add term name if needed.
-    if ($field_type == 'entity_reference' || $field_type == 'entity_reference_uuid') {
+    if ($field_type == 'term_reference') {
       $field = new Field($index, $field_name . '_label');
       $field->setType('string');
       $field->setPropertyPath($field_name . ':entity:name');
@@ -184,9 +184,9 @@ class ManageFields {
       throw new \Exception('Author is required');
     }
 
-    // If target is specified, type is not needed.
+    // If target is specified, type defaults to term_reference.
     if (isset($params['target']) && empty($params['type'])) {
-      $params['type'] = 'entity_reference_uuid';
+      $params['type'] = 'term_reference';
     }
     else {
       if (empty($params['type'])) {
@@ -201,6 +201,10 @@ class ManageFields {
 
     // Reference fields need a target.
     if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
+      $params['type'] = 'term_reference';
+    }
+
+    if (in_array($params['type'], ['term_reference', 'node_reference'])) {
       if (empty($params['target'])) {
         throw new \Exception('Target is required for reference fields');
       }
@@ -282,7 +286,7 @@ class ManageFields {
     $params['required'] = $params['required'] ?? FALSE;
 
     // Create field.
-    if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid', 'node_reference', 'term_reference'])) {
+    if (in_array($params['type'], ['node_reference', 'term_reference'])) {
       return $this->createDocumentReferenceField($params['author'], $params['label'], $params['type'], $params['target'], $params['multiple'], $params['required']);
     }
     else {
@@ -662,12 +666,17 @@ class ManageFields {
     // Check field parameters.
     $this->validFieldParameters($params);
 
+    // No reference to nodes allowed.
+    if ($params['type'] === 'node_reference') {
+      throw new \Exception('You cannot reference a document from a term');
+    }
+
     // Set defaults.
     $params['multiple'] = $params['multiple'] ?? FALSE;
     $params['required'] = $params['required'] ?? FALSE;
 
     // Create field.
-    if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
+    if (in_array($params['type'], ['term_reference', 'entity_reference', 'entity_reference_uuid'])) {
       $field_name = $this->createVocabularyReferenceField($vocabulary->id(), $params['label'], $params['target'], $params['multiple'], $params['required']);
     }
     else {
