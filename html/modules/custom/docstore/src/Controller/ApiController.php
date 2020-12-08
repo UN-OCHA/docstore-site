@@ -482,11 +482,7 @@ class ApiController extends ControllerBase {
     if (isset($params['metadata']) && $params['metadata']) {
       $metadata = $params['metadata'];
       foreach ($metadata as $metaitem) {
-        $this->getLogger('metaitem')->notice('<pre>' . print_r($metaitem, TRUE) . '</pre>');
-
         foreach ($metaitem as $key => $values) {
-          $this->getLogger('metaitem-key')->notice('<pre>' . print_r($key, TRUE) . '</pre>');
-          $this->getLogger('metaitem-value')->notice('<pre>' . print_r($values, TRUE) . '</pre>');
           // Check for label keys.
           if (strpos($key, '_label')) {
             $key = str_replace('_label', '', $key);
