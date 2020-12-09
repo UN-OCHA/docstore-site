@@ -272,3 +272,9 @@ API=http://0.0.0.0:4010 ./run.sh
 - Incoming drupal, https://github.com/Bounteous-Inc/webhook_entities
 - Test endpoint http://webhook.site/
 
+## Clean
+
+```bash
+fin drush entity:delete node --bundle=disaster
+fin drush entity:delete node --bundle=assessment
+```
