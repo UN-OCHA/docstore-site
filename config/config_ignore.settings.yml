@@ -5,10 +5,11 @@ ignored_config_entities:
   - ~field.storage.taxonomy_term.base_author_hid
   - ~field.storage.taxonomy_term.base_provider_uuid
   - ~field.storage.taxonomy_term.created
-  - 'field.field.node.document.*'
-  - '~field.field.node.document.base_*'
+  - 'field.field.node.*'
+  - '~field.field.node.*.base_*'
   - 'field.storage.node.*'
   - '~field.storage.node.base_*'
+  - 'node.type.*'
   - search_api.index.documents
   - 'core.entity_view_display.taxonomy_term.*'
   - 'core.entity_form_display.taxonomy_term.*'
