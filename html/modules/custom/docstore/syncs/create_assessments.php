@@ -176,6 +176,7 @@ function syncAssesments($url = '') {
 
     $assessment['metadata'][] = ['silk_id' => $row->id];
 
+    // Disasters.
     if (isset($row->disasters) && !empty($row->disasters)) {
       $disaster_data = [];
       foreach ($row->disasters as $disaster) {
@@ -191,10 +192,38 @@ function syncAssesments($url = '') {
       $assessment['metadata'][] = ['silk_disasters' => $disaster_data];
     }
 
+    // Local coordination groups aka bundles.
+    if (isset($row->bundles) && !empty($row->bundles)) {
+      $bundle_data = [];
+      foreach ($row->bundles as $bundle) {
+        $bundle_data[] = [
+          '_action' => 'lookup',
+          '_reference' => 'term',
+          '_target' => 'shared_local_coordination_group',
+          '_field' => 'id',
+          'value' => $bundle->id,
+        ];
+      }
+
+      $assessment['metadata'][] = ['silk_local_groups' => $bundle_data];
+    }
+
+    // Organizations.
+    if (isset($row->organizations) && !empty($row->organizations)) {
+      $organization_data = [];
+      foreach ($row->organizations as $organization) {
+        $organization_data[] = $organization->label;
+      }
+
+      $assessment['metadata'][] = ['silk_organizations_label' => $organization_data];
+    }
+
     $assessment['author'] = 'AR';
     $assessments[] = $assessment;
   }
 
+  $assessments = array_slice($assessments, 0, 1);
+  print_r($assessments);
   $post_data = [
     'author' => 'AR',
     'documents' => $assessments,
