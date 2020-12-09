@@ -1,6 +1,6 @@
 <?php
 
-$handle = fopen('files/reg_km.csv', 'r');
+$handle = fopen('reg_km.csv', 'r');
 
 // First line is header.
 $mapping = [
