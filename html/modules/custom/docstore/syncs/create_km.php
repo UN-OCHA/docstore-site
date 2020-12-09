@@ -1,6 +1,6 @@
 <?php
 
-$handle = fopen('reg_km.csv', 'r');
+$handle = fopen('modules/custom/docstore/syncs/reg_km.csv', 'r');
 
 // First line is header.
 $mapping = [
