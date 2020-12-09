@@ -51,6 +51,38 @@ function createDisasterFields() {
       'type' => 'term_reference',
       'target' => 'silk_disaster_status',
     ],
+    'primary_country' => [
+      'label' => 'Primary country',
+      'type' => 'term_reference',
+      'target' => 'shared_countries',
+      'multiple' => FALSE,
+    ],
+    'countries' => [
+      'label' => 'Country',
+      'type' => 'term_reference',
+      'target' => 'shared_countries',
+      'multiple' => TRUE,
+    ],
+    'profile' => [
+      'label' => 'Profile',
+      'type' => 'string_long',
+    ],
+    'description' => [
+      'label' => 'Description',
+      'type' => 'string_long',
+    ],
+    'disaster_type' => [
+      'label' => 'Disaster type',
+      'type' => 'term_reference',
+      'target' => 'shared_disaster_types',
+      'multiple' => TRUE,
+    ],
+    'primary_disaster_type' => [
+      'label' => 'Primary disaster type',
+      'type' => 'term_reference',
+      'target' => 'shared_disaster_types',
+      'multiple' => FALSE,
+    ],
   ];
 
   foreach ($fields as $field) {
@@ -72,6 +104,12 @@ function createDisasterFields() {
 function syncDisasters($url = '') {
   if (empty($url)) {
     $url = 'https://api.reliefweb.int/v1/disasters?appname=vocabulary&preset=external&limit=100';
+    $url .= '&fields[include][]=country.iso3';
+    $url .= '&fields[include][]=primary_country.iso3';
+    $url .= '&fields[include][]=profile.overview';
+    $url .= '&fields[include][]=description';
+    $url .= '&fields[include][]=type.code';
+    $url .= '&fields[include][]=primary_type.code';
   }
 
   $raw = file_get_contents($url);
@@ -85,13 +123,84 @@ function syncDisasters($url = '') {
       'files' => [],
     ];
 
+    // Id.
     $disaster['metadata'][] = ['silk_id' => $row->fields->id];
 
+    // Status.
+    $disaster['metadata'][] = ['silk_disaster_status' => $row->fields->status];
+
+    // Glide.
     if (isset($row->fields->glide)) {
       $disaster['metadata'][] = ['silk_glide_number' => $row->fields->glide];
     }
 
-    $disaster['metadata'][] = ['silk_disaster_status' => $row->fields->status];
+    // Profile.
+    if (isset($row->fields->profile->overview)) {
+      $disaster['metadata'][] = ['silk_profile' => $row->fields->profile->overview];
+    }
+
+    // Description.
+    if (isset($row->fields->description)) {
+      $disaster['metadata'][] = ['silk_description' => $row->fields->description];
+    }
+
+    // Disaster type.
+    if (isset($row->fields->type) && !empty($row->fields->type)) {
+      $type_data = [];
+      foreach ($row->fields->type as $type) {
+        $type_data[] = [
+          '_action' => 'lookup',
+          '_reference' => 'term',
+          '_target' => 'shared_disaster_types',
+          '_field' => 'disaster_type_code',
+          'value' => $type->code,
+        ];
+      }
+
+      $disaster['metadata'][] = ['silk_disaster_type' => $type_data];
+    }
+
+    // Primary disaster type.
+    if (isset($row->fields->primary_type) && !empty($row->fields->primary_type)) {
+      $type_data = [
+        '_action' => 'lookup',
+        '_reference' => 'term',
+        '_target' => 'shared_disaster_types',
+        '_field' => 'disaster_type_code',
+        'value' => $row->fields->primary_type->code,
+      ];
+
+      $disaster['metadata'][] = ['silk_primary_disaster_type' => [$type_data]];
+    }
+
+    // Country.
+    if (isset($row->fields->country) && !empty($row->fields->country)) {
+      $country_data = [];
+      foreach ($row->fields->country as $country) {
+        $country_data[] = [
+          '_action' => 'lookup',
+          '_reference' => 'term',
+          '_target' => 'shared_countries',
+          '_field' => 'iso3',
+          'value' => $country->iso3,
+        ];
+      }
+
+      $disaster['metadata'][] = ['silk_country' => $country_data];
+    }
+
+    // Primary disaster type.
+    if (isset($row->fields->primary_country) && !empty($row->fields->primary_country)) {
+      $country_data = [
+        '_action' => 'lookup',
+        '_reference' => 'term',
+        '_target' => 'shared_countries',
+        '_field' => 'iso3',
+        'value' => $row->fields->primary_country->iso3,
+      ];
+
+      $disaster['metadata'][] = ['silk_primary_country' => [$country_data]];
+    }
 
     $disaster['author'] = 'RW';
     $disasters[] = $disaster;

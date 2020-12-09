@@ -560,7 +560,7 @@ class ApiController extends ControllerBase {
       ]);
     }
     else {
-      $entities = $this->entityTypeManager->getStorage($reference)->loadByProperties([
+      $entities = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
         $field => $value,
         'vid' => $target,
       ]);
