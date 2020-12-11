@@ -687,8 +687,7 @@ class ManageFields {
       throw new \Exception('You cannot reference a document from a term');
     }
 
-    // @todo Force Id and code fields to be integers.
-
+    // @todo Force Id and code fields to be strings.
     // Set defaults.
     $params['multiple'] = $params['multiple'] ?? FALSE;
     $params['required'] = $params['required'] ?? FALSE;

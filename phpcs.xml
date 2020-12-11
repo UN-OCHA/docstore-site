@@ -8,20 +8,11 @@
   <exclude-pattern>./vendor/*</exclude-pattern>
   <exclude-pattern>*.md</exclude-pattern>
   <exclude-pattern>*.css</exclude-pattern>
-  <exclude-pattern>*.features.*</exclude-pattern>
-  <exclude-pattern>*.panelizer.inc</exclude-pattern>
-  <exclude-pattern>*.views_default.inc</exclude-pattern>
-  <exclude-pattern>*.pages_default.inc</exclude-pattern>
-  <exclude-pattern>*.field_group.inc</exclude-pattern>
-  <exclude-pattern>*.strongarm.inc</exclude-pattern>
-  <exclude-pattern>*.facetapi_defaults.inc</exclude-pattern>
-  <exclude-pattern>*.ds.inc</exclude-pattern>
   <exclude-pattern>*.js</exclude-pattern>
-  <exclude-pattern>*.default_environment_indicator_environments.inc</exclude-pattern>
+  <exclude-pattern>syncs/*</exclude-pattern>
   <exclude-pattern>node_modules/*</exclude-pattern>
   <exclude-pattern>assets/*</exclude-pattern>
   <exclude-pattern>gulpfile.js</exclude-pattern>
-  <exclude-pattern>TwitterAPIExchange.php</exclude-pattern>
 
   <rule ref="Drupal" />
   <rule ref="DrupalPractice" />
