@@ -1,5 +1,7 @@
 <?php
 
+const API_URL = 'http://docstore.local.docksal/';
+
 function post($url, $data) {
   $ch = curl_init($url);
 
@@ -29,7 +31,7 @@ function createVocabularies() {
   ];
 
   foreach ($vocabularies as $vocabulary) {
-    post('http://docstore.local.docksal/api/vocabularies', [
+    post(API_URL . 'api/vocabularies', [
       'label' => $vocabulary,
       'author' => 'RW',
     ]);
@@ -86,6 +88,7 @@ function createDisasterFields() {
   ];
 
   foreach ($fields as $field) {
+    print('Creating ' . $field['label']);
     $data = [
       'label' => $field['label'],
       'type' => $field['type'],
@@ -97,7 +100,7 @@ function createDisasterFields() {
       $data['target'] = $field['target'];
     }
 
-    post('http://docstore.local.docksal/api/fields/disasters', $data);
+    post(API_URL . 'api/fields/disasters', $data);
   }
 }
 
@@ -211,7 +214,7 @@ function syncDisasters($url = '') {
     'documents' => $disasters,
   ];
 
-  post('http://docstore.local.docksal/api/disasters/bulk', $post_data);
+  post(API_URL . 'api/disasters/bulk', $post_data);
 
   // Check for more data.
   if (isset($data->links) && isset($data->links->next->href)) {
