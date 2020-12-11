@@ -122,7 +122,7 @@ class ManageFields {
   /**
    * Add field to index.
    */
-  protected function addDocumentFieldToIndex($field_name, $field_type, $label) {
+  public function addDocumentFieldToIndex($field_name, $field_type, $label) {
     $field_type_mapping = $this->allowedFieldTypes();
 
     // Skip unknown field types.
@@ -131,6 +131,11 @@ class ManageFields {
     }
 
     $index = Index::load('documents');
+
+    // Skip existing fields.
+    if ($index->getField($field_name)) {
+      return;
+    }
 
     $field = new Field($index, $field_name);
     $field->setType($field_type_mapping[$field_type]);
@@ -284,24 +289,28 @@ class ManageFields {
     // Set defaults.
     $params['multiple'] = $params['multiple'] ?? FALSE;
     $params['required'] = $params['required'] ?? FALSE;
+    $params['machine_name'] = $params['machine_name'] ?? FALSE;
 
     // Create field.
     if (in_array($params['type'], ['node_reference', 'term_reference'])) {
-      return $this->createDocumentReferenceField($params['author'], $params['label'], $params['type'], $params['target'], $params['multiple'], $params['required']);
+      return $this->createDocumentReferenceField($params['author'], $params['label'], $params['machine_name'], $params['type'], $params['target'], $params['multiple'], $params['required']);
     }
     else {
-      return $this->createDocumentField($params['author'], $params['label'], $params['type'], $params['multiple'], $params['required']);
+      return $this->createDocumentField($params['author'], $params['label'], $params['machine_name'], $params['type'], $params['multiple'], $params['required']);
     }
   }
 
   /**
    * Create basic document field.
    */
-  protected function createDocumentField($author, $label, $field_type, $multiple = FALSE, $required = FALSE) {
+  protected function createDocumentField($author, $label, $machine_name, $field_type, $multiple = FALSE, $required = FALSE) {
     $new_field = FALSE;
 
-    // Create new machine name.
-    $field_name = $this->generateUniqueMachineName($label, 'node');
+    // Create new machine name if needed.
+    $field_name = $machine_name;
+    if (empty($field_name)) {
+      $field_name = $this->generateUniqueMachineName($label, 'node');
+    }
 
     // Create storage if needed.
     $field_storage = FieldStorageConfig::loadByName('node', $field_name);
@@ -361,11 +370,16 @@ class ManageFields {
   /**
    * Create reference document field.
    */
-  protected function createDocumentReferenceField($author, $label, $type, $bundle, $multiple = FALSE, $required = FALSE) {
+  protected function createDocumentReferenceField($author, $label, $machine_name, $type, $bundle, $multiple = FALSE, $required = FALSE) {
     $new_field = FALSE;
 
     $field_type = 'entity_reference_uuid';
-    $field_name = $this->generateUniqueMachineName($label, 'node');
+
+    // Create new machine name if needed.
+    $field_name = $machine_name;
+    if (empty($field_name)) {
+      $field_name = $this->generateUniqueMachineName($label, 'node');
+    }
 
     // Target type.
     $target_type = 'taxonomy_term';
@@ -515,6 +529,8 @@ class ManageFields {
       'name' => $params['label'],
     ]);
 
+    // @todo mark vocabulary as shared.
+    $vocabulary->setThirdPartySetting('docstore', 'shared', $params['shared'] ?? FALSE);
     $vocabulary->setThirdPartySetting('docstore', 'base_provider_uuid', $this->provider->uuid());
     $vocabulary->setThirdPartySetting('docstore', 'base_author_hid', $params['author']);
     $vocabulary->setThirdPartySetting('docstore', 'base_allow_duplicates', $params['allow_duplicates'] ?? TRUE);
@@ -670,6 +686,8 @@ class ManageFields {
     if ($params['type'] === 'node_reference') {
       throw new \Exception('You cannot reference a document from a term');
     }
+
+    // @todo Force Id and code fields to be integers.
 
     // Set defaults.
     $params['multiple'] = $params['multiple'] ?? FALSE;
