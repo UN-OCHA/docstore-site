@@ -282,6 +282,10 @@ fin drush entity:delete node --bundle=assessment
 ## Sync
 
 ```
+drush eval "docstore_create_node_type(\"disaster\")"
+drush eval "docstore_create_node_type(\"knowledge_management\")"
+drush eval "docstore_create_node_type(\"assessment\")"
+
 drush scr --verbose modules/custom/docstore/syncs/docstore_countries.php
 drush scr --verbose modules/custom/docstore/syncs/docstore_disaster_types.php
 drush scr --verbose modules/custom/docstore/syncs/docstore_functional_roles.php

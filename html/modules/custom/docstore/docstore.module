@@ -9,6 +9,7 @@ use Drupal\Core\Cache\Cache;
 use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StreamWrapper\StreamWrapperManager;
+use Drupal\docstore\ManageFields;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\node\Entity\NodeType;
@@ -251,13 +252,25 @@ function docstore_create_node_type($type = 'document') {
 
   // Add base fields.
   $base_fields = [
-    'base_author_hid',
-    'base_files',
-    'base_private',
+    'base_author_hid' => 1,
+    'base_files' => -1,
+    'base_private' => 1,
   ];
 
-  foreach ($base_fields as $base_field) {
+  foreach ($base_fields as $base_field => $cardinality) {
     $field_storage = FieldStorageConfig::loadByName('node', $base_field);
+
+    if (!$field_storage) {
+      $field_storage = FieldStorageConfig::create([
+        'field_name' => $base_field,
+        'entity_type' => 'node',
+        'type' => $type,
+        'cardinality' => $cardinality,
+      ]);
+
+      $field_storage->setThirdPartySetting('docstore', 'common', TRUE);
+      $field_storage->save();
+    }
 
     // Create instance.
     FieldConfig::create([
@@ -419,4 +432,89 @@ function docstore_theme_registry_alter(&$theme_registry) {
   $module_path = drupal_get_path('module', 'docstore');
   $theme_registry['taxonomy_term']['path'] = $module_path . '/templates';
   $theme_registry['taxonomy_term']['theme path'] = $module_path;
+}
+
+/**
+ * Rebuild index fields.
+ */
+function docstore_rebuild_index_fields() {
+  // Reset index.
+  $config_path = drupal_get_path('module', 'docstore') . '/config/install/search_api.index.documents.yml';
+  $data = Yaml::parseFile($config_path);
+  \Drupal::configFactory()->getEditable('search_api.index.documents')->setData($data)->save(TRUE);
+
+  $index = Index::load('documents');
+  $index->clear();
+
+  $entityFieldManager = Drupal::service('entity_field.manager');
+  $provider = user_load(2);
+  $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('database'));
+
+  $types = _docstore_get_defined_node_types();
+  foreach ($types as $type) {
+    $map = $entityFieldManager->getFieldDefinitions('node', $type);
+
+    // Remove fields we need.
+    unset($map['nid']);
+    unset($map['uuid']);
+    unset($map['vid']);
+    unset($map['langcode']);
+    unset($map['type']);
+    unset($map['revision_timestamp']);
+    unset($map['revision_uid']);
+    unset($map['revision_log']);
+    unset($map['status']);
+    unset($map['uid']);
+    unset($map['title']);
+    unset($map['created']);
+    unset($map['changed']);
+    unset($map['promote']);
+    unset($map['sticky']);
+    unset($map['default_langcode']);
+    unset($map['revision_default']);
+    unset($map['revision_translation_affected']);
+    unset($map['base_author_hid']);
+    unset($map['base_files']);
+    unset($map['base_private']);
+
+    // Add to search index display.
+    $storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
+
+    $view_display = $storage->load('node.' . $type . '.search_index');
+    if (!$view_display) {
+      $view_display = EntityViewDisplay::create([
+        'targetEntityType' => 'node',
+        'bundle' => $type,
+        'mode' => 'search_index',
+        'status' => TRUE,
+      ]);
+    }
+
+    foreach ($map as $field_name => $field_info) {
+      $view_display->setComponent($field_name, [
+        'type' => 'number_unformatted',
+        'settings' => [],
+      ]);
+
+      // Skip common fields, added using config.
+      if ($field_info->getFieldStorageDefinition()->getThirdPartySetting('docstore', 'common') === TRUE) {
+        continue;
+      }
+
+      $field_type = $field_info->getType();
+      if ($field_info->getType() === 'entity_reference_uuid') {
+        if ($field_info->getFieldStorageDefinition()->get('settings')['target_type'] === 'node') {
+          $field_type = 'node_reference';
+        }
+        else {
+          $field_type = 'term_reference';
+        }
+      }
+
+      // Add to index.
+      $manager->addDocumentFieldToIndex($field_name, $field_type, $field_info->getLabel());
+    }
+
+    $view_display->save();
+  }
 }
