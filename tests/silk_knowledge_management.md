@@ -133,7 +133,7 @@ Add context field.
   "label": "Context",
   "author": "hid_123456789",
   "multiple": true,
-  "type": "entity_reference_uuid",
+  "type": "term_reference",
   "target": "{voc_context}"
 }
 ```
