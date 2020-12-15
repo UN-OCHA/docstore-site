@@ -9,6 +9,7 @@ use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\node\Entity\NodeType;
 use Drupal\search_api\Entity\Index;
 use Drupal\search_api\Item\Field;
 use Drupal\taxonomy\Entity\Vocabulary;
@@ -222,9 +223,15 @@ class ManageFields {
             '@target' => $params['target'],
           ]));
         }
+
+        if (!$this->documentCanBeReferenced($params['target'])) {
+          throw new \Exception(strtr('Target document @target does not exist or is invalid', [
+            '@target' => $params['target'],
+          ]));
+        }
       }
       else {
-        if (!$this->vocabularyIsValid($params['target'])) {
+        if (!$this->vocabularyCanBeReferenced($params['target'])) {
           throw new \Exception(strtr('Target vocabulary @target does not exist or is invalid', [
             '@target' => $params['target'],
           ]));
@@ -234,9 +241,9 @@ class ManageFields {
   }
 
   /**
-   * Check is a vocabulary does exist.
+   * Check is a vocabulary can be referenced.
    */
-  protected function vocabularyIsValid($machine_name) {
+  protected function vocabularyCanBeReferenced($machine_name) {
     if (Uuid::isValid($machine_name)) {
       $vocabulary = \Drupal::service('entity.repository')->loadEntityByUuid('taxonomy_vocabulary', $machine_name);
     }
@@ -248,18 +255,101 @@ class ManageFields {
       }
     }
 
-    // Disallow access to base vocabularies.
-    if (strpos($machine_name, 'base_') === 0) {
-      return FALSE;
+    // Allow acces to own vocabulary.
+    if ($vocabulary->getThirdPartySetting('docstore', 'provider_uuid') === $this->provider->uuid()) {
+      return TRUE;
     }
 
     // Disallow access to vocabulary of an other provider.
-    if (strpos($machine_name, 'shared_') !== 0 && strpos($machine_name, $this->provider->get('prefix')->value) !== 0) {
+    if (!$vocabulary->getThirdPartySetting('docstore', 'shared')) {
       return FALSE;
     }
 
-    // Check name.
-    return $this->machineNameExists($machine_name, 'taxonomy_vocabulary');
+    return TRUE;
+  }
+
+  /**
+   * Check is a node type can be referenced.
+   */
+  protected function documentCanBeReferenced($type) {
+    $node_type = NodeType::load($type);
+    if (!$node_type) {
+      return FALSE;
+    }
+
+    // Allow acces to own document type.
+    if ($node_type->getThirdPartySetting('docstore', 'provider_uuid') === $this->provider->uuid()) {
+      return TRUE;
+    }
+
+    // Disallow access to vocabulary of an other provider.
+    if (!$node_type->getThirdPartySetting('docstore', 'shared')) {
+      return FALSE;
+    }
+
+    return TRUE;
+  }
+
+  /**
+   * Create document type.
+   *
+   * @param array $params
+   *   Label and author.
+   *
+   * @return \Drupal\node\Entity\NodeType
+   *   Newly created document type.
+   */
+  public function createDocumentType(array $params) {
+    // Check required fields.
+    if (empty($params['label'])) {
+      throw new \Exception('Label is required');
+    }
+
+    if (empty($params['author'])) {
+      throw new \Exception('Author is required');
+    }
+
+    // Create node type.
+    if (isset($params['machine_name'])) {
+      $machine_name = $params['machine_name'];
+    }
+    else {
+      $machine_name = $this->generateUniqueMachineName($params['label'], 'node_type');
+    }
+
+    $node_type = NodeType::create([
+      'type' => $machine_name,
+      'name' => $params['label'],
+    ]);
+
+    // Mark document type as shared.
+    $node_type->setThirdPartySetting('docstore', 'shared', $params['shared'] ?? FALSE);
+    $node_type->setThirdPartySetting('docstore', 'private', !$node_type->getThirdPartySetting('docstore', 'shared'));
+
+    // Can other providers add content.
+    $node_type->setThirdPartySetting('docstore', 'content_allowed', $params['content_allowed'] ?? FALSE);
+
+    // Can other providers add fields.
+    $node_type->setThirdPartySetting('docstore', 'fields_allowed', $params['fields_allowed'] ?? FALSE);
+
+    // Set base information.
+    $node_type->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
+    $node_type->setThirdPartySetting('docstore', 'author', $params['author']);
+    $node_type->setThirdPartySetting('docstore', 'allow_duplicates', $params['allow_duplicates'] ?? TRUE);
+    $node_type->save();
+
+    // Add files field.
+    $this->createDocumentBaseFieldFiles($machine_name);
+
+    // Add provider uuid.
+    $this->createDocumentBaseFieldProviderUuid($machine_name);
+
+    // Add author.
+    $this->createDocumentBaseFieldAuthor($machine_name);
+
+    docstore_notify_webhooks('document_type:create', $machine_name);
+
+    return $node_type;
   }
 
   /**
@@ -286,24 +376,34 @@ class ManageFields {
       throw new \Exception('Field type does not exist');
     }
 
+    // Allow acces to own or shared document type.
+    $node_type = NodeType::load($this->nodeType);
+    if ($node_type->getThirdPartySetting('docstore', 'provider_uuid') !== $this->provider->uuid()) {
+      if (!$node_type->getThirdPartySetting('docstore', 'fields_allowed')) {
+        throw new \Exception('You cannot add fields to this document type');
+      }
+    }
+
     // Set defaults.
     $params['multiple'] = $params['multiple'] ?? FALSE;
     $params['required'] = $params['required'] ?? FALSE;
     $params['machine_name'] = $params['machine_name'] ?? FALSE;
+    $params['private'] = $params['private'] ?? FALSE;
 
     // Create field.
+    // @todo pass params?
     if (in_array($params['type'], ['node_reference', 'term_reference'])) {
-      return $this->createDocumentReferenceField($params['author'], $params['label'], $params['machine_name'], $params['type'], $params['target'], $params['multiple'], $params['required']);
+      return $this->createDocumentReferenceField($params['author'], $params['label'], $params['machine_name'], $params['type'], $params['target'], $params['multiple'], $params['required'], $params['private']);
     }
     else {
-      return $this->createDocumentField($params['author'], $params['label'], $params['machine_name'], $params['type'], $params['multiple'], $params['required']);
+      return $this->createDocumentField($params['author'], $params['label'], $params['machine_name'], $params['type'], $params['multiple'], $params['required'], $params['private']);
     }
   }
 
   /**
    * Create basic document field.
    */
-  protected function createDocumentField($author, $label, $machine_name, $field_type, $multiple = FALSE, $required = FALSE) {
+  protected function createDocumentField($author, $label, $machine_name, $field_type, $multiple, $required, $private) {
     $new_field = FALSE;
 
     // Create new machine name if needed.
@@ -325,18 +425,23 @@ class ManageFields {
         'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
       ]);
 
-      $field_storage->setThirdPartySetting('docstore', 'base_provider_uuid', $this->provider->uuid());
-      $field_storage->setThirdPartySetting('docstore', 'base_author_hid', $author);
+      $field_storage->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
+      $field_storage->setThirdPartySetting('docstore', 'author', $author);
       $field_storage->save();
     }
 
     // Create instance.
-    FieldConfig::create([
+    $field_config = FieldConfig::create([
       'field_storage' => $field_storage,
       'bundle' => $this->nodeType,
       'required' => $required,
       'label' => $label,
-    ])->save();
+    ]);
+
+    $field_config->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
+    $field_config->setThirdPartySetting('docstore', 'author', $author);
+    $field_config->setThirdPartySetting('docstore', 'private', $private);
+    $field_config->save();
 
     // Add to search index display.
     $storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
@@ -370,7 +475,7 @@ class ManageFields {
   /**
    * Create reference document field.
    */
-  protected function createDocumentReferenceField($author, $label, $machine_name, $type, $bundle, $multiple = FALSE, $required = FALSE) {
+  protected function createDocumentReferenceField($author, $label, $machine_name, $type, $bundle, $multiple, $required, $private) {
     $new_field = FALSE;
 
     $field_type = 'entity_reference_uuid';
@@ -403,13 +508,13 @@ class ManageFields {
         ],
       ]);
 
-      $field_storage->setThirdPartySetting('docstore', 'base_provider_uuid', $this->provider->uuid());
-      $field_storage->setThirdPartySetting('docstore', 'base_author_hid', $author);
+      $field_storage->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
+      $field_storage->setThirdPartySetting('docstore', 'author', $author);
       $field_storage->save();
     }
 
     // Create instance.
-    FieldConfig::create([
+    $field_config = FieldConfig::create([
       'field_storage' => $field_storage,
       'bundle' => $this->nodeType,
       'label' => $label,
@@ -422,13 +527,27 @@ class ManageFields {
           ],
         ],
       ],
-    ])->save();
+    ]);
+
+    $field_config->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
+    $field_config->setThirdPartySetting('docstore', 'author', $author);
+    $field_config->setThirdPartySetting('docstore', 'private', $private);
+    $field_config->save();
 
     // Add to search index display.
     $storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
 
     /** @var \Drupal\Core\Entity\Entity\EntityViewDisplay $view_display */
     $view_display = $storage->load('node.' . $this->nodeType . '.search_index');
+    if (!$view_display) {
+      $view_display = EntityViewDisplay::create([
+        'targetEntityType' => 'node',
+        'bundle' => $type,
+        'mode' => 'search_index',
+        'status' => TRUE,
+      ]);
+    }
+
     $view_display->setComponent($field_name, [
       'type' => 'entity_reference_label',
       'settings' => [],
@@ -447,18 +566,19 @@ class ManageFields {
    * Get document field.
    */
   public function getDocumentField($field_name) {
-    $field = FieldConfig::loadByName('node', $this->nodeType, $field_name);
-    if (!$field) {
+    $field_config = FieldConfig::loadByName('node', $this->nodeType, $field_name);
+    if (!$field_config) {
       throw new \Exception('Field does not exist');
     }
 
     return [
-      'name' => $field->getName(),
-      'label' => $field->getLabel(),
-      'description' => $field->getDescription(),
-      'type' => $field->getType(),
-      'required' => $field->isRequired(),
-      'multiple' => $field->getFieldStorageDefinition()->isMultiple(),
+      'name' => $field_config->getName(),
+      'label' => $field_config->getLabel(),
+      'description' => $field_config->getDescription(),
+      'type' => $field_config->getType(),
+      'required' => $field_config->isRequired(),
+      'multiple' => $field_config->getFieldStorageDefinition()->isMultiple(),
+      'private' => $field_config->getThirdPartySetting('docstore', 'private'),
     ];
   }
 
@@ -466,34 +586,40 @@ class ManageFields {
    * Update document field.
    */
   public function updateDocumentField($field_name, $params) {
-    $field = FieldConfig::loadByName('node', $this->nodeType, $field_name);
-    if (!$field) {
+    $field_config = FieldConfig::loadByName('node', $this->nodeType, $field_name);
+    if (!$field_config) {
       throw new \Exception('Field does not exist');
     }
 
     if (isset($params['label'])) {
-      $field->setLabel($params['label']);
+      $field_config->setLabel($params['label']);
     }
 
     if (isset($params['description'])) {
-      $field->setDescription($params['description']);
+      $field_config->setDescription($params['description']);
+    }
+
+    if (isset($params['private'])) {
+      $field_config->setThirdPartySetting('docstore', 'private', $params['private']);
     }
 
     docstore_notify_webhooks('field:document:update', $field_name);
-    $field->save();
+    $field_config->save();
   }
 
   /**
    * Delete document field.
+   *
+   * Delete field on all content types.
    */
   public function deleteDocumentField($field_name) {
-    $field = FieldStorageConfig::loadByName('node', $field_name);
-    if (!$field) {
+    $field_storage = FieldStorageConfig::loadByName('node', $field_name);
+    if (!$field_storage) {
       throw new \Exception('Field does not exist');
     }
 
     docstore_notify_webhooks('field:document:delete', $field_name);
-    $field->delete();
+    $field_storage->delete();
   }
 
   /**
@@ -529,11 +655,20 @@ class ManageFields {
       'name' => $params['label'],
     ]);
 
-    // @todo mark vocabulary as shared.
+    // Mark vocabulary as shared.
     $vocabulary->setThirdPartySetting('docstore', 'shared', $params['shared'] ?? FALSE);
-    $vocabulary->setThirdPartySetting('docstore', 'base_provider_uuid', $this->provider->uuid());
-    $vocabulary->setThirdPartySetting('docstore', 'base_author_hid', $params['author']);
-    $vocabulary->setThirdPartySetting('docstore', 'base_allow_duplicates', $params['allow_duplicates'] ?? TRUE);
+    $vocabulary->setThirdPartySetting('docstore', 'private', !$vocabulary->getThirdPartySetting('docstore', 'shared'));
+
+    // Can other providers add content.
+    $vocabulary->setThirdPartySetting('docstore', 'content_allowed', $params['content_allowed'] ?? FALSE);
+
+    // Can other providers add fields.
+    $vocabulary->setThirdPartySetting('docstore', 'fields_allowed', $params['fields_allowed'] ?? FALSE);
+
+    // Set base information.
+    $vocabulary->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
+    $vocabulary->setThirdPartySetting('docstore', 'author', $params['author']);
+    $vocabulary->setThirdPartySetting('docstore', 'allow_duplicates', $params['allow_duplicates'] ?? TRUE);
     $vocabulary->save();
 
     // Add created field.
@@ -564,8 +699,8 @@ class ManageFields {
    */
   public function updateVocabulary(Vocabulary $vocabulary, array $params, string $method) {
     $protected_fields = [
-      'base_author_hid',
-      'base_provider_uuid',
+      'author',
+      'provider_uuid',
       'changed',
       'created',
       'default_langcode',
@@ -584,7 +719,7 @@ class ManageFields {
     ];
 
     // Provider can only update own vocabulary.
-    if ($vocabulary->getThirdPartySetting('docstore', 'base_provider_uuid') !== $this->provider->uuid()) {
+    if ($vocabulary->getThirdPartySetting('docstore', 'provider_uuid') !== $this->provider->uuid()) {
       throw new \Exception('Vocabulary is not owned by you');
     }
 
@@ -604,7 +739,7 @@ class ManageFields {
     $updated_fields = [];
 
     // Check allow_duplicate changes.
-    if (isset($params['base_allow_duplicates']) && $params['base_allow_duplicates'] === FALSE && $vocabulary->getThirdPartySetting('docstore', 'base_allow_duplicates') === TRUE) {
+    if (isset($params['allow_duplicates']) && $params['allow_duplicates'] === FALSE && $vocabulary->getThirdPartySetting('docstore', 'allow_duplicates') === TRUE) {
       // Check all existing terms.
       $query = $this->database->select('taxonomy_term_field_data', 't')
         ->fields('t', [
@@ -621,8 +756,8 @@ class ManageFields {
         throw new \Exception('Vocabulary contains duplicate terms');
       }
 
-      $vocabulary->setThirdPartySetting('docstore', 'base_allow_duplicates', $params['allow_duplicates'] ?? TRUE);
-      unset($params['base_allow_duplicates']);
+      $vocabulary->setThirdPartySetting('docstore', 'allow_duplicates', $params['allow_duplicates'] ?? TRUE);
+      unset($params['allow_duplicates']);
     }
 
     // Update all fields specified in params.
@@ -662,7 +797,7 @@ class ManageFields {
    */
   public function deleteVocabulary(Vocabulary $vocabulary) {
     // Provider can only update own vocabulary.
-    if ($vocabulary->getThirdPartySetting('docstore', 'base_provider_uuid') !== $this->provider->uuid()) {
+    if ($vocabulary->getThirdPartySetting('docstore', 'provider_uuid') !== $this->provider->uuid()) {
       throw new \Exception('Vocabulary is not owned by you');
     }
 
@@ -687,17 +822,26 @@ class ManageFields {
       throw new \Exception('You cannot reference a document from a term');
     }
 
+    // Allow acces to own or shared document type.
+    if ($vocabulary->getThirdPartySetting('docstore', 'provider_uuid') !== $this->provider->uuid()) {
+      if (!$vocabulary->getThirdPartySetting('docstore', 'fields_allowed')) {
+        throw new \Exception('You cannot add fields to this vocabulary');
+      }
+    }
+
     // @todo Force Id and code fields to be strings.
     // Set defaults.
     $params['multiple'] = $params['multiple'] ?? FALSE;
     $params['required'] = $params['required'] ?? FALSE;
+    $params['private'] = $params['private'] ?? FALSE;
+    $params['machine_name'] = $params['machine_name'] ?? FALSE;
 
     // Create field.
     if ($params['type'] === 'term_reference') {
-      $field_name = $this->createVocabularyReferenceField($vocabulary->id(), $params['label'], $params['target'], $params['multiple'], $params['required']);
+      $field_name = $this->createVocabularyReferenceField($params['author'], $vocabulary->id(), $params['label'], $params['machine_name'], $params['target'], $params['multiple'], $params['required'], $params['private']);
     }
     else {
-      $field_name = $this->createVocabularyField($vocabulary->id(), $params['label'], $params['type'], $params['multiple'], $params['required']);
+      $field_name = $this->createVocabularyField($params['author'], $vocabulary->id(), $params['label'], $params['machine_name'], $params['type'], $params['multiple'], $params['required'], $params['private']);
     }
 
     return $field_name;
@@ -712,17 +856,18 @@ class ManageFields {
    *   Field name.
    */
   public function getVocabularyField(Vocabulary $vocabulary, string $field_name) {
-    $field = FieldConfig::loadByName('taxonomy_term', $vocabulary->id(), $field_name);
-    if (!$field) {
+    $field_config = FieldConfig::loadByName('taxonomy_term', $vocabulary->id(), $field_name);
+    if (!$field_config) {
       throw new \Exception('Field does not exist');
     }
 
     return [
-      'name' => $field->getName(),
-      'label' => $field->getLabel(),
-      'description' => $field->getDescription(),
-      'type' => $field->getType(),
-      'multiple' => $field->getFieldStorageDefinition()->isMultiple(),
+      'name' => $field_config->getName(),
+      'label' => $field_config->getLabel(),
+      'description' => $field_config->getDescription(),
+      'type' => $field_config->getType(),
+      'multiple' => $field_config->getFieldStorageDefinition()->isMultiple(),
+      'private' => $field_config->getThirdPartySetting('docstore', 'private'),
     ];
   }
 
@@ -737,8 +882,8 @@ class ManageFields {
    *   Parameters to create the field.
    */
   public function updateVocabularyField(Vocabulary $vocabulary, string $field_name, array $params) {
-    $field = FieldConfig::loadByName('taxonomy_term', $vocabulary->id(), $field_name);
-    if (!$field) {
+    $field_config = FieldConfig::loadByName('taxonomy_term', $vocabulary->id(), $field_name);
+    if (!$field_config) {
       throw new \Exception('Field does not exist');
     }
 
@@ -747,15 +892,19 @@ class ManageFields {
     }
 
     if (isset($params['label'])) {
-      $field->setLabel($params['label']);
+      $field_config->setLabel($params['label']);
     }
 
     if (isset($params['description'])) {
-      $field->setDescription($params['description']);
+      $field_config->setDescription($params['description']);
+    }
+
+    if (isset($params['private'])) {
+      $field_config->setThirdPartySetting('docstore', 'private', $params['private']);
     }
 
     docstore_notify_webhooks('field:vocabulary:update', $field_name);
-    $field->save();
+    $field_config->save();
   }
 
   /**
@@ -767,21 +916,24 @@ class ManageFields {
    *   Field name.
    */
   public function deleteVocabularyField(Vocabulary $vocabulary, string $field_name) {
-    $field = FieldConfig::loadByName('taxonomy_term', $vocabulary->id(), $field_name);
-    if (!$field) {
+    $field_config = FieldConfig::loadByName('taxonomy_term', $vocabulary->id(), $field_name);
+    if (!$field_config) {
       throw new \Exception('Field does not exist');
     }
 
     docstore_notify_webhooks('field:vocabulary:delete', $field_name);
-    $field->delete();
+    $field_config->delete();
   }
 
   /**
    * Create a vocabulary field for a provider.
    */
-  protected function createVocabularyField($bundle, $label, $field_type, $multiple = FALSE, $required = FALSE) {
-    $provider_prefix = $bundle . '_';
-    $field_name = $this->generateUniqueMachineName($label, 'taxonomy_term', $provider_prefix);
+  protected function createVocabularyField($author, $bundle, $label, $machine_name, $field_type, $multiple, $required, $private) {
+    $field_name = $machine_name;
+    if (empty($field_name)) {
+      $provider_prefix = $bundle . '_';
+      $field_name = $this->generateUniqueMachineName($label, 'taxonomy_term', $provider_prefix);
+    }
 
     // Create storage.
     $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
@@ -792,19 +944,24 @@ class ManageFields {
         'type' => $field_type,
         'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
       ]);
+
+      $field_storage->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
+      $field_storage->setThirdPartySetting('docstore', 'author', $author);
       $field_storage->save();
     }
 
     // Create instance.
-    $field_config = FieldConfig::load('taxonomy_term.' . $bundle . '.' . $field_name);
-    if (!$field_config) {
-      FieldConfig::create([
-        'field_storage' => $field_storage,
-        'bundle' => $bundle,
-        'label' => $label,
-        'required' => $required,
-      ])->save();
-    }
+    $field_config = FieldConfig::create([
+      'field_storage' => $field_storage,
+      'bundle' => $bundle,
+      'label' => $label,
+      'required' => $required,
+    ]);
+
+    $field_config->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
+    $field_config->setThirdPartySetting('docstore', 'author', $author);
+    $field_config->setThirdPartySetting('docstore', 'private', $private);
+    $field_config->save();
 
     docstore_notify_webhooks('field:vocabulary:create', $field_name);
     return $field_name;
@@ -813,11 +970,14 @@ class ManageFields {
   /**
    * Create a reference field on a vocabulary for a provider.
    */
-  protected function createVocabularyReferenceField($bundle, $label, $target, $multiple = FALSE, $required = FALSE) {
+  protected function createVocabularyReferenceField($author, $bundle, $label, $machine_name, $target, $multiple, $required, $private) {
     $field_type = 'entity_reference_uuid';
 
-    $provider_prefix = $bundle . '_';
-    $field_name = $this->generateUniqueMachineName($label, 'taxonomy_term', $provider_prefix);
+    $field_name = $machine_name;
+    if (empty($field_name)) {
+      $provider_prefix = $bundle . '_';
+      $field_name = $this->generateUniqueMachineName($label, 'taxonomy_term', $provider_prefix);
+    }
 
     // Create storage.
     $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
@@ -831,27 +991,32 @@ class ManageFields {
           'target_type' => 'taxonomy_term',
         ],
       ]);
+
+      $field_storage->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
+      $field_storage->setThirdPartySetting('docstore', 'author', $author);
       $field_storage->save();
     }
 
     // Create instance.
-    $field_config = FieldConfig::load('taxonomy_term.' . $bundle . '.' . $field_name);
-    if (!$field_config) {
-      FieldConfig::create([
-        'field_storage' => $field_storage,
-        'bundle' => $bundle,
-        'label' => $label,
-        'required' => $required,
-        'settings' => [
-          'handler' => 'default:taxonomy_term',
-          'handler_settings' => [
-            'target_bundles' => [
-              $target => $target,
-            ],
+    $field_config = FieldConfig::create([
+      'field_storage' => $field_storage,
+      'bundle' => $bundle,
+      'label' => $label,
+      'required' => $required,
+      'settings' => [
+        'handler' => 'default:taxonomy_term',
+        'handler_settings' => [
+          'target_bundles' => [
+            $target => $target,
           ],
         ],
-      ])->save();
-    }
+      ],
+    ]);
+
+    $field_config->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
+    $field_config->setThirdPartySetting('docstore', 'author', $author);
+    $field_config->setThirdPartySetting('docstore', 'private', $private);
+    $field_config->save();
 
     docstore_notify_webhooks('field:vocabulary:create', $field_name);
     return $field_name;
@@ -880,11 +1045,14 @@ class ManageFields {
     }
 
     // Create instance.
-    FieldConfig::create([
+    $field_config = FieldConfig::create([
       'field_storage' => $field_storage,
       'bundle' => $bundle,
       'label' => $label,
-    ])->save();
+    ]);
+
+    $field_config->setThirdPartySetting('docstore', 'private', FALSE);
+    $field_config->save();
   }
 
   /**
@@ -895,7 +1063,7 @@ class ManageFields {
    */
   public function createVocabularyBaseFieldProviderUuid(string $bundle) {
     $label = 'Provider UUID';
-    $field_name = 'base_provider_uuid';
+    $field_name = 'provider_uuid';
     $field_type = 'entity_reference_uuid';
 
     $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
@@ -914,7 +1082,7 @@ class ManageFields {
     }
 
     // Create instance.
-    FieldConfig::create([
+    $field_config = FieldConfig::create([
       'field_storage' => $field_storage,
       'bundle' => $bundle,
       'label' => $label,
@@ -926,7 +1094,10 @@ class ManageFields {
           ],
         ],
       ],
-    ])->save();
+    ]);
+
+    $field_config->setThirdPartySetting('docstore', 'private', FALSE);
+    $field_config->save();
   }
 
   /**
@@ -936,8 +1107,8 @@ class ManageFields {
    *   Vocabulary bundle.
    */
   public function createVocabularyBaseFieldHidId(string $bundle) {
-    $label = 'Author (HID)';
-    $field_name = 'base_author_hid';
+    $label = 'Author';
+    $field_name = 'author';
     $field_type = 'string';
 
     $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
@@ -953,11 +1124,137 @@ class ManageFields {
     }
 
     // Create instance.
-    FieldConfig::create([
+    $field_config = FieldConfig::create([
       'field_storage' => $field_storage,
       'bundle' => $bundle,
       'label' => $label,
-    ])->save();
+    ]);
+
+    $field_config->setThirdPartySetting('docstore', 'private', FALSE);
+    $field_config->save();
   }
 
+  /**
+   * Add provider uuid field to a vocabulary.
+   *
+   * @param string $bundle
+   *   Vocabulary bundle.
+   */
+  public function createDocumentBaseFieldProviderUuid(string $bundle) {
+    $label = 'Provider UUID';
+    $field_name = 'provider_uuid';
+    $field_type = 'entity_reference_uuid';
+
+    $field_storage = FieldStorageConfig::load('node.' . $field_name);
+    if (!$field_storage) {
+      // Create storage.
+      $field_storage = FieldStorageConfig::create([
+        'field_name' => $field_name,
+        'entity_type' => 'node',
+        'type' => $field_type,
+        'cardinality' => 1,
+        'settings' => [
+          'target_type' => 'user',
+        ],
+      ]);
+      $field_storage->save();
+    }
+
+    // Create instance.
+    $field_config = FieldConfig::create([
+      'field_storage' => $field_storage,
+      'bundle' => $bundle,
+      'label' => $label,
+      'settings' => [
+        'handler' => 'default:user',
+        'handler_settings' => [
+          'target_bundles' => [
+            'provider' => 'provider',
+          ],
+        ],
+      ],
+    ]);
+
+    $field_config->setThirdPartySetting('docstore', 'private', FALSE);
+    $field_config->save();
+  }
+
+  /**
+   * Add HID id field to a vocabulary.
+   *
+   * @param string $bundle
+   *   Vocabulary bundle.
+   */
+  public function createDocumentBaseFieldAuthor(string $bundle) {
+    $label = 'Author';
+    $field_name = 'author';
+    $field_type = 'string';
+
+    $field_storage = FieldStorageConfig::load('node.' . $field_name);
+    if (!$field_storage) {
+      // Create storage.
+      $field_storage = FieldStorageConfig::create([
+        'field_name' => $field_name,
+        'entity_type' => 'node',
+        'type' => $field_type,
+        'cardinality' => 1,
+      ]);
+      $field_storage->save();
+    }
+
+    // Create instance.
+    $field_config = FieldConfig::create([
+      'field_storage' => $field_storage,
+      'bundle' => $bundle,
+      'label' => $label,
+    ]);
+
+    $field_config->setThirdPartySetting('docstore', 'private', FALSE);
+    $field_config->save();
+  }
+
+  /**
+   * Add files field to a document type.
+   *
+   * @param string $bundle
+   *   Node type.
+   */
+  public function createDocumentBaseFieldFiles(string $bundle) {
+    $label = 'Files';
+    $field_name = 'files';
+    $field_type = 'entity_reference_uuid';
+
+    $field_storage = FieldStorageConfig::load('node.' . $field_name);
+    if (!$field_storage) {
+      // Create storage.
+      $field_storage = FieldStorageConfig::create([
+        'field_name' => $field_name,
+        'entity_type' => 'node',
+        'type' => $field_type,
+        'cardinality' => 1,
+        'settings' => [
+          'target_type' => 'media',
+        ],
+      ]);
+      $field_storage->save();
+    }
+
+    // Create instance.
+    $field_config = FieldConfig::create([
+      'field_storage' => $field_storage,
+      'bundle' => $bundle,
+      'label' => $label,
+      'settings' => [
+        'handler' => 'default:user',
+        'handler_settings' => [
+          'target_bundles' => [
+            'file' => 'file',
+          ],
+        ],
+      ],
+    ]);
+
+    $field_config->setThirdPartySetting('docstore', 'private', FALSE);
+    $field_config->save();
+  }
 }

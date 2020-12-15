@@ -44,7 +44,7 @@ export HASH=$(php -r "print md5('$ME_SHARED$FILEPRIVATETXT$ME_UUID');")
 ./silk -test.v -silk.url $API silk_files.md || exit 1;
 ./silk -test.v -silk.url $API silk_create.md || exit 1;
 ./silk -test.v -silk.url $API silk_exceptions.md || exit 1;
-
+exit
 $DRUSH eval "_docstore_setup_testing()"
 $DRUSH cr
 

@@ -245,7 +245,7 @@ Example output.
   "langcode": "en",
   "status": "1",
   "name": "Brussels",
-  "base_author_hid": "23cdf322"
+  "author": "23cdf322"
 }
 ```
 

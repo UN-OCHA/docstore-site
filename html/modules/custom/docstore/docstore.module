@@ -243,61 +243,15 @@ function docstore_create_node_type($type = 'document') {
     return;
   }
 
-  $node_type = NodeType::create([
-    'type' => $type,
-    'name' => ucfirst($type),
+  $provider = user_load(2);
+  $manager = new ManageFields($provider, $type, Drupal::service('entity_field.manager'), Drupal::service('database'));
+  $manager->createDocumentType([
+    'label' => ucfirst($type),
+    'author' => 'common',
+    'fields_allowed' => TRUE,
+    'content_allowed' => TRUE,
+    'shared' => TRUE,
   ]);
-
-  $node_type->save();
-
-  // Add base fields.
-  $base_fields = [
-    'base_author_hid' => 1,
-    'base_files' => -1,
-    'base_private' => 1,
-  ];
-
-  foreach ($base_fields as $base_field => $cardinality) {
-    $field_storage = FieldStorageConfig::loadByName('node', $base_field);
-
-    if (!$field_storage) {
-      $field_storage = FieldStorageConfig::create([
-        'field_name' => $base_field,
-        'entity_type' => 'node',
-        'type' => $type,
-        'cardinality' => $cardinality,
-      ]);
-
-      $field_storage->setThirdPartySetting('docstore', 'common', TRUE);
-      $field_storage->save();
-    }
-
-    // Create instance.
-    FieldConfig::create([
-      'field_storage' => $field_storage,
-      'bundle' => $type,
-      'label' => $base_field,
-    ])->save();
-
-    // Add to search index display.
-    $storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
-    $view_display = $storage->load('node.' . $type . '.search_index');
-
-    if (!$view_display) {
-      $view_display = EntityViewDisplay::create([
-        'targetEntityType' => 'node',
-        'bundle' => $type,
-        'mode' => 'search_index',
-        'status' => TRUE,
-      ]);
-    }
-
-    /** @var \Drupal\Core\Entity\Entity\EntityViewDisplay $view_display */
-    $view_display->setComponent($base_field, [
-      'type' => 'number_unformatted',
-      'settings' => [],
-    ])->save();
-  }
 }
 
 /**

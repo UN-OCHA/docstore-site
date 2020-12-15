@@ -419,9 +419,9 @@ class ApiController extends ControllerBase {
       'type' => $node_type,
       'title' => $params['title'],
       'uid' => $provider->id(),
-      'base_author_hid' => [],
-      'base_files' => [],
-      'base_private' => [],
+      'author' => [],
+      'files' => [],
+      'private' => [],
       'status' => Node::PUBLISHED,
     ];
 
@@ -432,18 +432,18 @@ class ApiController extends ControllerBase {
 
     // Private.
     if (isset($params['private']) && $params['private']) {
-      $item['base_private'][] = [
+      $item['private'][] = [
         'value' => TRUE,
       ];
     }
     else {
-      $item['base_private'][] = [
+      $item['private'][] = [
         'value' => FALSE,
       ];
     }
 
     // Store HID Id.
-    $item['base_author_hid'][] = [
+    $item['author'][] = [
       'value' => $params['author'],
     ];
 
@@ -463,14 +463,14 @@ class ApiController extends ControllerBase {
             throw new BadRequestHttpException(strtr('Media @uuid does not exist', ['@uuid' => $uuid]));
           }
 
-          $item['base_files'][] = [
+          $item['files'][] = [
             'target_uuid' => $media->uuid(),
           ];
         }
         else {
           if (isset($uuid['uri'])) {
             $media = $this->fetchAndCreateFile($uuid['uri'], $provider);
-            $item['base_files'][] = [
+            $item['files'][] = [
               'target_uuid' => $media->uuid(),
             ];
           }
@@ -899,8 +899,8 @@ class ApiController extends ControllerBase {
     $node_type = $this->typeAllowed($type, 'write');
 
     $protected_fields = [
-      'base_author_hid',
-      'base_provider_uuid',
+      'author',
+      'provider_uuid',
       'changed',
       'created',
       'default_langcode',
@@ -949,7 +949,7 @@ class ApiController extends ControllerBase {
 
     // Re-map fields.
     if (isset($params['private'])) {
-      $params['base_private'] = $params['private'];
+      $params['private'] = $params['private'];
       unset($params['private']);
     }
 
@@ -1735,7 +1735,7 @@ class ApiController extends ControllerBase {
     // Load vocabulary.
     $vocabulary = $this->loadVocabulary($params['vocabulary']);
 
-    if ($vocabulary->getThirdPartySetting('docstore', 'base_allow_duplicates') === FALSE) {
+    if ($vocabulary->getThirdPartySetting('docstore', 'allow_duplicates') === FALSE) {
       // Check for duplicate labels.
       $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
         'name' => $params['label'],
@@ -1778,7 +1778,7 @@ class ApiController extends ControllerBase {
       'name' => $params['label'],
       'vid' => $vocabulary->id(),
       'created' => [],
-      'base_provider_uuid' => [],
+      'provider_uuid' => [],
       'parent' => [],
       'description' => $params['description'] ?? '',
     ];
@@ -1789,12 +1789,12 @@ class ApiController extends ControllerBase {
     ];
 
     // Set owner.
-    $item['base_provider_uuid'][] = [
+    $item['provider_uuid'][] = [
       'target_uuid' => $provider->uuid(),
     ];
 
     // Store HID Id.
-    $item['base_author_hid'][] = [
+    $item['author'][] = [
       'value' => $params['author'],
     ];
 
@@ -1963,8 +1963,8 @@ class ApiController extends ControllerBase {
    */
   public function updateTerm($id, Request $request) {
     $protected_fields = [
-      'base_author_hid',
-      'base_provider_uuid',
+      'author',
+      'provider_uuid',
       'changed',
       'created',
       'default_langcode',
@@ -1995,7 +1995,7 @@ class ApiController extends ControllerBase {
     $provider = $this->requireProvider();
 
     // Provider can only update own terms.
-    if ($term->base_provider_uuid->entity->uuid() !== $provider->uuid()) {
+    if ($term->provider_uuid->entity->uuid() !== $provider->uuid()) {
       throw new BadRequestHttpException('Term is not owned by you');
     }
 
@@ -2012,7 +2012,7 @@ class ApiController extends ControllerBase {
       unset($params['label']);
 
       $vocabulary = $this->loadVocabulary($term->getVocabularyId());
-      if ($vocabulary->getThirdPartySetting('docstore', 'base_allow_duplicates') === FALSE) {
+      if ($vocabulary->getThirdPartySetting('docstore', 'allow_duplicates') === FALSE) {
         // Check for duplicate labels.
         $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
           'name' => $params['name'],
@@ -2131,7 +2131,7 @@ class ApiController extends ControllerBase {
     $provider = $this->requireProvider();
 
     // Provider can only update own terms.
-    if ($term->base_provider_uuid->entity->uuid() !== $provider->uuid()) {
+    if ($term->provider_uuid->entity->uuid() !== $provider->uuid()) {
       throw new BadRequestHttpException('Term is not owned by you');
     }
 

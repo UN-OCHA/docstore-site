@@ -562,8 +562,8 @@ Example output.
   "uuid": "uuid",
   "name": "string",
   "description": "text_long",
-  "base_author_hid": "string",
-  "base_provider_uuid": "entity_reference_uuid",
+  "author": "string",
+  "provider_uuid": "entity_reference_uuid",
   "created": "timestamp",
   "silk_iso_3_code": "string"
 }
@@ -1334,7 +1334,7 @@ Update vocabulary to disallow duplicate terms.
 ```json
 {
   "label": "Dupes no longer allowed",
-  "base_allow_duplicates": false
+  "allow_duplicates": false
 }
 ```
 
@@ -1368,7 +1368,7 @@ Update vocabulary to disallow duplicate terms.
 ```json
 {
   "label": "Dupes no longer allowed",
-  "base_allow_duplicates": false
+  "allow_duplicates": false
 }
 ```
 
