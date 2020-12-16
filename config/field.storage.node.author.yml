@@ -1,14 +1,17 @@
-uuid: 1e41cada-fdd2-44aa-92c5-e86085fa1584
+uuid: b7432b6a-e5e8-4457-b7f8-8834c9d31174
 langcode: en
 status: true
 dependencies:
   module:
     - node
-id: node.base_private
-field_name: base_private
+id: node.author
+field_name: author
 entity_type: node
-type: boolean
-settings: {  }
+type: string
+settings:
+  max_length: 255
+  is_ascii: false
+  case_sensitive: false
 module: core
 locked: false
 cardinality: 1

@@ -1,4 +1,4 @@
-uuid: 8cd8320f-af4c-4d95-b740-407d398a21a7
+uuid: 5ab0d2f3-6365-475d-8619-b6ffe19a715a
 langcode: en
 status: true
 dependencies:
@@ -6,8 +6,8 @@ dependencies:
     - entity_reference_uuid
     - media
     - node
-id: node.base_files
-field_name: base_files
+id: node.files
+field_name: files
 entity_type: node
 type: entity_reference_uuid
 settings:

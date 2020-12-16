@@ -1,21 +1,14 @@
 ignored_config_entities:
   - 'taxonomy.*'
-  - 'field.field.taxonomy_term.*'
   - 'field.storage.taxonomy_term.*'
-  - ~field.storage.taxonomy_term.base_author_hid
-  - ~field.storage.taxonomy_term.base_provider_uuid
-  - ~field.storage.taxonomy_term.created
-  - 'field.field.node.*'
-  - '~field.field.node.*.base_*'
-  - 'field.storage.node.*'
-  - '~field.storage.node.base_*'
+  - 'field.field.taxonomy_term.*'
   - 'node.type.*'
+  - 'field.storage.node.*'
+  - 'field.field.node.*'
   - search_api.index.documents
   - 'core.entity_view_display.taxonomy_term.*'
   - 'core.entity_form_display.taxonomy_term.*'
-  - core.entity_form_display.node.document.default
-  - core.entity_view_display.node.document.teaser
-  - core.entity_view_display.node.document.default
+  - 'core.entity_form_display.node.*'
   - 'webhooks.webhook.*'
 _core:
   default_config_hash: UVH1aJ4b44UM-VdPVN7hNNuuVqfReJxwfVeDQH1Hvsk
