@@ -156,7 +156,7 @@ class ManageFields {
     }
 
     // Add term name if needed.
-    if ($field_type == 'term_reference') {
+    if ($field_type === 'term_reference') {
       $field = new Field($index, $field_name . '_label');
       $field->setType('string');
       $field->setPropertyPath($field_name . ':entity:name');
@@ -205,11 +205,12 @@ class ManageFields {
       }
     }
 
-    // Reference fields need a target.
+    // Map old types.
     if (in_array($params['type'], ['entity_reference', 'entity_reference_uuid'])) {
       $params['type'] = 'term_reference';
     }
 
+    // Reference fields need a target.
     if (in_array($params['type'], ['term_reference', 'node_reference'])) {
       if (empty($params['target'])) {
         throw new \Exception('Target is required for reference fields');
@@ -342,10 +343,13 @@ class ManageFields {
     $this->createDocumentBaseFieldFiles($machine_name);
 
     // Add provider uuid.
-    $this->createDocumentBaseFieldProviderUuid($machine_name);
+    //$this->createDocumentBaseFieldProviderUuid($machine_name);
 
     // Add author.
     $this->createDocumentBaseFieldAuthor($machine_name);
+
+    // Add private.
+    $this->createDocumentBaseFieldPrivate($machine_name);
 
     docstore_notify_webhooks('document_type:create', $machine_name);
 
@@ -458,6 +462,11 @@ class ManageFields {
       ]);
     }
 
+    // Make sure it's active.
+    if (!$view_display->status()) {
+      $view_display->setStatus(TRUE);
+    }
+
     $view_display->setComponent($field_name, [
       'type' => 'number_unformatted',
       'settings' => [],
@@ -477,7 +486,6 @@ class ManageFields {
    */
   protected function createDocumentReferenceField($author, $label, $machine_name, $type, $bundle, $multiple, $required, $private) {
     $new_field = FALSE;
-
     $field_type = 'entity_reference_uuid';
 
     // Create new machine name if needed.
@@ -542,10 +550,15 @@ class ManageFields {
     if (!$view_display) {
       $view_display = EntityViewDisplay::create([
         'targetEntityType' => 'node',
-        'bundle' => $type,
+        'bundle' => $this->nodeType,
         'mode' => 'search_index',
         'status' => TRUE,
       ]);
+    }
+
+    // Make sure it's active.
+    if (!$view_display->status()) {
+      $view_display->setStatus(TRUE);
     }
 
     $view_display->setComponent($field_name, [
@@ -1180,7 +1193,7 @@ class ManageFields {
   }
 
   /**
-   * Add HID id field to a vocabulary.
+   * Add author field to a vocabulary.
    *
    * @param string $bundle
    *   Vocabulary bundle.
@@ -1189,6 +1202,40 @@ class ManageFields {
     $label = 'Author';
     $field_name = 'author';
     $field_type = 'string';
+
+    $field_storage = FieldStorageConfig::load('node.' . $field_name);
+    if (!$field_storage) {
+      // Create storage.
+      $field_storage = FieldStorageConfig::create([
+        'field_name' => $field_name,
+        'entity_type' => 'node',
+        'type' => $field_type,
+        'cardinality' => 1,
+      ]);
+      $field_storage->save();
+    }
+
+    // Create instance.
+    $field_config = FieldConfig::create([
+      'field_storage' => $field_storage,
+      'bundle' => $bundle,
+      'label' => $label,
+    ]);
+
+    $field_config->setThirdPartySetting('docstore', 'private', FALSE);
+    $field_config->save();
+  }
+
+  /**
+   * Add private field to a document.
+   *
+   * @param string $bundle
+   *   Document bundle.
+   */
+  public function createDocumentBaseFieldPrivate(string $bundle) {
+    $label = 'Private';
+    $field_name = 'private';
+    $field_type = 'boolean';
 
     $field_storage = FieldStorageConfig::load('node.' . $field_name);
     if (!$field_storage) {
@@ -1231,7 +1278,7 @@ class ManageFields {
         'field_name' => $field_name,
         'entity_type' => 'node',
         'type' => $field_type,
-        'cardinality' => 1,
+        'cardinality' => -1,
         'settings' => [
           'target_type' => 'media',
         ],

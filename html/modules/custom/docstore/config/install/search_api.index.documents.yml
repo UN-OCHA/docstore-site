@@ -11,10 +11,10 @@ dependencies:
     - user
     - search_api
   config:
-    - field.storage.node.base_author_hid
+    - field.storage.node.author
     - field.storage.media.field_media_file
-    - field.storage.node.base_files
-    - field.storage.node.base_private
+    - field.storage.node.files
+    - field.storage.node.private
     - search_api.server.solr
     - core.entity_view_mode.node.search_index
 third_party_settings:
@@ -63,11 +63,11 @@ field_settings:
   author:
     label: 'Author (HID)'
     datasource_id: 'entity:node'
-    property_path: base_author_hid
+    property_path: author
     type: string
     dependencies:
       config:
-        - field.storage.node.base_author_hid
+        - field.storage.node.author
   changed:
     label: Changed
     datasource_id: 'entity:node'
@@ -87,59 +87,59 @@ field_settings:
   files_file_filemime:
     label: 'Files » File » MIME type'
     datasource_id: 'entity:node'
-    property_path: 'base_files:entity:field_media_file:entity:filemime'
+    property_path: 'files:entity:field_media_file:entity:filemime'
     type: string
     dependencies:
       config:
         - field.storage.media.field_media_file
-        - field.storage.node.base_files
+        - field.storage.node.files
       module:
         - file
         - media
   files_file_filename:
     label: 'Files » File » Filename'
     datasource_id: 'entity:node'
-    property_path: 'base_files:entity:field_media_file:entity:filename'
+    property_path: 'files:entity:field_media_file:entity:filename'
     type: string
     dependencies:
       config:
         - field.storage.media.field_media_file
-        - field.storage.node.base_files
+        - field.storage.node.files
       module:
         - file
         - media
   files_file_uri:
     label: 'Files » File » URI'
     datasource_id: 'entity:node'
-    property_path: 'base_files:entity:field_media_file:entity:uri:url'
+    property_path: 'files:entity:field_media_file:entity:uri:url'
     type: string
     dependencies:
       config:
         - field.storage.media.field_media_file
-        - field.storage.node.base_files
+        - field.storage.node.files
       module:
         - file
         - media
   files_file_uuid:
     label: 'Files » File » UUID'
     datasource_id: 'entity:node'
-    property_path: 'base_files:entity:field_media_file:entity:uuid'
+    property_path: 'files:entity:field_media_file:entity:uuid'
     type: string
     dependencies:
       config:
         - field.storage.media.field_media_file
-        - field.storage.node.base_files
+        - field.storage.node.files
       module:
         - file
         - media
   files_media_uuid:
     label: 'Files » Media » UUID'
     datasource_id: 'entity:node'
-    property_path: 'base_files:entity:uuid'
+    property_path: 'files:entity:uuid'
     type: string
     dependencies:
       config:
-        - field.storage.node.base_files
+        - field.storage.node.files
       module:
         - media
   langcode:
@@ -153,11 +153,11 @@ field_settings:
   private:
     label: Private
     datasource_id: 'entity:node'
-    property_path: base_private
+    property_path: private
     type: boolean
     dependencies:
       config:
-        - field.storage.node.base_private
+        - field.storage.node.private
   provider:
     label: 'User » UUID'
     datasource_id: 'entity:node'
