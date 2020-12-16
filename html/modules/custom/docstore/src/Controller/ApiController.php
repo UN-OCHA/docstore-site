@@ -347,7 +347,7 @@ class ApiController extends ControllerBase {
       // Remove files fields.
       foreach ($row as $key => $value) {
         if (strpos($key, 'files_') === 0) {
-          //unset($row[$key]);
+          unset($row[$key]);
         }
       }
 

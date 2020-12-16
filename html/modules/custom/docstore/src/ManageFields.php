@@ -342,9 +342,6 @@ class ManageFields {
     // Add files field.
     $this->createDocumentBaseFieldFiles($machine_name);
 
-    // Add provider uuid.
-    //$this->createDocumentBaseFieldProviderUuid($machine_name);
-
     // Add author.
     $this->createDocumentBaseFieldAuthor($machine_name);
 
@@ -1148,51 +1145,6 @@ class ManageFields {
   }
 
   /**
-   * Add provider uuid field to a vocabulary.
-   *
-   * @param string $bundle
-   *   Vocabulary bundle.
-   */
-  public function createDocumentBaseFieldProviderUuid(string $bundle) {
-    $label = 'Provider UUID';
-    $field_name = 'provider_uuid';
-    $field_type = 'entity_reference_uuid';
-
-    $field_storage = FieldStorageConfig::load('node.' . $field_name);
-    if (!$field_storage) {
-      // Create storage.
-      $field_storage = FieldStorageConfig::create([
-        'field_name' => $field_name,
-        'entity_type' => 'node',
-        'type' => $field_type,
-        'cardinality' => 1,
-        'settings' => [
-          'target_type' => 'user',
-        ],
-      ]);
-      $field_storage->save();
-    }
-
-    // Create instance.
-    $field_config = FieldConfig::create([
-      'field_storage' => $field_storage,
-      'bundle' => $bundle,
-      'label' => $label,
-      'settings' => [
-        'handler' => 'default:user',
-        'handler_settings' => [
-          'target_bundles' => [
-            'provider' => 'provider',
-          ],
-        ],
-      ],
-    ]);
-
-    $field_config->setThirdPartySetting('docstore', 'private', FALSE);
-    $field_config->save();
-  }
-
-  /**
    * Add author field to a vocabulary.
    *
    * @param string $bundle
@@ -1304,4 +1256,5 @@ class ManageFields {
     $field_config->setThirdPartySetting('docstore', 'private', FALSE);
     $field_config->save();
   }
+
 }
