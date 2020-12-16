@@ -2,6 +2,9 @@ DRUSH=${DRUSH:-"fin drush"}
 HOST=${HOST:-"http://docstore.local.docksal"}
 API=${API:-"$HOST/api"}
 
+# Add document type
+$DRUSH eval "docstore_create_node_type('document')"
+
 # Clear docstore, test vocabulary CRUD
 $DRUSH eval "_docstore_setup_testing()"
 $DRUSH cr
