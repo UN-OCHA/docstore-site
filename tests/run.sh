@@ -1,3 +1,4 @@
+# Env vars
 DRUSH=${DRUSH:-"fin drush"}
 HOST=${HOST:-"http://docstore.local.docksal"}
 API=${API:-"$HOST/api"}
