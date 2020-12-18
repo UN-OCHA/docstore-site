@@ -54,7 +54,7 @@ class ManageFields {
   public function __construct(TypedUser $provider,
     $nodeType,
     EntityFieldManagerInterface $entityFieldManager,
-    Connection $database
+    Connection $database = NULL
     ) {
     $this->provider = $provider;
     $this->nodeType = $nodeType;
@@ -310,6 +310,10 @@ class ManageFields {
       throw new \Exception('Author is required');
     }
 
+    if (empty($params['endpoint'])) {
+      throw new \Exception('Endpoint is required');
+    }
+
     // Create node type.
     if (isset($params['machine_name'])) {
       $machine_name = $params['machine_name'];
@@ -337,6 +341,8 @@ class ManageFields {
     $node_type->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
     $node_type->setThirdPartySetting('docstore', 'author', $params['author']);
     $node_type->setThirdPartySetting('docstore', 'allow_duplicates', $params['allow_duplicates'] ?? TRUE);
+    $node_type->setThirdPartySetting('docstore', 'endpoint', $params['endpoint']);
+
     $node_type->save();
 
     // Add files field.

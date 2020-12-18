@@ -76,6 +76,68 @@ docstore_delete_hook:
     docstore_crud: 'C'
     docstore_access_level: 'B'
 
+# Document types
+docstore_document_get_types:
+  path: '/api/types'
+  defaults:
+    _controller: 'docstore.doctype_controller:getDocumentTypes'
+    _title: 'Get document types'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_document_create_type:
+  path: '/api/types'
+  defaults:
+    _controller: 'docstore.doctype_controller:createDocumentType'
+    _title: 'Create document type'
+  methods: [POST]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'C'
+    docstore_access_level: 'A'
+docstore_document_get_type:
+  path: '/api/types/{type}'
+  defaults:
+    _controller: 'docstore.doctype_controller:getDocumentType'
+    _title: 'Get document type'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_document_update_type:
+  path: '/api/types/{type}'
+  defaults:
+    _controller: 'docstore.doctype_controller:updateDocumentType'
+    _title: 'Update document type'
+  methods: [PUT, PATCH]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_document_delete_type:
+  path: '/api/types/{type}'
+  defaults:
+    _controller: 'docstore.doctype_controller:deleteDocumentType'
+    _title: 'Delete document type'
+  methods: [DELETE]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+
 # Documents
 docstore_get_documents:
   path: '/api/{type}'
