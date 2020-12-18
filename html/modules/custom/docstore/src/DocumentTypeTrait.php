@@ -90,4 +90,38 @@ trait DocumentTypeTrait {
     return 'document_endpoints';
   }
 
+  /**
+   * Check if provider can read content.
+   */
+  protected function providerCanRead($node_type, $provider) {
+    $type = $this->entityTypeManager->getStorage('node_type')->load($node_type);
+
+    if (!$provider->isAnonymous() && $type->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
+      return TRUE;
+    }
+
+    if ($type->getThirdPartySetting('docstore', 'shared')) {
+      return TRUE;
+    }
+
+    return FALSE;
+  }
+
+  /**
+   * Check if provider can create, update, delete content.
+   */
+  protected function providerCanCreateUpdateDelete($node_type, $provider) {
+    $type = $this->entityTypeManager->getStorage('node_type')->load($node_type);
+
+    if (!$provider->isAnonymous() && $type->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
+      return TRUE;
+    }
+
+    if ($type->getThirdPartySetting('docstore', 'content_allowed')) {
+      return TRUE;
+    }
+
+    return FALSE;
+  }
+
 }
