@@ -36,4 +36,5 @@ trait ProviderTrait {
 
     return $provider;
   }
+
 }

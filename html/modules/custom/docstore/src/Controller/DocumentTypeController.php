@@ -5,6 +5,7 @@ namespace Drupal\docstore\Controller;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\docstore\ManageFields;
 use Drupal\docstore\ProviderTrait;
@@ -47,10 +48,12 @@ class DocumentTypeController extends ControllerBase {
    */
   public function __construct(ConfigFactoryInterface $config,
       EntityFieldManagerInterface $entityFieldManager,
+      EntityTypeManagerInterface $entityTypeManager,
       LoggerChannelFactoryInterface $logger_factory
     ) {
     $this->config = $config;
     $this->entityFieldManager = $entityFieldManager;
+    $this->entityTypeManager = $entityTypeManager;
     $this->loggerFactory = $logger_factory;
   }
 
@@ -84,7 +87,9 @@ class DocumentTypeController extends ControllerBase {
 
     $data = [];
 
-    $node_types = NodeType::loadMultiple();
+    $node_types = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
+
+    /** @var \Drupal\node\Entity\NodeType $node_type */
     foreach ($node_types as $node_type) {
       // Skip private types.
       if ($node_type->getThirdPartySetting('docstore', 'private') && $node_type->getThirdPartySetting('docstore', 'provider_uuid') !== $provider->uuid()) {
@@ -102,7 +107,9 @@ class DocumentTypeController extends ControllerBase {
    * Get document type.
    */
   public function getDocumentType($type, Request $request) {
-    $node_type = NodeType::load($type);
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->entityTypeManager->getStorage('node_type')->load($type);
+
     if (!$node_type) {
       throw new BadRequestHttpException('Type not supported.');
     }
@@ -117,7 +124,9 @@ class DocumentTypeController extends ControllerBase {
    * Update document type.
    */
   public function updateDocumentType($type, Request $request) {
-    $node_type = NodeType::load($type);
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->entityTypeManager->getStorage('node_type')->load($type);
+
     if (!$node_type) {
       throw new BadRequestHttpException('Type not supported.');
     }
@@ -129,7 +138,9 @@ class DocumentTypeController extends ControllerBase {
    * Delete document type.
    */
   public function deleteDocumentType($type, Request $request) {
-    $node_type = NodeType::load($type);
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->entityTypeManager->getStorage('node_type')->load($type);
+
     if (!$node_type) {
       throw new BadRequestHttpException('Type not supported.');
     }
@@ -150,7 +161,7 @@ class DocumentTypeController extends ControllerBase {
    * @param \Drupal\node\Entity\NodeType $node_type
    *   Full node type.
    */
-  protected function buildJsonOutput($node_type) {
+  protected function buildJsonOutput(NodeType $node_type) {
     return [
       'machine_name' => $node_type->id(),
       'label' => $node_type->label(),
