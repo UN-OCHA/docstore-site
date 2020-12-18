@@ -11,7 +11,7 @@ Create document type.
 ```json
 {
   "machine_name": "test",
-  "endpoint": "documents",
+  "endpoint": "test-documents",
   "label": "Test document",
   "shared": true,
   "content_allowed": true,
@@ -28,7 +28,7 @@ Create document type.
 
 ## POST /types
 
-Create document type.
+Create document type with same machine name.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -37,7 +37,85 @@ Create document type.
 ```json
 {
   "machine_name": "test",
-  "endpoint": "documents",
+  "endpoint": "test-documents",
+  "label": "Test 2",
+  "shared": true,
+  "content_allowed": true,
+  "fields_allowed": true,
+  "author": "common",
+  "allow_duplicates": true
+}
+```
+
+===
+
+* Status: `500`
+* Content-Type: "application/json"
+
+## POST /types
+
+Create document type with same endpoint.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "machine_name": "test2a",
+  "endpoint": "test-documents",
+  "label": "Test 2",
+  "shared": true,
+  "content_allowed": true,
+  "fields_allowed": true,
+  "author": "common",
+  "allow_duplicates": true
+}
+```
+
+===
+
+* Status: `500`
+* Content-Type: "application/json"
+
+## POST /types
+
+Create document type with illegal endpoint.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "machine_name": "test2b",
+  "endpoint": "me",
+  "label": "Test 2",
+  "shared": true,
+  "content_allowed": true,
+  "fields_allowed": true,
+  "author": "common",
+  "allow_duplicates": true
+}
+```
+
+===
+
+* Status: `500`
+* Content-Type: "application/json"
+
+## POST /types
+
+Create document type with invalid endpoint.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "machine_name": "test2c",
+  "endpoint": "docuMents",
   "label": "Test 2",
   "shared": true,
   "content_allowed": true,
