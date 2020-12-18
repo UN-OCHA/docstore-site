@@ -15,35 +15,38 @@ use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystem;
-use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\State\State;
 use Drupal\Core\StreamWrapper\StreamWrapperManager;
-use Drupal\user\Entity\User;
-use Drupal\docstore\ParseQueryParameters;
+use Drupal\docstore\DocumentTypeTrait;
 use Drupal\docstore\ManageFields;
+use Drupal\docstore\ParseQueryParameters;
 use Drupal\entity_usage\EntityUsage;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\file\Entity\File;
 use Drupal\file\FileUsage\FileUsageInterface;
 use Drupal\media\Entity\Media;
 use Drupal\node\Entity\Node;
-use Drupal\search_api\Entity\Index;
 use Drupal\search_api_solr\SearchApiSolrException;
 use Drupal\search_api_solr\SolrBackendInterface;
+use Drupal\search_api\Entity\Index;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\taxonomy\Entity\Vocabulary;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Drupal\user\Entity\User;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException;
 
 /**
  * Controller for API endpoints.
  */
 class ApiController extends ControllerBase {
+
+  use DocumentTypeTrait;
 
   /**
    * The config.
@@ -2998,21 +3001,7 @@ class ApiController extends ControllerBase {
    * Get allowed endpoints.
    */
   protected function typeAllowed($type, $mode = 'read') {
-    $config = _docstore_get_allowed_api_endpoints();
-
-    if (!isset($config[$type])) {
-      throw new BadRequestHttpException('Type not supported.');
-    }
-
-    if (!isset($config[$type][$mode])) {
-      throw new BadRequestHttpException('Type not supported.');
-    }
-
-    if (!$config[$type][$mode]) {
-      throw new BadRequestHttpException('Type not supported.');
-    }
-
-    return $config[$type][$mode];
+    return $this->EndpointGetNodeType($type);
   }
 
   /**

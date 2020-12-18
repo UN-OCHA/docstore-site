@@ -7,6 +7,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\docstore\DocumentTypeTrait;
 use Drupal\docstore\ManageFields;
 use Drupal\docstore\ProviderTrait;
 use Drupal\node\Entity\NodeType;
@@ -20,6 +21,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  */
 class DocumentTypeController extends ControllerBase {
 
+  use DocumentTypeTrait;
   use ProviderTrait;
 
   /**
@@ -72,6 +74,9 @@ class DocumentTypeController extends ControllerBase {
 
     $manager = new ManageFields($provider, '', $this->entityFieldManager);
     $data = $manager->createDocumentType($params);
+
+    // Rebuild endpoints.
+    $this->rebuildEndpoints();
 
     $response = new JsonResponse($data);
     $response->setStatusCode(201);
@@ -150,6 +155,9 @@ class DocumentTypeController extends ControllerBase {
     ];
 
     $node_type->delete();
+
+    // Rebuild endpoints.
+    $this->rebuildEndpoints();
 
     $response = new JsonResponse($data);
     return $response;

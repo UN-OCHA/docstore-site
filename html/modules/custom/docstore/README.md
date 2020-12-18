@@ -1,5 +1,14 @@
 # Document store
 
+## TODO
+
+### Document types
+
+- [x] check endpoint, use white/black list to avoid clashes
+- [ ] add permission
+- [ ] delete when empty
+- [ ] implement PUT, PATCH
+
 ## Naming conventions for fields, vocabularies
 
 - `base_`: basic data needed to make it work

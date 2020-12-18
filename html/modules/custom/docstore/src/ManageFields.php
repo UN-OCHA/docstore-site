@@ -7,6 +7,7 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\docstore\DocumentTypeTrait;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\node\Entity\NodeType;
@@ -19,6 +20,8 @@ use Drupal\user_bundle\Entity\TypedUser;
  * Provides helper methods for parsing query parameters.
  */
 class ManageFields {
+
+  use DocumentTypeTrait;
 
   /**
    * The provider.
@@ -320,6 +323,14 @@ class ManageFields {
     }
     else {
       $machine_name = $this->generateUniqueMachineName($params['label'], 'node_type');
+    }
+
+    if (!$this->validEndpoint($machine_name)) {
+      throw new \Exception('Endpoint is not allowed');
+    }
+
+    if ($this->EndpointExists($params['endpoint'])) {
+      throw new \Exception('Endpoint is already defined');
     }
 
     $node_type = NodeType::create([
