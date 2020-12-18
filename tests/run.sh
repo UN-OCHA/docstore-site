@@ -8,7 +8,7 @@ $DRUSH eval "_docstore_setup_testing()"
 $DRUSH cr
 
 # Add document type
-$DRUSH eval "docstore_create_node_type('document')"
+$DRUSH eval "docstore_create_node_type('document', 'documents')"
 
 ./silk -test.v -silk.url $API silk_webhooks.md || exit 1;
 ./silk -test.v -silk.url $API silk_vocabulary_crud.md || exit 1;
@@ -66,8 +66,8 @@ $DRUSH --verbose scr ../html/modules/custom/docstore/syncs/docstore_vulnerable_g
 
 ./silk -test.v -silk.url $API silk_document_crud.md || exit 1;
 
-$DRUSH eval "docstore_create_node_type('assessment')"
+$DRUSH eval "docstore_create_node_type('assessment', 'assessments')"
 ./silk -test.v -silk.url $API silk_assessment_crud.md || exit 1;
 
-$DRUSH --verbose eval "docstore_create_node_type('knowledge_management')"
+$DRUSH --verbose eval "docstore_create_node_type('knowledge_management', 'knowledge-managements')"
 ./silk -test.v -silk.url $API silk_knowledge_management.md || exit 1;
