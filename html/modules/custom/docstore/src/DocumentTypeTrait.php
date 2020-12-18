@@ -41,7 +41,7 @@ trait DocumentTypeTrait {
   /**
    * Check if an endpoint exists.
    */
-  protected function EndpointExists($endpoint) {
+  protected function endpointExists($endpoint) {
     $document_endpoints = $this->GetEndpoints();
     return isset($document_endpoints[$endpoint]);
   }
@@ -49,19 +49,19 @@ trait DocumentTypeTrait {
   /**
    * Get node type for an endpoint.
    */
-  protected function EndpointGetNodeType($endpoint) {
+  protected function endpointGetNodeType($endpoint) {
     if (!$this->EndpointExists($endpoint)) {
       throw new \Exception('Endpoint does not exist');
     }
 
-    $document_endpoints = $this->GetEndpoints();
+    $document_endpoints = $this->getEndpoints();
     return $document_endpoints[$endpoint];
   }
 
   /**
    * Get a list of endpoints and associated node type.
    */
-  protected function GetEndpoints() {
+  protected function getEndpoints() {
     $document_endpoints = \Drupal::state()->get($this->getEndpointStateKey(), []);
     if (empty($document_endpoints) && isset($this->entityTypeManager)) {
       $node_types = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
@@ -89,4 +89,5 @@ trait DocumentTypeTrait {
   protected function getEndpointStateKey() {
     return 'document_endpoints';
   }
+
 }

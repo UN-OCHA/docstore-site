@@ -7,7 +7,6 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
-use Drupal\docstore\DocumentTypeTrait;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\node\Entity\NodeType;
@@ -329,7 +328,7 @@ class ManageFields {
       throw new \Exception('Endpoint is not allowed');
     }
 
-    if ($this->EndpointExists($params['endpoint'])) {
+    if ($this->endpointExists($params['endpoint'])) {
       throw new \Exception('Endpoint is already defined');
     }
 
