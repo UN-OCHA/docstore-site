@@ -353,7 +353,7 @@ class ApiController extends ControllerBase {
         }
       }
 
-      // @todo: check for private fields, vocabularies.
+      // @todo Check for private fields, vocabularies.
       // Remove files fields.
       foreach ($row as $key => $value) {
         if (strpos($key, 'files_') === 0) {
