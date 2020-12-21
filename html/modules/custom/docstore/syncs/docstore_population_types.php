@@ -24,7 +24,7 @@ function docstore_population_types_vocabularies() {
 function docstore_population_types_fields() {
   return [
     'shared_population_types' => [
-      'id' => 'integer',
+      'id' => 'string',
     ],
   ];
 }

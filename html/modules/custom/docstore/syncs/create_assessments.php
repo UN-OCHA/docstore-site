@@ -23,18 +23,42 @@ function post($url, $data) {
   }
 }
 
+function createNodeType() {
+  post('http://docstore.local.docksal/api/types', [
+    'machine_name' => 'assessment',
+    'endpoint' => 'assessments',
+    'label' => 'Assessment',
+    'shared' => true,
+    'content_allowed' => true,
+    'fields_allowed' => true,
+    'author' => 'common',
+    'allow_duplicates' => true,
+  ]);
+
+  post('http://docstore.local.docksal/api/types', [
+    'machine_name' => 'assessment_document',
+    'endpoint' => 'assessment-documents',
+    'label' => 'Assessment document',
+    'shared' => true,
+    'content_allowed' => true,
+    'fields_allowed' => true,
+    'author' => 'common',
+    'allow_duplicates' => true,
+  ]);
+}
+
 function createVocabularies() {
   $vocabularies = [
-    'organizations',
-    'locations',
-    'disasters',
-    'units_of_measurement',
-    'assessment_status',
+    'Organizations' => 'ar_organizations',
+    'Locations' => 'ar_locations',
+    'Units of measurement' => 'ar_units_of_measurement',
+    'Assessment status' => 'ar_assessment_status',
   ];
 
-  foreach ($vocabularies as $vocabulary) {
+  foreach ($vocabularies as $vocabulary => $machine_name) {
     post('http://docstore.local.docksal/api/vocabularies', [
       'label' => $vocabulary,
+      'machine_name' => $machine_name,
       'author' => 'AR',
     ]);
   }
@@ -52,9 +76,10 @@ function createAssessmentDocumentFields() {
     ],
   ];
 
-  foreach ($fields as $field) {
+  foreach ($fields as $machine_name => $field) {
     post('http://docstore.local.docksal/api/fields/assessment-documents', [
       'label' => $field['label'],
+      'machine_name' => $machine_name,
       'type' => $field['type'],
       'multiple' => $field['multiple'] ?? FALSE,
       'author' => 'AR',
@@ -66,8 +91,8 @@ function createAssessmentFields() {
   $fields = [
     'id' => [
       'label' => 'Id',
-      'type' => 'integer',
-      'multiple' => TRUE,
+      'type' => 'string',
+      'multiple' => FALSE,
     ],
     'contacts' => [
       'label' => 'Contacts',
@@ -83,19 +108,19 @@ function createAssessmentFields() {
     'organizations' => [
       'label' => 'Organizations',
       'type' => 'term_reference',
-      'target' => 'silk_organizations',
+      'target' => 'ar_organizations',
       'multiple' => TRUE,
     ],
     'asst_organizations' => [
       'label' => 'Other organizations',
       'type' => 'term_reference',
-      'target' => 'silk_organizations',
+      'target' => 'ar_organizations',
       'multiple' => TRUE,
     ],
     'locations' => [
       'label' => 'Locations',
       'type' => 'term_reference',
-      'target' => 'silk_locations',
+      'target' => 'ar_locations',
       'multiple' => TRUE,
     ],
     'population_types' => [
@@ -113,7 +138,7 @@ function createAssessmentFields() {
     'units_of_measurement' => [
       'label' => 'units_of_measurement',
       'type' => 'term_reference',
-      'target' => 'silk_units_of_measurement',
+      'target' => 'ar_units_of_measurement',
       'multiple' => TRUE,
     ],
     'disasters' => [
@@ -142,9 +167,10 @@ function createAssessmentFields() {
     ],
   ];
 
-  foreach ($fields as $field) {
+  foreach ($fields as $machine_name => $field) {
     $data = [
       'label' => $field['label'],
+      'machine_name' => $machine_name,
       'type' => $field['type'],
       'multiple' => $field['multiple'] ?? FALSE,
       'author' => 'AR',
@@ -174,7 +200,7 @@ function syncAssesments($url = '') {
       'files' => [],
     ];
 
-    $assessment['metadata'][] = ['silk_id' => $row->id];
+    $assessment['metadata'][] = ['id' => $row->id];
 
     // Disasters.
     if (isset($row->disasters) && !empty($row->disasters)) {
@@ -184,28 +210,30 @@ function syncAssesments($url = '') {
           '_action' => 'lookup',
           '_reference' => 'node',
           '_target' => 'disaster',
-          '_field' => 'silk_glide_number',
+          '_field' => 'glide_number',
           'value' => $disaster->glide,
         ];
       }
 
-      $assessment['metadata'][] = ['silk_disasters' => $disaster_data];
+      $assessment['metadata'][] = ['disasters' => $disaster_data];
     }
 
     // Local coordination groups aka bundles.
     if (isset($row->bundles) && !empty($row->bundles)) {
       $bundle_data = [];
       foreach ($row->bundles as $bundle) {
-        $bundle_data[] = [
-          '_action' => 'lookup',
-          '_reference' => 'term',
-          '_target' => 'shared_local_coordination_group',
-          '_field' => 'id',
-          'value' => $bundle->id,
-        ];
+        if (isset($bundle->id)) {
+          $bundle_data[] = [
+            '_action' => 'lookup',
+            '_reference' => 'term',
+            '_target' => 'shared_local_coordination_group',
+            '_field' => 'id',
+            'value' => $bundle->id,
+          ];
+        }
       }
 
-      $assessment['metadata'][] = ['silk_local_groups' => $bundle_data];
+      $assessment['metadata'][] = ['local_groups' => $bundle_data];
     }
 
     // Organizations.
@@ -215,7 +243,7 @@ function syncAssesments($url = '') {
         $organization_data[] = $organization->label;
       }
 
-      $assessment['metadata'][] = ['silk_organizations_label' => $organization_data];
+      $assessment['metadata'][] = ['organizations_label' => $organization_data];
     }
 
     $assessment['author'] = 'AR';
@@ -238,6 +266,7 @@ function syncAssesments($url = '') {
   }
 }
 
+createNodeType();
 createVocabularies();
 createAssessmentDocumentFields();
 createAssessmentFields();

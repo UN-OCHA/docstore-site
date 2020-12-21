@@ -24,7 +24,7 @@ function docstore_global_coordination_groups_vocabularies() {
 function docstore_global_coordination_groups_fields() {
   return [
     'shared_global_coordination_group' => [
-      'id' => 'integer',
+      'id' => 'string',
       'acronym' => 'string',
       'group_type' => 'string',
       'homepage' => 'string',

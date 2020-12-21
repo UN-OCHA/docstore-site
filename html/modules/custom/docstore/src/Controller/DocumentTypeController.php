@@ -72,6 +72,9 @@ class DocumentTypeController extends ControllerBase {
       throw new BadRequestHttpException('You have to pass a JSON object');
     }
 
+    // Make sure endpoints are fresh.
+    $this->rebuildEndpoints();
+
     $manager = new ManageFields($provider, '', $this->entityFieldManager);
     $data = $manager->createDocumentType($params);
 

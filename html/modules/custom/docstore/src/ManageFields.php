@@ -324,7 +324,7 @@ class ManageFields {
       $machine_name = $this->generateUniqueMachineName($params['label'], 'node_type');
     }
 
-    if (!$this->validEndpoint($machine_name)) {
+    if (!$this->validEndpoint($params['endpoint'])) {
       throw new \Exception('Endpoint is not allowed');
     }
 
@@ -682,14 +682,14 @@ class ManageFields {
     ]);
 
     // Mark vocabulary as shared.
-    $vocabulary->setThirdPartySetting('docstore', 'shared', $params['shared'] ?? FALSE);
+    $vocabulary->setThirdPartySetting('docstore', 'shared', $params['shared'] ?? TRUE);
     $vocabulary->setThirdPartySetting('docstore', 'private', !$vocabulary->getThirdPartySetting('docstore', 'shared'));
 
     // Can other providers add content.
-    $vocabulary->setThirdPartySetting('docstore', 'content_allowed', $params['content_allowed'] ?? FALSE);
+    $vocabulary->setThirdPartySetting('docstore', 'content_allowed', $params['content_allowed'] ?? TRUE);
 
     // Can other providers add fields.
-    $vocabulary->setThirdPartySetting('docstore', 'fields_allowed', $params['fields_allowed'] ?? FALSE);
+    $vocabulary->setThirdPartySetting('docstore', 'fields_allowed', $params['fields_allowed'] ?? TRUE);
 
     // Set base information.
     $vocabulary->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());

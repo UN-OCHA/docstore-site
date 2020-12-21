@@ -28,6 +28,19 @@ function post($url, $data) {
   }
 }
 
+function createNodeType() {
+  post('http://docstore.local.docksal/api/types', [
+    'machine_name' => 'knowledge_management',
+    'endpoint' => 'knowledge-managements',
+    'label' => 'Knowledge management',
+    'shared' => true,
+    'content_allowed' => true,
+    'fields_allowed' => true,
+    'author' => 'common',
+    'allow_duplicates' => true,
+  ]);
+}
+
 function createVocabularies() {
   $vocabularies = [
     'Context' => 'ar_context',
@@ -203,6 +216,7 @@ function syncKM() {
   post(API_URL . 'api/knowledge-managements/bulk', $data);
 }
 
+createNodeType();
 createVocabularies();
 createKMFields();
 syncKM();

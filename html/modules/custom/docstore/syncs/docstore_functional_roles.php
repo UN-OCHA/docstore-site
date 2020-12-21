@@ -24,7 +24,7 @@ function docstore_functional_roles_vocabularies() {
 function docstore_functional_roles_fields() {
   return [
     'shared_functional_roles' => [
-      'id' => 'integer',
+      'id' => 'string',
       'scope' => 'string',
     ],
   ];

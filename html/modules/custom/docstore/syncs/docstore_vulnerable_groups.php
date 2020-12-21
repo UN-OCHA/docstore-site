@@ -24,7 +24,7 @@ function docstore_vulnerable_groups_vocabularies() {
 function docstore_vulnerable_groups_fields() {
   return [
     'shared_vulnerable_groups' => [
-      'id' => 'integer',
+      'id' => 'string',
     ],
   ];
 }

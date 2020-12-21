@@ -24,7 +24,7 @@ function docstore_themes_vocabularies() {
 function docstore_themes_fields() {
   return [
     'shared_themes' => [
-      'id' => 'integer',
+      'id' => 'string',
     ],
   ];
 }
