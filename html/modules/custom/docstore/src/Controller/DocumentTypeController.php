@@ -11,7 +11,6 @@ use Drupal\docstore\DocumentTypeTrait;
 use Drupal\docstore\ManageFields;
 use Drupal\docstore\ProviderTrait;
 use Drupal\node\Entity\NodeType;
-use Nette\NotImplementedException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
