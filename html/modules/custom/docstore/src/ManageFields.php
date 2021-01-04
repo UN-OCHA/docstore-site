@@ -370,6 +370,61 @@ class ManageFields {
   }
 
   /**
+   * Update document type.
+   *
+   * @param string $type
+   *   Label and author.
+   * @param array $params
+   *   Label and author.
+   *
+   * @return \Drupal\node\Entity\NodeType
+   *   Newly created document type.
+   */
+  public function updateDocumentType($type, array $params) {
+    if (isset($params['author'])) {
+      throw new \Exception('Author can not be changed');
+    }
+
+    if (isset($params['endpoint'])) {
+      throw new \Exception('Endpoint can not be changed');
+    }
+
+    if (isset($params['machine_name'])) {
+      throw new \Exception('Machine name can not be changed');
+    }
+
+    $node_type = NodeType::load($type);
+
+    if (!$node_type) {
+      throw new \Exception('Unknown type');
+    }
+
+    // Update name/label.
+    if (isset($params['label'])) {
+      $node_type->set('name', $params['label']);
+    }
+
+    // Mark document type as shared.
+    $node_type->setThirdPartySetting('docstore', 'shared', $params['shared'] ?? FALSE);
+    $node_type->setThirdPartySetting('docstore', 'private', !$node_type->getThirdPartySetting('docstore', 'shared'));
+
+    // Can other providers add content.
+    $node_type->setThirdPartySetting('docstore', 'content_allowed', $params['content_allowed'] ?? FALSE);
+
+    // Can other providers add fields.
+    $node_type->setThirdPartySetting('docstore', 'fields_allowed', $params['fields_allowed'] ?? FALSE);
+
+    // Set base information.
+    $node_type->setThirdPartySetting('docstore', 'allow_duplicates', $params['allow_duplicates'] ?? TRUE);
+
+    $node_type->save();
+
+    docstore_notify_webhooks('document_type:update', $type);
+
+    return $node_type;
+  }
+
+  /**
    * Get document fields.
    */
   public function getDocumentFields() {

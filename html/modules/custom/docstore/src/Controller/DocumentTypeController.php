@@ -76,7 +76,7 @@ class DocumentTypeController extends ControllerBase {
     $this->rebuildEndpoints();
 
     $manager = new ManageFields($provider, '', $this->entityFieldManager);
-    $data = $manager->createDocumentType($params);
+    $data = $this->buildJsonOutput($manager->createDocumentType($params));
 
     // Rebuild endpoints.
     $this->rebuildEndpoints();
@@ -139,7 +139,24 @@ class DocumentTypeController extends ControllerBase {
       throw new BadRequestHttpException('Type not supported.');
     }
 
-    throw new NotImplementedException('Type not supported.');
+    // Get provider.
+    $provider = $this->requireProvider();
+
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
+
+    // Make sure endpoints are fresh.
+    $this->rebuildEndpoints();
+
+    $manager = new ManageFields($provider, '', $this->entityFieldManager);
+    $data = $this->buildJsonOutput($manager->updateDocumentType($type, $params));
+
+    $response = new JsonResponse($data);
+    $response->setStatusCode(200);
+    return $response;
   }
 
   /**

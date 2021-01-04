@@ -7,7 +7,7 @@
 - [x] check endpoint, use white/black list to avoid clashes
 - [ ] add permission
 - [ ] delete when empty
-- [ ] implement PUT, PATCH
+- [x] implement PUT, PATCH
 
 ## Naming conventions for fields, vocabularies
 
