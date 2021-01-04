@@ -24,7 +24,7 @@ function docstore_disasters_vocabularies() {
 function docstore_disasters_fields() {
   return [
     'shared_disaster_types' => [
-      'id' => 'integer',
+      'id' => 'string',
       'disaster_type_code' => 'string',
     ],
   ];

@@ -237,7 +237,7 @@ function _docstore_setup_testing() {
 /**
  * Create node type.
  */
-function docstore_create_node_type($type = 'document') {
+function docstore_create_node_type($type = 'document', $endpoint = 'documents') {
   if (NodeType::load($type)) {
     return;
   }
@@ -246,6 +246,7 @@ function docstore_create_node_type($type = 'document') {
   $manager = new ManageFields($provider, $type, Drupal::service('entity_field.manager'), Drupal::service('database'));
   $manager->createDocumentType([
     'label' => ucfirst($type),
+    'endpoint' => $endpoint,
     'author' => 'common',
     'fields_allowed' => TRUE,
     'content_allowed' => TRUE,

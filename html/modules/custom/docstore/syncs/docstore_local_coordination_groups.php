@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Sync themes from vocabulary.
+ * Sync global_coordination_groups from vocabulary.
  */
 
 use Drupal\docstore\ManageFields;
@@ -12,19 +12,22 @@ use Drupal\taxonomy\Entity\Vocabulary;
 /**
  * List of vocabularies.
  */
-function docstore_themes_vocabularies() {
+function docstore_global_coordination_groups_vocabularies() {
   return [
-    'shared_themes' => 'Themes',
+    'shared_local_coordination_groups' => 'Local coordination groups',
   ];
 }
 
 /**
  * List of fields.
  */
-function docstore_themes_fields() {
+function docstore_global_coordination_groups_fields() {
   return [
-    'shared_themes' => [
-      'id' => 'string',
+    'shared_local_coordination_groups' => [
+      'id' => 'integer',
+      'email' => 'string',
+      'website' => 'string',
+      'type' => 'string',
     ],
   ];
 }
@@ -32,11 +35,11 @@ function docstore_themes_fields() {
 /**
  * Ensure vocabularies do exist.
  */
-function docstore_themes_ensure_vocabularies() {
+function docstore_global_coordination_groups_ensure_vocabularies() {
   $provider = user_load(2);
   $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('database'));
 
-  foreach (docstore_themes_vocabularies() as $machine_name => $label) {
+  foreach (docstore_global_coordination_groups_vocabularies() as $machine_name => $label) {
     $vocabulary = Vocabulary::load($machine_name);
     if (!$vocabulary) {
       $vocabulary = $manager->createVocabulary([
@@ -52,11 +55,11 @@ function docstore_themes_ensure_vocabularies() {
 /**
  * Ensure vocabulary fields do exist.
  */
-function docstore_themes_ensure_vocabulary_fields() {
+function docstore_global_coordination_groups_ensure_vocabulary_fields() {
   $provider = user_load(2);
   $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('database'));
 
-  foreach (docstore_themes_fields() as $machine_name => $fields) {
+  foreach (docstore_global_coordination_groups_fields() as $machine_name => $fields) {
     $vocabulary = Vocabulary::load($machine_name);
     foreach ($fields as $label => $type) {
       if (is_array($type)) {
@@ -79,17 +82,17 @@ function docstore_themes_ensure_vocabulary_fields() {
 }
 
 /**
- * Sync themes from vocabulary.
+ * Sync global_coordination_groups from vocabulary.
  */
-function docstore_disaster_types_sync() {
-  docstore_themes_ensure_vocabularies();
-  docstore_themes_ensure_vocabulary_fields();
+function docstore_vulnerable_group_sync() {
+  docstore_global_coordination_groups_ensure_vocabularies();
+  docstore_global_coordination_groups_ensure_vocabulary_fields();
 
   $http_client = \Drupal::httpClient();
-  $url = 'https://api.reliefweb.int/v1/references/themes?appname=vocabulary';
+  $url = 'https://vocabulary.unocha.org/json/beta-v1/global_coordination_groups.json';
 
   // Load vocabulary.
-  $vocabulary = Vocabulary::load('shared_themes');
+  $vocabulary = Vocabulary::load('shared_local_coordination_groups');
 
   // Load provider.
   $provider = user_load(2);
@@ -100,10 +103,10 @@ function docstore_disaster_types_sync() {
     $data = json_decode($raw);
 
     foreach ($data->data as $row) {
-      $term = taxonomy_term_load_multiple_by_name($row->fields->name, $vocabulary->id());
+      $term = taxonomy_term_load_multiple_by_name($row->label, $vocabulary->id());
       if (!$term) {
         $item = [
-          'name' => $row->fields->name,
+          'name' => $row->label,
           'vid' => $vocabulary->id(),
           'created' => [],
           'base_provider_uuid' => [],
@@ -132,16 +135,13 @@ function docstore_disaster_types_sync() {
         $term = reset($term);
       }
 
-      $fields = docstore_themes_fields()[$vocabulary->id()];
-      // Add description field.
-      $fields['description'] = 'string';
-
+      $fields = docstore_global_coordination_groups_fields()[$vocabulary->id()];
       foreach ($fields as $name => $type) {
         $field_name = str_replace('-', '_', $name);
         if ($term->hasField($field_name)) {
           $value = FALSE;
-          if (isset($row->fields->{$name})) {
-            $value = $row->fields->{$name};
+          if (isset($row->{$name})) {
+            $value = $row->{$name};
           }
 
           if ($type === 'boolean') {
@@ -182,4 +182,4 @@ function docstore_disaster_types_sync() {
 }
 
 // Auto execute.
-docstore_disaster_types_sync();
+docstore_vulnerable_group_sync();

@@ -63,7 +63,7 @@ class DownloadController extends ControllerBase {
       throw new BadRequestHttpException('No shared secret defined');
     }
 
-    $calculated_hash = md5($provider->get('shared_secret')->value . $file_uuid . $provider_uuid);
+    $calculated_hash = md5($provider->get('shared_secret')->value . $media_uuid . $provider_uuid);
     if ($hash !== $calculated_hash) {
       throw new BadRequestHttpException('Hash does not match');
     }

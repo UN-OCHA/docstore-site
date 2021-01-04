@@ -8,6 +8,7 @@ use Drupal\Core\Routing\RouteMatch;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
@@ -45,11 +46,21 @@ final class DocstoreExceptionSubscriber implements EventSubscriberInterface {
 
     // If the exception is cacheable, generate a cacheable response.
     if ($exception instanceof CacheableDependencyInterface) {
-      $response = new CacheableJsonResponse(['message' => $event->getException()->getMessage()], $exception->getStatusCode(), $exception->getHeaders());
+      if (!$exception instanceof HttpException) {
+        $response = new CacheableJsonResponse(['message' => $exception->getMessage()], 500);
+      }
+      else {
+        $response = new CacheableJsonResponse(['message' => $exception->getMessage()], $exception->getStatusCode(), $exception->getHeaders());
+      }
       $response->addCacheableDependency($exception);
     }
     else {
-      $response = new JsonResponse(['message' => $event->getException()->getMessage()], $exception->getStatusCode(), $exception->getHeaders());
+      if (!$exception instanceof HttpException) {
+        $response = new JsonResponse(['message' => $exception->getMessage()], 500);
+      }
+      else {
+        $response = new JsonResponse(['message' => $exception->getMessage()], $exception->getStatusCode(), $exception->getHeaders());
+      }
     }
 
     $event->setResponse($response);

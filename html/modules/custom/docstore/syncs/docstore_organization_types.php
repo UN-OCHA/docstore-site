@@ -24,7 +24,7 @@ function docstore_organization_types_vocabularies() {
 function docstore_organization_types_fields() {
   return [
     'shared_organization_types' => [
-      'id' => 'integer',
+      'id' => 'string',
       'reliefweb_id' => 'integer',
       'reliefweb_label' => 'string',
       'scope' => 'string',

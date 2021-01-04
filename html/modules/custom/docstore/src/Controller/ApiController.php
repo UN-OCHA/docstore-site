@@ -15,35 +15,39 @@ use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystem;
-use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\State\State;
 use Drupal\Core\StreamWrapper\StreamWrapperManager;
-use Drupal\user\Entity\User;
-use Drupal\docstore\ParseQueryParameters;
+use Drupal\docstore\DocumentTypeTrait;
 use Drupal\docstore\ManageFields;
+use Drupal\docstore\ParseQueryParameters;
 use Drupal\entity_usage\EntityUsage;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\file\Entity\File;
 use Drupal\file\FileUsage\FileUsageInterface;
 use Drupal\media\Entity\Media;
 use Drupal\node\Entity\Node;
-use Drupal\search_api\Entity\Index;
 use Drupal\search_api_solr\SearchApiSolrException;
 use Drupal\search_api_solr\SolrBackendInterface;
+use Drupal\search_api\Entity\Index;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\taxonomy\Entity\Vocabulary;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Drupal\user\Entity\User;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException;
 
 /**
  * Controller for API endpoints.
  */
 class ApiController extends ControllerBase {
+
+  use DocumentTypeTrait;
 
   /**
    * The config.
@@ -176,7 +180,13 @@ class ApiController extends ControllerBase {
     // Check if type is allowed.
     $node_type = $this->typeAllowed($type, 'read');
 
-    $data = [];
+    // Check if provider has access.
+    $provider = $this->getProvider();
+    if (!$this->providerCanRead($node_type, $provider)) {
+      throw new AccessDeniedHttpException(strtr('You do not have access to read @type', [
+        '@type' => $node_type,
+      ]));
+    }
 
     // Query index.
     $index = Index::load('documents');
@@ -213,7 +223,6 @@ class ApiController extends ControllerBase {
     }
 
     // Check published and private.
-    $provider = $this->getProvider();
     if ($provider->isAnonymous()) {
       $query->addCondition('published', TRUE);
       $query->addCondition('private', TRUE, '<>');
@@ -252,7 +261,7 @@ class ApiController extends ControllerBase {
     }
 
     // Massage the data.
-    $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index, $request->getSchemeAndHttpHost());
+    $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index, $request->getSchemeAndHttpHost(), $provider);
 
     // Add cache tags.
     $cache_tags['#cache'] = [
@@ -344,6 +353,7 @@ class ApiController extends ControllerBase {
         }
       }
 
+      // @todo Check for private fields, vocabularies.
       // Remove files fields.
       foreach ($row as $key => $value) {
         if (strpos($key, 'files_') === 0) {
@@ -640,7 +650,13 @@ class ApiController extends ControllerBase {
     // Check if type is allowed.
     $node_type = $this->typeAllowed($type, 'read');
 
-    $data = [];
+    // Check if provider has access.
+    $provider = $this->getProvider();
+    if (!$this->providerCanRead($node_type, $provider)) {
+      throw new AccessDeniedHttpException(strtr('You do not have access to read @type', [
+        '@type' => $node_type,
+      ]));
+    }
 
     // Query index.
     $index = Index::load('documents');
@@ -685,7 +701,7 @@ class ApiController extends ControllerBase {
       throw new BadRequestHttpException('Only solr backend is supported');
     }
 
-    $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index, $request->getSchemeAndHttpHost());
+    $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index, $request->getSchemeAndHttpHost(), $provider);
 
     if (empty($data)) {
       throw new NotFoundHttpException(strtr('Document @uuid does not exist', ['@uuid' => $id]));
@@ -2998,21 +3014,17 @@ class ApiController extends ControllerBase {
    * Get allowed endpoints.
    */
   protected function typeAllowed($type, $mode = 'read') {
-    $config = _docstore_get_allowed_api_endpoints();
-
-    if (!isset($config[$type])) {
-      throw new BadRequestHttpException('Type not supported.');
+    // Allow read operations on "any" endpoint.
+    if ($type === 'any' && $mode === 'read') {
+      return 'any';
     }
 
-    if (!isset($config[$type][$mode])) {
-      throw new BadRequestHttpException('Type not supported.');
+    // Allow read operations on "all" endpoint.
+    if ($type === 'all' && $mode === 'read') {
+      return 'any';
     }
 
-    if (!$config[$type][$mode]) {
-      throw new BadRequestHttpException('Type not supported.');
-    }
-
-    return $config[$type][$mode];
+    return $this->EndpointGetNodeType($type);
   }
 
   /**

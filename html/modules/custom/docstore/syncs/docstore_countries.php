@@ -30,7 +30,7 @@ function docstore_countries_fields() {
       'dgacm-list' => 'boolean',
       'fts_api_id' => 'integer',
       'hrinfo_id' => 'integer',
-      'id' => 'integer',
+      'id' => 'string',
       'iso2' => 'string',
       'iso3' => 'string',
       'm49' => 'integer',

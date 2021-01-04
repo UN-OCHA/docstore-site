@@ -25,6 +25,19 @@ function post($url, $data) {
   }
 }
 
+function createNodeType() {
+  post('http://docstore.local.docksal/api/types', [
+    'machine_name' => 'disaster',
+    'endpoint' => 'disasters',
+    'label' => 'disaster',
+    'shared' => true,
+    'content_allowed' => true,
+    'fields_allowed' => true,
+    'author' => 'common',
+    'allow_duplicates' => true,
+  ]);
+}
+
 function createVocabularies() {
   $vocabularies = [
     'disaster_status',
@@ -42,7 +55,7 @@ function createDisasterFields() {
   $fields = [
     'id' => [
       'label' => 'Id',
-      'type' => 'integer',
+      'type' => 'string',
     ],
     'glide' => [
       'label' => 'Glide number',
@@ -87,10 +100,11 @@ function createDisasterFields() {
     ],
   ];
 
-  foreach ($fields as $field) {
+  foreach ($fields as $machine_name => $field) {
     print('Creating ' . $field['label']);
     $data = [
       'label' => $field['label'],
+      'machine_name' => $machine_name,
       'type' => $field['type'],
       'multiple' => $field['multiple'] ?? FALSE,
       'author' => 'RW',
@@ -127,24 +141,24 @@ function syncDisasters($url = '') {
     ];
 
     // Id.
-    $disaster['metadata'][] = ['silk_id' => $row->fields->id];
+    $disaster['metadata'][] = ['id' => $row->fields->id];
 
     // Status.
-    $disaster['metadata'][] = ['silk_disaster_status' => $row->fields->status];
+    $disaster['metadata'][] = ['disaster_status' => $row->fields->status];
 
     // Glide.
     if (isset($row->fields->glide)) {
-      $disaster['metadata'][] = ['silk_glide_number' => $row->fields->glide];
+      $disaster['metadata'][] = ['glide_number' => $row->fields->glide];
     }
 
     // Profile.
     if (isset($row->fields->profile->overview)) {
-      $disaster['metadata'][] = ['silk_profile' => $row->fields->profile->overview];
+      $disaster['metadata'][] = ['profile' => $row->fields->profile->overview];
     }
 
     // Description.
     if (isset($row->fields->description)) {
-      $disaster['metadata'][] = ['silk_description' => $row->fields->description];
+      $disaster['metadata'][] = ['description' => $row->fields->description];
     }
 
     // Disaster type.
@@ -160,7 +174,7 @@ function syncDisasters($url = '') {
         ];
       }
 
-      $disaster['metadata'][] = ['silk_disaster_type' => $type_data];
+      $disaster['metadata'][] = ['disaster_type' => $type_data];
     }
 
     // Primary disaster type.
@@ -173,7 +187,7 @@ function syncDisasters($url = '') {
         'value' => $row->fields->primary_type->code,
       ];
 
-      $disaster['metadata'][] = ['silk_primary_disaster_type' => [$type_data]];
+      $disaster['metadata'][] = ['primary_disaster_type' => [$type_data]];
     }
 
     // Country.
@@ -189,10 +203,10 @@ function syncDisasters($url = '') {
         ];
       }
 
-      $disaster['metadata'][] = ['silk_country' => $country_data];
+      $disaster['metadata'][] = ['country' => $country_data];
     }
 
-    // Primary disaster type.
+    // Primary country.
     if (isset($row->fields->primary_country) && !empty($row->fields->primary_country)) {
       $country_data = [
         '_action' => 'lookup',
@@ -202,7 +216,7 @@ function syncDisasters($url = '') {
         'value' => $row->fields->primary_country->iso3,
       ];
 
-      $disaster['metadata'][] = ['silk_primary_country' => [$country_data]];
+      $disaster['metadata'][] = ['primary_country' => [$country_data]];
     }
 
     $disaster['author'] = 'RW';
@@ -223,6 +237,7 @@ function syncDisasters($url = '') {
   }
 }
 
+createNodeType();
 createVocabularies();
 createDisasterFields();
 syncDisasters();
