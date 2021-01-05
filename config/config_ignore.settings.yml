@@ -4,6 +4,9 @@ ignored_config_entities:
   - 'field.field.taxonomy_term.*'
   - 'node.type.*'
   - 'field.storage.node.*'
+  - ~field.storage.node.author
+  - ~field.storage.node.files
+  - ~field.storage.node.private
   - 'field.field.node.*'
   - search_api.index.documents
   - 'core.entity_view_display.taxonomy_term.*'
