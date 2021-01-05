@@ -416,7 +416,7 @@ class ApiController extends ControllerBase {
     $node_type = $this->typeAllowed($type, 'write');
 
     /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->entityTypeManager->getStorage('node_type')->load($type);
+    $node_type = $this->entityTypeManager->getStorage('node_type')->load($node_type);
 
     // Check if provider can create terms.
     if ($node_type->getThirdPartySetting('docstore', 'provider_uuid') !== $provider->uuid) {
