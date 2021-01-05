@@ -399,6 +399,10 @@ class ManageFields {
       throw new \Exception('Unknown type');
     }
 
+    if ($node_type->getThirdPartySetting('docstore', 'provider_uuid') !== $this->provider->uuid()) {
+      throw new \Exception('Only the owner can update');
+    }
+
     // Update name/label.
     if (isset($params['label'])) {
       $node_type->set('name', $params['label']);
@@ -463,7 +467,6 @@ class ManageFields {
     $params['private'] = $params['private'] ?? FALSE;
 
     // Create field.
-    // @todo pass params?
     if (in_array($params['type'], ['node_reference', 'term_reference'])) {
       return $this->createDocumentReferenceField($params['author'], $params['label'], $params['machine_name'], $params['type'], $params['target'], $params['multiple'], $params['required'], $params['private']);
     }
