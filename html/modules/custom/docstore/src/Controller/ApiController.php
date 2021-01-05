@@ -413,10 +413,10 @@ class ApiController extends ControllerBase {
    */
   protected function createDocumentForProvider($type, $params, $provider) {
     // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'write');
+    $document_type = $this->typeAllowed($type, 'write');
 
     /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->entityTypeManager->getStorage('node_type')->load($node_type);
+    $node_type = $this->entityTypeManager->getStorage('node_type')->load($document_type);
 
     // Check if provider can create terms.
     if ($node_type->getThirdPartySetting('docstore', 'provider_uuid') !== $provider->uuid) {
@@ -436,7 +436,7 @@ class ApiController extends ControllerBase {
 
     // Create node.
     $item = [
-      'type' => $node_type->id(),
+      'type' => $document_type,
       'title' => $params['title'],
       'uid' => $provider->id(),
       'author' => [],
@@ -507,7 +507,7 @@ class ApiController extends ControllerBase {
           // Check for label keys.
           if (strpos($key, '_label')) {
             $key = str_replace('_label', '', $key);
-            $values = $this->mapOrCreateTerms($key, $values, $node_type, $provider, $params['author']);
+            $values = $this->mapOrCreateTerms($key, $values, $document_type, $provider, $params['author']);
           }
 
           if (!is_array($values)) {
