@@ -14,7 +14,7 @@ use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\State\State;
-use Drupal\docstore\DocumentTypeTrait;
+use Drupal\docstore\ProviderTrait;
 use Drupal\docstore\ManageFields;
 use Drupal\entity_usage\EntityUsage;
 use Drupal\field\Entity\FieldConfig;
@@ -31,12 +31,12 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class VocabularyController extends ControllerBase {
 
-  use DocumentTypeTrait;
+  use ProviderTrait;
 
   /**
    * The config.
    *
-   * @var \Drupal\Core\Config\Config
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected $config;
 
@@ -459,36 +459,6 @@ class VocabularyController extends ControllerBase {
   }
 
   /**
-   * Get provider.
-   *
-   * @return \Drupal\user_bundle\Entity\TypedUser|false
-   *   The provider if found.
-   */
-  protected function getProvider() {
-    /** @var Drupal\Core\Session\AccountProxy $current_user */
-    $current_user = $this->currentUser();
-    $provider = $current_user->getAccount();
-
-    return $provider;
-  }
-
-  /**
-   * Require provider.
-   *
-   * @return \Drupal\user_bundle\Entity\TypedUser|false
-   *   The provider if found.
-   */
-  protected function requireProvider() {
-    $provider = $this->getProvider();
-
-    if (!$provider || $provider->isAnonymous()) {
-      throw new BadRequestHttpException('Provider is required');
-    }
-
-    return $provider;
-  }
-
-  /**
    * Get vocabulary machine name.
    */
   protected function getVocabularyMachineName($id) {
@@ -621,7 +591,7 @@ class VocabularyController extends ControllerBase {
    * @return \Drupal\taxonomy\Entity\Term
    *   Newly created term.
    */
-  protected function createTermFromParameters(array $params, Vocabulary $vocabulary, User $provider) {
+  public function createTermFromParameters(array $params, Vocabulary $vocabulary, User $provider) {
     // Term.
     $item = [
       'name' => $params['label'],
