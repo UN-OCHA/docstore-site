@@ -23,7 +23,6 @@ use Drupal\docstore\DocumentTypeTrait;
 use Drupal\docstore\ManageFields;
 use Drupal\docstore\ProviderTrait;
 use Drupal\docstore\ParseQueryParameters;
-use Drupal\docstore\Controller\VocabularyController;
 use Drupal\entity_usage\EntityUsage;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\file\Entity\File;
