@@ -415,6 +415,16 @@ class ApiController extends ControllerBase {
     // Check if type is allowed.
     $node_type = $this->typeAllowed($type, 'write');
 
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->entityTypeManager->getStorage('node_type')->load($type);
+
+    // Check if provider can create terms.
+    if ($node_type->getThirdPartySetting('docstore', 'provider_uuid') !== $provider->uuid) {
+      if (!$node_type->getThirdPartySetting('docstore', 'content_allowed', FALSE)) {
+        throw new \Exception(strtr('You are not allowed to create new documents in @node_type', ['@node_type' => $node_type->label()]));
+      }
+    }
+
     // Check required fields.
     if (empty($params['title'])) {
       throw new BadRequestHttpException('Title is required');
@@ -426,7 +436,7 @@ class ApiController extends ControllerBase {
 
     // Create node.
     $item = [
-      'type' => $node_type,
+      'type' => $node_type->id(),
       'title' => $params['title'],
       'uid' => $provider->id(),
       'author' => [],
@@ -1149,8 +1159,6 @@ class ApiController extends ControllerBase {
 
     // Create field.
     $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
-
-    // Create field.
     try {
       $field_name = $manager->addDocumentField($params);
     }
@@ -1306,11 +1314,6 @@ class ApiController extends ControllerBase {
     // Load vocabulary.
     $vocabulary = $this->loadVocabulary($bundle);
 
-    // Loop values.
-    if (!is_array($values)) {
-      $values = [$values];
-    }
-
     $vocabulary_controller = new VocabularyController(
       $this->config,
       $this->database,
@@ -1321,6 +1324,11 @@ class ApiController extends ControllerBase {
       $this->state,
       $this->entityUsage,
     );
+
+    // Loop values.
+    if (!is_array($values)) {
+      $values = [$values];
+    }
 
     foreach ($values as &$value) {
       $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
@@ -1333,6 +1341,13 @@ class ApiController extends ControllerBase {
         $value = $term->uuid();
 
         continue;
+      }
+
+      // Check if provider can create terms.
+      if ($vocabulary->getThirdPartySetting('docstore', 'provider_uuid') !== $provider->uuid) {
+        if (!$vocabulary->getThirdPartySetting('docstore', 'content_allowed', FALSE)) {
+          throw new \Exception(strtr('You are not allowed to create new terms in @vocabulary', ['@vocabulary' => $vocabulary->label()]));
+        }
       }
 
       // Create term.
