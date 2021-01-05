@@ -20,6 +20,9 @@ services:
   docstore.api_controller:
     class: \Drupal\docstore\Controller\ApiController
     arguments: ['@config.factory', '@database', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@transliteration', '@file.mime_type.guesser', '@file_system', '@file.usage', '@logger.factory', '@state', '@entity_usage.usage']
+  docstore.vocabulary_controller:
+    class: \Drupal\docstore\Controller\VocabularyController
+    arguments: ['@config.factory', '@database', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@logger.factory', '@state', '@entity_usage.usage']
   docstore.doctype_controller:
     class: \Drupal\docstore\Controller\DocumentTypeController
     arguments: ['@config.factory', '@entity_field.manager', '@entity_type.manager', '@logger.factory']

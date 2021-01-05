@@ -2851,6 +2851,7 @@ class ApiController extends ControllerBase {
       $usage_list = array_keys($usage_list);
 
       foreach ($usage_list as $media_id) {
+        /** @var \Drupal\media\Entity\Media $media_entity */
         $media_entity = $this->entityTypeManager->getStorage('media')->load($media_id);
 
         // Move old file to revisions.
