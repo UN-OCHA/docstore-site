@@ -399,6 +399,10 @@ class ManageFields {
       throw new \Exception('Unknown type');
     }
 
+    if ($node_type->getThirdPartySetting('docstore', 'provider_uuid') !== $this->provider->uuid()) {
+      throw new \Exception('Only the owner can update');
+    }
+
     // Update name/label.
     if (isset($params['label'])) {
       $node_type->set('name', $params['label']);
