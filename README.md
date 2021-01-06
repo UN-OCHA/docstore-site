@@ -20,6 +20,7 @@ To get/update information you can use the `api/me` endpoint.
 curl -X GET "https://docstore.local.docksal/api/me" -H  "accept: application/json" -H  "API-KEY: abcd" | jq
 ```
 
+All POST, PUT, PATCH and DELETE operation do require an API key. To be able to get private and unpublished documents you need an API key as well.
 ## Document types ([Docs](https://un-ocha.github.io/doc-store-api/#/DocumentType/post-types))
 
 The document store supports multiple document types ("Content types"), these can be created using the API using the `api/types` endpoint.
@@ -79,6 +80,10 @@ For all read operation there's and endpoint `api/any` which will query all defin
 
 `metadata` contains values for fields, the default format is `"field_name": "value"` but other formats are supported as well.
 
+### Create documents in bulk
+
+You can create multiple documents at once using the `api/{type}/bulk` end point by passing an array of JSON objects.
+
 ### Reference terms using their label
 
 For all fields referencing terms, the API allows you to use the `_label` suffix to specify the label instead of the uuid.
@@ -99,9 +104,44 @@ Example
   }
 ```
 
-## Vocabularies and terms
+## Vocabularies
+
+Creating vocabularies can be at `api/vocabularies`
+
+| field | default | required | info |
+| ----- | ------- | -------- | ---- |
+| machine_name | | Yes | internal name, will be generated if not specified |
+| label | | Yes | visible name |
+| shared | true | No | Other users can reference this vocabulary |
+| content_allowed | true | No | Other providers can create new terms |
+| fields_allowed | true | No | Other providers can add their fields |
+| author | | Yes | The person who created this |
+| allow_duplicates | true | No | Allow duplicate term names |
+
+Creating fields on a vocabulary is the same process as adding fields to a document type.
+
+## Terms
+
+Terms can be created either at `api/terms` or using the vocabulary specific `api/vocabularies/{id}/terms`
 
 ## Files
+
+Creating files using HTTP request is a bit special, it can be done using a POST request to `api/files`. You can create a file without and content and later use `api/files/{id}/content` to send the content of the file as a binary string. Updating the file contents will automatically create a new revision of the file on disk.
+
+| field | default | required | info |
+| ----- | ------- | -------- | ---- |
+| filename | | Yes | Name of the file |
+| mimetype | '' | No | Mime type of the file, will be detected if not specified |
+| alt | '' | No | Alt dewscription of the file |
+| private | false | No | Mark the file as being private |
+| data | '' | No | Base64 encode file contents |
+| use_dropfolder | FALSE | No | Instructs the document store to scan the dropfolder for the file using the specified filename |
+
+For each file created, the document store creates a media entity to keep track of all the file revisions.
+
+### Getting private files
+
+Private files (the content) can be fetch using either an API key on `api/files/{id}/content` or by using the either `media/{media_uuid}/{provider_uuid}/{hash}/{filename}` or `files/{file_uuid}/{provider_uuid}/{hash}/{filename}`. The first one returns the content of the current published revision, the latter returns the content of a specific version.
 
 ## Examples and code snippets
 

@@ -2,7 +2,7 @@
 docstore_wait:
   path: '/api/wait'
   defaults:
-    _controller: 'docstore.api_controller:wait'
+    _controller: 'docstore.document_read_controller:wait'
     _title: 'Wait a second'
   methods: [GET]
   requirements:
@@ -142,7 +142,7 @@ docstore_document_delete_type:
 docstore_get_documents:
   path: '/api/{type}'
   defaults:
-    _controller: 'docstore.api_controller:getDocuments'
+    _controller: 'docstore.document_read_controller:getDocuments'
     _title: 'Get documents'
   methods: [GET]
   requirements:
@@ -154,7 +154,7 @@ docstore_get_documents:
 docstore_create_document:
   path: '/api/{type}'
   defaults:
-    _controller: 'docstore.api_controller:createDocument'
+    _controller: 'docstore.document_controller:createDocument'
     _title: 'Create document'
   methods: [POST]
   requirements:
@@ -166,7 +166,7 @@ docstore_create_document:
 docstore_create_document_in_bulk:
   path: '/api/{type}/bulk'
   defaults:
-    _controller: 'docstore.api_controller:createDocumentInBulk'
+    _controller: 'docstore.document_controller:createDocumentInBulk'
     _title: 'Create documents in bulk'
   methods: [POST]
   requirements:
@@ -178,7 +178,7 @@ docstore_create_document_in_bulk:
 docstore_get_document:
   path: '/api/{type}/{id}'
   defaults:
-    _controller: 'docstore.api_controller:getDocument'
+    _controller: 'docstore.document_read_controller:getDocument'
     _title: 'Get document'
   methods: [GET]
   requirements:
@@ -190,7 +190,7 @@ docstore_get_document:
 docstore_get_document_revisions:
   path: '/api/{type}/{id}/revisions'
   defaults:
-    _controller: 'docstore.api_controller:getDocumentRevisions'
+    _controller: 'docstore.document_read_controller:getDocumentRevisions'
     _title: 'Get document revisions'
   methods: [GET]
   requirements:
@@ -202,7 +202,7 @@ docstore_get_document_revisions:
 docstore_get_document_revision:
   path: '/api/{type}/{id}/revisions/{vid}'
   defaults:
-    _controller: 'docstore.api_controller:getDocumentRevision'
+    _controller: 'docstore.document_read_controller:getDocumentRevision'
     _title: 'Get document revision'
   methods: [GET]
   requirements:
@@ -214,7 +214,7 @@ docstore_get_document_revision:
 docstore_get_document_files:
   path: '/api/{type}/{id}/files'
   defaults:
-    _controller: 'docstore.api_controller:getDocumentFiles'
+    _controller: 'docstore.document_read_controller:getDocumentFiles'
     _title: 'Get document files'
   methods: [GET]
   requirements:
@@ -226,7 +226,7 @@ docstore_get_document_files:
 docstore_get_document_terms:
   path: '/api/{type}/{id}/terms'
   defaults:
-    _controller: 'docstore.api_controller:getDocumentTerms'
+    _controller: 'docstore.document_read_controller:getDocumentTerms'
     _title: 'Get document terms'
   methods: [GET]
   requirements:
@@ -238,7 +238,7 @@ docstore_get_document_terms:
 docstore_update_document:
   path: '/api/{type}/{id}'
   defaults:
-    _controller: 'docstore.api_controller:updateDocument'
+    _controller: 'docstore.document_controller:updateDocument'
     _title: 'Update document'
   methods: [PUT, PATCH]
   requirements:
@@ -250,7 +250,7 @@ docstore_update_document:
 docstore_delete_document:
   path: '/api/{type}/{id}'
   defaults:
-    _controller: 'docstore.api_controller:DeleteDocument'
+    _controller: 'docstore.document_controller:DeleteDocument'
     _title: 'Delete document'
   methods: [DELETE]
   requirements:
@@ -264,7 +264,7 @@ docstore_delete_document:
 docstore_document_get_fields:
   path: '/api/fields/{type}'
   defaults:
-    _controller: 'docstore.api_controller:getDocumentFields'
+    _controller: 'docstore.document_controller:getDocumentFields'
     _title: 'Get document fields'
   methods: [GET]
   requirements:
@@ -276,7 +276,7 @@ docstore_document_get_fields:
 docstore_document_create_fields:
   path: '/api/fields/{type}'
   defaults:
-    _controller: 'docstore.api_controller:createDocumentField'
+    _controller: 'docstore.document_controller:createDocumentField'
     _title: 'Create document field'
   methods: [POST]
   requirements:
@@ -288,7 +288,7 @@ docstore_document_create_fields:
 docstore_document_get_field:
   path: '/api/fields/{type}/{id}'
   defaults:
-    _controller: 'docstore.api_controller:getDocumentField'
+    _controller: 'docstore.document_controller:getDocumentField'
     _title: 'Get document field'
   methods: [GET]
   requirements:
@@ -300,7 +300,7 @@ docstore_document_get_field:
 docstore_document_update_field:
   path: '/api/fields/{type}/{id}'
   defaults:
-    _controller: 'docstore.api_controller:updateDocumentField'
+    _controller: 'docstore.document_controller:updateDocumentField'
     _title: 'Update document field'
   methods: [PUT, PATCH]
   requirements:
@@ -312,7 +312,7 @@ docstore_document_update_field:
 docstore_document_delete_field:
   path: '/api/fields/{type}/{id}'
   defaults:
-    _controller: 'docstore.api_controller:deleteDocumentField'
+    _controller: 'docstore.document_controller:deleteDocumentField'
     _title: 'Delete document field'
   methods: [DELETE]
   requirements:
@@ -548,7 +548,7 @@ docstore_delete_term:
 docstore_get_all_media:
   path: '/api/media'
   defaults:
-    _controller: 'docstore.api_controller:getAllMedia'
+    _controller: 'docstore.document_controller:getAllMedia'
     _title: 'Get all media'
   methods: [GET]
   requirements:
@@ -560,7 +560,7 @@ docstore_get_all_media:
 docstore_get_media:
   path: '/api/media/{id}'
   defaults:
-    _controller: 'docstore.api_controller:getMedia'
+    _controller: 'docstore.document_controller:getMedia'
     _title: 'Get media'
   methods: [GET]
   requirements:
@@ -572,7 +572,7 @@ docstore_get_media:
 docstore_get_media_revisions:
   path: '/api/media/{id}/revisions/{vid}'
   defaults:
-    _controller: 'docstore.api_controller:getMediaRevision'
+    _controller: 'docstore.document_controller:getMediaRevision'
     _title: 'Get media revision'
   methods: [GET]
   requirements:
@@ -584,7 +584,7 @@ docstore_get_media_revisions:
 docstore_get_media_content:
   path: '/api/media/{id}/content'
   defaults:
-    _controller: 'docstore.api_controller:getMediaContent'
+    _controller: 'docstore.document_controller:getMediaContent'
     _title: 'Get media content'
   methods: [GET]
   requirements:
@@ -596,7 +596,7 @@ docstore_get_media_content:
 docstore_get_media_revisions_content:
   path: '/api/media/{id}/revisions/{vid}/content'
   defaults:
-    _controller: 'docstore.api_controller:getMediaRevisionContent'
+    _controller: 'docstore.document_controller:getMediaRevisionContent'
     _title: 'Get media revision content'
   methods: [GET]
   requirements:
@@ -610,7 +610,7 @@ docstore_get_media_revisions_content:
 docstore_get_files:
   path: '/api/files'
   defaults:
-    _controller: 'docstore.api_controller:getFiles'
+    _controller: 'docstore.document_controller:getFiles'
     _title: 'Get files'
   methods: [GET]
   requirements:
@@ -622,7 +622,7 @@ docstore_get_files:
 docstore_create_file:
   path: '/api/files'
   defaults:
-    _controller: 'docstore.api_controller:createFile'
+    _controller: 'docstore.document_controller:createFile'
     _title: 'Create file'
   methods: [POST]
   requirements:
@@ -634,7 +634,7 @@ docstore_create_file:
 docstore_get_file:
   path: '/api/files/{id}'
   defaults:
-    _controller: 'docstore.api_controller:getFile'
+    _controller: 'docstore.document_controller:getFile'
     _title: 'Get file'
   methods: [GET]
   requirements:
@@ -646,7 +646,7 @@ docstore_get_file:
 docstore_get_file_usage:
   path: '/api/files/{id}/usage'
   defaults:
-    _controller: 'docstore.api_controller:getFileUsage'
+    _controller: 'docstore.document_controller:getFileUsage'
     _title: 'Get file usage'
   methods: [GET]
   requirements:
@@ -658,7 +658,7 @@ docstore_get_file_usage:
 docstore_update_file:
   path: '/api/files/{id}'
   defaults:
-    _controller: 'docstore.api_controller:updateFile'
+    _controller: 'docstore.document_controller:updateFile'
     _title: 'Update file'
   methods: [PUT, PATCH]
   requirements:
@@ -670,7 +670,7 @@ docstore_update_file:
 docstore_delete_file:
   path: '/api/files/{id}'
   defaults:
-    _controller: 'docstore.api_controller:DeleteFile'
+    _controller: 'docstore.document_controller:DeleteFile'
     _title: 'Delete file'
   methods: [DELETE]
   requirements:
@@ -682,7 +682,7 @@ docstore_delete_file:
 docstore_get_file_content:
   path: '/api/files/{id}/content'
   defaults:
-    _controller: 'docstore.api_controller:getFileContent'
+    _controller: 'docstore.document_controller:getFileContent'
     _title: 'Get file content'
   methods: [GET]
   requirements:
@@ -694,7 +694,7 @@ docstore_get_file_content:
 docstore_create_file_content:
   path: '/api/files/{id}/content'
   defaults:
-    _controller: 'docstore.api_controller:createFileContent'
+    _controller: 'docstore.document_controller:createFileContent'
     _title: 'Create file content'
   methods: [POST]
   requirements:
@@ -706,7 +706,7 @@ docstore_create_file_content:
 docstore_update_file_content:
   path: '/api/files/{id}/content'
   defaults:
-    _controller: 'docstore.api_controller:updateFileContent'
+    _controller: 'docstore.document_controller:updateFileContent'
     _title: 'Update file content'
   methods: [PUT]
   requirements:
