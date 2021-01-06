@@ -17,9 +17,12 @@ services:
       public: false
       tags:
         - { name: page_cache_request_policy }
-  docstore.api_controller:
-    class: \Drupal\docstore\Controller\ApiController
+  docstore.document_controller:
+    class: \Drupal\docstore\Controller\DocumentController
     arguments: ['@config.factory', '@database', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@transliteration', '@file.mime_type.guesser', '@file_system', '@file.usage', '@logger.factory', '@state', '@entity_usage.usage']
+  docstore.document_read_controller:
+    class: \Drupal\docstore\Controller\DocumentReadController
+    arguments: ['@config.factory', '@database', '@entity_type.manager', '@logger.factory', '@state']
   docstore.vocabulary_controller:
     class: \Drupal\docstore\Controller\VocabularyController
     arguments: ['@config.factory', '@database', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@logger.factory', '@state', '@entity_usage.usage']
