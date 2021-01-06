@@ -104,7 +104,7 @@ Example
   }
 ```
 
-## Vocabularies and terms
+## Vocabularies
 
 Creating vocabularies can be at `api/vocabularies`
 
@@ -117,6 +117,12 @@ Creating vocabularies can be at `api/vocabularies`
 | fields_allowed | true | No | Other providers can add their fields |
 | author | | Yes | The person who created this |
 | allow_duplicates | true | No | Allow duplicate term names |
+
+Creating fields on a vocabulary is the same process as adding fields to a document type.
+
+## Terms
+
+Terms can be created either at `api/terms` or using the vocabulary specific `api/vocabularies/{id}/terms`
 
 ## Files
 
