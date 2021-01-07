@@ -174,7 +174,7 @@ class DocumentController extends ControllerBase {
     }
 
     // Create document.
-    $document = $this->createDocumentForProvider($type, $params, $provider);
+    $document = $this->createDocumentForProvider($node_type, $params, $provider);
 
     $data = [
       'message' => strtr('@type created', ['@type' => ucfirst($node_type)]),
@@ -191,11 +191,8 @@ class DocumentController extends ControllerBase {
    * Create document for provider.
    */
   protected function createDocumentForProvider($type, $params, $provider) {
-    // Check if type is allowed.
-    $document_type = $this->typeAllowed($type, 'write');
-
     /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->entityTypeManager->getStorage('node_type')->load($document_type);
+    $node_type = $this->entityTypeManager->getStorage('node_type')->load($type);
 
     // Check if provider can create terms.
     if ($node_type->getThirdPartySetting('docstore', 'provider_uuid') !== $provider->uuid) {
@@ -215,7 +212,7 @@ class DocumentController extends ControllerBase {
 
     // Create node.
     $item = [
-      'type' => $document_type,
+      'type' => $type,
       'title' => $params['title'],
       'uid' => $provider->id(),
       'author' => [],
@@ -286,7 +283,7 @@ class DocumentController extends ControllerBase {
           // Check for label keys.
           if (strpos($key, '_label')) {
             $key = str_replace('_label', '', $key);
-            $values = $this->mapOrCreateTerms($key, $values, $document_type, $provider, $params['author']);
+            $values = $this->mapOrCreateTerms($key, $values, $type, $provider, $params['author']);
           }
 
           if (!is_array($values)) {
@@ -299,25 +296,47 @@ class DocumentController extends ControllerBase {
               $item[$key] = [];
             }
 
-            foreach ($values as $value) {
-              if (is_array($value)) {
-                if ($value['_action'] === 'lookup') {
-                  // Lookup target.
-                  $entity = $this->findTargetByProperty($value['_reference'], $value['_target'], $value['_field'], $value['value']);
-                  if ($entity) {
-                    $item[$key][] = [
-                      'target_uuid' => $entity->uuid(),
-                    ];
+            if ($values['_action'] === 'daterange') {
+              $item[$key][] = [
+                'value' => $values['value'],
+                'end_value' => $values['end_value'],
+              ];
+            }
+            else {
+              foreach ($values as $value) {
+                if ($values['_action'] === 'daterange') {
+                  $item[$key][] = [
+                    'value' => $values['value'],
+                    'end_value' => $values['end_value'],
+                  ];
+                }
+                elseif (is_array($value)) {
+                  if ($value['_action'] === 'lookup') {
+                    // Lookup target.
+                    $entity = $this->findTargetByProperty($value['_reference'], $value['_target'], $value['_field'], $value['value']);
+                    if ($entity) {
+                      $item[$key][] = [
+                        'target_uuid' => $entity->uuid(),
+                      ];
+                    }
+                  }
+                  elseif ($value['_action'] === 'create') {
+                    // Allow on the fly creation of child items.
+                    if ($value['_reference'] === 'node') {
+                      $child_document = $this->createDocumentForProvider($value['_target'], $value['_data'], $provider);
+                      if ($child_document) {
+                        $item[$key][] = [
+                          'target_uuid' => $child_document->uuid(),
+                        ];
+                      }
+                    }
                   }
                 }
-                elseif ($value['_action'] === 'create') {
-                  // @todo allow on the fly creation of child items.
+                else {
+                  $item[$key][] = [
+                    'target_uuid' => $value,
+                  ];
                 }
-              }
-              else {
-                $item[$key][] = [
-                  'target_uuid' => $value,
-                ];
               }
             }
           }
@@ -400,6 +419,9 @@ class DocumentController extends ControllerBase {
    * Create document.
    */
   public function createDocumentInBulk($type, Request $request) {
+    // Check if type is allowed.
+    $node_type = $this->typeAllowed($type, 'write');
+
     // Get provider.
     $provider = $this->requireProvider();
 
@@ -419,7 +441,7 @@ class DocumentController extends ControllerBase {
       $document['author'] = $params['author'];
 
       // Create document.
-      $this->createDocumentForProvider($type, $document, $provider);
+      $this->createDocumentForProvider($node_type, $document, $provider);
     }
 
     $data = [
