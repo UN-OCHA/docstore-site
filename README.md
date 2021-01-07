@@ -104,6 +104,45 @@ Example
   }
 ```
 
+### Create child item
+
+If you specify an object, instead of a plain value, you can create reference data using any property you want.
+
+Example
+
+```json
+  {
+    "_action": "create",
+    "_reference": "node",
+    "_target": "assessment_document",
+    "_data": {
+      "author": "AR",
+      "title": "Title",
+      "files": [],
+      "metadata": [
+        {
+          "accessibility": "Publicly Available"
+        },
+        {
+          "instructions": ""
+        }
+      ]
+    }
+  }
+```
+
+### Daterange
+
+Date range have an end date, so needs special treatment.
+
+```json
+  {
+    "_action": "daterange",
+    "value": "2011-09-01T00:00:00",
+    "end_value": "2011-09-02T00:00:00",
+  }
+```
+
 ## Vocabularies
 
 Creating vocabularies can be at `api/vocabularies`

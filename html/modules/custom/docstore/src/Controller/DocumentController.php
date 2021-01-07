@@ -868,6 +868,11 @@ class DocumentController extends ControllerBase {
     }
 
     foreach ($values as &$value) {
+      // Skip empty values.
+      if (empty($value)) {
+        continue;
+      }
+
       $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
         'name' => $value,
         'vid' => $vocabulary->id(),
