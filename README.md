@@ -65,7 +65,7 @@ To add new fields to a document type, you can use the `api/field/{type}` endpoin
 
 ## Documents
 
-For all read operation there's and endpoint `api/any` which will query all defined document types. If you want to query 1 specific document type or if you want to create, update or delete a document, you'll have to use to specific endpoint.
+For all read operation there's an endpoint `api/any` which will query all defined document types. If you want to query 1 specific document type or if you want to create, update or delete a document, you'll have to use to specific endpoint.
 
 | field | default | required | info |
 | -----  | -------- | -------- | ---- |
@@ -82,7 +82,7 @@ For all read operation there's and endpoint `api/any` which will query all defin
 
 ### Create documents in bulk
 
-You can create multiple documents at once using the `api/{type}/bulk` end point by passing an array of JSON objects.
+You can create multiple documents at once using the `api/{type}/bulk` endpoint by passing an array of JSON objects.
 
 ### Reference terms using their label
 
@@ -118,7 +118,7 @@ Creating vocabularies can be at `api/vocabularies`
 | author | | Yes | The person who created this |
 | allow_duplicates | true | No | Allow duplicate term names |
 
-Creating fields on a vocabulary is the same process as adding fields to a document type.
+Creating fields on a vocabulary is the same process as adding fields to a document type, but add `api/vocabularies/{id}/fields`
 
 ## Terms
 
@@ -126,7 +126,7 @@ Terms can be created either at `api/terms` or using the vocabulary specific `api
 
 ## Files
 
-Creating files using HTTP request is a bit special, it can be done using a POST request to `api/files`. You can create a file without and content and later use `api/files/{id}/content` to send the content of the file as a binary string. Updating the file contents will automatically create a new revision of the file on disk.
+Creating files using HTTP request is a bit special, it can be done using a POST request to `api/files`. You can create a file without any content and later use `api/files/{id}/content` to send the content of the file as a binary string. Updating the file contents will automatically create a new revision of the file on disk.
 
 | field | default | required | info |
 | ----- | ------- | -------- | ---- |

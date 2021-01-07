@@ -14,7 +14,7 @@ use Drupal\taxonomy\Entity\Vocabulary;
  */
 function docstore_organization_types_vocabularies() {
   return [
-    'shared_organization_types' => 'Organization types',
+    'organization_types' => 'Organization types',
   ];
 }
 
@@ -23,7 +23,7 @@ function docstore_organization_types_vocabularies() {
  */
 function docstore_organization_types_fields() {
   return [
-    'shared_organization_types' => [
+    'organization_types' => [
       'id' => 'string',
       'reliefweb_id' => 'integer',
       'reliefweb_label' => 'string',
@@ -92,7 +92,7 @@ function docstore_organization_types_sync() {
   $url = 'https://vocabulary.unocha.org/json/beta-v1/organization_types.json';
 
   // Load vocabulary.
-  $vocabulary = Vocabulary::load('shared_organization_types');
+  $vocabulary = Vocabulary::load('organization_types');
 
   // Load provider.
   $provider = user_load(2);

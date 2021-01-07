@@ -14,7 +14,7 @@ use Drupal\taxonomy\Entity\Vocabulary;
  */
 function docstore_population_types_vocabularies() {
   return [
-    'shared_population_types' => 'Population types',
+    'population_types' => 'Population types',
   ];
 }
 
@@ -23,7 +23,7 @@ function docstore_population_types_vocabularies() {
  */
 function docstore_population_types_fields() {
   return [
-    'shared_population_types' => [
+    'population_types' => [
       'id' => 'string',
     ],
   ];
@@ -89,7 +89,7 @@ function docstore_population_types_sync() {
   $url = 'https://www.humanitarianresponse.info/en/api/v1.0/population_types';
 
   // Load vocabulary.
-  $vocabulary = Vocabulary::load('shared_population_types');
+  $vocabulary = Vocabulary::load('population_types');
 
   // Load provider.
   $provider = user_load(2);

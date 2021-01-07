@@ -14,7 +14,7 @@ use Drupal\taxonomy\Entity\Vocabulary;
  */
 function docstore_functional_roles_vocabularies() {
   return [
-    'shared_functional_roles' => 'Functional roles',
+    'functional_roles' => 'Functional roles',
   ];
 }
 
@@ -23,7 +23,7 @@ function docstore_functional_roles_vocabularies() {
  */
 function docstore_functional_roles_fields() {
   return [
-    'shared_functional_roles' => [
+    'functional_roles' => [
       'id' => 'string',
       'scope' => 'string',
     ],
@@ -90,7 +90,7 @@ function docstore_vulnerable_group_sync() {
   $url = 'https://vocabulary.unocha.org/json/beta-v1/functional_roles.json';
 
   // Load vocabulary.
-  $vocabulary = Vocabulary::load('shared_functional_roles');
+  $vocabulary = Vocabulary::load('functional_roles');
 
   // Load provider.
   $provider = user_load(2);

@@ -14,7 +14,7 @@ use Drupal\taxonomy\Entity\Vocabulary;
  */
 function docstore_themes_vocabularies() {
   return [
-    'shared_themes' => 'Themes',
+    'themes' => 'Themes',
   ];
 }
 
@@ -23,7 +23,7 @@ function docstore_themes_vocabularies() {
  */
 function docstore_themes_fields() {
   return [
-    'shared_themes' => [
+    'themes' => [
       'id' => 'string',
     ],
   ];
@@ -89,7 +89,7 @@ function docstore_disaster_types_sync() {
   $url = 'https://api.reliefweb.int/v1/references/themes?appname=vocabulary';
 
   // Load vocabulary.
-  $vocabulary = Vocabulary::load('shared_themes');
+  $vocabulary = Vocabulary::load('themes');
 
   // Load provider.
   $provider = user_load(2);

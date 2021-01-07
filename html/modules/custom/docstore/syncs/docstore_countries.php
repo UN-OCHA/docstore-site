@@ -15,8 +15,8 @@ use Drupal\taxonomy\Entity\Vocabulary;
  */
 function docstore_countries_vocabularies() {
   return [
-    'shared_countries' => 'Countries',
-    'shared_territories' => 'Territories',
+    'countries' => 'Countries',
+    'territories' => 'Territories',
   ];
 }
 
@@ -25,7 +25,7 @@ function docstore_countries_vocabularies() {
  */
 function docstore_countries_fields() {
   return [
-    'shared_countries' => [
+    'countries' => [
       'admin_level' => 'integer',
       'dgacm-list' => 'boolean',
       'fts_api_id' => 'integer',
@@ -42,11 +42,11 @@ function docstore_countries_fields() {
       'geolocation' => 'geofield',
       'territory' => [
         'type' => 'entity_reference_uuid',
-        'target' => 'shared_territories',
+        'target' => 'territories',
       ],
     ],
-    'shared_territories' => [
-      'code' => 'integer',
+    'territories' => [
+      'code' => 'string',
     ],
   ];
 }
@@ -135,7 +135,7 @@ function docstore_countries_territory_term($data) {
     }
 
     if (!$parent) {
-      $existing = taxonomy_term_load_multiple_by_name($short_name, 'shared_territories');
+      $existing = taxonomy_term_load_multiple_by_name($short_name, 'territories');
     }
     else {
       $parent_tid = 0;
@@ -161,7 +161,7 @@ function docstore_countries_territory_term($data) {
     }
 
     $term_data = [
-      'vid' => 'shared_territories',
+      'vid' => 'territories',
       'name' => $short_name,
       'description' => $territory['label'],
       'code' => [],
@@ -194,7 +194,7 @@ function docstore_countries_sync() {
   $url = 'https://vocabulary.unocha.org/json/beta-v3/countries.json';
 
   // Load vocabulary.
-  $vocabulary = Vocabulary::load('shared_countries');
+  $vocabulary = Vocabulary::load('countries');
 
   // Load provider.
   $provider = user_load(2);
@@ -205,7 +205,7 @@ function docstore_countries_sync() {
     $data = json_decode($raw);
 
     foreach ($data->data as $row) {
-      $term = taxonomy_term_load_multiple_by_name($row->label->default, 'shared_countries');
+      $term = taxonomy_term_load_multiple_by_name($row->label->default, 'countries');
       if (!$term) {
         $item = [
           'name' => $row->label->default,
@@ -237,7 +237,7 @@ function docstore_countries_sync() {
         $term = reset($term);
       }
 
-      $fields = docstore_countries_fields()['shared_countries'];
+      $fields = docstore_countries_fields()['countries'];
       foreach ($fields as $name => $type) {
         $field_name = str_replace('-', '_', $name);
         if ($term->hasField($field_name)) {

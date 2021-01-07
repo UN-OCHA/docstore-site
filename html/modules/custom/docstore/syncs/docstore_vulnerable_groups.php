@@ -14,7 +14,7 @@ use Drupal\taxonomy\Entity\Vocabulary;
  */
 function docstore_vulnerable_groups_vocabularies() {
   return [
-    'shared_vulnerable_groups' => 'Vulnerable groups',
+    'vulnerable_groups' => 'Vulnerable groups',
   ];
 }
 
@@ -23,7 +23,7 @@ function docstore_vulnerable_groups_vocabularies() {
  */
 function docstore_vulnerable_groups_fields() {
   return [
-    'shared_vulnerable_groups' => [
+    'vulnerable_groups' => [
       'id' => 'string',
     ],
   ];
@@ -89,7 +89,7 @@ function docstore_vulnerable_group_sync() {
   $url = 'https://api.reliefweb.int/v1/references/vulnerable-groups?appname=vocabulary';
 
   // Load vocabulary.
-  $vocabulary = Vocabulary::load('shared_vulnerable_groups');
+  $vocabulary = Vocabulary::load('vulnerable_groups');
 
   // Load provider.
   $provider = user_load(2);

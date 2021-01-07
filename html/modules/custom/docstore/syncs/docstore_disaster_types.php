@@ -14,7 +14,7 @@ use Drupal\taxonomy\Entity\Vocabulary;
  */
 function docstore_disasters_vocabularies() {
   return [
-    'shared_disaster_types' => 'Disaster types',
+    'disaster_types' => 'Disaster types',
   ];
 }
 
@@ -23,7 +23,7 @@ function docstore_disasters_vocabularies() {
  */
 function docstore_disasters_fields() {
   return [
-    'shared_disaster_types' => [
+    'disaster_types' => [
       'id' => 'string',
       'disaster_type_code' => 'string',
     ],
@@ -90,7 +90,7 @@ function docstore_disaster_types_sync() {
   $url = 'https://api.reliefweb.int/v1/references/disaster-types?appname=vocabulary';
 
   // Load vocabulary.
-  $vocabulary = Vocabulary::load('shared_disaster_types');
+  $vocabulary = Vocabulary::load('disaster_types');
 
   // Load provider.
   $provider = user_load(2);

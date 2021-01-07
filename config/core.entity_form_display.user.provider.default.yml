@@ -1,0 +1,65 @@
+uuid: 87e76aec-8c25-4da8-95ed-f5114282e375
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.user.provider.api_keys
+    - field.field.user.provider.api_keys_read_only
+    - field.field.user.provider.dropfolder
+    - field.field.user.provider.prefix
+    - field.field.user.provider.shared_secret
+    - user_bundle.user_type.provider
+id: user.provider.default
+targetEntityType: user
+bundle: provider
+mode: default
+content:
+  account:
+    weight: 0
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  api_keys:
+    weight: 1
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  api_keys_read_only:
+    weight: 2
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  dropfolder:
+    weight: 3
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  prefix:
+    type: string_textfield
+    weight: 5
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  shared_secret:
+    weight: 4
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+hidden:
+  langcode: true
+  language: true
+  timezone: true
