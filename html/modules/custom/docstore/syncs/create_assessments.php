@@ -102,7 +102,7 @@ function createAssessmentFields() {
     'local_groups' => [
       'label' => 'Local groups',
       'type' => 'term_reference',
-      'target' => 'shared_local_coordination_groups',
+      'target' => 'local_coordination_groups',
       'multiple' => TRUE,
     ],
     'organizations' => [
@@ -126,13 +126,13 @@ function createAssessmentFields() {
     'population_types' => [
       'label' => 'population_types',
       'type' => 'term_reference',
-      'target' => 'shared_population_types',
+      'target' => 'population_types',
       'multiple' => TRUE,
     ],
     'themes' => [
       'label' => 'themes',
       'type' => 'term_reference',
-      'target' => 'shared_themes',
+      'target' => 'themes',
       'multiple' => TRUE,
     ],
     'units_of_measurement' => [
@@ -226,7 +226,7 @@ function syncAssesments($url = '') {
           $bundle_data[] = [
             '_action' => 'lookup',
             '_reference' => 'term',
-            '_target' => 'shared_local_coordination_group',
+            '_target' => 'local_coordination_group',
             '_field' => 'id',
             'value' => $bundle->id,
           ];

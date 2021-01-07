@@ -115,7 +115,7 @@ Add country field.
   "label": "Country",
   "author": "hid_123456789",
   "type": "entity_reference_uuid",
-  "target": "shared_countries"
+  "target": "countries"
 }
 ```
 

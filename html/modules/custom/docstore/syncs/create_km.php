@@ -69,7 +69,7 @@ function createKMFields() {
     'countries' => [
       'label' => 'Countries',
       'type' => 'term_reference',
-      'target' => 'shared_countries',
+      'target' => 'countries',
       'multiple' => TRUE,
     ],
     'ar_document_type' => [
@@ -81,7 +81,7 @@ function createKMFields() {
     'global_cluster' => [
       'label' => 'Global cluster',
       'type' => 'term_reference',
-      'target' => 'shared_global_coordination_group',
+      'target' => 'global_coordination_groups',
       'multiple' => TRUE,
     ],
     'ar_hpc_document_repository' => [
@@ -99,7 +99,7 @@ function createKMFields() {
     'population_types' => [
       'label' => 'Population Types',
       'type' => 'term_reference',
-      'target' => 'shared_population_types',
+      'target' => 'population_types',
       'multiple' => TRUE,
     ],
     'description' => [

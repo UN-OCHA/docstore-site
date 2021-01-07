@@ -69,13 +69,13 @@ function createDisasterFields() {
     'primary_country' => [
       'label' => 'Primary country',
       'type' => 'term_reference',
-      'target' => 'shared_countries',
+      'target' => 'countries',
       'multiple' => FALSE,
     ],
     'countries' => [
       'label' => 'Country',
       'type' => 'term_reference',
-      'target' => 'shared_countries',
+      'target' => 'countries',
       'multiple' => TRUE,
     ],
     'profile' => [
@@ -89,13 +89,13 @@ function createDisasterFields() {
     'disaster_type' => [
       'label' => 'Disaster type',
       'type' => 'term_reference',
-      'target' => 'shared_disaster_types',
+      'target' => 'disaster_types',
       'multiple' => TRUE,
     ],
     'primary_disaster_type' => [
       'label' => 'Primary disaster type',
       'type' => 'term_reference',
-      'target' => 'shared_disaster_types',
+      'target' => 'disaster_types',
       'multiple' => FALSE,
     ],
   ];
@@ -168,7 +168,7 @@ function syncDisasters($url = '') {
         $type_data[] = [
           '_action' => 'lookup',
           '_reference' => 'term',
-          '_target' => 'shared_disaster_types',
+          '_target' => 'disaster_types',
           '_field' => 'disaster_type_code',
           'value' => $type->code,
         ];
@@ -182,7 +182,7 @@ function syncDisasters($url = '') {
       $type_data = [
         '_action' => 'lookup',
         '_reference' => 'term',
-        '_target' => 'shared_disaster_types',
+        '_target' => 'disaster_types',
         '_field' => 'disaster_type_code',
         'value' => $row->fields->primary_type->code,
       ];
@@ -197,7 +197,7 @@ function syncDisasters($url = '') {
         $country_data[] = [
           '_action' => 'lookup',
           '_reference' => 'term',
-          '_target' => 'shared_countries',
+          '_target' => 'countries',
           '_field' => 'iso3',
           'value' => $country->iso3,
         ];
@@ -211,7 +211,7 @@ function syncDisasters($url = '') {
       $country_data = [
         '_action' => 'lookup',
         '_reference' => 'term',
-        '_target' => 'shared_countries',
+        '_target' => 'countries',
         '_field' => 'iso3',
         'value' => $row->fields->primary_country->iso3,
       ];

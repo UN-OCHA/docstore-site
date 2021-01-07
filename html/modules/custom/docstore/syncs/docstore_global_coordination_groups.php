@@ -14,7 +14,7 @@ use Drupal\taxonomy\Entity\Vocabulary;
  */
 function docstore_global_coordination_groups_vocabularies() {
   return [
-    'global_coordination_group' => 'Global coordination groups',
+    'global_coordination_groups' => 'Global coordination groups',
   ];
 }
 
@@ -23,7 +23,7 @@ function docstore_global_coordination_groups_vocabularies() {
  */
 function docstore_global_coordination_groups_fields() {
   return [
-    'global_coordination_group' => [
+    'global_coordination_groups' => [
       'id' => 'string',
       'acronym' => 'string',
       'group_type' => 'string',
@@ -92,7 +92,7 @@ function docstore_vulnerable_group_sync() {
   $url = 'https://vocabulary.unocha.org/json/beta-v1/global_coordination_groups.json';
 
   // Load vocabulary.
-  $vocabulary = Vocabulary::load('global_coordination_group');
+  $vocabulary = Vocabulary::load('global_coordination_groups');
 
   // Load provider.
   $provider = user_load(2);

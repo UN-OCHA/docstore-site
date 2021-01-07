@@ -167,7 +167,7 @@ Add countries field.
   "author": "hid_123456789",
   "multiple": true,
   "type": "entity_reference_uuid",
-  "target": "shared_countries"
+  "target": "countries"
 }
 ```
 
@@ -233,7 +233,7 @@ Add Global cluster field.
   "author": "hid_123456789",
   "multiple": true,
   "type": "entity_reference_uuid",
-  "target": "shared_global_coordination_group"
+  "target": "global_coordination_groups"
 }
 ```
 
@@ -332,7 +332,7 @@ Add Population Types field.
   "author": "hid_123456789",
   "multiple": true,
   "type": "entity_reference_uuid",
-  "target": "shared_population_types"
+  "target": "population_types"
 }
 ```
 
