@@ -5,6 +5,8 @@ module:
   config: 0
   config_filter: 0
   config_ignore: 0
+  datetime: 0
+  datetime_range: 0
   docstore: 0
   dynamic_entity_reference: 0
   dynamic_page_cache: 0
