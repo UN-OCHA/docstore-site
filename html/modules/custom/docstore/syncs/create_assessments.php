@@ -110,12 +110,12 @@ function createAssessmentFields() {
     ],
     'subject' => [
       'label' => 'Subject',
-      'type' => 'string',
+      'type' => 'string_long',
       'multiple' => FALSE,
     ],
     'methodology' => [
       'label' => 'Methodology',
-      'type' => 'string',
+      'type' => 'string_long',
       'multiple' => FALSE,
     ],
     'key_findings' => [
@@ -278,8 +278,13 @@ function syncAssesments($url = '') {
     if (isset($row->operation)) {
       $data_operation = [];
       foreach ($row->operation as $operation) {
-        $data_operation[] = $operation;
-        $assessment['metadata'][] = ['operation_label' => $data_operation];
+        if (!empty($operation)) {
+          $data_operation[] = $operation;
+        }
+
+        if (!empty($data_operation)) {
+          $assessment['metadata'][] = ['operation_label' => $data_operation];
+        }
       }
     }
 
@@ -301,7 +306,7 @@ function syncAssesments($url = '') {
           '_action' => 'lookup',
           '_reference' => 'node',
           '_target' => 'disaster',
-          '_field' => 'glide_number',
+          '_field' => 'glide',
           'value' => $disaster->glide,
         ];
       }
@@ -331,7 +336,9 @@ function syncAssesments($url = '') {
     if (isset($row->organizations) && !empty($row->organizations)) {
       $organization_data = [];
       foreach ($row->organizations as $organization) {
-        $organization_data[] = $organization->label;
+        if (isset($organization->label)) {
+          $organization_data[] = $organization->label;
+        }
       }
 
       $assessment['metadata'][] = ['organizations_label' => $organization_data];
@@ -341,7 +348,9 @@ function syncAssesments($url = '') {
     if (isset($row->participating_organizations) && !empty($row->participating_organizations)) {
       $organization_data = [];
       foreach ($row->participating_organizations as $organization) {
-        $organization_data[] = $organization->label;
+        if (isset($organization->label)) {
+          $organization_data[] = $organization->label;
+        }
       }
 
       $assessment['metadata'][] = ['asst_organizations_label' => $organization_data];
@@ -512,9 +521,9 @@ function syncAssesments($url = '') {
   post(API_URL . 'api/assessments/bulk', $post_data);
 
   // Check for more data.
-  if (isset($data->links) && isset($data->links->next->href)) {
-    print $data->links->next->href;
-    syncAssesments($data->links->next->href);
+  if (isset($data->next->href)) {
+    print $data->next->href;
+    syncAssesments($data->next->href);
   }
 }
 
