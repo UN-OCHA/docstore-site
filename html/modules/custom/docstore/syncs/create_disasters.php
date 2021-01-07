@@ -26,14 +26,14 @@ function post($url, $data) {
 }
 
 function createNodeType() {
-  post('http://docstore.local.docksal/api/types', [
+  post(API_URL . 'api/types', [
     'machine_name' => 'disaster',
     'endpoint' => 'disasters',
     'label' => 'disaster',
     'shared' => true,
     'content_allowed' => true,
     'fields_allowed' => true,
-    'author' => 'common',
+    'author' => 'RW',
     'allow_duplicates' => true,
   ]);
 }

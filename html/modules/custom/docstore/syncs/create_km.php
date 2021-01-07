@@ -3,7 +3,6 @@
 const API_URL = 'http://docstore.local.docksal/';
 
 // fin drush entity:delete node --bundle=knowledge_management
-// fin drush eval "docstore_create_node_type('knowledge_management')"
 
 function post($url, $data) {
   $ch = curl_init($url);
@@ -29,7 +28,7 @@ function post($url, $data) {
 }
 
 function createNodeType() {
-  post('http://docstore.local.docksal/api/types', [
+  post(API_URL . 'api/types', [
     'machine_name' => 'knowledge_management',
     'endpoint' => 'knowledge-managements',
     'label' => 'Knowledge management',
