@@ -1,5 +1,10 @@
 <?php
 
+// fin drush entity:delete node --bundle=assessment
+// fin drush entity:delete node --bundle=assessment_document
+
+const API_URL = 'http://docstore.local.docksal/';
+
 function post($url, $data) {
   $ch = curl_init($url);
 
@@ -24,7 +29,7 @@ function post($url, $data) {
 }
 
 function createNodeType() {
-  post('http://docstore.local.docksal/api/types', [
+  post(API_URL . 'api/types', [
     'machine_name' => 'assessment',
     'endpoint' => 'assessments',
     'label' => 'Assessment',
@@ -35,7 +40,7 @@ function createNodeType() {
     'allow_duplicates' => true,
   ]);
 
-  post('http://docstore.local.docksal/api/types', [
+  post(API_URL . 'api/types', [
     'machine_name' => 'assessment_document',
     'endpoint' => 'assessment-documents',
     'label' => 'Assessment document',
@@ -56,7 +61,7 @@ function createVocabularies() {
   ];
 
   foreach ($vocabularies as $vocabulary => $machine_name) {
-    post('http://docstore.local.docksal/api/vocabularies', [
+    post(API_URL . 'api/vocabularies', [
       'label' => $vocabulary,
       'machine_name' => $machine_name,
       'author' => 'AR',
@@ -77,7 +82,7 @@ function createAssessmentDocumentFields() {
   ];
 
   foreach ($fields as $machine_name => $field) {
-    post('http://docstore.local.docksal/api/fields/assessment-documents', [
+    post(API_URL . 'api/fields/assessment-documents', [
       'label' => $field['label'],
       'machine_name' => $machine_name,
       'type' => $field['type'],
@@ -92,6 +97,57 @@ function createAssessmentFields() {
     'id' => [
       'label' => 'Id',
       'type' => 'string',
+      'multiple' => FALSE,
+    ],
+    'ar_date' => [
+      'label' => 'Date',
+      'type' => 'daterange',
+    ],
+    'other_location' => [
+      'label' => 'Other location',
+      'type' => 'string',
+      'multiple' => FALSE,
+    ],
+    'subject' => [
+      'label' => 'Subject',
+      'type' => 'string',
+      'multiple' => FALSE,
+    ],
+    'methodology' => [
+      'label' => 'Methodology',
+      'type' => 'string',
+      'multiple' => FALSE,
+    ],
+    'key_findings' => [
+      'label' => 'Key findings',
+      'type' => 'string_long',
+      'multiple' => FALSE,
+    ],
+    'collection_method' => [
+      'label' => 'Collection method',
+      'type' => 'string',
+      'multiple' => TRUE,
+    ],
+    'operation' => [
+      'label' => 'Operations',
+      'type' => 'term_reference',
+      'target' => 'countries',
+      'multiple' => TRUE,
+    ],
+    'sample_size' => [
+      'label' => 'Sample size',
+      'type' => 'string',
+      'multiple' => FALSE,
+    ],
+    'frequency' => [
+      'label' => 'Frequency',
+      'type' => 'string',
+      'multiple' => FALSE,
+    ],
+    'ar_status' => [
+      'label' => 'Status',
+      'type' => 'term_reference',
+      'target' => 'ar_assessment_status',
       'multiple' => FALSE,
     ],
     'contacts' => [
@@ -124,19 +180,19 @@ function createAssessmentFields() {
       'multiple' => TRUE,
     ],
     'population_types' => [
-      'label' => 'population_types',
+      'label' => 'Population types',
       'type' => 'term_reference',
       'target' => 'population_types',
       'multiple' => TRUE,
     ],
     'themes' => [
-      'label' => 'themes',
+      'label' => 'Themes',
       'type' => 'term_reference',
       'target' => 'themes',
       'multiple' => TRUE,
     ],
     'units_of_measurement' => [
-      'label' => 'units_of_measurement',
+      'label' => 'Units of measurement',
       'type' => 'term_reference',
       'target' => 'ar_units_of_measurement',
       'multiple' => TRUE,
@@ -180,7 +236,7 @@ function createAssessmentFields() {
       $data['target'] = $field['target'];
     }
 
-    post('http://docstore.local.docksal/api/fields/assessments', $data);
+    post(API_URL . 'api/fields/assessments', $data);
   }
 }
 
@@ -200,7 +256,42 @@ function syncAssesments($url = '') {
       'files' => [],
     ];
 
-    $assessment['metadata'][] = ['id' => $row->id];
+    $assessment['metadata'] = [
+      ['id' => $row->id],
+      ['other_location' => $row->other_location ?? ''],
+      ['subject' => $row->subject ?? ''],
+      ['methodology' => $row->methodology ?? ''],
+      ['key_findings' => $row->key_findings ?? ''],
+      ['sample_size' => $row->sample_size ?? ''],
+      ['frequency' => $row->frequency ?? ''],
+      ['ar_status_label' => $row->status ?? ''],
+    ];
+
+    if (isset($row->collection_method)) {
+      $data_collection_method = [];
+      foreach ($row->collection_method as $collection_method) {
+        $data_collection_method[] = $collection_method;
+      }
+      $assessment['metadata'][] = ['collection_method' => $data_collection_method];
+    }
+
+    if (isset($row->operation)) {
+      $data_operation = [];
+      foreach ($row->operation as $operation) {
+        $data_operation[] = $operation;
+        $assessment['metadata'][] = ['operation_label' => $data_operation];
+      }
+    }
+
+    if (isset($row->date)) {
+      $assessment['metadata'][] = [
+        'ar_date' => [
+          '_action' => 'daterange',
+          'value' => str_replace(' ', 'T', $row->date->value),
+          'end_value' => str_replace(' ', 'T', $row->date->value2),
+        ],
+      ];
+    }
 
     // Disasters.
     if (isset($row->disasters) && !empty($row->disasters)) {
@@ -226,7 +317,7 @@ function syncAssesments($url = '') {
           $bundle_data[] = [
             '_action' => 'lookup',
             '_reference' => 'term',
-            '_target' => 'local_coordination_group',
+            '_target' => 'local_coordination_groups',
             '_field' => 'id',
             'value' => $bundle->id,
           ];
@@ -246,23 +337,184 @@ function syncAssesments($url = '') {
       $assessment['metadata'][] = ['organizations_label' => $organization_data];
     }
 
+    // Participating organizations.
+    if (isset($row->participating_organizations) && !empty($row->participating_organizations)) {
+      $organization_data = [];
+      foreach ($row->participating_organizations as $organization) {
+        $organization_data[] = $organization->label;
+      }
+
+      $assessment['metadata'][] = ['asst_organizations_label' => $organization_data];
+    }
+
+    // Locations.
+    if (isset($row->locations) && !empty($row->locations)) {
+      $locations_data = [];
+      foreach ($row->locations as $organization) {
+        $locations_data[] = $organization->label;
+      }
+
+      $assessment['metadata'][] = ['locations_label' => $locations_data];
+    }
+
+    // Population types.
+    if (isset($row->population_types) && !empty($row->population_types)) {
+      $population_type_data = [];
+      foreach ($row->population_types as $population_type) {
+        if (isset($population_type->id)) {
+          $population_type_data[] = [
+            '_action' => 'lookup',
+            '_reference' => 'term',
+            '_target' => 'population_types',
+            '_field' => 'id',
+            'value' => $population_type->id,
+          ];
+        }
+      }
+
+      $assessment['metadata'][] = ['population_types' => $population_type_data];
+    }
+
+    // Themes.
+    if (isset($row->themes) && !empty($row->themes)) {
+      $theme_data = [];
+      foreach ($row->themes as $theme) {
+        if (isset($theme->id)) {
+          $theme_data[] = [
+            '_action' => 'lookup',
+            '_reference' => 'term',
+            '_target' => 'themes',
+            '_field' => 'id',
+            'value' => $theme->id,
+          ];
+        }
+      }
+
+      $assessment['metadata'][] = ['themes' => $theme_data];
+    }
+
+    // units_of_measurement.
+    if (isset($row->unit_measurement) && !empty($row->unit_measurement)) {
+      $unit_measurement_data = [];
+      foreach ($row->unit_measurement as $unit) {
+        if (!empty($unit)) {
+          $unit_measurement_data[] = $unit;
+        }
+      }
+
+      if (!empty($unit_measurement_data)) {
+        $assessment['metadata'][] = ['units_of_measurement_label' => $unit_measurement_data];
+      }
+    }
+
+    // Report.
+    if (isset($row->report) && !empty($row->report)) {
+      $report_data = [
+        '_action' => 'create',
+        '_reference' => 'node',
+        '_target' => 'assessment_document',
+        '_data' => [
+          'author' => 'AR',
+          'title' => $row->report->file->filename ?? 'Not applicable',
+          'files' => [],
+          'metadata' => [
+            ['accessibility' => $row->report->accessibility ?? 'Publicly Available'],
+            ['instructions' => $row->report->instructions ?? ''],
+          ],
+        ],
+      ];
+
+      if (isset($row->report->file->filename)) {
+        $report_data['_data']['title'] = $row->report->file->filename;
+      }
+
+      if (isset($row->report->file->url)) {
+        $report_data['_data']['files'][] = [
+          'uri' => $row->report->file->url,
+        ];
+      }
+
+      // Pass as an array.
+      $assessment['metadata'][] = ['assessment_report' => [$report_data]];
+    }
+
+    // Questionnaires.
+    if (isset($row->questionnaire) && !empty($row->questionnaire)) {
+      $questionnaire_data = [
+        '_action' => 'create',
+        '_reference' => 'node',
+        '_target' => 'assessment_document',
+        '_data' => [
+          'author' => 'AR',
+          'title' => $row->questionnaire->file->filename ?? 'Not applicable',
+          'files' => [],
+          'metadata' => [
+            ['accessibility' => $row->questionnaire->accessibility ?? 'Publicly Available'],
+            ['instructions' => $row->questionnaire->instructions ?? ''],
+          ],
+        ],
+      ];
+
+      if (isset($row->questionnaire->file->filename)) {
+        $questionnaire_data['_data']['title'] = $row->questionnaire->file->filename;
+      }
+
+      if (isset($row->questionnaire->file->url)) {
+        $questionnaire_data['_data']['files'][] = [
+          'uri' => $row->questionnaire->file->url,
+        ];
+      }
+
+      // Pass as an array.
+      $assessment['metadata'][] = ['assessment_questionnaire' => [$questionnaire_data]];
+    }
+
+    // Data.
+    if (isset($row->data) && !empty($row->data)) {
+      $data_data = [
+        '_action' => 'create',
+        '_reference' => 'node',
+        '_target' => 'assessment_document',
+        '_data' => [
+          'author' => 'AR',
+          'title' => $row->data->file->filename ?? 'Not applicable',
+          'files' => [],
+          'metadata' => [
+            ['accessibility' => $row->data->accessibility ?? 'Publicly Available'],
+            ['instructions' => $row->data->instructions ?? ''],
+          ],
+        ],
+      ];
+
+      if (isset($row->data->file->filename)) {
+        $data_data['_data']['title'] = $row->data->file->filename;
+      }
+
+      if (isset($row->data->file->url)) {
+        $data_data['_data']['files'][] = [
+          'uri' => $row->data->file->url,
+        ];
+      }
+
+      // Pass as an array.
+      $assessment['metadata'][] = ['assessment_data' => [$data_data]];
+    }
+
     $assessment['author'] = 'AR';
     $assessments[] = $assessment;
   }
 
-  $assessments = array_slice($assessments, 0, 1);
-  print_r($assessments);
   $post_data = [
     'author' => 'AR',
     'documents' => $assessments,
   ];
 
-  post('http://docstore.local.docksal/api/assessments/bulk', $post_data);
+  post(API_URL . 'api/assessments/bulk', $post_data);
 
   // Check for more data.
   if (isset($data->links) && isset($data->links->next->href)) {
     print $data->links->next->href;
-//    syncAssesments($data->links->next->href);
+    syncAssesments($data->links->next->href);
   }
 }
 

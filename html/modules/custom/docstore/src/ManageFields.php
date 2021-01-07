@@ -77,6 +77,8 @@ class ManageFields {
       'term_reference' => 'string',
       'email' => 'string',
       'timestamp' => 'date',
+      'datetime' => 'date',
+      'daterange' => 'date',
       'integer' => 'integer',
       'string_long' => 'text',
       'geofield' => 'geofield',
@@ -164,6 +166,16 @@ class ManageFields {
       $field->setPropertyPath($field_name . ':entity:name');
       $field->setDatasourceId('entity:node');
       $field->setLabel($label . ' (name)');
+      $index->addField($field);
+    }
+
+    // Add end date.
+    if ($field_type === 'daterange') {
+      $field = new Field($index, $field_name . '_end');
+      $field->setType('date');
+      $field->setPropertyPath($field_name . ':end_value');
+      $field->setDatasourceId('entity:node');
+      $field->setLabel($label . ' (end)');
       $index->addField($field);
     }
 
@@ -539,7 +551,6 @@ class ManageFields {
     }
 
     $view_display->setComponent($field_name, [
-      'type' => 'number_unformatted',
       'settings' => [],
     ])->save();
 

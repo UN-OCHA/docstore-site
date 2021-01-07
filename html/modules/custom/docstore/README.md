@@ -290,20 +290,22 @@ fin drush entity:delete node --bundle=assessment
 
 ## Sync
 
-```
-drush eval "docstore_create_node_type(\"disaster\")"
-drush eval "docstore_create_node_type(\"knowledge_management\")"
-drush eval "docstore_create_node_type(\"assessment\")"
+### Jenkins drush jobs
 
-drush scr --verbose modules/custom/docstore/syncs/docstore_countries.php
-drush scr --verbose modules/custom/docstore/syncs/docstore_disaster_types.php
-drush scr --verbose modules/custom/docstore/syncs/docstore_functional_roles.php
-drush scr --verbose modules/custom/docstore/syncs/docstore_global_coordination_groups.php
-drush scr --verbose modules/custom/docstore/syncs/docstore_organization_types.php
-drush scr --verbose modules/custom/docstore/syncs/docstore_population_types.php
-drush scr --verbose modules/custom/docstore/syncs/docstore_themes.php
-drush scr --verbose modules/custom/docstore/syncs/docstore_vulnerable_groups.php
+- `scr --verbose modules/custom/docstore/syncs/docstore_countries.php`
+- `scr --verbose modules/custom/docstore/syncs/docstore_disaster_types.php`
+- `scr --verbose modules/custom/docstore/syncs/docstore_functional_roles.php`
+- `scr --verbose modules/custom/docstore/syncs/docstore_global_coordination_groups.php`
+- `scr --verbose modules/custom/docstore/syncs/docstore_local_coordination_groups.php`
+- `scr --verbose modules/custom/docstore/syncs/docstore_organization_types.php`
+- `scr --verbose modules/custom/docstore/syncs/docstore_population_types.php`
+- `scr --verbose modules/custom/docstore/syncs/docstore_themes.php`
+- `scr --verbose modules/custom/docstore/syncs/docstore_vulnerable_groups.php`
 
-drush scr --verbose modules/custom/docstore/syncs/create_km.php
-drush scr --verbose modules/custom/docstore/syncs/create_disasters.php
+### Local sync jobs
+
+```bash
+php ./create_km.php
+php ./create_disasters.php
+php ./create_assessments.php
 ```
