@@ -16,6 +16,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\State\State;
 use Drupal\docstore\ProviderTrait;
 use Drupal\docstore\ManageFields;
+use Drupal\docstore\MetadataTrait;
 use Drupal\entity_usage\EntityUsage;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\taxonomy\Entity\Term;
@@ -31,6 +32,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class VocabularyController extends ControllerBase {
 
+  use MetadataTrait;
   use ProviderTrait;
 
   /**
@@ -620,9 +622,7 @@ class VocabularyController extends ControllerBase {
     // Check for meta tags.
     if (isset($params['metadata']) && $params['metadata']) {
       $metadata = $params['metadata'];
-      if (!is_array($metadata) || $this->arrayIsAssociative($metadata)) {
-        throw new BadRequestHttpException('Metadata has to be an array');
-      }
+      $item = array_merge($item, $this->buildItemDataFromMetaData($metadata, '', $provider, $params['author']));
 
       foreach ($metadata as $metaitem) {
         foreach ($metaitem as $key => $values) {
