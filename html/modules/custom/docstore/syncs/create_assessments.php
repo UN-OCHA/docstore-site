@@ -418,95 +418,32 @@ function syncAssesments($url = '') {
 
     // Report.
     if (isset($row->report) && !empty($row->report)) {
-      $report_data = [
-        '_action' => 'create',
-        '_reference' => 'node',
-        '_target' => 'assessment_document',
-        '_data' => [
-          'author' => 'AR',
-          'title' => $row->report->file->filename ?? 'Not applicable',
-          'files' => [],
-          'metadata' => [
-            ['accessibility' => $row->report->accessibility ?? 'Publicly Available'],
-            ['instructions' => $row->report->instructions ?? ''],
-          ],
-        ],
-      ];
-
-      if (isset($row->report->file->filename)) {
-        $report_data['_data']['title'] = $row->report->file->filename;
-      }
-
-      if (isset($row->report->file->url)) {
-        $report_data['_data']['files'][] = [
-          'uri' => $row->report->file->url,
-        ];
-      }
+      $report_data = buildAssessmentDocument($row->report);
 
       // Pass as an array.
-      $assessment['metadata'][] = ['assessment_report' => [$report_data]];
+      if ($report_data) {
+        $assessment['metadata'][] = ['assessment_report' => [$report_data]];
+      }
     }
 
     // Questionnaires.
     if (isset($row->questionnaire) && !empty($row->questionnaire)) {
-      $questionnaire_data = [
-        '_action' => 'create',
-        '_reference' => 'node',
-        '_target' => 'assessment_document',
-        '_data' => [
-          'author' => 'AR',
-          'title' => $row->questionnaire->file->filename ?? 'Not applicable',
-          'files' => [],
-          'metadata' => [
-            ['accessibility' => $row->questionnaire->accessibility ?? 'Publicly Available'],
-            ['instructions' => $row->questionnaire->instructions ?? ''],
-          ],
-        ],
-      ];
-
-      if (isset($row->questionnaire->file->filename)) {
-        $questionnaire_data['_data']['title'] = $row->questionnaire->file->filename;
-      }
-
-      if (isset($row->questionnaire->file->url)) {
-        $questionnaire_data['_data']['files'][] = [
-          'uri' => $row->questionnaire->file->url,
-        ];
-      }
+      $questionnaire_data = buildAssessmentDocument($row->questionnaire);
 
       // Pass as an array.
-      $assessment['metadata'][] = ['assessment_questionnaire' => [$questionnaire_data]];
+      if ($questionnaire_data) {
+        $assessment['metadata'][] = ['assessment_questionnaire' => [$questionnaire_data]];
+      }
     }
 
     // Data.
     if (isset($row->data) && !empty($row->data)) {
-      $data_data = [
-        '_action' => 'create',
-        '_reference' => 'node',
-        '_target' => 'assessment_document',
-        '_data' => [
-          'author' => 'AR',
-          'title' => $row->data->file->filename ?? 'Not applicable',
-          'files' => [],
-          'metadata' => [
-            ['accessibility' => $row->data->accessibility ?? 'Publicly Available'],
-            ['instructions' => $row->data->instructions ?? ''],
-          ],
-        ],
-      ];
-
-      if (isset($row->data->file->filename)) {
-        $data_data['_data']['title'] = $row->data->file->filename;
-      }
-
-      if (isset($row->data->file->url)) {
-        $data_data['_data']['files'][] = [
-          'uri' => $row->data->file->url,
-        ];
-      }
+      $data_data = buildAssessmentDocument($row->data);
 
       // Pass as an array.
-      $assessment['metadata'][] = ['assessment_data' => [$data_data]];
+      if ($data_data) {
+        $assessment['metadata'][] = ['assessment_data' => [$data_data]];
+      }
     }
 
     $assessment['author'] = 'AR';
@@ -525,6 +462,43 @@ function syncAssesments($url = '') {
     print $data->next->href;
     syncAssesments($data->next->href);
   }
+}
+
+function buildAssessmentDocument($data) {
+  if (!isset($data->accessibility) || $data->accessibility === 'Not Available') {
+    return FALSE;
+  }
+
+  if (empty($data->file->filename) && empty($data->file->url) && empty($data->instructions)) {
+    return FALSE;
+  }
+
+  $output = [
+    '_action' => 'create',
+    '_reference' => 'node',
+    '_target' => 'assessment_document',
+    '_data' => [
+      'author' => 'AR',
+      'title' => $data->file->filename ?? 'Not applicable',
+      'files' => [],
+      'metadata' => [
+        ['accessibility' => $data->accessibility ?? 'Publicly Available'],
+        ['instructions' => $data->instructions ?? ''],
+      ],
+    ],
+  ];
+
+  if (isset($data->file->filename)) {
+    $output['_data']['title'] = $data->file->filename;
+  }
+
+  if (isset($data->file->url)) {
+    $output['_data']['files'][] = [
+      'uri' => $data->file->url,
+    ];
+  }
+
+  return $output;
 }
 
 createNodeType();
