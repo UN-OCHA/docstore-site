@@ -323,3 +323,59 @@ Example output.
 ```
 
 * Status: `201`
+
+## POST /testdocs
+
+Add a minimal document.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "title": "Minimal",
+  "author": "hid_123456789",
+  "metadata": [
+    {
+      "field_parent": {
+        "_action": "create",
+        "_reference": "term",
+        "_target": "voc_parent",
+        "_data": {
+          "author": "Test",
+          "label": "Parent 5",
+          "metadata": [
+            {
+              "field_childs":   {
+                "_action": "create",
+                "_reference": "term",
+                "_target": "voc_child",
+                "_data": {
+                  "author": "Test",
+                  "label": "Child 3"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Testdocs created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Testdocs created"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
