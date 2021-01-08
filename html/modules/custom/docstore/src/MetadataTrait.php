@@ -4,6 +4,9 @@ namespace Drupal\docstore;
 
 use Drupal\field\Entity\FieldConfig;
 use Drupal\docstore\Controller\VocabularyController;
+use Drupal\taxonomy\Entity\Term;
+use Drupal\taxonomy\Entity\Vocabulary;
+use Drupal\user\Entity\User;
 
 /**
  * Build metadata structure.
@@ -16,7 +19,7 @@ trait MetadataTrait {
    * @return array
    *   Item for Entity::create.
    */
-  protected function buildItemDataFromMetaData($metadata, $type, $provider, $author) {
+  protected function buildItemDataFromMetaData($metadata, $type, $provider, $author, $entity_type) {
     $item = [];
 
     if (!is_array($metadata) || $this->arrayIsAssociative($metadata)) {
@@ -26,9 +29,9 @@ trait MetadataTrait {
     foreach ($metadata as $metaitem) {
       foreach ($metaitem as $key => $values) {
         // Check for label keys.
-        if (!empty($type) && strpos($key, '_label')) {
+        if (strpos($key, '_label')) {
           $key = str_replace('_label', '', $key);
-          $values = $this->mapOrCreateTerms($key, $values, $type, $provider, $author);
+          $values = $this->mapOrCreateTerms($key, $values, $type, $provider, $entity_type);
         }
 
         // Plain values.
@@ -63,6 +66,16 @@ trait MetadataTrait {
                   ];
                 }
               }
+
+              if ($values['_reference'] === 'term') {
+                $target_vocabulary = $this->loadVocabulary($values['_target']);
+                $child_term = $this->createTermFromParameters($values['_data'], $target_vocabulary, $provider);
+                if ($child_term) {
+                  $item[$key][] = [
+                    'target_uuid' => $child_term->uuid(),
+                  ];
+                }
+              }
             }
             else {
               // No action defined, pass as multi property.
@@ -93,6 +106,16 @@ trait MetadataTrait {
                       ];
                     }
                   }
+
+                  if ($value['_reference'] === 'term') {
+                    $target_vocabulary = $this->vocabularyLoad($value['_target']);
+                    $child_term = $this->createTermFromParameters($value['_data'], $target_vocabulary, $provider);
+                    if ($child_term) {
+                      $item[$key][] = [
+                        'target_uuid' => $child_term->uuid(),
+                      ];
+                    }
+                  }
                 }
                 else {
                   // No action defined, pass as multi property.
@@ -117,8 +140,13 @@ trait MetadataTrait {
   /**
    * Map or create terms based on field and label.
    */
-  protected function mapOrCreateTerms($field_name, $values, $type, $provider, $author) {
-    $field = FieldConfig::loadByName('node', $type, $field_name);
+  protected function mapOrCreateTerms($field_name, $values, $type, $provider, $entity_type) {
+    if ($entity_type === 'node') {
+      $field = FieldConfig::loadByName('node', $type, $field_name);
+    }
+    else {
+      $field = FieldConfig::loadByName('taxonomy_term', $type, $field_name);
+    }
 
     if (!$field) {
       throw new \Exception(strtr('Field @field does not exist on @type', [
@@ -218,6 +246,69 @@ trait MetadataTrait {
     if ($entities) {
       return reset($entities);
     }
+  }
+
+  /**
+   * Create a term.
+   *
+   * @param array $params
+   *   Array of values.
+   * @param \Drupal\taxonomy\Entity\Vocabulary $vocabulary
+   *   Vocabulary.
+   * @param \Drupal\user\Entity\User $provider
+   *   Provider.
+   *
+   * @return \Drupal\taxonomy\Entity\Term
+   *   Newly created term.
+   */
+  public function createTermFromParameters(array $params, Vocabulary $vocabulary, User $provider) {
+    // Term.
+    $item = [
+      'name' => $params['label'],
+      'vid' => $vocabulary->id(),
+      'created' => [],
+      'provider_uuid' => [],
+      'parent' => [],
+      'description' => $params['description'] ?? '',
+    ];
+
+    // Set creation time.
+    $item['created'][] = [
+      'value' => time(),
+    ];
+
+    // Set owner.
+    $item['provider_uuid'][] = [
+      'target_uuid' => $provider->uuid(),
+    ];
+
+    // Store HID Id.
+    $item['author'][] = [
+      'value' => $params['author'],
+    ];
+
+    // Check for meta tags.
+    if (isset($params['metadata']) && $params['metadata']) {
+      $metadata = $params['metadata'];
+      $item = array_merge($item, $this->buildItemDataFromMetaData($metadata, $vocabulary->id(), $provider, $params['author'], 'term'));
+    }
+
+    // Create term.
+    $term = Term::create($item);
+
+    // Check for invalid fields.
+    foreach ($item as $key => $data) {
+      if (!$term->hasField($key)) {
+        throw new \Exception(strtr('Unknown field @field', [
+          '@field' => $key,
+        ]));
+      }
+    }
+
+    // Save.
+    $term->save();
+
+    return $term;
   }
 
 }
