@@ -81,7 +81,7 @@ class ManageFields {
       'daterange' => 'date',
       'integer' => 'integer',
       'string_long' => 'text',
-      'geofield' => 'geofield',
+      'geofield' => 'string',
     ];
   }
 
@@ -142,12 +142,23 @@ class ManageFields {
       return;
     }
 
-    $field = new Field($index, $field_name);
-    $field->setType($field_type_mapping[$field_type]);
-    $field->setPropertyPath($field_name);
-    $field->setDatasourceId('entity:node');
-    $field->setLabel($label);
-    $index->addField($field);
+    // Add node title if needed.
+    if ($field_type === 'geofield') {
+      $field = new Field($index, $field_name . '_latlon');
+      $field->setType('string');
+      $field->setPropertyPath($field_name . ':latlon');
+      $field->setDatasourceId('entity:node');
+      $field->setLabel($label . ' (latlon)');
+      $index->addField($field);
+    }
+    else {
+      $field = new Field($index, $field_name);
+      $field->setType($field_type_mapping[$field_type]);
+      $field->setPropertyPath($field_name);
+      $field->setDatasourceId('entity:node');
+      $field->setLabel($label);
+      $index->addField($field);
+    }
 
     // Add node title if needed.
     if ($field_type === 'node_reference') {
