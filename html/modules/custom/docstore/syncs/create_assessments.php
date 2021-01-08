@@ -291,7 +291,6 @@ function syncAssesments($url = '') {
     if (isset($row->date)) {
       $assessment['metadata'][] = [
         'ar_date' => [
-          '_action' => 'daterange',
           'value' => str_replace(' ', 'T', $row->date->value),
           'end_value' => str_replace(' ', 'T', $row->date->value2),
         ],

@@ -133,15 +133,24 @@ Example
   }
 ```
 
-### Daterange
+### Multi property values
 
 Date range have an end date, so needs special treatment.
 
 ```json
   {
-    "_action": "daterange",
     "value": "2011-09-01T00:00:00",
     "end_value": "2011-09-02T00:00:00",
+  }
+```
+
+Geofield needs to be passed as follows.
+
+```json
+  {
+    "lat": 4.6,
+    "lon": 51,
+    "value": "POINT (4.6 51)"
   }
 ```
 

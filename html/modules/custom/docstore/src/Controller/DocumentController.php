@@ -286,6 +286,7 @@ class DocumentController extends ControllerBase {
             $values = $this->mapOrCreateTerms($key, $values, $type, $provider, $params['author']);
           }
 
+          // Plain values.
           if (!is_array($values)) {
             $item[$key][] = [
               'value' => $values,
@@ -296,22 +297,39 @@ class DocumentController extends ControllerBase {
               $item[$key] = [];
             }
 
-            if ($values['_action'] === 'daterange') {
-              $item[$key][] = [
-                'value' => $values['value'],
-                'end_value' => $values['end_value'],
-              ];
-            }
-            else {
-              foreach ($values as $value) {
-                if ($values['_action'] === 'daterange') {
+            // Single value with multiple properties or action.
+            if ($this->arrayIsAssociative($values)) {
+              if (isset($values['_action']) && $values['_action'] === 'lookup') {
+                // Lookup target.
+                $entity = $this->findTargetByProperty($values['_reference'], $values['_target'], $values['_field'], $values['value']);
+                if ($entity) {
                   $item[$key][] = [
-                    'value' => $values['value'],
-                    'end_value' => $values['end_value'],
+                    'target_uuid' => $entity->uuid(),
                   ];
                 }
-                elseif (is_array($value)) {
-                  if ($value['_action'] === 'lookup') {
+              }
+              elseif (isset($values['_action']) && $values['_action'] === 'create') {
+                // Allow on the fly creation of child items.
+                if ($values['_reference'] === 'node') {
+                  $child_document = $this->createDocumentForProvider($values['_target'], $values['_data'], $provider);
+                  if ($child_document) {
+                    $item[$key][] = [
+                      'target_uuid' => $child_document->uuid(),
+                    ];
+                  }
+                }
+              }
+              else {
+                // No action defined, pass as multi property.
+                $item[$key][] = $values;
+              }
+            }
+            else {
+              // Multiple values as array.
+              foreach ($values as $value) {
+                // Nested array.
+                if (is_array($value)) {
+                  if (isset($value['_action']) && $value['_action'] === 'lookup') {
                     // Lookup target.
                     $entity = $this->findTargetByProperty($value['_reference'], $value['_target'], $value['_field'], $value['value']);
                     if ($entity) {
@@ -320,7 +338,7 @@ class DocumentController extends ControllerBase {
                       ];
                     }
                   }
-                  elseif ($value['_action'] === 'create') {
+                  elseif (isset($value['_action']) && $value['_action'] === 'create') {
                     // Allow on the fly creation of child items.
                     if ($value['_reference'] === 'node') {
                       $child_document = $this->createDocumentForProvider($value['_target'], $value['_data'], $provider);
@@ -331,8 +349,13 @@ class DocumentController extends ControllerBase {
                       }
                     }
                   }
+                  else {
+                    // No action defined, pass as multi property.
+                    $item[$key][] = $value;
+                  }
                 }
                 else {
+                  // Assume it's a uuid.
                   $item[$key][] = [
                     'target_uuid' => $value,
                   ];
