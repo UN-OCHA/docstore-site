@@ -36,7 +36,7 @@ The document store supports multiple document types ("Content types"), these can
 | author | | Yes | The person who created this |
 | allow_duplicates | true | No | Allow duplicate titles |
 
-## Document fields
+## Document fields ([Docs](https://un-ocha.github.io/doc-store-api/#/Document/post-document-fields))
 
 To add new fields to a document type, you can use the `api/field/{type}` endpoint.
 
@@ -59,11 +59,13 @@ To add new fields to a document type, you can use the `api/field/{type}` endpoin
 | term_reference | reference to a term |
 | email | email address|
 | timestamp | datetime |
+| datetime | datetime |
+| daterange | datetime with end value |
 | integer | integer |
 | string_long | long string (blob) |
 | geofield | lat/lon coordinates |
 
-## Documents
+## Documents ([Docs](https://un-ocha.github.io/doc-store-api/#/Document/createDocument))
 
 For all read operation there's an endpoint `api/any` which will query all defined document types. If you want to query 1 specific document type or if you want to create, update or delete a document, you'll have to use to specific endpoint.
 
@@ -80,7 +82,7 @@ For all read operation there's an endpoint `api/any` which will query all define
 
 `metadata` contains values for fields, the default format is `"field_name": "value"` but other formats are supported as well.
 
-### Create documents in bulk
+### Create documents in bulk ([Docs](https://un-ocha.github.io/doc-store-api/#/Document/post-type-bulk))
 
 You can create multiple documents at once using the `api/{type}/bulk` endpoint by passing an array of JSON objects.
 
@@ -143,7 +145,7 @@ Date range have an end date, so needs special treatment.
   }
 ```
 
-## Vocabularies
+## Vocabularies ([Docs](https://un-ocha.github.io/doc-store-api/#/Vocabulary/post-vocabularies))
 
 Creating vocabularies can be at `api/vocabularies`
 
@@ -159,11 +161,11 @@ Creating vocabularies can be at `api/vocabularies`
 
 Creating fields on a vocabulary is the same process as adding fields to a document type, but add `api/vocabularies/{id}/fields`
 
-## Terms
+## Terms ([Docs](https://un-ocha.github.io/doc-store-api/#/Vocabulary/post-vocabularies-terms))
 
 Terms can be created either at `api/terms` or using the vocabulary specific `api/vocabularies/{id}/terms`
 
-## Files
+## Files ([Docs](https://un-ocha.github.io/doc-store-api/#/File/post-files))
 
 Creating files using HTTP request is a bit special, it can be done using a POST request to `api/files`. You can create a file without any content and later use `api/files/{id}/content` to send the content of the file as a binary string. Updating the file contents will automatically create a new revision of the file on disk.
 
