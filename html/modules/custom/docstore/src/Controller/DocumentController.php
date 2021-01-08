@@ -867,9 +867,10 @@ class DocumentController extends ControllerBase {
       $values = [$values];
     }
 
-    foreach ($values as &$value) {
+    foreach ($values as $key => &$value) {
       // Skip empty values.
-      if (empty($value)) {
+      if (empty(trim($value))) {
+        unset($values[$key]);
         continue;
       }
 
