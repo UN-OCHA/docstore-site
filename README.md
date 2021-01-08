@@ -133,6 +133,28 @@ Example
   }
 ```
 
+### Create term with child term
+
+```json
+{
+  "label": "Parent 4",
+  "author": "23cdf322",
+  "metadata": [
+    {
+      "field_childs":   {
+        "_action": "create",
+        "_reference": "term",
+        "_target": "voc_child",
+        "_data": {
+          "author": "Test",
+          "label": "Child 2"
+        }
+      }
+    }
+  ]
+}
+```
+
 ### Multi property values
 
 Date range have an end date, so needs special treatment.
