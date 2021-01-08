@@ -816,7 +816,7 @@ Example output.
 }
 ```
 
-* Status: `400`
+* Status: `500`
 * Content-Type: "application/json"
 * Data.message: "Unknown field field"
 
