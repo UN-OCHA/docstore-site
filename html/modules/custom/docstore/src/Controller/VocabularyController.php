@@ -928,6 +928,11 @@ class VocabularyController extends ControllerBase {
 
     /** @var \Drupal\Core\Entity\Term $term */
     foreach ($terms as $term) {
+      // Make sure user has access to the vocabulary.
+      if (!$this->providerCanUseVocabulary($term->getVocabularyId(), $provider)) {
+        continue;
+      }
+
       $vocabulary = $this->loadVocabulary($term->getVocabularyId());
       $row = [
         'uuid' => $term->uuid(),
@@ -1000,4 +1005,31 @@ class VocabularyController extends ControllerBase {
     return count(array_filter(array_keys($array), 'is_string')) > 0;
   }
 
+  /**
+   * Check if provider can use vocabulary.
+   */
+  protected function providerCanUseVocabulary($vocabulary_id, $provider) {
+    static $cache = [];
+
+    if (isset($cache[$vocabulary_id][$provider->id])) {
+      return $cache[$vocabulary_id][$provider->id];
+    }
+
+    // Load vocabulary.
+    $vocabulary = $this->loadVocabulary($vocabulary_id);
+
+    // Owner has access.
+    if (!$provider->isAnonymous() && $vocabulary->getThirdPartySetting('docstore', 'provider_uuid') === $this->provider->uuid()) {
+      $cache[$vocabulary_id][$provider->id] = TRUE;
+      return $cache[$vocabulary_id][$provider->id];
+    }
+
+    if ($vocabulary->getThirdPartySetting('docstore', 'shared')) {
+      $cache[$vocabulary_id][$provider->id] = TRUE;
+      return $cache[$vocabulary_id][$provider->id];
+    }
+
+    $cache[$vocabulary_id][$provider->id] = FALSE;
+    return $cache[$vocabulary_id][$provider->id];
+  }
 }
