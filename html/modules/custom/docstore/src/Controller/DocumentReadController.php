@@ -632,14 +632,15 @@ class DocumentReadController extends ControllerBase {
     }
 
     $public_fields = [
-      'search_api_id',
-      'search_api_relevance',
+      'boost_document',
       'changed',
       'created',
       'langcode',
       'provider',
       'published',
       'rendered_item',
+      'search_api_id',
+      'search_api_relevance',
       'title',
       'type',
       'uuid',
