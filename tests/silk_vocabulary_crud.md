@@ -812,13 +812,13 @@ Example output.
 
 ```json
 {
-  "message": "Unknown field field"
+  "message": "Field field does not exist"
 }
 ```
 
 * Status: `500`
 * Content-Type: "application/json"
-* Data.message: "Unknown field field"
+* Data.message: "Field field does not exist"
 
 ## POST /vocabularies/{machine_name}/terms
 
