@@ -924,6 +924,8 @@ class VocabularyController extends ControllerBase {
     }
     $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadMultiple($tids);
 
+    $provider = $this->getProvider();
+
     /** @var \Drupal\Core\Entity\Term $term */
     foreach ($terms as $term) {
       $vocabulary = $this->loadVocabulary($term->getVocabularyId());
@@ -940,6 +942,11 @@ class VocabularyController extends ControllerBase {
       $term_fields = $term->getFields();
       foreach ($term_fields as $term_field) {
         if (in_array($term_field->getName(), $hide_fields)) {
+          continue;
+        }
+
+        // Make sure user has access to the field.
+        if (!$this->providerCanUseField($term_field->getName(), $term->getVocabularyId(), 'taxonomy_term', $provider)) {
           continue;
         }
 
