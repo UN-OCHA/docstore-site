@@ -300,8 +300,13 @@ class DocumentReadController extends ControllerBase {
         elseif (strpos($key, '_lon') !== FALSE && isset($row[str_replace('_lon', '', $key)])) {
           // Will be checked when checking key without _lon.
         }
-        elseif (strpos($key, '_latlon') !== FALSE && isset($row[str_replace('_latlon', '', $key)])) {
-          // Will be checked when checking key without _latlon.
+        elseif (strpos($key, '_latlon') !== FALSE) {
+          if (isset($row[str_replace('_latlon', '', $key)])) {
+            // Check without _latlon.
+            if (!$this->providerCanUseDocumentField(str_replace('_latlon', '', $key), $row['type'], $provider)) {
+              unset($row[$key]);
+            }
+          }
         }
         else {
           // Check if provider has access to the field.
