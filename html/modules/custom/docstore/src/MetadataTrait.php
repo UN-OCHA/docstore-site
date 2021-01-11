@@ -364,4 +364,5 @@ trait MetadataTrait {
     $cache[$entity_type][$type][$field_name][$provider->id] = FALSE;
     return $cache[$entity_type][$type][$field_name][$provider->id];
   }
+
 }

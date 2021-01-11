@@ -1032,4 +1032,5 @@ class VocabularyController extends ControllerBase {
     $cache[$vocabulary_id][$provider->id] = FALSE;
     return $cache[$vocabulary_id][$provider->id];
   }
+
 }
