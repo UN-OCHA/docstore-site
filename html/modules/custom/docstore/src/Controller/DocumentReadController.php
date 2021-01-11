@@ -13,6 +13,7 @@ use Drupal\Core\State\State;
 use Drupal\docstore\DocumentTypeTrait;
 use Drupal\docstore\ProviderTrait;
 use Drupal\docstore\ParseQueryParameters;
+use Drupal\field\Entity\FieldConfig;
 use Drupal\search_api_solr\SearchApiSolrException;
 use Drupal\search_api_solr\SolrBackendInterface;
 use Drupal\search_api\Entity\Index;
@@ -234,25 +235,20 @@ class DocumentReadController extends ControllerBase {
 
       $row = [];
       foreach ($field_mapping as $name => $solr_name) {
-        // @todo Only return base, shared and provider fields.
         if (isset($solr_row[$solr_name])) {
           $row[$name] = $solr_row[$solr_name];
         }
       }
 
-      // Output tags as objects.
-      foreach ($row as $key => $row_data) {
-        if (isset($row[$key . '_label'])) {
-          $tupples = [];
-          foreach ($row_data as $tupple_key => $tupple_value) {
-            $tupples[$tupple_key] = [
-              'uuid' => $tupple_value,
-              'name' => is_array($row[$key . '_label']) ? $row[$key . '_label'][$tupple_key] : $row[$key . '_label'],
-            ];
-          }
-          $row[$key] = $tupples;
-          unset($row[$key . '_label']);
-        }
+      // Remove solr fields.
+      if (isset($row['search_api_datasource'])) {
+        unset($row['search_api_datasource']);
+      }
+      if (isset($row['search_api_language'])) {
+        unset($row['search_api_language']);
+      }
+      if (isset($row['rendered_item'])) {
+        unset($row['rendered_item']);
       }
 
       // Re-write file information.
@@ -280,7 +276,6 @@ class DocumentReadController extends ControllerBase {
         }
       }
 
-      // @todo Check for private fields, vocabularies.
       // Remove files fields.
       foreach ($row as $key => $value) {
         if (strpos($key, 'files_') === 0) {
@@ -288,15 +283,55 @@ class DocumentReadController extends ControllerBase {
         }
       }
 
-      // Remove solr fields.
-      if (isset($row['search_api_datasource'])) {
-        unset($row['search_api_datasource']);
-      }
-      if (isset($row['search_api_language'])) {
-        unset($row['search_api_language']);
-      }
-      if (isset($row['rendered_item'])) {
-        unset($row['rendered_item']);
+      // Output tags as objects.
+      foreach ($row as $key => $row_data) {
+        // Check if it's a special label field.
+        if (strpos($key, '_label') !== FALSE && isset($row[str_replace('_label', '', $key)])) {
+          // Will be checked when checking key without _label.
+        }
+        // Check if it's a date field.
+        elseif (strpos($key, '_end') !== FALSE && isset($row[str_replace('_end', '', $key)])) {
+          // Will be checked when checking key without _end.
+        }
+        // Check if it's a geofield field.
+        elseif (strpos($key, '_lat') !== FALSE && isset($row[str_replace('_lat', '', $key)])) {
+          // Will be checked when checking key without _lat.
+        }
+        elseif (strpos($key, '_lon') !== FALSE && isset($row[str_replace('_lon', '', $key)])) {
+          // Will be checked when checking key without _lon.
+        }
+        elseif (strpos($key, '_latlon') !== FALSE && isset($row[str_replace('_latlon', '', $key)])) {
+          // Will be checked when checking key without _latlon.
+        }
+        else {
+          // Check if provider has access to the field.
+          if (!$this->providerCanUseDocumentField($key, $row['type'], $provider)) {
+            unset($row[$key]);
+
+            if (isset($row[$key . '_label'])) {
+              unset($row[$key . '_label']);
+            }
+
+            if (isset($row[$key . '_end'])) {
+              unset($row[$key . '_end']);
+            }
+
+            continue;
+          }
+        }
+
+        // Handle label fields.
+        if (isset($row[$key . '_label'])) {
+          $tupples = [];
+          foreach ($row_data as $tupple_key => $tupple_value) {
+            $tupples[$tupple_key] = [
+              'uuid' => $tupple_value,
+              'name' => is_array($row[$key . '_label']) ? $row[$key . '_label'][$tupple_key] : $row[$key . '_label'],
+            ];
+          }
+          $row[$key] = $tupples;
+          unset($row[$key . '_label']);
+        }
       }
 
       $data[] = $row;
@@ -584,6 +619,57 @@ class DocumentReadController extends ControllerBase {
     }
 
     return $this->EndpointGetNodeType($type);
+  }
+
+  /**
+   * Check if provider can use field.
+   */
+  protected function providerCanUseDocumentField($field_name, $type, $provider) {
+    static $cache = [];
+
+    if (isset($cache[$type][$field_name][$provider->id])) {
+      return $cache[$type][$field_name][$provider->id];
+    }
+
+    $public_fields = [
+      'search_api_id',
+      'search_api_relevance',
+      'changed',
+      'created',
+      'langcode',
+      'provider',
+      'published',
+      'rendered_item',
+      'title',
+      'type',
+      'uuid',
+      'vid',
+    ];
+
+    if (in_array($field_name, $public_fields)) {
+      $cache[$type][$field_name][$provider->id] = TRUE;
+      return TRUE;
+    }
+
+    $field_config = FieldConfig::loadByName('node', $type, $field_name);
+    if (!$field_config) {
+      throw new \Exception(strtr('Field @field does not exist', [
+        '@field' => $field_name,
+      ]));
+    }
+
+    if (!$provider->isAnonymous() && $field_config->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
+      $cache[$type][$field_name][$provider->id] = TRUE;
+      return TRUE;
+    }
+
+    if (!$field_config->getThirdPartySetting('docstore', 'private', FALSE)) {
+      $cache[$type][$field_name][$provider->id] = TRUE;
+      return TRUE;
+    }
+
+    $cache[$type][$field_name][$provider->id] = FALSE;
+    return FALSE;
   }
 
 }

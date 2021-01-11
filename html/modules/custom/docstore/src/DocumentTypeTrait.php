@@ -134,9 +134,6 @@ trait DocumentTypeTrait {
   /**
    * List of accessible document types by provider.
    */
-  /**
-   * Get a list of endpoints and associated node type.
-   */
   protected function getAccessibleDocumentTypes($provider) {
     $document_types = \Drupal::state()->get($this->getDocumentTypeStateKey(), []);
     if (empty($document_types) || !isset($document_types[$provider->id()])) {

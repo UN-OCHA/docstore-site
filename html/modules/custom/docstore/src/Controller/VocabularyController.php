@@ -859,6 +859,7 @@ class VocabularyController extends ControllerBase {
   protected function loadVocabularies() {
     $vocabularies = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple();
 
+    // @todo check access.
     return $vocabularies;
   }
 
