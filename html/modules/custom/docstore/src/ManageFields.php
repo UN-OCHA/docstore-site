@@ -387,6 +387,9 @@ class ManageFields {
     // Add private.
     $this->createDocumentBaseFieldPrivate($machine_name);
 
+    // Keep track of private types.
+    $this->rebuildDocumentTypes($this->provider);
+
     docstore_notify_webhooks('document_type:create', $machine_name);
 
     return $node_type;
@@ -445,6 +448,9 @@ class ManageFields {
     $node_type->setThirdPartySetting('docstore', 'allow_duplicates', $params['allow_duplicates'] ?? TRUE);
 
     $node_type->save();
+
+    // Keep track of private types.
+    $this->rebuildDocumentTypes($this->provider);
 
     docstore_notify_webhooks('document_type:update', $type);
 

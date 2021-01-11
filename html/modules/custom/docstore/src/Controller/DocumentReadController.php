@@ -101,7 +101,7 @@ class DocumentReadController extends ControllerBase {
 
     // Check if provider has access.
     $provider = $this->getProvider();
-    if (!$this->providerCanRead($node_type, $provider)) {
+    if ($node_type !== 'any' && !$this->providerCanRead($node_type, $provider)) {
       throw new AccessDeniedHttpException(strtr('You do not have access to read @type', [
         '@type' => $node_type,
       ]));
@@ -140,6 +140,13 @@ class DocumentReadController extends ControllerBase {
     if ($node_type !== 'any') {
       $query->addCondition('type', $node_type);
     }
+    else {
+      // Limit to accessible node types.
+      $accessible_types = $this->getAccessibleDocumentTypes($provider);
+      if (!empty($accessible_types)) {
+        $query->addCondition('type', $accessible_types, 'IN');
+      }
+    }
 
     // Check published and private.
     if ($provider->isAnonymous()) {
@@ -150,6 +157,7 @@ class DocumentReadController extends ControllerBase {
       // Return private documents of provider.
       $group_provider = $query->createConditionGroup('OR');
       $group_provider->addCondition('provider', $provider->uuid());
+
       // Or public published documents.
       $group_published = $query->createConditionGroup('AND');
       $group_published->addCondition('published', TRUE);
