@@ -322,6 +322,11 @@ trait MetadataTrait {
    * Check if user has access to the field.
    */
   protected function providerCanUseField($field_name, $type, $entity_type, $provider) {
+    // Use real entity type.
+    if ($entity_type === 'term') {
+      $entity_type = 'taxonomy_term';
+    }
+
     static $cache = [];
 
     if (isset($cache[$entity_type][$type][$field_name][$provider->id])) {
