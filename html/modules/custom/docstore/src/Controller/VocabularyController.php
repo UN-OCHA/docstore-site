@@ -18,7 +18,6 @@ use Drupal\docstore\ProviderTrait;
 use Drupal\docstore\ManageFields;
 use Drupal\docstore\MetadataTrait;
 use Drupal\entity_usage\EntityUsage;
-use Exception;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -593,7 +592,7 @@ class VocabularyController extends ControllerBase {
     try {
       $term = $this->createTermFromParameters($params, $vocabulary, $provider);
     }
-    catch (Exception $e) {
+    catch (\Exception $e) {
       throw new BadRequestHttpException($e->getMessage(), $e, 400);
     }
 
