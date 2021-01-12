@@ -1036,7 +1036,7 @@ class VocabularyController extends ControllerBase {
 
     $vocabularies = $this->loadVocabularies();
     foreach ($vocabularies as $vocabulary) {
-      if (!$provider->isAnonymous() && $vocabulary->getThirdPartySetting('docstore', 'provider_uuid') === $this->provider->uuid()) {
+      if (!$provider->isAnonymous() && $vocabulary->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
         $cache[$provider->id][] = $vocabulary->id();
       }
 
@@ -1062,7 +1062,7 @@ class VocabularyController extends ControllerBase {
     $vocabulary = $this->loadVocabulary($vocabulary_id);
 
     // Owner has access.
-    if (!$provider->isAnonymous() && $vocabulary->getThirdPartySetting('docstore', 'provider_uuid') === $this->provider->uuid()) {
+    if (!$provider->isAnonymous() && $vocabulary->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
       $cache[$vocabulary_id][$provider->id] = TRUE;
       return $cache[$vocabulary_id][$provider->id];
     }
