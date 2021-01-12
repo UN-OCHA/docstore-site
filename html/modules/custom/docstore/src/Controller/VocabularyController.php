@@ -668,7 +668,6 @@ class VocabularyController extends ControllerBase {
       'url.query_args:page',
     ]));
 
-
     return $response;
   }
 
@@ -961,6 +960,9 @@ class VocabularyController extends ControllerBase {
 
       if (!empty($vids)) {
         $vids = array_intersect($vids, $accessible_vocabularies);
+        if (empty($vids)) {
+          throw new BadRequestHttpException('You do not have access to this vocabulary');
+        }
         $query->condition('vid', $vids, 'IN');
       }
       else {

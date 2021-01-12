@@ -158,7 +158,86 @@ Get terms.
 * Status: `200`
 * Content-Type: "application/json"
 * Data[0].test_public: "I'm visible"
-* Data[0].test_private: "I'm not visiblex"
+* Data[0].test_private: "I'm not visible"
+
+## `GET /vocabularies/{machine_name}/terms`
+
+Get terms as other provider.
+
+* Accept: "application/json"
+* API-KEY: dcba
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].test_public: "I'm visible"
+
+## PATCH /vocabularies/{machine_name}
+
+Make vocabulary private.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "private": true
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Vocabulary updated"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## `GET /vocabularies/{machine_name}/terms`
+
+Get terms.
+
+* Accept: "application/json"
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "You do not have access to this vocabulary"
+
+## `GET /vocabularies/{machine_name}/terms`
+
+Get terms.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].test_public: "I'm visible"
+* Data[0].test_private: "I'm not visible"
+
+## `GET /vocabularies/{machine_name}/terms`
+
+Get terms as other provider.
+
+* Accept: "application/json"
+* API-KEY: dcba
+
+===
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "You do not have access to this vocabulary"
 
 ## DELETE /terms/{term_uuid}
 

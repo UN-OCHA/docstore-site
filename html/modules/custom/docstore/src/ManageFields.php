@@ -848,7 +848,29 @@ class ManageFields {
       unset($params['label']);
     }
 
-    $updated_fields = [];
+    if (isset($params['shared'])) {
+      $vocabulary->setThirdPartySetting('docstore', 'shared', $params['shared']);
+      $vocabulary->setThirdPartySetting('docstore', 'private', !$vocabulary->getThirdPartySetting('docstore', 'shared'));
+      unset($params['shared']);
+    }
+
+    if (isset($params['private'])) {
+      $vocabulary->setThirdPartySetting('docstore', 'shared', !$params['private']);
+      $vocabulary->setThirdPartySetting('docstore', 'private', !$vocabulary->getThirdPartySetting('docstore', 'shared'));
+      unset($params['private']);
+    }
+
+    // Can other providers add content.
+    if (isset($params['content_allowed'])) {
+      $vocabulary->setThirdPartySetting('docstore', 'content_allowed', $params['content_allowed']);
+      unset($params['content_allowed']);
+    }
+
+    // Can other providers add fields.
+    if (isset($params['fields_allowed'])) {
+      $vocabulary->setThirdPartySetting('docstore', 'fields_allowed', $params['fields_allowed']);
+      unset($params['fields_allowed']);
+    }
 
     // Check allow_duplicate changes.
     if (isset($params['allow_duplicates']) && $params['allow_duplicates'] === FALSE && $vocabulary->getThirdPartySetting('docstore', 'allow_duplicates') === TRUE) {
@@ -873,6 +895,7 @@ class ManageFields {
     }
 
     // Update all fields specified in params.
+    $updated_fields = [];
     foreach ($params as $name => $values) {
       // Make sure protected fields aren't set.
       if (isset($protected_fields[$name])) {
