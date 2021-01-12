@@ -285,7 +285,9 @@ class VocabularyController extends ControllerBase {
   public function getVocabularyTerms($id, Request $request) {
     $vocabulary = $this->loadVocabulary($id);
 
-    $data = $this->loadTerms([$vocabulary->id()]);
+    $offset = $request->get('offset') ?? 0;
+    $limit = $request->get('limit') ?? 100;
+    $data = $this->loadTerms([$vocabulary->id()], NULL, $offset, $limit);
 
     $response = new CacheableJsonResponse($data);
 
@@ -493,7 +495,9 @@ class VocabularyController extends ControllerBase {
       $vids = [];
     }
 
-    $data = $this->loadTerms($vids);
+    $offset = $request->get('offset') ?? 0;
+    $limit = $request->get('limit') ?? 100;
+    $data = $this->loadTerms($vids, NULL, $offset, $limit);
 
     $response = new CacheableJsonResponse($data);
 
@@ -582,7 +586,7 @@ class VocabularyController extends ControllerBase {
   public function getTerm($id) {
     // Load term.
     $term = $this->loadTerm($id);
-    $terms = $this->loadTerms([], $term->id());
+    $terms = $this->loadTerms([], $term->id(), 0, 1);
     $data = reset($terms);
 
     // Add cache tags.
@@ -602,7 +606,7 @@ class VocabularyController extends ControllerBase {
   public function getTermRevisions($id, Request $request) {
     // Load term.
     $term = $this->loadTerm($id);
-    $terms = $this->loadTerms([], $term->id());
+    $terms = $this->loadTerms([], $term->id(), 0, 1);
     $data = reset($terms);
 
     $revisions = $this->database->select('taxonomy_term_revision', 'tr')
@@ -859,6 +863,7 @@ class VocabularyController extends ControllerBase {
   protected function loadVocabularies() {
     $vocabularies = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple();
 
+    // @todo check access.
     return $vocabularies;
   }
 
@@ -890,7 +895,8 @@ class VocabularyController extends ControllerBase {
   /**
    * Fetch terms.
    */
-  public function loadTerms($vids = [], $tid = NULL) {
+  public function loadTerms($vids = [], $tid = NULL, $offset = 0, $limit = 100) {
+    $provider = $this->getProvider();
     $data = [];
 
     // Fields to hide.
@@ -911,20 +917,39 @@ class VocabularyController extends ControllerBase {
       $tids[] = $tid;
     }
     else {
-      // Build query, use paging.
+      // Build query.
       $query = $this->entityTypeManager->getStorage('taxonomy_term')->getQuery();
 
+      // @todo add paging.
+      $query->range($offset, $limit);
+
       // Filter by vocabularies.
+      $accessible_vocabularies = $this->getAccessibleVocabularies($provider);
+      if (empty($accessible_vocabularies)) {
+        throw new BadRequestHttpException('You do not have access to any vocabulary');
+      }
+
       if (!empty($vids)) {
+        $vids = array_intersect($vids, $accessible_vocabularies);
         $query->condition('vid', $vids, 'IN');
+      }
+      else {
+        $query->condition('vid', $accessible_vocabularies, 'IN');
       }
 
       $tids = $query->execute();
     }
+
+    // Load terms.
     $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadMultiple($tids);
 
     /** @var \Drupal\Core\Entity\Term $term */
     foreach ($terms as $term) {
+      // Make sure user has access to the vocabulary.
+      if (!$this->providerCanUseVocabulary($term->getVocabularyId(), $provider)) {
+        continue;
+      }
+
       $vocabulary = $this->loadVocabulary($term->getVocabularyId());
       $row = [
         'uuid' => $term->uuid(),
@@ -939,6 +964,11 @@ class VocabularyController extends ControllerBase {
       $term_fields = $term->getFields();
       foreach ($term_fields as $term_field) {
         if (in_array($term_field->getName(), $hide_fields)) {
+          continue;
+        }
+
+        // Make sure user has access to the field.
+        if (!$this->providerCanUseField($term_field->getName(), $term->getVocabularyId(), 'taxonomy_term', $provider)) {
           continue;
         }
 
@@ -990,6 +1020,60 @@ class VocabularyController extends ControllerBase {
    */
   protected function arrayIsAssociative(array $array) {
     return count(array_filter(array_keys($array), 'is_string')) > 0;
+  }
+
+  /**
+   * Get list of accessible vocabularies.
+   */
+  protected function getAccessibleVocabularies($provider) {
+    static $cache = [];
+
+    if (isset($cache[$provider->id])) {
+      return $cache[$provider->id];
+    }
+
+    $cache[$provider->id] = [];
+
+    $vocabularies = $this->loadVocabularies();
+    foreach ($vocabularies as $vocabulary) {
+      if (!$provider->isAnonymous() && $vocabulary->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
+        $cache[$provider->id][] = $vocabulary->id();
+      }
+
+      if ($vocabulary->getThirdPartySetting('docstore', 'shared')) {
+        $cache[$provider->id][] = $vocabulary->id();
+      }
+    }
+
+    return $cache[$provider->id];
+  }
+
+  /**
+   * Check if provider can use vocabulary.
+   */
+  protected function providerCanUseVocabulary($vocabulary_id, $provider) {
+    static $cache = [];
+
+    if (isset($cache[$vocabulary_id][$provider->id])) {
+      return $cache[$vocabulary_id][$provider->id];
+    }
+
+    // Load vocabulary.
+    $vocabulary = $this->loadVocabulary($vocabulary_id);
+
+    // Owner has access.
+    if (!$provider->isAnonymous() && $vocabulary->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
+      $cache[$vocabulary_id][$provider->id] = TRUE;
+      return $cache[$vocabulary_id][$provider->id];
+    }
+
+    if ($vocabulary->getThirdPartySetting('docstore', 'shared')) {
+      $cache[$vocabulary_id][$provider->id] = TRUE;
+      return $cache[$vocabulary_id][$provider->id];
+    }
+
+    $cache[$vocabulary_id][$provider->id] = FALSE;
+    return $cache[$vocabulary_id][$provider->id];
   }
 
 }

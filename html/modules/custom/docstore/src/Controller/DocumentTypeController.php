@@ -178,6 +178,9 @@ class DocumentTypeController extends ControllerBase {
     // Rebuild endpoints.
     $this->rebuildEndpoints();
 
+    // Keep track of private types.
+    $this->rebuildDocumentTypes($this->provider);
+
     $response = new JsonResponse($data);
     return $response;
   }

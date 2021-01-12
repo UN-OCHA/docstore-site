@@ -8,6 +8,20 @@ namespace Drupal\docstore;
 trait DocumentTypeTrait {
 
   /**
+   * Name of the key.
+   */
+  protected function getEndpointStateKey() {
+    return 'document_endpoints';
+  }
+
+  /**
+   * Name of the key.
+   */
+  protected function getDocumentTypeStateKey() {
+    return 'document_document_types';
+  }
+
+  /**
    * Check if an endpoint is valid.
    */
   protected function validEndpoint($endpoint) {
@@ -84,13 +98,6 @@ trait DocumentTypeTrait {
   }
 
   /**
-   * Name of the key.
-   */
-  protected function getEndpointStateKey() {
-    return 'document_endpoints';
-  }
-
-  /**
    * Check if provider can read content.
    */
   protected function providerCanRead($node_type, $provider) {
@@ -117,11 +124,46 @@ trait DocumentTypeTrait {
       return TRUE;
     }
 
-    if ($type->getThirdPartySetting('docstore', 'content_allowed')) {
+    if (!$provider->isAnonymous() && $type->getThirdPartySetting('docstore', 'content_allowed')) {
       return TRUE;
     }
 
     return FALSE;
+  }
+
+  /**
+   * List of accessible document types by provider.
+   */
+  protected function getAccessibleDocumentTypes($provider) {
+    $document_types = \Drupal::state()->get($this->getDocumentTypeStateKey(), []);
+    if (empty($document_types) || !isset($document_types[$provider->id()])) {
+      if (isset($this->entityTypeManager)) {
+        $node_types = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
+        foreach ($node_types as $node_type) {
+          if ($this->providerCanRead($node_type->id(), $provider)) {
+            $document_types[$provider->id()][] = $node_type->id();
+          }
+        }
+
+        \Drupal::state()->set($this->getDocumentTypeStateKey(), $document_types);
+      }
+      else {
+        return [];
+      }
+    }
+
+    return $document_types[$provider->id()];
+  }
+
+  /**
+   * Rebuild endpoints state.
+   */
+  protected function rebuildDocumentTypes($provider = NULL) {
+    \Drupal::state()->delete($this->getDocumentTypeStateKey());
+
+    if ($provider) {
+      $this->getAccessibleDocumentTypes($provider);
+    }
   }
 
 }

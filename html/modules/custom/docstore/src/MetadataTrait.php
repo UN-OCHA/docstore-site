@@ -34,6 +34,13 @@ trait MetadataTrait {
           $values = $this->mapOrCreateTerms($key, $values, $type, $provider, $entity_type);
         }
 
+        // Make sure user has access to the field.
+        if (!$this->providerCanUseField($key, $type, $entity_type, $provider)) {
+          throw new \Exception(strtr('You do not have access to field @field', [
+            '@field' => $key,
+          ]));
+        }
+
         // Plain values.
         if (!is_array($values)) {
           $item[$key][] = [
@@ -309,6 +316,58 @@ trait MetadataTrait {
     $term->save();
 
     return $term;
+  }
+
+  /**
+   * Check if user has access to the field.
+   */
+  protected function providerCanUseField($field_name, $type, $entity_type, $provider) {
+    // Use real entity type.
+    if ($entity_type === 'term') {
+      $entity_type = 'taxonomy_term';
+    }
+
+    static $cache = [];
+
+    if (isset($cache[$entity_type][$type][$field_name][$provider->id])) {
+      return $cache[$entity_type][$type][$field_name][$provider->id];
+    }
+
+    $public_fields = [
+      'uuid',
+      'langcode',
+      'status',
+      'name',
+      'description',
+      'default_langcode',
+      'revision_default',
+      'revision_translation_affected',
+    ];
+
+    if (in_array($field_name, $public_fields)) {
+      $cache[$entity_type][$type][$field_name][$provider->id] = TRUE;
+      return $cache[$entity_type][$type][$field_name][$provider->id];
+    }
+
+    $field_config = FieldConfig::loadByName($entity_type, $type, $field_name);
+    if (!$field_config) {
+      throw new \Exception(strtr('Field @field does not exist', [
+        '@field' => $field_name,
+      ]));
+    }
+
+    if (!$provider->isAnonymous() && $field_config->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
+      $cache[$entity_type][$type][$field_name][$provider->id] = TRUE;
+      return $cache[$entity_type][$type][$field_name][$provider->id];
+    }
+
+    if (!$field_config->getThirdPartySetting('docstore', 'private', FALSE)) {
+      $cache[$entity_type][$type][$field_name][$provider->id] = TRUE;
+      return $cache[$entity_type][$type][$field_name][$provider->id];
+    }
+
+    $cache[$entity_type][$type][$field_name][$provider->id] = FALSE;
+    return $cache[$entity_type][$type][$field_name][$provider->id];
   }
 
 }
