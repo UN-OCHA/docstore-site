@@ -275,7 +275,6 @@ class VocabularyController extends ControllerBase {
     Cache::invalidateTags(['vocabularies']);
 
     $response = new JsonResponse($data);
-
     return $response;
   }
 
@@ -289,7 +288,20 @@ class VocabularyController extends ControllerBase {
     $limit = $request->get('limit') ?? 100;
     $data = $this->loadTerms([$vocabulary->id()], NULL, $offset, $limit);
 
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => [
+        'terms',
+      ],
+    ];
+
     $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
+      'user',
+      'url.query_args:filter',
+      'url.query_args:sort',
+      'url.query_args:page',
+    ]));
 
     return $response;
   }
@@ -306,8 +318,7 @@ class VocabularyController extends ControllerBase {
       $data[$field_name] = $field_info->getType();
     }
 
-    $response = new CacheableJsonResponse($data);
-
+    $response = new JsonResponse($data);
     return $response;
   }
 
@@ -499,7 +510,20 @@ class VocabularyController extends ControllerBase {
     $limit = $request->get('limit') ?? 100;
     $data = $this->loadTerms($vids, NULL, $offset, $limit);
 
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => [
+        'terms',
+      ],
+    ];
+
     $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
+      'user',
+      'url.query_args:filter',
+      'url.query_args:sort',
+      'url.query_args:page',
+    ]));
 
     return $response;
   }
@@ -591,11 +615,18 @@ class VocabularyController extends ControllerBase {
 
     // Add cache tags.
     $cache_tags['#cache'] = [
-      'tags' => $term->getCacheTags(),
+      'tags' => [
+        'terms',
+      ],
     ];
 
     $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
+      'user',
+      'url.query_args:filter',
+      'url.query_args:sort',
+      'url.query_args:page',
+    ]));
 
     return $response;
   }
@@ -630,7 +661,13 @@ class VocabularyController extends ControllerBase {
     ];
 
     $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
+      'user',
+      'url.query_args:filter',
+      'url.query_args:sort',
+      'url.query_args:page',
+    ]));
+
 
     return $response;
   }
@@ -786,14 +823,7 @@ class VocabularyController extends ControllerBase {
       'uuid' => $term->uuid(),
     ];
 
-    // Add cache tags.
-    $cache_tags['#cache'] = [
-      'tags' => $term->getCacheTags(),
-    ];
-
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
-
+    $response = new JsonResponse($data);
     return $response;
   }
 
