@@ -1003,23 +1003,6 @@ Get a vocabulary.
 * Status: `404`
 * Content-Type: "application/json"
 
-## `GET /terms`
-
-Get all terms.
-
-* Accept: "application/json"
-
-===
-
-Example output.
-
-```json
-[]
-```
-
-* Status: `200`
-* Content-Type: "application/json"
-
 ## POST /vocabularies
 
 Create vocabulary disallowing duplicate terms.

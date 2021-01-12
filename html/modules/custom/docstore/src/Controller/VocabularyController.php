@@ -925,6 +925,10 @@ class VocabularyController extends ControllerBase {
 
       // Filter by vocabularies.
       $accessible_vocabularies = $this->getAccessibleVocabularies($provider);
+      if (empty($accessible_vocabularies)) {
+        throw new BadRequestHttpException('You do not have access to any vocabulary');
+      }
+
       if (!empty($vids)) {
         $vids = array_intersect($vids, $accessible_vocabularies);
         $query->condition('vid', $vids, 'IN');
