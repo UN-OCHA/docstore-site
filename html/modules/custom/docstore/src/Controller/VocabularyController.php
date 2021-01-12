@@ -18,6 +18,7 @@ use Drupal\docstore\ProviderTrait;
 use Drupal\docstore\ManageFields;
 use Drupal\docstore\MetadataTrait;
 use Drupal\entity_usage\EntityUsage;
+use Exception;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -589,7 +590,12 @@ class VocabularyController extends ControllerBase {
       }
     }
 
-    $term = $this->createTermFromParameters($params, $vocabulary, $provider);
+    try {
+      $term = $this->createTermFromParameters($params, $vocabulary, $provider);
+    }
+    catch (Exception $e) {
+      throw new BadRequestHttpException($e->getMessage(), $e, 400);
+    }
 
     $data = [
       'message' => 'Term created',
@@ -837,6 +843,11 @@ class VocabularyController extends ControllerBase {
     // Provider can only update own terms.
     if ($term->provider_uuid->entity->uuid() !== $provider->uuid()) {
       throw new BadRequestHttpException('Term is not owned by you');
+    }
+
+    // Check if vocabulary is accessible.
+    if (!$this->providerCanUseVocabulary($term->getVocabularyId(), $provider)) {
+      throw new BadRequestHttpException('The vocabulary is private');
     }
 
     // Check if term is in use.
