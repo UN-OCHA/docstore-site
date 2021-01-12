@@ -275,7 +275,6 @@ class VocabularyController extends ControllerBase {
     Cache::invalidateTags(['vocabularies']);
 
     $response = new JsonResponse($data);
-
     return $response;
   }
 
@@ -289,7 +288,18 @@ class VocabularyController extends ControllerBase {
     $limit = $request->get('limit') ?? 100;
     $data = $this->loadTerms([$vocabulary->id()], NULL, $offset, $limit);
 
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => array_merge(['terms'], $vocabulary->getCacheTags()),
+    ];
+
     $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
+      'user',
+      'url.query_args:filter',
+      'url.query_args:sort',
+      'url.query_args:page',
+    ]));
 
     return $response;
   }
@@ -306,8 +316,7 @@ class VocabularyController extends ControllerBase {
       $data[$field_name] = $field_info->getType();
     }
 
-    $response = new CacheableJsonResponse($data);
-
+    $response = new JsonResponse($data);
     return $response;
   }
 
@@ -499,7 +508,20 @@ class VocabularyController extends ControllerBase {
     $limit = $request->get('limit') ?? 100;
     $data = $this->loadTerms($vids, NULL, $offset, $limit);
 
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => [
+        'terms',
+      ],
+    ];
+
     $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
+      'user',
+      'url.query_args:filter',
+      'url.query_args:sort',
+      'url.query_args:page',
+    ]));
 
     return $response;
   }
@@ -567,7 +589,12 @@ class VocabularyController extends ControllerBase {
       }
     }
 
-    $term = $this->createTermFromParameters($params, $vocabulary, $provider);
+    try {
+      $term = $this->createTermFromParameters($params, $vocabulary, $provider);
+    }
+    catch (\Exception $e) {
+      throw new BadRequestHttpException($e->getMessage(), $e, 400);
+    }
 
     $data = [
       'message' => 'Term created',
@@ -591,11 +618,18 @@ class VocabularyController extends ControllerBase {
 
     // Add cache tags.
     $cache_tags['#cache'] = [
-      'tags' => $term->getCacheTags(),
+      'tags' => [
+        'terms',
+      ],
     ];
 
     $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
+      'user',
+      'url.query_args:filter',
+      'url.query_args:sort',
+      'url.query_args:page',
+    ]));
 
     return $response;
   }
@@ -630,7 +664,12 @@ class VocabularyController extends ControllerBase {
     ];
 
     $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
+      'user',
+      'url.query_args:filter',
+      'url.query_args:sort',
+      'url.query_args:page',
+    ]));
 
     return $response;
   }
@@ -786,14 +825,7 @@ class VocabularyController extends ControllerBase {
       'uuid' => $term->uuid(),
     ];
 
-    // Add cache tags.
-    $cache_tags['#cache'] = [
-      'tags' => $term->getCacheTags(),
-    ];
-
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
-
+    $response = new JsonResponse($data);
     return $response;
   }
 
@@ -810,6 +842,11 @@ class VocabularyController extends ControllerBase {
     // Provider can only update own terms.
     if ($term->provider_uuid->entity->uuid() !== $provider->uuid()) {
       throw new BadRequestHttpException('Term is not owned by you');
+    }
+
+    // Check if vocabulary is accessible.
+    if (!$this->providerCanUseVocabulary($term->getVocabularyId(), $provider)) {
+      throw new BadRequestHttpException('The vocabulary is private');
     }
 
     // Check if term is in use.
@@ -931,6 +968,9 @@ class VocabularyController extends ControllerBase {
 
       if (!empty($vids)) {
         $vids = array_intersect($vids, $accessible_vocabularies);
+        if (empty($vids)) {
+          throw new BadRequestHttpException('You do not have access to this vocabulary');
+        }
         $query->condition('vid', $vids, 'IN');
       }
       else {

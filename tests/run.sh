@@ -17,6 +17,7 @@ $DRUSH eval "docstore_create_node_type('document', 'documents')"
 ./silk -test.v -silk.url $API silk_document_types_crud.md || exit 1;
 ./silk -test.v -silk.url $API silk_geofield.md || exit 1;
 ./silk -test.v -silk.url $API silk_child_terms.md || exit 1;
+./silk -test.v -silk.url $API silk_private.md || exit 1;
 
 # Clear docstore, general tests
 $DRUSH eval "_docstore_setup_testing()"
