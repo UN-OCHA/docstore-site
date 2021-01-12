@@ -49,7 +49,7 @@ Create document type with same machine name.
 
 ===
 
-* Status: `500`
+* Status: `400`
 * Content-Type: "application/json"
 
 ## POST /types
@@ -75,7 +75,7 @@ Create document type with same endpoint.
 
 ===
 
-* Status: `500`
+* Status: `400`
 * Content-Type: "application/json"
 
 ## POST /types
@@ -101,7 +101,7 @@ Create document type with illegal endpoint.
 
 ===
 
-* Status: `500`
+* Status: `400`
 * Content-Type: "application/json"
 
 ## POST /types
@@ -127,7 +127,7 @@ Create document type with invalid endpoint.
 
 ===
 
-* Status: `500`
+* Status: `400`
 * Content-Type: "application/json"
 
 ## GET /types

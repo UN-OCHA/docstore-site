@@ -760,7 +760,7 @@ Create term with wrong metadata.
 
 ===
 
-* Status: `500`
+* Status: `400`
 * Content-Type: "application/json"
 * Data.message: "Metadata has to be an array"
 
@@ -782,7 +782,7 @@ Create term with wrong metadata.
 
 ===
 
-* Status: `500`
+* Status: `400`
 * Content-Type: "application/json"
 * Data.message: "Metadata has to be an array"
 
@@ -816,7 +816,7 @@ Example output.
 }
 ```
 
-* Status: `500`
+* Status: `400`
 * Content-Type: "application/json"
 * Data.message: "Field field does not exist"
 

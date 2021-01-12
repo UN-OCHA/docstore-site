@@ -47,7 +47,7 @@ final class DocstoreExceptionSubscriber implements EventSubscriberInterface {
     // If the exception is cacheable, generate a cacheable response.
     if ($exception instanceof CacheableDependencyInterface) {
       if (!$exception instanceof HttpException) {
-        $response = new CacheableJsonResponse(['message' => $exception->getMessage()], 500);
+        $response = new CacheableJsonResponse(['message' => $exception->getMessage()], 400);
       }
       else {
         $response = new CacheableJsonResponse(['message' => $exception->getMessage()], $exception->getStatusCode(), $exception->getHeaders());
@@ -56,7 +56,7 @@ final class DocstoreExceptionSubscriber implements EventSubscriberInterface {
     }
     else {
       if (!$exception instanceof HttpException) {
-        $response = new JsonResponse(['message' => $exception->getMessage()], 500);
+        $response = new JsonResponse(['message' => $exception->getMessage()], 400);
       }
       else {
         $response = new JsonResponse(['message' => $exception->getMessage()], $exception->getStatusCode(), $exception->getHeaders());
