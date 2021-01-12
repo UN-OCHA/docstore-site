@@ -892,6 +892,7 @@ class VocabularyController extends ControllerBase {
    * Fetch terms.
    */
   public function loadTerms($vids = [], $tid = NULL) {
+    $provider = $this->getProvider();
     $data = [];
 
     // Fields to hide.
@@ -916,15 +917,19 @@ class VocabularyController extends ControllerBase {
       $query = $this->entityTypeManager->getStorage('taxonomy_term')->getQuery();
 
       // Filter by vocabularies.
+      $accessible_vocabularies = $this->getAccessibleVocabularies($provider);
       if (!empty($vids)) {
-        $query->condition('vid', $vids, 'IN');
+        $vids = array_intersect($vids, $accessible_vocabularies);
+      }
+      else {
+        $query->condition('vid', $accessible_vocabularies, 'IN');
       }
 
       $tids = $query->execute();
     }
-    $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadMultiple($tids);
 
-    $provider = $this->getProvider();
+    // Load terms.
+    $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadMultiple($tids);
 
     /** @var \Drupal\Core\Entity\Term $term */
     foreach ($terms as $term) {
@@ -1003,6 +1008,32 @@ class VocabularyController extends ControllerBase {
    */
   protected function arrayIsAssociative(array $array) {
     return count(array_filter(array_keys($array), 'is_string')) > 0;
+  }
+
+  /**
+   * Get list of accessible vocabularies.
+   */
+  protected function getAccessibleVocabularies($provider) {
+    static $cache = [];
+
+    if (isset($cache[$provider->id])) {
+      return $cache[$provider->id];
+    }
+
+    $cache[$provider->id] = [];
+
+    $vocabularies = $this->loadVocabularies();
+    foreach ($vocabularies as $vocabulary) {
+      if (!$provider->isAnonymous() && $vocabulary->getThirdPartySetting('docstore', 'provider_uuid') === $this->provider->uuid()) {
+        $cache[$provider->id][] = $provider->id;
+      }
+
+      if ($vocabulary->getThirdPartySetting('docstore', 'shared')) {
+        $cache[$provider->id][] = $provider->id;
+      }
+    }
+
+    return $cache[$provider->id];
   }
 
   /**
