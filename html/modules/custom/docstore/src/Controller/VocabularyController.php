@@ -290,9 +290,7 @@ class VocabularyController extends ControllerBase {
 
     // Add cache tags.
     $cache_tags['#cache'] = [
-      'tags' => [
-        'terms',
-      ],
+      'tags' => array_merge(['terms'], $vocabulary->getCacheTags()),
     ];
 
     $response = new CacheableJsonResponse($data);
