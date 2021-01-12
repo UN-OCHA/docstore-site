@@ -285,7 +285,9 @@ class VocabularyController extends ControllerBase {
   public function getVocabularyTerms($id, Request $request) {
     $vocabulary = $this->loadVocabulary($id);
 
-    $data = $this->loadTerms([$vocabulary->id()]);
+    $offset = $request->get('offset') ?? 0;
+    $limit = $request->get('limit') ?? 100;
+    $data = $this->loadTerms([$vocabulary->id()], NULL, $offset, $limit);
 
     $response = new CacheableJsonResponse($data);
 
@@ -493,7 +495,9 @@ class VocabularyController extends ControllerBase {
       $vids = [];
     }
 
-    $data = $this->loadTerms($vids);
+    $offset = $request->get('offset') ?? 0;
+    $limit = $request->get('limit') ?? 100;
+    $data = $this->loadTerms($vids, NULL, $offset, $limit);
 
     $response = new CacheableJsonResponse($data);
 
@@ -582,7 +586,7 @@ class VocabularyController extends ControllerBase {
   public function getTerm($id) {
     // Load term.
     $term = $this->loadTerm($id);
-    $terms = $this->loadTerms([], $term->id());
+    $terms = $this->loadTerms([], $term->id(), 0, 1);
     $data = reset($terms);
 
     // Add cache tags.
@@ -602,7 +606,7 @@ class VocabularyController extends ControllerBase {
   public function getTermRevisions($id, Request $request) {
     // Load term.
     $term = $this->loadTerm($id);
-    $terms = $this->loadTerms([], $term->id());
+    $terms = $this->loadTerms([], $term->id(), 0, 1);
     $data = reset($terms);
 
     $revisions = $this->database->select('taxonomy_term_revision', 'tr')
@@ -891,7 +895,7 @@ class VocabularyController extends ControllerBase {
   /**
    * Fetch terms.
    */
-  public function loadTerms($vids = [], $tid = NULL) {
+  public function loadTerms($vids = [], $tid = NULL, $offset = 0, $limit = 100) {
     $provider = $this->getProvider();
     $data = [];
 
@@ -913,13 +917,17 @@ class VocabularyController extends ControllerBase {
       $tids[] = $tid;
     }
     else {
-      // Build query, use paging.
+      // Build query.
       $query = $this->entityTypeManager->getStorage('taxonomy_term')->getQuery();
+
+      // @todo add paging.
+      $query->range($offset, $limit);
 
       // Filter by vocabularies.
       $accessible_vocabularies = $this->getAccessibleVocabularies($provider);
       if (!empty($vids)) {
         $vids = array_intersect($vids, $accessible_vocabularies);
+        $query->condition('vid', $vids, 'IN');
       }
       else {
         $query->condition('vid', $accessible_vocabularies, 'IN');
@@ -1025,11 +1033,11 @@ class VocabularyController extends ControllerBase {
     $vocabularies = $this->loadVocabularies();
     foreach ($vocabularies as $vocabulary) {
       if (!$provider->isAnonymous() && $vocabulary->getThirdPartySetting('docstore', 'provider_uuid') === $this->provider->uuid()) {
-        $cache[$provider->id][] = $provider->id;
+        $cache[$provider->id][] = $vocabulary->id();
       }
 
       if ($vocabulary->getThirdPartySetting('docstore', 'shared')) {
-        $cache[$provider->id][] = $provider->id;
+        $cache[$provider->id][] = $vocabulary->id();
       }
     }
 
