@@ -361,14 +361,14 @@ class ManageFields {
     ]);
 
     // Mark document type as shared.
-    $node_type->setThirdPartySetting('docstore', 'shared', $params['shared'] ?? FALSE);
+    $node_type->setThirdPartySetting('docstore', 'shared', $params['shared'] ?? TRUE);
     $node_type->setThirdPartySetting('docstore', 'private', !$node_type->getThirdPartySetting('docstore', 'shared'));
 
     // Can other providers add content.
-    $node_type->setThirdPartySetting('docstore', 'content_allowed', $params['content_allowed'] ?? FALSE);
+    $node_type->setThirdPartySetting('docstore', 'content_allowed', $params['content_allowed'] ?? TRUE);
 
     // Can other providers add fields.
-    $node_type->setThirdPartySetting('docstore', 'fields_allowed', $params['fields_allowed'] ?? FALSE);
+    $node_type->setThirdPartySetting('docstore', 'fields_allowed', $params['fields_allowed'] ?? TRUE);
 
     // Set base information.
     $node_type->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
@@ -435,17 +435,29 @@ class ManageFields {
     }
 
     // Mark document type as shared.
-    $node_type->setThirdPartySetting('docstore', 'shared', $params['shared'] ?? FALSE);
-    $node_type->setThirdPartySetting('docstore', 'private', !$node_type->getThirdPartySetting('docstore', 'shared'));
+    if (isset($params['shared'])) {
+      $node_type->setThirdPartySetting('docstore', 'shared', $params['shared']);
+      $node_type->setThirdPartySetting('docstore', 'private', !$node_type->getThirdPartySetting('docstore', 'shared'));
+    }
+
+    if (isset($params['private'])) {
+      $node_type->setThirdPartySetting('docstore', 'shared', !$params['private']);
+      $node_type->setThirdPartySetting('docstore', 'private', !$node_type->getThirdPartySetting('docstore', 'shared'));
+    }
 
     // Can other providers add content.
-    $node_type->setThirdPartySetting('docstore', 'content_allowed', $params['content_allowed'] ?? FALSE);
+    if (isset($params['content_allowed'])) {
+      $node_type->setThirdPartySetting('docstore', 'content_allowed', $params['content_allowed']);
+    }
 
     // Can other providers add fields.
-    $node_type->setThirdPartySetting('docstore', 'fields_allowed', $params['fields_allowed'] ?? FALSE);
+    if (isset($params['fields_allowed'])) {
+      $node_type->setThirdPartySetting('docstore', 'fields_allowed', $params['fields_allowed']);
+    }
 
-    // Set base information.
-    $node_type->setThirdPartySetting('docstore', 'allow_duplicates', $params['allow_duplicates'] ?? TRUE);
+    if (isset($params['allow_duplicates'])) {
+      $node_type->setThirdPartySetting('docstore', 'allow_duplicates', $params['allow_duplicates'] ?? TRUE);
+    }
 
     $node_type->save();
 
