@@ -13,11 +13,7 @@ Create document type.
   "machine_name": "test",
   "endpoint": "test-documents",
   "label": "Test document",
-  "shared": true,
-  "content_allowed": true,
-  "fields_allowed": true,
-  "author": "common",
-  "allow_duplicates": true
+  "author": "common"
 }
 ```
 
@@ -152,6 +148,67 @@ Get test type.
 * API-KEY: abcd
 
 ===
+
+```json
+{
+  "machine_name": "test",
+  "label": "Test document",
+  "shared": true,
+  "private": false,
+  "content_allowed": true,
+  "fields_allowed": true,
+  "author":"common",
+  "allow_duplicates":true,
+  "endpoint":"test-documents"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## PATCH /types/test
+
+Update document type.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Test document - private",
+  "shared": false
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /types/test
+
+Get test type.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+```json
+{
+  "machine_name": "test",
+  "label": "Test document - private",
+  "shared": false,
+  "private": true,
+  "content_allowed": true,
+  "fields_allowed": true,
+  "author":"common",
+  "allow_duplicates":true,
+  "endpoint":"test-documents"
+}
+```
 
 * Status: `200`
 * Content-Type: "application/json"
