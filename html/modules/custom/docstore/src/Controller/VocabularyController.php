@@ -774,12 +774,14 @@ class VocabularyController extends ControllerBase {
       }
     }
 
+    // Load vocabulary.
+    $vocabulary = $this->loadVocabulary($term->getVocabularyId());
+
     // Label is actually name.
     if (isset($params['label'])) {
       $params['name'] = $params['label'];
       unset($params['label']);
 
-      $vocabulary = $this->loadVocabulary($term->getVocabularyId());
       if ($vocabulary->getThirdPartySetting('docstore', 'allow_duplicates') === FALSE) {
         // Check for duplicate labels.
         $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([

@@ -228,6 +228,27 @@ Update title.
 * Data.message: "Term updated"
 * Data.uuid: {term1}
 
+## PATCH /terms/{term1}
+
+Update description.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "description": "Version 3 rocks"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term updated"
+* Data.uuid: {term1}
+
 ## GET /terms/{term1}
 
 Test single term.
