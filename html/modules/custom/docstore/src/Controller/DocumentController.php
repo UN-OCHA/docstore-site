@@ -28,7 +28,6 @@ use Drupal\file\Entity\File;
 use Drupal\file\FileUsage\FileUsageInterface;
 use Drupal\media\Entity\Media;
 use Drupal\node\Entity\Node;
-use Drupal\node\Entity\NodeType;
 use Drupal\user\Entity\User;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -508,7 +507,9 @@ class DocumentController extends ControllerBase {
 
     // Check if we need to create a new revision.
     $document->setRevisionCreationTime(time());
-    $node_type = NodeType::load($type);
+
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->entityTypeManager->getStorage('node_type')->load($type);
 
     if ($node_type->isNewRevision() || $params['new_revision'] ?? FALSE) {
       $document->revision_log = 'Updated';
