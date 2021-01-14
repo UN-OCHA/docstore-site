@@ -729,7 +729,6 @@ class VocabularyController extends ControllerBase {
   /**
    * Update term.
    */
-
   public function updateTerm($id, Request $request) {
     $protected_fields = [
       'author',
