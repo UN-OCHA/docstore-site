@@ -211,6 +211,18 @@ docstore_get_document_revision:
     _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'B'
+docstore_publish_document_revision:
+  path: '/api/{type}/{id}/revisions/{vid}/publish'
+  defaults:
+    _controller: 'docstore.document_controller:publishDocumentRevision'
+    _title: 'Set document revision'
+  methods: [PUT, PATCH]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'C'
+    docstore_access_level: 'B'
 docstore_get_document_files:
   path: '/api/{type}/{id}/files'
   defaults:
