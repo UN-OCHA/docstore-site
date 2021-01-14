@@ -201,6 +201,7 @@ Creating vocabularies can be at `api/vocabularies`
 | content_allowed | true | No | Other providers can create new terms |
 | fields_allowed | true | No | Other providers can add their fields |
 | author | | Yes | The person who created this |
+| use_revisions | true | no | Create new revisions by default |
 | allow_duplicates | true | No | Allow duplicate term names |
 
 Creating fields on a vocabulary is the same process as adding fields to a document type, but add `api/vocabularies/{id}/fields`
@@ -208,6 +209,16 @@ Creating fields on a vocabulary is the same process as adding fields to a docume
 ## Terms ([Docs](https://un-ocha.github.io/doc-store-api/#/Vocabulary/post-vocabularies-terms))
 
 Terms can be created either at `api/terms` or using the vocabulary specific `api/vocabularies/{id}/terms`
+
+Terms have revisions which can be accessed at `api/terms/{id}/revisions/{revision_id}` and also has support for `api/terms/{id}/revisions/{revision_id}/publish`
+
+When updating terms you can use these fields.
+
+| field | default | required | info |
+| -----  | -------- | -------- | ---- |
+| new_revision | | No | create a new revision even if revisions are disabled |
+| revision_log | "Updated" | No | revision log message |
+| draft | false | No | Is the revision published |
 
 ## Files ([Docs](https://un-ocha.github.io/doc-store-api/#/File/post-files))
 

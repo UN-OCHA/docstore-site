@@ -531,6 +531,30 @@ docstore_get_term_revisions:
     _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'B'
+docstore_get_term_revision:
+  path: '/api/terms/{id}/revisions/{revision_id}'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:getTermRevision'
+    _title: 'Get term'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_publish_term_revision:
+  path: '/api/terms/{id}/revisions/{revision_id}/publish'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:publishTermRevision'
+    _title: 'Publish term revision'
+  methods: [PUT, PATCH]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'C'
+    docstore_access_level: 'B'
 docstore_update_term:
   path: '/api/terms/{id}'
   defaults:

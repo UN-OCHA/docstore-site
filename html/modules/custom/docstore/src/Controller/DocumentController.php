@@ -642,7 +642,6 @@ class DocumentController extends ControllerBase {
 
       $document->isDefaultRevision(TRUE);
       $document->save();
-
     }
 
     $data = [
