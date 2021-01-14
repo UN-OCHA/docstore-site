@@ -28,6 +28,7 @@ use Drupal\file\Entity\File;
 use Drupal\file\FileUsage\FileUsageInterface;
 use Drupal\media\Entity\Media;
 use Drupal\node\Entity\Node;
+use Drupal\node\Entity\NodeType;
 use Drupal\user\Entity\User;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -372,7 +373,7 @@ class DocumentController extends ControllerBase {
    */
   public function updateDocument($type, $id, Request $request) {
     // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'write');
+    $type = $this->typeAllowed($type, 'write');
 
     $protected_fields = [
       'author',
@@ -425,12 +426,12 @@ class DocumentController extends ControllerBase {
 
     // Re-map fields.
     if (isset($params['private'])) {
-      $params['private'] = $params['private'];
+      $document->set('private', $params['private']);
       unset($params['private']);
     }
 
     if (isset($params['published'])) {
-      $params['published'] = $params['published'];
+      $document->setPublished($params['published']);
       unset($params['published']);
     }
 
@@ -463,6 +464,11 @@ class DocumentController extends ControllerBase {
 
     // Update all fields specified in params.
     foreach ($params as $name => $values) {
+      // Ignore new_revision.
+      if ($name === 'new_revision') {
+        continue;
+      }
+
       // Make sure protected fields aren't set.
       if (isset($protected_fields[$name])) {
         throw new BadRequestHttpException(strtr('Field @name cannot be changed', ['@name' => $name]));
@@ -500,11 +506,20 @@ class DocumentController extends ControllerBase {
       }
     }
 
-    $document->setNewRevision();
-    $document->revision_log = 'Updated';
+    // Check if we need to create a new revision.
     $document->setRevisionCreationTime(time());
-    $document->isDefaultRevision(TRUE);
-    $document->setRevisionUserId($provider->id());
+    $node_type = NodeType::load($type);
+
+    if ($node_type->isNewRevision() || $params['new_revision'] ?? FALSE) {
+      $document->revision_log = 'Updated';
+      if (isset($params['revision_log'])) {
+        $document->revision_log = $params['revision_log'];
+        unset($params['revision_log']);
+      }
+      $document->setNewRevision();
+      $document->isDefaultRevision(TRUE);
+      $document->setRevisionUserId($provider->id());
+    }
 
     // Trigger validation.
     $violations = $document->validate();
@@ -519,7 +534,7 @@ class DocumentController extends ControllerBase {
     $document->save();
 
     $data = [
-      'message' => strtr('@type updated', ['@type' => ucfirst($node_type)]),
+      'message' => strtr('@type updated', ['@type' => ucfirst($type)]),
       'uuid' => $document->uuid(),
     ];
 
