@@ -372,7 +372,7 @@ class DocumentController extends ControllerBase {
    */
   public function updateDocument($type, $id, Request $request) {
     // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'write');
+    $type = $this->typeAllowed($type, 'write');
 
     $protected_fields = [
       'author',
@@ -425,12 +425,12 @@ class DocumentController extends ControllerBase {
 
     // Re-map fields.
     if (isset($params['private'])) {
-      $params['private'] = $params['private'];
+      $document->set('private', $params['private']);
       unset($params['private']);
     }
 
     if (isset($params['published'])) {
-      $params['published'] = $params['published'];
+      $document->setPublished($params['published']);
       unset($params['published']);
     }
 
@@ -463,6 +463,11 @@ class DocumentController extends ControllerBase {
 
     // Update all fields specified in params.
     foreach ($params as $name => $values) {
+      // Ignore revision fields.
+      if ($name === 'new_revision' || $$name === 'revision_log' || $name === 'draft') {
+        continue;
+      }
+
       // Make sure protected fields aren't set.
       if (isset($protected_fields[$name])) {
         throw new BadRequestHttpException(strtr('Field @name cannot be changed', ['@name' => $name]));
@@ -500,11 +505,27 @@ class DocumentController extends ControllerBase {
       }
     }
 
-    $document->setNewRevision();
-    $document->revision_log = 'Updated';
+    // Check if we need to create a new revision.
     $document->setRevisionCreationTime(time());
-    $document->isDefaultRevision(TRUE);
-    $document->setRevisionUserId($provider->id());
+
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->entityTypeManager->getStorage('node_type')->load($type);
+
+    if ($node_type->isNewRevision() || $params['new_revision'] ?? FALSE) {
+      $document->revision_log = 'Updated';
+      if (isset($params['revision_log'])) {
+        $document->revision_log = $params['revision_log'];
+        unset($params['revision_log']);
+      }
+      $document->setNewRevision();
+      $document->setRevisionUserId($provider->id());
+
+      // Save new revision as draft?
+      $document->isDefaultRevision(TRUE);
+      if ($params['draft'] ?? FALSE) {
+        $document->isDefaultRevision(FALSE);
+      }
+    }
 
     // Trigger validation.
     $violations = $document->validate();
@@ -519,7 +540,7 @@ class DocumentController extends ControllerBase {
     $document->save();
 
     $data = [
-      'message' => strtr('@type updated', ['@type' => ucfirst($node_type)]),
+      'message' => strtr('@type updated', ['@type' => ucfirst($type)]),
       'uuid' => $document->uuid(),
     ];
 
@@ -560,6 +581,82 @@ class DocumentController extends ControllerBase {
     $document->delete();
 
     $response = new JsonResponse($data);
+
+    return $response;
+  }
+
+  /**
+   * Publish a document revision.
+   */
+  public function publishDocumentRevision($type, $id, $vid, Request $request) {
+    // Check if type is allowed.
+    $node_type = $this->typeAllowed($type, 'write');
+
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
+
+    // Get provider.
+    $provider = $this->requireProvider();
+
+    // Check for last.
+    if ($vid === 'last') {
+      // Get last revisions.
+      $query = $this->database->select('node_revision', 'nr')
+        ->fields('nr', ['vid']);
+      $query->innerJoin('node', 'n', 'nr.nid = n.nid');
+      $vid = $query->condition('n.uuid', $id)
+        ->orderBy('vid', 'DESC')
+        ->execute()
+        ->fetchCol(0);
+
+      $vid = reset($vid);
+    }
+
+    /** @var \Drupal\node\Entity\Node $document */
+    $document = $this->entityTypeManager->getStorage('node')->loadRevision($vid);
+
+    // Provider can only update own document.
+    if ($document->getOwnerId() !== $provider->id()) {
+      throw new BadRequestHttpException('Document is not owned by you');
+    }
+
+    if ($document->uuid() !== $id) {
+      throw new BadRequestHttpException('Revision not found');
+    }
+
+    if ($document->bundle() !== $node_type) {
+      throw new BadRequestHttpException('Wrong node type');
+    }
+
+    if (!$document->isDefaultRevision()) {
+      $document->setRevisionCreationTime(time());
+      $document->revision_log = 'Updated';
+      if (isset($params['revision_log'])) {
+        $document->revision_log = $params['revision_log'];
+      }
+      $document->setNewRevision();
+      $document->setRevisionUserId($provider->id());
+
+      $document->isDefaultRevision(TRUE);
+      $document->save();
+
+    }
+
+    $data = [
+      'message' => strtr('@type updated', ['@type' => ucfirst($node_type)]),
+      'uuid' => $document->uuid(),
+    ];
+
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => $document->getCacheTags(),
+    ];
+
+    $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
 
     return $response;
   }

@@ -5,7 +5,7 @@
 ### Document types
 
 - [x] check endpoint, use white/black list to avoid clashes
-- [ ] add permission
+- [x] add permission
 - [ ] delete when empty
 - [x] implement PUT, PATCH
 

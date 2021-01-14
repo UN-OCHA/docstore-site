@@ -39,7 +39,8 @@ Create document type with same machine name.
   "content_allowed": true,
   "fields_allowed": true,
   "author": "common",
-  "allow_duplicates": true
+  "allow_duplicates": true,
+  "use_revisions": true,
 }
 ```
 

@@ -34,6 +34,7 @@ The document store supports multiple document types ("Content types"), these can
 | content_allowed | true | No | Other providers can create new documents |
 | fields_allowed | true | No | Other providers can add their fields |
 | author | | Yes | The person who created this |
+| use_revisions | true | no | Create new revisions by default |
 | allow_duplicates | true | No | Allow duplicate titles |
 
 ## Document fields ([Docs](https://un-ocha.github.io/doc-store-api/#/Document/post-document-fields))
@@ -76,7 +77,7 @@ For all read operation there's an endpoint `api/any` which will query all define
 | published | true | No | Is the document published |
 | private | false | No | Is the document private |
 | files | [] | No | Array of URI or UUID |
-| metadata | [] | No | Array of metadata items
+| metadata | [] | No | Array of metadata items |
 
 `files` is an array with mixed values. If the value is a string, it's assumed that it's the `uuid` of an existing media item in the document store. If the value is an object containing a property `uri`, that value is use to retrieve the remote file.
 
@@ -175,6 +176,18 @@ Geofield needs to be passed as follows.
     "value": "POINT (4.6 51)"
   }
 ```
+
+## Document revisions ([Docs](https://un-ocha.github.io/doc-store-api/#/Document/get-type-entityid-revisions))
+
+By default all content types have revisions enabled. When updating a document you have the following extra properties.
+
+| field | default | required | info |
+| -----  | -------- | -------- | ---- |
+| new_revision | | No | create a new revision even if revisions are disabled |
+| revision_log | "Updated" | No | revision log message |
+| draft | false | No | Is the revision published |
+
+To publish a revision you can use `api/{type}/{id}/revisions/{vid}/publish`, the only property you can set is `revision_log`
 
 ## Vocabularies ([Docs](https://un-ocha.github.io/doc-store-api/#/Vocabulary/post-vocabularies))
 
