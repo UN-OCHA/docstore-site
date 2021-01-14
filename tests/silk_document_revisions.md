@@ -329,6 +329,7 @@ Force a new revision.
 {
   "title": "Version 4",
   "new_revision": true,
+  "revision_log": "Force a new revision",
   "author": "test"
 }
 ```

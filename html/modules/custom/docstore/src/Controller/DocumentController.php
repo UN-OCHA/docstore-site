@@ -465,7 +465,7 @@ class DocumentController extends ControllerBase {
     // Update all fields specified in params.
     foreach ($params as $name => $values) {
       // Ignore new_revision.
-      if ($name === 'new_revision') {
+      if ($name === 'new_revision' || $$name === 'revision_log') {
         continue;
       }
 
