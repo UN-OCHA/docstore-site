@@ -376,6 +376,9 @@ class ManageFields {
     $node_type->setThirdPartySetting('docstore', 'allow_duplicates', $params['allow_duplicates'] ?? TRUE);
     $node_type->setThirdPartySetting('docstore', 'endpoint', $params['endpoint']);
 
+    // Track revisions by default.
+    $node_type->setNewRevision($params['use_revisions'] ?? TRUE);
+
     $node_type->save();
 
     // Add files field.
@@ -457,6 +460,11 @@ class ManageFields {
 
     if (isset($params['allow_duplicates'])) {
       $node_type->setThirdPartySetting('docstore', 'allow_duplicates', $params['allow_duplicates'] ?? TRUE);
+    }
+
+    // Track revisions.
+    if (isset($params['use_revisions'])) {
+      $node_type->setNewRevision($params['use_revisions']);
     }
 
     $node_type->save();
