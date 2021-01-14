@@ -675,6 +675,58 @@ class VocabularyController extends ControllerBase {
   }
 
   /**
+   * Get term revision.
+   */
+  public function getTermRevision($id, $revision_id, Request $request) {
+    /** @var \Drupal\term\Entity\Term $term */
+    $term = $this->entityTypeManager->getStorage('taxonomy_term')->loadRevision($revision_id);
+    if ($term->uuid() !== $id) {
+      throw new BadRequestHttpException('Revision not found');
+    }
+
+    $data = [];
+    $term_fields = $term->getFields(TRUE);
+    foreach ($term_fields as $term_field) {
+      $field_item_list = isset($term->{$term_field->getName()}) ? $term->{$term_field->getName()} : NULL;
+      $field_item_definition = $field_item_list->getFieldDefinition();
+
+      $values = [];
+      foreach ($field_item_list as $field_item) {
+        if ($main_property_name = $field_item->mainPropertyName()) {
+          $values[] = $field_item->getValue()[$main_property_name];
+        }
+        else {
+          $values[] = $field_item->getValue();
+        }
+      }
+
+      $field_name = $term_field->getName();
+      if ($field_name === 'name') {
+        $field_name = 'label';
+      }
+
+      if ($field_item_definition->getFieldStorageDefinition()->getCardinality() == 1) {
+        $data[$field_name] = reset($values);
+      }
+      else {
+        $data[$field_name] = $values;
+      }
+    }
+
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => $term->getCacheTags(),
+    ];
+
+    $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
+      'user',
+    ]));
+
+    return $response;
+  }
+
+  /**
    * Update term.
    */
   public function updateTerm($id, Request $request) {
@@ -722,12 +774,14 @@ class VocabularyController extends ControllerBase {
       }
     }
 
+    // Load vocabulary.
+    $vocabulary = $this->loadVocabulary($term->getVocabularyId());
+
     // Label is actually name.
     if (isset($params['label'])) {
       $params['name'] = $params['label'];
       unset($params['label']);
 
-      $vocabulary = $this->loadVocabulary($term->getVocabularyId());
       if ($vocabulary->getThirdPartySetting('docstore', 'allow_duplicates') === FALSE) {
         // Check for duplicate labels.
         $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
@@ -775,6 +829,11 @@ class VocabularyController extends ControllerBase {
 
     // Update all fields specified in params.
     foreach ($params as $name => $values) {
+      // Ignore revision fields.
+      if ($name === 'new_revision' || $name === 'revision_log' || $name === 'draft') {
+        continue;
+      }
+
       // Make sure protected fields aren't set.
       if (isset($protected_fields[$name])) {
         throw new BadRequestHttpException(strtr('Field @name cannot be changed', ['@name' => $name]));
@@ -812,13 +871,70 @@ class VocabularyController extends ControllerBase {
       }
     }
 
-    $term->setNewRevision();
-    $term->revision_log = 'Term updated';
+    // Check if we need to create a new revision.
     $term->setRevisionCreationTime(time());
-    $term->isDefaultRevision(TRUE);
-    $term->setRevisionUserId($provider->id());
+
+    if ($vocabulary->getThirdPartySetting('docstore', 'use_revisions', TRUE) || $params['new_revision'] ?? FALSE) {
+      $term->revision_log = 'Updated';
+      if (isset($params['revision_log'])) {
+        $term->revision_log = $params['revision_log'];
+        unset($params['revision_log']);
+      }
+      $term->setNewRevision();
+      $term->setRevisionUserId($provider->id());
+
+      // Save new revision as draft?
+      $term->isDefaultRevision(TRUE);
+      if ($params['draft'] ?? FALSE) {
+        $term->isDefaultRevision(FALSE);
+      }
+    }
 
     $term->save();
+
+    $data = [
+      'message' => 'Term updated',
+      'uuid' => $term->uuid(),
+    ];
+
+    $response = new JsonResponse($data);
+    return $response;
+  }
+
+  /**
+   * Publish term revision.
+   */
+  public function publishTermRevision($id, $revision_id, Request $request) {
+    /** @var \Drupal\term\Entity\Term $term */
+    $term = $this->entityTypeManager->getStorage('taxonomy_term')->loadRevision($revision_id);
+    if ($term->uuid() !== $id) {
+      throw new BadRequestHttpException('Revision not found');
+    }
+
+    // Get provider.
+    $provider = $this->requireProvider();
+
+    // Provider can only update own terms.
+    if ($term->provider_uuid->entity->uuid() !== $provider->uuid()) {
+      throw new BadRequestHttpException('Term is not owned by you');
+    }
+
+    if ($term->uuid() !== $id) {
+      throw new BadRequestHttpException('Revision not found');
+    }
+
+    if (!$term->isDefaultRevision()) {
+      $term->setRevisionCreationTime(time());
+      $term->revision_log = 'Updated';
+      if (isset($params['revision_log'])) {
+        $term->revision_log = $params['revision_log'];
+      }
+      $term->setNewRevision();
+      $term->setRevisionUserId($provider->id());
+
+      $term->isDefaultRevision(TRUE);
+      $term->save();
+    }
 
     $data = [
       'message' => 'Term updated',

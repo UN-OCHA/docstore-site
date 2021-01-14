@@ -801,6 +801,7 @@ class ManageFields {
     $vocabulary->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
     $vocabulary->setThirdPartySetting('docstore', 'author', $params['author']);
     $vocabulary->setThirdPartySetting('docstore', 'allow_duplicates', $params['allow_duplicates'] ?? TRUE);
+    $vocabulary->setThirdPartySetting('docstore', 'use_revisions', $params['use_revisions'] ?? TRUE);
     $vocabulary->save();
 
     // Add created field.
@@ -890,6 +891,12 @@ class ManageFields {
     if (isset($params['fields_allowed'])) {
       $vocabulary->setThirdPartySetting('docstore', 'fields_allowed', $params['fields_allowed']);
       unset($params['fields_allowed']);
+    }
+
+    // Revisions.
+    if (isset($params['use_revisions'])) {
+      $vocabulary->setThirdPartySetting('docstore', 'use_revisions', $params['use_revisions']);
+      unset($params['use_revisions']);
     }
 
     // Check allow_duplicate changes.
