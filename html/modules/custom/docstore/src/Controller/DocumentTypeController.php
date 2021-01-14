@@ -202,6 +202,7 @@ class DocumentTypeController extends ControllerBase {
       'provider_uuid' => $node_type->getThirdPartySetting('docstore', 'provider_uuid'),
       'author' => $node_type->getThirdPartySetting('docstore', 'author'),
       'allow_duplicates' => $node_type->getThirdPartySetting('docstore', 'allow_duplicates'),
+      'use_revisions' => $node_type->shouldCreateNewRevision(),
       'endpoint' => $node_type->getThirdPartySetting('docstore', 'endpoint'),
     ];
   }
