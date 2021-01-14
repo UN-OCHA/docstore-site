@@ -464,8 +464,8 @@ class DocumentController extends ControllerBase {
 
     // Update all fields specified in params.
     foreach ($params as $name => $values) {
-      // Ignore new_revision.
-      if ($name === 'new_revision' || $$name === 'revision_log') {
+      // Ignore revision fields.
+      if ($name === 'new_revision' || $$name === 'revision_log' || $name === 'draft') {
         continue;
       }
 
@@ -517,8 +517,13 @@ class DocumentController extends ControllerBase {
         unset($params['revision_log']);
       }
       $document->setNewRevision();
-      $document->isDefaultRevision(TRUE);
       $document->setRevisionUserId($provider->id());
+
+      // Save new revision as draft?
+      $document->isDefaultRevision(TRUE);
+      if ($params['draft'] ?? FALSE) {
+        $document->isDefaultRevision(FALSE);
+      }
     }
 
     // Trigger validation.

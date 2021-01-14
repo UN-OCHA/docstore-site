@@ -424,6 +424,129 @@ Get document revisions.
 * Data.vid: {doc1_rev4}
 * Data.title: "Version 4"
 
+## PUT /test-revisions/{doc1}
+
+Force a new revision as draft.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "title": "Version 5",
+  "new_revision": true,
+  "draft": true,
+  "revision_log": "Force a new revision as draft",
+  "author": "test"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Testrev updated"
+* Data.uuid: {doc1}
+
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /test-revisions/{doc1}
+
+Test single document.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: {doc1}
+* Data.title: "Version 4"
+
+## GET /test-revisions/{doc1}/revisions
+
+Get document revisions.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: {doc1}
+* Data.revisions[0].vid: /^[0-9]+$/ // Machine_name {doc1_rev5}
+
+## GET /test-revisions/{doc1}/revisions/{doc1_rev1}
+
+Get document revisions.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: {doc1}
+* Data.vid: {doc1_rev1}
+* Data.title: "Version 1"
+
+## GET /test-revisions/{doc1}/revisions/{doc1_rev2}
+
+Get document revisions.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: {doc1}
+* Data.vid: {doc1_rev2}
+* Data.title: "Version 3"
+
+## GET /test-revisions/{doc1}/revisions/{doc1_rev4}
+
+Get document revisions.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: {doc1}
+* Data.vid: {doc1_rev4}
+* Data.title: "Version 4"
+
+## GET /test-revisions/{doc1}/revisions/{doc1_rev5}
+
+Get document revisions.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: {doc1}
+* Data.vid: {doc1_rev5}
+* Data.title: "Version 5"
+
 ## DELETE /test-revisions/{doc1}
 
 Delete document.
