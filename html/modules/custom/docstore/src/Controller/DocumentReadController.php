@@ -283,8 +283,14 @@ class DocumentReadController extends ControllerBase {
         }
       }
 
+
       // Output tags as objects.
       foreach ($row as $key => $row_data) {
+        // Make sure field still exists.
+        if (!isset($row[$key])) {
+          continue;
+        }
+
         // Check if it's a special label field.
         if (strpos($key, '_label') !== FALSE && isset($row[str_replace('_label', '', $key)])) {
           // Will be checked when checking key without _label.
@@ -331,14 +337,22 @@ class DocumentReadController extends ControllerBase {
 
         // Handle label fields.
         if (isset($row[$key . '_label'])) {
-          $tupples = [];
-          foreach ($row_data as $tupple_key => $tupple_value) {
-            $tupples[$tupple_key] = [
-              'uuid' => $tupple_value,
-              'name' => is_array($row[$key . '_label']) ? $row[$key . '_label'][$tupple_key] : $row[$key . '_label'],
+          if (is_array($row[$key])) {
+            $tupples = [];
+            foreach ($row_data as $tupple_key => $tupple_value) {
+              $tupples[$tupple_key] = [
+                'uuid' => $tupple_value,
+                'name' => is_array($row[$key . '_label']) ? $row[$key . '_label'][$tupple_key] : $row[$key . '_label'],
+              ];
+            }
+            $row[$key] = $tupples;
+          }
+          else {
+            $row[$key] = [
+              'uuid' => $row[$key],
+              'name' => $row[$key . '_label'],
             ];
           }
-          $row[$key] = $tupples;
           unset($row[$key . '_label']);
         }
 
