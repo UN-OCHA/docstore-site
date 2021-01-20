@@ -31,7 +31,7 @@ trait MetadataTrait {
         // Check for label keys.
         if (strpos($key, '_label')) {
           $key = str_replace('_label', '', $key);
-          $values = $this->mapOrCreateTerms($key, $values, $type, $provider, $entity_type);
+          $values = $this->mapOrCreateTerms($key, $values, $type, $provider, $author, $entity_type);
         }
 
         // Make sure user has access to the field.
@@ -147,7 +147,7 @@ trait MetadataTrait {
   /**
    * Map or create terms based on field and label.
    */
-  protected function mapOrCreateTerms($field_name, $values, $type, $provider, $entity_type) {
+  protected function mapOrCreateTerms($field_name, $values, $type, $provider, $author, $entity_type) {
     if ($entity_type === 'node') {
       $field = FieldConfig::loadByName('node', $type, $field_name);
     }
@@ -222,7 +222,7 @@ trait MetadataTrait {
       // Create term.
       $params = [
         'label' => $value,
-        'author' => $provider->uuid(),
+        'author' => $author,
       ];
 
       $term = $vocabulary_controller->createTermFromParameters($params, $vocabulary, $provider);
