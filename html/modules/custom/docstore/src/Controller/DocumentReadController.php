@@ -289,6 +289,10 @@ class DocumentReadController extends ControllerBase {
         if (strpos($key, '_label') !== FALSE && isset($row[str_replace('_label', '', $key)])) {
           // Will be checked when checking key without _label.
         }
+        // Check if it's a link title field.
+        if (strpos($key, '_title') !== FALSE && isset($row[str_replace('_title', '', $key)])) {
+          // Will be checked when checking key without _title.
+        }
         // Check if it's a date field.
         elseif (strpos($key, '_end') !== FALSE && isset($row[str_replace('_end', '', $key)])) {
           // Will be checked when checking key without _end.
@@ -336,6 +340,27 @@ class DocumentReadController extends ControllerBase {
           }
           $row[$key] = $tupples;
           unset($row[$key . '_label']);
+        }
+
+        // Handle link title field.
+        if (isset($row[$key . '_title'])) {
+          if (is_array($row[$key . '_title'])) {
+            $tupples = [];
+            foreach ($row_data as $tupple_key => $tupple_value) {
+              $tupples[$tupple_key] = [
+                'url' => $tupple_value,
+                'title' => is_array($row[$key . '_title']) ? $row[$key . '_title'][$tupple_key] : $row[$key . '_title'],
+              ];
+            }
+            $row[$key] = $tupples;
+          }
+          else {
+            $row[$key] = [
+              'url' => $row[$key],
+              'title' => $row[$key . '_title'],
+            ];
+          }
+          unset($row[$key . '_title']);
         }
       }
 
