@@ -285,9 +285,18 @@ class DocumentReadController extends ControllerBase {
 
       // Output tags as objects.
       foreach ($row as $key => $row_data) {
+        // Make sure field still exists.
+        if (!isset($row[$key])) {
+          continue;
+        }
+
         // Check if it's a special label field.
         if (strpos($key, '_label') !== FALSE && isset($row[str_replace('_label', '', $key)])) {
           // Will be checked when checking key without _label.
+        }
+        // Check if it's a link title field.
+        if (strpos($key, '_title') !== FALSE && isset($row[str_replace('_title', '', $key)])) {
+          // Will be checked when checking key without _title.
         }
         // Check if it's a date field.
         elseif (strpos($key, '_end') !== FALSE && isset($row[str_replace('_end', '', $key)])) {
@@ -327,15 +336,44 @@ class DocumentReadController extends ControllerBase {
 
         // Handle label fields.
         if (isset($row[$key . '_label'])) {
-          $tupples = [];
-          foreach ($row_data as $tupple_key => $tupple_value) {
-            $tupples[$tupple_key] = [
-              'uuid' => $tupple_value,
-              'name' => is_array($row[$key . '_label']) ? $row[$key . '_label'][$tupple_key] : $row[$key . '_label'],
+          if (is_array($row[$key])) {
+            $tupples = [];
+            foreach ($row_data as $tupple_key => $tupple_value) {
+              $tupples[$tupple_key] = [
+                'uuid' => $tupple_value,
+                'name' => is_array($row[$key . '_label']) ? $row[$key . '_label'][$tupple_key] : $row[$key . '_label'],
+              ];
+            }
+            $row[$key] = $tupples;
+          }
+          else {
+            $row[$key] = [
+              'uuid' => $row[$key],
+              'name' => $row[$key . '_label'],
             ];
           }
-          $row[$key] = $tupples;
           unset($row[$key . '_label']);
+        }
+
+        // Handle link title field.
+        if (isset($row[$key . '_title'])) {
+          if (is_array($row[$key . '_title'])) {
+            $tupples = [];
+            foreach ($row_data as $tupple_key => $tupple_value) {
+              $tupples[$tupple_key] = [
+                'uri' => $tupple_value,
+                'title' => is_array($row[$key . '_title']) ? $row[$key . '_title'][$tupple_key] : $row[$key . '_title'],
+              ];
+            }
+            $row[$key] = $tupples;
+          }
+          else {
+            $row[$key] = [
+              'uri' => $row[$key],
+              'title' => $row[$key . '_title'],
+            ];
+          }
+          unset($row[$key . '_title']);
         }
       }
 

@@ -21,6 +21,7 @@ module:
   geofield: 0
   image: 0
   language: 0
+  link: 0
   media: 0
   node: 0
   options: 0

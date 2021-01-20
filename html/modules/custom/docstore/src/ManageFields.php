@@ -82,6 +82,7 @@ class ManageFields {
       'integer' => 'integer',
       'string_long' => 'text',
       'geofield' => 'string',
+      'link' => 'string',
     ];
   }
 
@@ -177,6 +178,16 @@ class ManageFields {
       $field->setPropertyPath($field_name . ':entity:name');
       $field->setDatasourceId('entity:node');
       $field->setLabel($label . ' (name)');
+      $index->addField($field);
+    }
+
+    // Add link title if needed.
+    if ($field_type === 'link') {
+      $field = new Field($index, $field_name . '_title');
+      $field->setType('string');
+      $field->setPropertyPath($field_name . ':title');
+      $field->setDatasourceId('entity:node');
+      $field->setLabel($label . ' (title)');
       $index->addField($field);
     }
 
