@@ -348,7 +348,7 @@ class DocumentReadController extends ControllerBase {
             $tupples = [];
             foreach ($row_data as $tupple_key => $tupple_value) {
               $tupples[$tupple_key] = [
-                'url' => $tupple_value,
+                'uri' => $tupple_value,
                 'title' => is_array($row[$key . '_title']) ? $row[$key . '_title'][$tupple_key] : $row[$key . '_title'],
               ];
             }
@@ -356,7 +356,7 @@ class DocumentReadController extends ControllerBase {
           }
           else {
             $row[$key] = [
-              'url' => $row[$key],
+              'uri' => $row[$key],
               'title' => $row[$key . '_title'],
             ];
           }
