@@ -258,7 +258,7 @@ Get docs.
 * Data.silk_my_multi_link_field[1].uri: "https://unocha.org"
 * Data.silk_my_multi_link_field[1].title: "UNOCHA"
 
-## DELETE /types/linktestx
+## DELETE /types/linktest
 
 Delete test type.
 
