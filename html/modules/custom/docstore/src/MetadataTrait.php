@@ -66,6 +66,11 @@ trait MetadataTrait {
             elseif (isset($values['_action']) && $values['_action'] === 'create') {
               // Allow on the fly creation of child items.
               if ($values['_reference'] === 'node') {
+                // Add author.
+                if (!isset($values['_data']['author'])) {
+                  $values['_data']['author'] = $author;
+                }
+
                 $child_document = $this->createDocumentForProvider($values['_target'], $values['_data'], $provider);
                 if ($child_document) {
                   $item[$key][] = [
@@ -75,6 +80,11 @@ trait MetadataTrait {
               }
 
               if ($values['_reference'] === 'term') {
+                // Add author.
+                if (!isset($values['_data']['author'])) {
+                  $values['_data']['author'] = $author;
+                }
+
                 $target_vocabulary = $this->loadVocabulary($values['_target']);
                 $child_term = $this->createTermFromParameters($values['_data'], $target_vocabulary, $provider);
                 if ($child_term) {
@@ -115,6 +125,11 @@ trait MetadataTrait {
                   }
 
                   if ($value['_reference'] === 'term') {
+                    // Add author.
+                    if (!isset($values['_data']['author'])) {
+                      $values['_data']['author'] = $author;
+                    }
+
                     $target_vocabulary = $this->vocabularyLoad($value['_target']);
                     $child_term = $this->createTermFromParameters($value['_data'], $target_vocabulary, $provider);
                     if ($child_term) {
@@ -270,11 +285,15 @@ trait MetadataTrait {
    *   Newly created term.
    */
   public function createTermFromParameters(array $params, Vocabulary $vocabulary, User $provider) {
+    if (empty($params['author'])) {
+      throw new \Exception('Author is required');
+    }
+
     // Term.
     $item = [
       'name' => $params['label'],
       'vid' => $vocabulary->id(),
-      'author' => [],
+      'author' => $params['author'],
       'created' => [],
       'provider_uuid' => [],
       'parent' => [],
@@ -289,11 +308,6 @@ trait MetadataTrait {
     // Set owner.
     $item['provider_uuid'][] = [
       'target_uuid' => $provider->uuid(),
-    ];
-
-    // Store HID Id.
-    $item['author'][] = [
-      'value' => $params['author'],
     ];
 
     // Check for meta tags.
