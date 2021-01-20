@@ -283,7 +283,6 @@ class DocumentReadController extends ControllerBase {
         }
       }
 
-
       // Output tags as objects.
       foreach ($row as $key => $row_data) {
         // Make sure field still exists.
