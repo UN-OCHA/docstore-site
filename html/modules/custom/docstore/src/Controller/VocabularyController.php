@@ -924,6 +924,8 @@ class VocabularyController extends ControllerBase {
     }
 
     if (!$term->isDefaultRevision()) {
+      // Parse JSON.
+      $params = json_decode($request->getContent(), TRUE);
       $term->setRevisionCreationTime(time());
       $term->revision_log = 'Updated';
       if (isset($params['revision_log'])) {

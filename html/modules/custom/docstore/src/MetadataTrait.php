@@ -213,7 +213,7 @@ trait MetadataTrait {
       }
 
       // Check if provider can create terms.
-      if ($vocabulary->getThirdPartySetting('docstore', 'provider_uuid') !== $provider->uuid) {
+      if ($vocabulary->getThirdPartySetting('docstore', 'provider_uuid') !== $provider->uuid()) {
         if (!$vocabulary->getThirdPartySetting('docstore', 'content_allowed', FALSE)) {
           throw new \Exception(strtr('You are not allowed to create new terms in @vocabulary', ['@vocabulary' => $vocabulary->label()]));
         }
@@ -222,6 +222,7 @@ trait MetadataTrait {
       // Create term.
       $params = [
         'label' => $value,
+        'author' => $provider->uuid(),
       ];
 
       $term = $vocabulary_controller->createTermFromParameters($params, $vocabulary, $provider);
@@ -273,6 +274,7 @@ trait MetadataTrait {
     $item = [
       'name' => $params['label'],
       'vid' => $vocabulary->id(),
+      'author' => [],
       'created' => [],
       'provider_uuid' => [],
       'parent' => [],
