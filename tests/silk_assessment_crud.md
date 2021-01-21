@@ -1,6 +1,6 @@
 # Create assessments
 
-## POST /fields/assessments
+## POST /types/assessments/fields
 
 Test empty post.
 
@@ -17,7 +17,7 @@ Test empty post.
 * Content-Type: "application/json"
 * Data.message: "You have to pass a JSON object"
 
-## POST /fields/assessments
+## POST /types/assessments/fields
 
 Test empty post.
 
@@ -35,7 +35,7 @@ Test empty post.
 * Content-Type: "application/json"
 * Data.message: "You have to pass a JSON object"
 
-## POST /fields/assessments
+## POST /types/assessments/fields
 
 Test empty post.
 
@@ -53,7 +53,7 @@ Test empty post.
 * Content-Type: "application/json"
 * Data.message: "You have to pass a JSON object"
 
-## POST /fields/assessments
+## POST /types/assessments/fields
 
 Test illegal json post.
 
@@ -71,7 +71,7 @@ Test illegal json post.
 * Content-Type: "application/json"
 * Data.message: "You have to pass a JSON object"
 
-## POST /fields/assessments
+## POST /types/assessments/fields
 
 Add id field.
 
@@ -102,7 +102,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_id}
 
-## POST /assessments
+## POST /documents/assessments
 
 Add a assessment as anonymous.
 
@@ -121,7 +121,7 @@ Add a assessment as anonymous.
 * Status: `403`
 * Content-Type: "application/json"
 
-## POST /assessments
+## POST /documents/assessments
 
 Add a assessment without title.
 
@@ -141,7 +141,7 @@ Add a assessment without title.
 * Content-Type: "application/json"
 * Data.message: "Title is required"
 
-## POST /assessments
+## POST /documents/assessments
 
 Add a assessment without author.
 
@@ -161,7 +161,7 @@ Add a assessment without author.
 * Content-Type: "application/json"
 * Data.message: "Author is required"
 
-## POST /assessments
+## POST /documents/assessments
 
 Add a minimal assessment.
 
@@ -206,7 +206,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /assessments
+## GET /documents/assessments
 
 Test filters.
 
@@ -219,7 +219,7 @@ Test filters.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
 
-## GET /assessments
+## GET /documents/assessments
 
 Test filters.
 
@@ -233,7 +233,7 @@ Test filters.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
 
-## GET /assessments
+## GET /documents/assessments
 
 Test filters.
 
@@ -247,7 +247,7 @@ Test filters.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
 
-## GET /assessments
+## GET /documents/assessments
 
 Test filters.
 
@@ -264,7 +264,7 @@ Test filters.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /assessments
+## GET /documents/assessments
 
 Test filters.
 
@@ -280,7 +280,7 @@ Test filters.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
 
-## GET /assessments
+## GET /documents/assessments
 
 Test filters.
 
@@ -300,7 +300,7 @@ Test filters.
 * Status: `200`
 * Content-Type: "application/json"
 
-## POST /assessments
+## POST /documents/assessments
 
 Add a private assessment.
 
@@ -346,7 +346,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## POST /assessments
+## POST /documents/assessments
 
 Add an unpublished assessment.
 
@@ -392,7 +392,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## POST /assessments
+## POST /documents/assessments
 
 Add an unpublished private assessment.
 
@@ -439,7 +439,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /assessments/{doc2}
+## GET /documents/assessments/{doc2}
 
 Get private assessment as owner.
 
@@ -452,7 +452,7 @@ Get private assessment as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
 
-## GET /assessments/{doc2}
+## GET /documents/assessments/{doc2}
 
 Get private assessment as anonymous.
 
@@ -463,7 +463,7 @@ Get private assessment as anonymous.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /assessments/{doc2}
+## GET /documents/assessments/{doc2}
 
 Get private assessment as other provider.
 
@@ -475,7 +475,7 @@ Get private assessment as other provider.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /assessments/{doc3}
+## GET /documents/assessments/{doc3}
 
 Get unpublished assessment as owner.
 
@@ -488,7 +488,7 @@ Get unpublished assessment as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc3}
 
-## GET /assessments/{doc3}
+## GET /documents/assessments/{doc3}
 
 Get unpublished assessment as anonymous.
 
@@ -499,7 +499,7 @@ Get unpublished assessment as anonymous.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /assessments/{doc3}
+## GET /documents/assessments/{doc3}
 
 Get unpublished assessment as other provider.
 
@@ -511,7 +511,7 @@ Get unpublished assessment as other provider.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /assessments/{doc4}
+## GET /documents/assessments/{doc4}
 
 Get private unpublished assessment as owner.
 
@@ -524,7 +524,7 @@ Get private unpublished assessment as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc4}
 
-## GET /assessments/{doc4}
+## GET /documents/assessments/{doc4}
 
 Get unpublished assessment as anonymous.
 
@@ -535,7 +535,7 @@ Get unpublished assessment as anonymous.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /assessments/{doc4}
+## GET /documents/assessments/{doc4}
 
 Get unpublished assessment as other provider.
 
@@ -547,7 +547,7 @@ Get unpublished assessment as other provider.
 * Status: `404`
 * Content-Type: "application/json"
 
-## PUT /assessments/{doc1}
+## PUT /documents/assessments/{doc1}
 
 Update minimal assessment.
 
@@ -585,7 +585,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /assessments/{doc1}
+## GET /documents/assessments/{doc1}
 
 Get minimal assessment.
 
@@ -606,7 +606,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## PUT /assessments/{doc1}
+## PUT /documents/assessments/{doc1}
 
 Update minimal assessment as anonymous.
 
@@ -624,7 +624,7 @@ Update minimal assessment as anonymous.
 * Status: `403`
 * Content-Type: "application/json"
 
-## PUT /assessments/{doc1}
+## PUT /documents/assessments/{doc1}
 
 Update minimal assessment as other provider.
 
@@ -642,7 +642,7 @@ Update minimal assessment as other provider.
 * Status: `403`
 * Content-Type: "application/json"
 
-## PATCH /assessments/{doc2}
+## PATCH /documents/assessments/{doc2}
 
 Update private assessment.
 
@@ -686,7 +686,7 @@ Example output.
 * Content-Type: "application/json"
 
 
-## GET /assessments
+## GET /documents/assessments
 
 Test filters.
 
@@ -700,7 +700,7 @@ Test filters.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc2}
 
-## GET /assessments/{doc2}
+## GET /documents/assessments/{doc2}
 
 Get Private assessment.
 
@@ -721,7 +721,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## PATCH /assessments/{doc2}
+## PATCH /documents/assessments/{doc2}
 
 Update private assessment as anonymous.
 
@@ -739,7 +739,7 @@ Update private assessment as anonymous.
 * Status: `403`
 * Content-Type: "application/json"
 
-## PATCH /assessments/{doc2}
+## PATCH /documents/assessments/{doc2}
 
 Update private assessment as other provider.
 
@@ -757,7 +757,7 @@ Update private assessment as other provider.
 * Status: `403`
 * Content-Type: "application/json"
 
-## GET /assessments/{doc2}
+## GET /documents/assessments/{doc2}
 
 Get private assessment as owner.
 
@@ -770,7 +770,7 @@ Get private assessment as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
 
-## GET /assessments/{doc2}
+## GET /documents/assessments/{doc2}
 
 Get private assessment as anonymous.
 
@@ -781,7 +781,7 @@ Get private assessment as anonymous.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /assessments/{doc2}
+## GET /documents/assessments/{doc2}
 
 Get private assessment as other provider.
 
@@ -793,7 +793,7 @@ Get private assessment as other provider.
 * Status: `404`
 * Content-Type: "application/json"
 
-## PATCH /assessments/{doc2}
+## PATCH /documents/assessments/{doc2}
 
 Make private assessment public.
 
@@ -832,7 +832,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /assessments/{doc2}
+## GET /documents/assessments/{doc2}
 
 Get Private assessment.
 
@@ -853,7 +853,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /assessments/{doc2}
+## GET /documents/assessments/{doc2}
 
 Get private assessment as owner.
 
@@ -866,7 +866,7 @@ Get private assessment as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
 
-## GET /assessments/{doc2}
+## GET /documents/assessments/{doc2}
 
 Get private assessment as anonymous.
 
@@ -878,7 +878,7 @@ Get private assessment as anonymous.
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
 
-## GET /assessments/{doc2}
+## GET /documents/assessments/{doc2}
 
 Get private assessment as other provider.
 
@@ -891,7 +891,7 @@ Get private assessment as other provider.
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
 
-## PATCH /assessments/{doc3}
+## PATCH /documents/assessments/{doc3}
 
 Make unpublished assessment public.
 
@@ -930,7 +930,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /assessments/{doc3}
+## GET /documents/assessments/{doc3}
 
 Get unpublished assessment.
 
@@ -951,7 +951,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /assessments/{doc3}
+## GET /documents/assessments/{doc3}
 
 Get unpublished assessment as owner.
 
@@ -964,7 +964,7 @@ Get unpublished assessment as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc3}
 
-## GET /assessments/{doc3}
+## GET /documents/assessments/{doc3}
 
 Get unpublished assessment as anonymous.
 
@@ -975,7 +975,7 @@ Get unpublished assessment as anonymous.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /assessments/{doc3}
+## GET /documents/assessments/{doc3}
 
 Get unpublished assessment as other provider.
 
@@ -987,7 +987,7 @@ Get unpublished assessment as other provider.
 * Status: `404`
 * Content-Type: "application/json"
 
-## DELETE /assessments/{doc3}
+## DELETE /documents/assessments/{doc3}
 
 Delete private assessment as anonymous.
 
@@ -998,7 +998,7 @@ Delete private assessment as anonymous.
 * Status: `403`
 * Content-Type: "application/json"
 
-## DELETE /assessments/{doc3}
+## DELETE /documents/assessments/{doc3}
 
 Delete private assessment as other provider.
 
@@ -1010,7 +1010,7 @@ Delete private assessment as other provider.
 * Status: `400`
 * Content-Type: "application/json"
 
-## DELETE /assessments/{doc3}
+## DELETE /documents/assessments/{doc3}
 
 Delete private assessment as owner.
 
@@ -1033,7 +1033,7 @@ Delete private assessment as owner.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /assessments/{doc3}
+## GET /documents/assessments/{doc3}
 
 Get deleted unpublished assessment as owner.
 
@@ -1045,7 +1045,7 @@ Get deleted unpublished assessment as owner.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /assessments/{doc3}
+## GET /documents/assessments/{doc3}
 
 Get deleted unpublished assessment as anonymous.
 
@@ -1056,7 +1056,7 @@ Get deleted unpublished assessment as anonymous.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /assessments/{doc3}
+## GET /documents/assessments/{doc3}
 
 Get deleted unpublished assessment as other provider.
 

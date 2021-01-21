@@ -1,6 +1,6 @@
 # Document exceptions
 
-## GET /documents/12321321313
+## GET /documents/documents/12321321313
 
 * Accept: "application/json"
 * API-KEY: abcd
