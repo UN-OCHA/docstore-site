@@ -12,7 +12,7 @@ Create document type.
 {
   "machine_name": "linktest",
   "endpoint": "link-test",
-  "label": "link test document",
+  "label": "Link test document",
   "shared": true,
   "content_allowed": true,
   "fields_allowed": true,
@@ -26,7 +26,7 @@ Create document type.
 * Status: `201`
 * Content-Type: "application/json"
 
-## POST /fields/link-test
+## POST /types/linktest/fields
 
 Add link field.
 
@@ -57,7 +57,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_link}
 
-## POST /fields/link-test
+## POST /types/linktest/fields
 
 Add multi value link field.
 
@@ -89,7 +89,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_linkmulti}
 
-## POST /link-test
+## POST /documents/link-test
 
 Add a minimal document.
 
@@ -128,16 +128,16 @@ Example output.
 
 ```json
 {
-  "message": "Linktest created"
+  "message": "Link test document created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Linktest created"
+* Data.message: "Link test document created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc1}
 
-## POST /link-test
+## POST /documents/link-test
 
 Add a minimal document.
 
@@ -166,16 +166,16 @@ Example output.
 
 ```json
 {
-  "message": "Linktest created"
+  "message": "Link test document created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Linktest created"
+* Data.message: "Link test document created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc2}
 
-## POST /link-test
+## POST /documents/link-test
 
 Add a minimal document.
 
@@ -211,13 +211,13 @@ Example output.
 
 ```json
 {
-  "message": "Linktest created"
+  "message": "Link test document created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Linktest created"
+* Data.message: "Link test document created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc3}
 
 ## GET /wait
@@ -230,7 +230,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /link-test
+## GET /documents/link-test
 
 Get docs.
 
@@ -242,7 +242,7 @@ Get docs.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /link-test/{doc1}
+## GET /documents/link-test/{doc1}
 
 Get docs.
 
