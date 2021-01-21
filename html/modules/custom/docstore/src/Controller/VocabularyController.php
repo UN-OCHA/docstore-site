@@ -905,6 +905,12 @@ class VocabularyController extends ControllerBase {
    * Publish term revision.
    */
   public function publishTermRevision($id, $revision_id, Request $request) {
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
+
     /** @var \Drupal\term\Entity\Term $term */
     $term = $this->entityTypeManager->getStorage('taxonomy_term')->loadRevision($revision_id);
     if ($term->uuid() !== $id) {

@@ -31,7 +31,7 @@ trait MetadataTrait {
         // Check for label keys.
         if (strpos($key, '_label')) {
           $key = str_replace('_label', '', $key);
-          $values = $this->mapOrCreateTerms($key, $values, $type, $provider, $entity_type);
+          $values = $this->mapOrCreateTerms($key, $values, $type, $provider, $author, $entity_type);
         }
 
         // Make sure user has access to the field.
@@ -66,6 +66,11 @@ trait MetadataTrait {
             elseif (isset($values['_action']) && $values['_action'] === 'create') {
               // Allow on the fly creation of child items.
               if ($values['_reference'] === 'node') {
+                // Add author.
+                if (!isset($values['_data']['author'])) {
+                  $values['_data']['author'] = $author;
+                }
+
                 $child_document = $this->createDocumentForProvider($values['_target'], $values['_data'], $provider);
                 if ($child_document) {
                   $item[$key][] = [
@@ -75,6 +80,11 @@ trait MetadataTrait {
               }
 
               if ($values['_reference'] === 'term') {
+                // Add author.
+                if (!isset($values['_data']['author'])) {
+                  $values['_data']['author'] = $author;
+                }
+
                 $target_vocabulary = $this->loadVocabulary($values['_target']);
                 $child_term = $this->createTermFromParameters($values['_data'], $target_vocabulary, $provider);
                 if ($child_term) {
@@ -115,6 +125,11 @@ trait MetadataTrait {
                   }
 
                   if ($value['_reference'] === 'term') {
+                    // Add author.
+                    if (!isset($values['_data']['author'])) {
+                      $values['_data']['author'] = $author;
+                    }
+
                     $target_vocabulary = $this->vocabularyLoad($value['_target']);
                     $child_term = $this->createTermFromParameters($value['_data'], $target_vocabulary, $provider);
                     if ($child_term) {
@@ -147,7 +162,7 @@ trait MetadataTrait {
   /**
    * Map or create terms based on field and label.
    */
-  protected function mapOrCreateTerms($field_name, $values, $type, $provider, $entity_type) {
+  protected function mapOrCreateTerms($field_name, $values, $type, $provider, $author, $entity_type) {
     if ($entity_type === 'node') {
       $field = FieldConfig::loadByName('node', $type, $field_name);
     }
@@ -213,7 +228,7 @@ trait MetadataTrait {
       }
 
       // Check if provider can create terms.
-      if ($vocabulary->getThirdPartySetting('docstore', 'provider_uuid') !== $provider->uuid) {
+      if ($vocabulary->getThirdPartySetting('docstore', 'provider_uuid') !== $provider->uuid()) {
         if (!$vocabulary->getThirdPartySetting('docstore', 'content_allowed', FALSE)) {
           throw new \Exception(strtr('You are not allowed to create new terms in @vocabulary', ['@vocabulary' => $vocabulary->label()]));
         }
@@ -222,6 +237,7 @@ trait MetadataTrait {
       // Create term.
       $params = [
         'label' => $value,
+        'author' => $author,
       ];
 
       $term = $vocabulary_controller->createTermFromParameters($params, $vocabulary, $provider);
@@ -269,10 +285,15 @@ trait MetadataTrait {
    *   Newly created term.
    */
   public function createTermFromParameters(array $params, Vocabulary $vocabulary, User $provider) {
+    if (empty($params['author'])) {
+      throw new \Exception('Author is required');
+    }
+
     // Term.
     $item = [
       'name' => $params['label'],
       'vid' => $vocabulary->id(),
+      'author' => $params['author'],
       'created' => [],
       'provider_uuid' => [],
       'parent' => [],
@@ -287,11 +308,6 @@ trait MetadataTrait {
     // Set owner.
     $item['provider_uuid'][] = [
       'target_uuid' => $provider->uuid(),
-    ];
-
-    // Store HID Id.
-    $item['author'][] = [
-      'value' => $params['author'],
     ];
 
     // Check for meta tags.

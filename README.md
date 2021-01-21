@@ -39,7 +39,7 @@ The document store supports multiple document types ("Content types"), these can
 
 ## Document fields ([Docs](https://un-ocha.github.io/doc-store-api/#/Document/post-document-fields))
 
-To add new fields to a document type, you can use the `api/field/{type}` endpoint.
+To add new fields to a document type, you can use the `api/fields/{type}` endpoint.
 
 | field | default | required | info |
 | -----  | -------- | -------- | ---- |

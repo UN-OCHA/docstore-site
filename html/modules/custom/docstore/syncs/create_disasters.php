@@ -148,7 +148,7 @@ function syncDisasters($url = '') {
 
     // Glide.
     if (isset($row->fields->glide)) {
-      $disaster['metadata'][] = ['glide_number' => $row->fields->glide];
+      $disaster['metadata'][] = ['glide' => $row->fields->glide];
     }
 
     // Profile.
@@ -190,7 +190,7 @@ function syncDisasters($url = '') {
       $disaster['metadata'][] = ['primary_disaster_type' => [$type_data]];
     }
 
-    // Country.
+    // Countries.
     if (isset($row->fields->country) && !empty($row->fields->country)) {
       $country_data = [];
       foreach ($row->fields->country as $country) {
@@ -203,7 +203,7 @@ function syncDisasters($url = '') {
         ];
       }
 
-      $disaster['metadata'][] = ['country' => $country_data];
+      $disaster['metadata'][] = ['countries' => $country_data];
     }
 
     // Primary country.
