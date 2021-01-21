@@ -10,9 +10,9 @@ Create document type.
 
 ```json
 {
-  "machine_name": "testdocs",
-  "endpoint": "testdocs",
-  "label": "Test document type",
+  "machine_name": "childterms",
+  "endpoint": "childterms",
+  "label": "Test child terms",
   "shared": true,
   "content_allowed": true,
   "fields_allowed": true,
@@ -90,7 +90,7 @@ Example output.
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // UUID {uuid}
 * Data.machine_name: /^[0-9a-z_]+$/ // Machine_name {voc_child}
 
-## POST /fields/testdocs
+## POST /types/childterms/fields
 
 Add term ref to parent voc.
 
@@ -156,7 +156,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_parent_child}
 
-## POST /testdocs
+## POST /documents/childterms
 
 Add a minimal document.
 
@@ -182,16 +182,16 @@ Example output.
 
 ```json
 {
-  "message": "Testdocs created"
+  "message": "Test child terms created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Testdocs created"
+* Data.message: "Test child terms created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc1}
 
-## POST /testdocs
+## POST /documents/childterms
 
 Create term using label.
 
@@ -217,13 +217,13 @@ Example output.
 
 ```json
 {
-  "message": "Testdocs created"
+  "message": "Test child terms created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Testdocs created"
+* Data.message: "Test child terms created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc1}
 
 ## POST /vocabularies/voc_parent/terms
@@ -324,7 +324,7 @@ Example output.
 
 * Status: `201`
 
-## POST /testdocs
+## POST /documents/childterms
 
 Add a minimal document.
 
@@ -371,11 +371,11 @@ Example output.
 
 ```json
 {
-  "message": "Testdocs created"
+  "message": "Test child terms created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Testdocs created"
+* Data.message: "Test child terms created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
