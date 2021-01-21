@@ -407,6 +407,79 @@ docstore_create_term_in_vocabulary:
     _auth: ['docstore_auth']
     docstore_crud: 'C'
     docstore_access_level: 'B'
+docstore_get_term:
+  path: '/api/v1/vocabularies/{id}/terms/{term_id}'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:getTerm'
+    _title: 'Get term'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_get_term_revisions:
+  path: '/api/v1/vocabularies/{id}/terms/{term_id}/revisions'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:getTermRevisions'
+    _title: 'Get term'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_get_term_revision:
+  path: '/api/v1/vocabularies/{id}/terms/{term_id}/revisions/{revision_id}'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:getTermRevision'
+    _title: 'Get term'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_publish_term_revision:
+  path: '/api/v1/vocabularies/{id}/terms/{term_id}/revisions/{revision_id}/publish'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:publishTermRevision'
+    _title: 'Publish term revision'
+  methods: [PUT, PATCH]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'C'
+    docstore_access_level: 'B'
+docstore_update_term:
+  path: '/api/v1/vocabularies/{id}/terms/{term_id}'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:updateTerm'
+    _title: 'Update term'
+  methods: [PUT, PATCH]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'U'
+    docstore_access_level: 'B'
+docstore_delete_term:
+  path: '/api/v1/vocabularies/{id}/terms/{term_id}'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:DeleteTerm'
+    _title: 'Delete term'
+  methods: [DELETE]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'D'
+    docstore_access_level: 'B'
+
 docstore_update_vocabulary:
   path: '/api/v1/vocabularies/{id}'
   defaults:
@@ -493,104 +566,6 @@ docstore_vocabulary_delete_fields:
     _auth: ['docstore_auth']
     docstore_crud: 'D'
     docstore_access_level: 'A'
-
-# Terms
-docstore_get_terms:
-  path: '/api/v1/terms'
-  defaults:
-    _controller: 'docstore.vocabulary_controller:getTerms'
-    _title: 'Get terms'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'B'
-docstore_create_term:
-  path: '/api/v1/terms'
-  defaults:
-    _controller: 'docstore.vocabulary_controller:createTerm'
-    _title: 'Create term'
-  methods: [POST]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'C'
-    docstore_access_level: 'B'
-docstore_get_term:
-  path: '/api/v1/terms/{id}'
-  defaults:
-    _controller: 'docstore.vocabulary_controller:getTerm'
-    _title: 'Get term'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'B'
-docstore_get_term_revisions:
-  path: '/api/v1/terms/{id}/revisions'
-  defaults:
-    _controller: 'docstore.vocabulary_controller:getTermRevisions'
-    _title: 'Get term'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'B'
-docstore_get_term_revision:
-  path: '/api/v1/terms/{id}/revisions/{revision_id}'
-  defaults:
-    _controller: 'docstore.vocabulary_controller:getTermRevision'
-    _title: 'Get term'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'B'
-docstore_publish_term_revision:
-  path: '/api/v1/terms/{id}/revisions/{revision_id}/publish'
-  defaults:
-    _controller: 'docstore.vocabulary_controller:publishTermRevision'
-    _title: 'Publish term revision'
-  methods: [PUT, PATCH]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'C'
-    docstore_access_level: 'B'
-docstore_update_term:
-  path: '/api/v1/terms/{id}'
-  defaults:
-    _controller: 'docstore.vocabulary_controller:updateTerm'
-    _title: 'Update term'
-  methods: [PUT, PATCH]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'U'
-    docstore_access_level: 'B'
-docstore_delete_term:
-  path: '/api/v1/terms/{id}'
-  defaults:
-    _controller: 'docstore.vocabulary_controller:DeleteTerm'
-    _title: 'Delete term'
-  methods: [DELETE]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'D'
-    docstore_access_level: 'B'
 
 # Media
 docstore_get_all_media:
