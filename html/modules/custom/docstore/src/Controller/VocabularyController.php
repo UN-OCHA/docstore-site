@@ -652,7 +652,7 @@ class VocabularyController extends ControllerBase {
       throw new BadRequestHttpException('Revision not found');
     }
 
-    if ($term->getVocabularyId !== $vocabulary->id()) {
+    if ($term->getVocabularyId() !== $vocabulary->id()) {
       throw new BadRequestHttpException('Revision not found');
     }
 
@@ -732,7 +732,7 @@ class VocabularyController extends ControllerBase {
     $term = $this->loadTerm($term_id);
 
     $vocabulary = $this->loadVocabulary($id);
-    if ($term->getVocabularyId !== $vocabulary->id()) {
+    if ($term->getVocabularyId() !== $vocabulary->id()) {
       throw new BadRequestHttpException('Revision not found');
     }
 
@@ -892,7 +892,7 @@ class VocabularyController extends ControllerBase {
     }
 
     $vocabulary = $this->loadVocabulary($id);
-    if ($term->getVocabularyId !== $vocabulary->id()) {
+    if ($term->getVocabularyId() !== $vocabulary->id()) {
       throw new BadRequestHttpException('Revision not found');
     }
 
@@ -941,8 +941,8 @@ class VocabularyController extends ControllerBase {
     $provider = $this->requireProvider();
 
     $vocabulary = $this->loadVocabulary($id);
-    if ($term->getVocabularyId !== $vocabulary->id()) {
-      throw new BadRequestHttpException('Revision not found');
+    if ($term->getVocabularyId() !== $vocabulary->id()) {
+      throw new BadRequestHttpException('Wrong vocabulary');
     }
 
     // Provider can only update own terms.

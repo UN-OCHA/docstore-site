@@ -954,7 +954,7 @@ Example output.
 * Content-Type: "application/json"
 * Data.message: "Vocabulary is in use and can not be deleted"
 
-## DELETE /terms/{term_uuid}
+## DELETE /vocabularies/{uuid}/terms/{term_uuid}
 
 Delete term.
 
@@ -976,7 +976,7 @@ Example output.
 * Content-Type: "application/json"
 * Data.message: "Term deleted"
 
-## DELETE /terms/{term_uuid}
+## DELETE /vocabularies/{uuid}/terms/{term_uuid}
 
 Delete deleted term.
 
@@ -1137,7 +1137,7 @@ Create term again.
 * Content-Type: "application/json"
 * Data.message: "Term with same label already exists"
 
-## PUT /terms/{term_uuid}
+## PUT /vocabularies/{uuid}/terms/{term_uuid}
 
 Rename term.
 
@@ -1157,7 +1157,7 @@ Rename term.
 * Content-Type: "application/json"
 * Data.message: "Term updated"
 
-## PUT /terms/{term_uuid}
+## PUT /vocabularies/{uuid}/terms/{term_uuid}
 
 Rename term.
 
@@ -1288,7 +1288,7 @@ Create term again.
 * Content-Type: "application/json"
 * Data.message: "Term created"
 
-## PUT /terms/{term_uuid}
+## PUT /vocabularies/{uuid}/terms/{term_uuid}
 
 Rename term.
 
@@ -1308,7 +1308,7 @@ Rename term.
 * Content-Type: "application/json"
 * Data.message: "Term updated"
 
-## PUT /terms/{term_uuid}
+## PUT /vocabularies/{uuid}/terms/{term_uuid}
 
 Rename term.
 
@@ -1349,7 +1349,7 @@ Update vocabulary to disallow duplicate terms.
 * Content-Type: "application/json"
 * Data.message: "Vocabulary contains duplicate terms"
 
-## DELETE /terms/{term_uuid}
+## DELETE /vocabularies/{uuid}/terms/{term_uuid}
 
 Delete term.
 
