@@ -2,6 +2,9 @@
 
 namespace Drupal\docstore\Controller;
 
+use Drupal\Core\Cache\Cache;
+use Drupal\Core\Cache\CacheableJsonResponse;
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
@@ -182,6 +185,164 @@ class DocumentTypeController extends ControllerBase {
     $this->rebuildDocumentTypes($this->provider);
 
     $response = new JsonResponse($data);
+    return $response;
+  }
+
+  /**
+   * Get document fields.
+   */
+  public function getDocumentFields($node_type) {
+
+    // Load provider.
+    $provider = $this->requireProvider();
+
+    // Create field.
+    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
+    $data = $manager->getDocumentFields();
+
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => [
+        'document_fields',
+      ],
+    ];
+
+    $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+
+    return $response;
+  }
+
+  /**
+   * Create document field.
+   */
+  public function createDocumentField($node_type, Request $request) {
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
+
+    // Load provider.
+    $provider = $this->requireProvider();
+
+    // Create field.
+    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
+    try {
+      $field_name = $manager->addDocumentField($params);
+    }
+    catch (\Exception $exception) {
+      throw new BadRequestHttpException($exception->getMessage());
+    }
+
+    $data = [
+      'message' => 'Field created',
+      'field_name' => $field_name,
+    ];
+
+    // Invalidate cache.
+    Cache::invalidateTags(['document_fields']);
+
+    $response = new JsonResponse($data);
+    $response->setStatusCode(201);
+
+    return $response;
+  }
+
+  /**
+   * Get document field.
+   */
+  public function getDocumentField($node_type, $id, Request $request) {
+    // Get provider.
+    $provider = $this->requireProvider();
+
+    // Get field config.
+    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
+
+    try {
+      $data = $manager->getDocumentField($id);
+    }
+    catch (\Exception $exception) {
+      throw new BadRequestHttpException($exception->getMessage());
+    }
+
+    // Add cache tags.
+    $cache_tags['#cache'] = [
+      'tags' => [
+        'document_fields',
+      ],
+    ];
+
+    $response = new CacheableJsonResponse($data);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
+
+    return $response;
+  }
+
+  /**
+   * Update document field.
+   */
+  public function updateDocumentField($node_type, $field, $id, Request $request) {
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
+
+    // Load provider.
+    $provider = $this->requireProvider();
+
+    // Get manager.
+    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
+
+    // Update field.
+    try {
+      $field_name = $manager->updateDocumentField($id, $params);
+    }
+    catch (\Exception $exception) {
+      throw new BadRequestHttpException($exception->getMessage());
+    }
+
+    $data = [
+      'message' => 'Field updated',
+      'field_name' => $field_name,
+    ];
+
+    // Invalidate cache.
+    Cache::invalidateTags(['document_fields']);
+
+    $response = new JsonResponse($data);
+
+    return $response;
+  }
+
+  /**
+   * Delete document field.
+   */
+  public function deleteDocumentField($node_type, $id, Request $request) {
+    // Get provider.
+    $provider = $this->requireProvider();
+
+    // Delete field storage and config.
+    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
+
+    // Create field.
+    try {
+      $manager->deleteDocumentField($id);
+    }
+    catch (\Exception $exception) {
+      throw new BadRequestHttpException($exception->getMessage());
+    }
+
+    // Invalidate cache.
+    Cache::invalidateTags(['document_fields']);
+
+    $data = [
+      'message' => 'Field deleted',
+    ];
+
+    $response = new JsonResponse($data);
+
     return $response;
   }
 
