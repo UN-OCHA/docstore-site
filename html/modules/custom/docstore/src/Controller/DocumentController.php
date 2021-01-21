@@ -20,7 +20,6 @@ use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\State\State;
 use Drupal\Core\StreamWrapper\StreamWrapperManager;
 use Drupal\docstore\DocumentTypeTrait;
-use Drupal\docstore\ManageFields;
 use Drupal\docstore\MetadataTrait;
 use Drupal\docstore\ProviderTrait;
 use Drupal\entity_usage\EntityUsage;
@@ -178,7 +177,7 @@ class DocumentController extends ControllerBase {
     $document = $this->createDocumentForProvider($node_type, $params, $provider);
 
     $data = [
-      'message' => strtr('@type created', ['@type' => ucfirst($node_type)]),
+      'message' => strtr('@type created', ['@type' => $this->getNodeTypeLabel($node_type)]),
       'uuid' => $document->uuid(),
     ];
 
@@ -540,9 +539,12 @@ class DocumentController extends ControllerBase {
     $document->save();
 
     $data = [
-      'message' => strtr('@type updated', ['@type' => ucfirst($type)]),
+      'message' => strtr('@type updated', ['@type' => $this->getNodeTypeLabel($type)]),
       'uuid' => $document->uuid(),
     ];
+
+    // Invalidate cache.
+    Cache::invalidateTags(['documents']);
 
     // Add cache tags.
     $cache_tags['#cache'] = [
@@ -574,11 +576,14 @@ class DocumentController extends ControllerBase {
     }
 
     $data = [
-      'message' => strtr('@type deleted', ['@type' => ucfirst($node_type)]),
+      'message' => strtr('@type deleted', ['@type' => $this->getNodeTypeLabel($node_type)]),
       'uuid' => $document->uuid(),
     ];
 
     $document->delete();
+
+    // Invalidate cache.
+    Cache::invalidateTags(['documents']);
 
     $response = new JsonResponse($data);
 
@@ -645,7 +650,7 @@ class DocumentController extends ControllerBase {
     }
 
     $data = [
-      'message' => strtr('@type updated', ['@type' => ucfirst($node_type)]),
+      'message' => strtr('@type updated', ['@type' => $this->getNodeTypeLabel($node_type)]),
       'uuid' => $document->uuid(),
     ];
 
@@ -656,178 +661,6 @@ class DocumentController extends ControllerBase {
 
     $response = new CacheableJsonResponse($data);
     $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
-
-    return $response;
-  }
-
-  /**
-   * Get document fields.
-   */
-  public function getDocumentFields($type) {
-    // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'field');
-
-    // Load provider.
-    $provider = $this->requireProvider();
-
-    // Create field.
-    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
-    $data = $manager->getDocumentFields();
-
-    // Add cache tags.
-    $cache_tags['#cache'] = [
-      'tags' => [
-        'document_fields',
-      ],
-    ];
-
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
-
-    return $response;
-  }
-
-  /**
-   * Create document field.
-   */
-  public function createDocumentField($type, Request $request) {
-    // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'field');
-
-    // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
-
-    // Load provider.
-    $provider = $this->requireProvider();
-
-    // Create field.
-    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
-    try {
-      $field_name = $manager->addDocumentField($params);
-    }
-    catch (\Exception $exception) {
-      throw new BadRequestHttpException($exception->getMessage());
-    }
-
-    $data = [
-      'message' => 'Field created',
-      'field_name' => $field_name,
-    ];
-
-    // Invalidate cache.
-    Cache::invalidateTags(['document_fields']);
-
-    $response = new JsonResponse($data);
-    $response->setStatusCode(201);
-
-    return $response;
-  }
-
-  /**
-   * Get document field.
-   */
-  public function getDocumentField($type, $id, Request $request) {
-    // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'field');
-
-    // Get provider.
-    $provider = $this->requireProvider();
-
-    // Get field config.
-    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
-
-    try {
-      $data = $manager->getDocumentField($id);
-    }
-    catch (\Exception $exception) {
-      throw new BadRequestHttpException($exception->getMessage());
-    }
-
-    // Add cache tags.
-    $cache_tags['#cache'] = [
-      'tags' => [
-        'document_fields',
-      ],
-    ];
-
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
-
-    return $response;
-  }
-
-  /**
-   * Update document field.
-   */
-  public function updateDocumentField($type, $field, $id, Request $request) {
-    // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'field');
-
-    // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
-
-    // Load provider.
-    $provider = $this->requireProvider();
-
-    // Get manager.
-    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
-
-    // Update field.
-    try {
-      $field_name = $manager->updateDocumentField($id, $params);
-    }
-    catch (\Exception $exception) {
-      throw new BadRequestHttpException($exception->getMessage());
-    }
-
-    $data = [
-      'message' => 'Field updated',
-      'field_name' => $field_name,
-    ];
-
-    // Invalidate cache.
-    Cache::invalidateTags(['document_fields']);
-
-    $response = new JsonResponse($data);
-
-    return $response;
-  }
-
-  /**
-   * Delete document field.
-   */
-  public function deleteDocumentField($type, $id, Request $request) {
-    // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'field');
-
-    // Get provider.
-    $provider = $this->requireProvider();
-
-    // Delete field storage and config.
-    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
-
-    // Create field.
-    try {
-      $manager->deleteDocumentField($id);
-    }
-    catch (\Exception $exception) {
-      throw new BadRequestHttpException($exception->getMessage());
-    }
-
-    // Invalidate cache.
-    Cache::invalidateTags(['document_fields']);
-
-    $data = [
-      'message' => 'Field deleted',
-    ];
-
-    $response = new JsonResponse($data);
 
     return $response;
   }
@@ -1620,6 +1453,16 @@ class DocumentController extends ControllerBase {
     if (!file_move($file, $new_uri)) {
       throw new BadRequestHttpException('File could not be moved');
     }
+  }
+
+  /**
+   * Get node type label.
+   */
+  protected function getNodeTypeLabel($node_type) {
+    /** @var \Drupal\node\Entity\NodeType $type */
+    $type = $this->entityTypeManager->getStorage('node_type')->load($node_type);
+
+    return $type->label();
   }
 
 }

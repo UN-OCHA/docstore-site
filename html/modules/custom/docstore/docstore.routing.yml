@@ -102,7 +102,7 @@ docstore_document_create_type:
     docstore_crud: 'C'
     docstore_access_level: 'A'
 docstore_document_get_type:
-  path: '/api/v1/types/{type}'
+  path: '/api/v1/types/{node_type}'
   defaults:
     _controller: 'docstore.doctype_controller:getDocumentType'
     _title: 'Get document type'
@@ -114,7 +114,7 @@ docstore_document_get_type:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 docstore_document_update_type:
-  path: '/api/v1/types/{type}'
+  path: '/api/v1/types/{node_type}'
   defaults:
     _controller: 'docstore.doctype_controller:updateDocumentType'
     _title: 'Update document type'
@@ -126,7 +126,7 @@ docstore_document_update_type:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 docstore_document_delete_type:
-  path: '/api/v1/types/{type}'
+  path: '/api/v1/types/{node_type}'
   defaults:
     _controller: 'docstore.doctype_controller:deleteDocumentType'
     _title: 'Delete document type'
@@ -138,9 +138,83 @@ docstore_document_delete_type:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 
+# Document fields
+docstore_document_get_fields:
+  path: '/api/v1/types/{node_type}/fields'
+  defaults:
+    _controller: 'docstore.doctype_controller:getDocumentFields'
+    _title: 'Get document fields'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_document_create_fields:
+  path: '/api/v1/types/{node_type}/fields'
+  defaults:
+    _controller: 'docstore.doctype_controller:createDocumentField'
+    _title: 'Create document field'
+  methods: [POST]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'C'
+    docstore_access_level: 'A'
+docstore_document_get_field:
+  path: '/api/v1/types/{node_type}/fields/{id}'
+  defaults:
+    _controller: 'docstore.doctype_controller:getDocumentField'
+    _title: 'Get document field'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_document_update_field:
+  path: '/api/v1/types/{node_type}/fields/{id}'
+  defaults:
+    _controller: 'docstore.doctype_controller:updateDocumentField'
+    _title: 'Update document field'
+  methods: [PUT, PATCH]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_document_delete_field:
+  path: '/api/v1/types/{node_type}/fields/{id}'
+  defaults:
+    _controller: 'docstore.doctype_controller:deleteDocumentField'
+    _title: 'Delete document field'
+  methods: [DELETE]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+
 # Documents
+docstore_get_any_document:
+  path: '/api/v1/documents'
+  defaults:
+    _controller: 'docstore.document_read_controller:getDocuments'
+    _title: 'Get documents'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
 docstore_get_documents:
-  path: '/api/v1/{type}'
+  path: '/api/v1/documents/{type}'
   defaults:
     _controller: 'docstore.document_read_controller:getDocuments'
     _title: 'Get documents'
@@ -152,7 +226,7 @@ docstore_get_documents:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_create_document:
-  path: '/api/v1/{type}'
+  path: '/api/v1/documents/{type}'
   defaults:
     _controller: 'docstore.document_controller:createDocument'
     _title: 'Create document'
@@ -164,7 +238,7 @@ docstore_create_document:
     docstore_crud: 'C'
     docstore_access_level: 'B'
 docstore_create_document_in_bulk:
-  path: '/api/v1/{type}/bulk'
+  path: '/api/v1/documents/{type}/bulk'
   defaults:
     _controller: 'docstore.document_controller:createDocumentInBulk'
     _title: 'Create documents in bulk'
@@ -176,7 +250,7 @@ docstore_create_document_in_bulk:
     docstore_crud: 'C'
     docstore_access_level: 'B'
 docstore_get_document:
-  path: '/api/v1/{type}/{id}'
+  path: '/api/v1/documents/{type}/{id}'
   defaults:
     _controller: 'docstore.document_read_controller:getDocument'
     _title: 'Get document'
@@ -188,7 +262,7 @@ docstore_get_document:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_get_document_revisions:
-  path: '/api/v1/{type}/{id}/revisions'
+  path: '/api/v1/documents/{type}/{id}/revisions'
   defaults:
     _controller: 'docstore.document_read_controller:getDocumentRevisions'
     _title: 'Get document revisions'
@@ -200,7 +274,7 @@ docstore_get_document_revisions:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_get_document_revision:
-  path: '/api/v1/{type}/{id}/revisions/{vid}'
+  path: '/api/v1/documents/{type}/{id}/revisions/{vid}'
   defaults:
     _controller: 'docstore.document_read_controller:getDocumentRevision'
     _title: 'Get document revision'
@@ -212,7 +286,7 @@ docstore_get_document_revision:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_publish_document_revision:
-  path: '/api/v1/{type}/{id}/revisions/{vid}/publish'
+  path: '/api/v1/documents/{type}/{id}/revisions/{vid}/publish'
   defaults:
     _controller: 'docstore.document_controller:publishDocumentRevision'
     _title: 'Set document revision'
@@ -224,7 +298,7 @@ docstore_publish_document_revision:
     docstore_crud: 'C'
     docstore_access_level: 'B'
 docstore_get_document_files:
-  path: '/api/v1/{type}/{id}/files'
+  path: '/api/v1/documents/{type}/{id}/files'
   defaults:
     _controller: 'docstore.document_read_controller:getDocumentFiles'
     _title: 'Get document files'
@@ -236,7 +310,7 @@ docstore_get_document_files:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_get_document_terms:
-  path: '/api/v1/{type}/{id}/terms'
+  path: '/api/v1/documents/{type}/{id}/terms'
   defaults:
     _controller: 'docstore.document_read_controller:getDocumentTerms'
     _title: 'Get document terms'
@@ -248,7 +322,7 @@ docstore_get_document_terms:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_update_document:
-  path: '/api/v1/{type}/{id}'
+  path: '/api/v1/documents/{type}/{id}'
   defaults:
     _controller: 'docstore.document_controller:updateDocument'
     _title: 'Update document'
@@ -260,7 +334,7 @@ docstore_update_document:
     docstore_crud: 'U'
     docstore_access_level: 'B'
 docstore_delete_document:
-  path: '/api/v1/{type}/{id}'
+  path: '/api/v1/documents/{type}/{id}'
   defaults:
     _controller: 'docstore.document_controller:DeleteDocument'
     _title: 'Delete document'
@@ -271,68 +345,6 @@ docstore_delete_document:
     _auth: ['docstore_auth']
     docstore_crud: 'D'
     docstore_access_level: 'B'
-
-# Document fields
-docstore_document_get_fields:
-  path: '/api/v1/fields/{type}'
-  defaults:
-    _controller: 'docstore.document_controller:getDocumentFields'
-    _title: 'Get document fields'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'A'
-docstore_document_create_fields:
-  path: '/api/v1/fields/{type}'
-  defaults:
-    _controller: 'docstore.document_controller:createDocumentField'
-    _title: 'Create document field'
-  methods: [POST]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'C'
-    docstore_access_level: 'A'
-docstore_document_get_field:
-  path: '/api/v1/fields/{type}/{id}'
-  defaults:
-    _controller: 'docstore.document_controller:getDocumentField'
-    _title: 'Get document field'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'A'
-docstore_document_update_field:
-  path: '/api/v1/fields/{type}/{id}'
-  defaults:
-    _controller: 'docstore.document_controller:updateDocumentField'
-    _title: 'Update document field'
-  methods: [PUT, PATCH]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'A'
-docstore_document_delete_field:
-  path: '/api/v1/fields/{type}/{id}'
-  defaults:
-    _controller: 'docstore.document_controller:deleteDocumentField'
-    _title: 'Delete document field'
-  methods: [DELETE]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'A'
 
 # Vocabularies
 docstore_get_vocabularies:
@@ -395,6 +407,79 @@ docstore_create_term_in_vocabulary:
     _auth: ['docstore_auth']
     docstore_crud: 'C'
     docstore_access_level: 'B'
+docstore_get_term:
+  path: '/api/v1/vocabularies/{id}/terms/{term_id}'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:getTerm'
+    _title: 'Get term'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_get_term_revisions:
+  path: '/api/v1/vocabularies/{id}/terms/{term_id}/revisions'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:getTermRevisions'
+    _title: 'Get term'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_get_term_revision:
+  path: '/api/v1/vocabularies/{id}/terms/{term_id}/revisions/{revision_id}'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:getTermRevision'
+    _title: 'Get term'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_publish_term_revision:
+  path: '/api/v1/vocabularies/{id}/terms/{term_id}/revisions/{revision_id}/publish'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:publishTermRevision'
+    _title: 'Publish term revision'
+  methods: [PUT, PATCH]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'C'
+    docstore_access_level: 'B'
+docstore_update_term:
+  path: '/api/v1/vocabularies/{id}/terms/{term_id}'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:updateTerm'
+    _title: 'Update term'
+  methods: [PUT, PATCH]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'U'
+    docstore_access_level: 'B'
+docstore_delete_term:
+  path: '/api/v1/vocabularies/{id}/terms/{term_id}'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:DeleteTerm'
+    _title: 'Delete term'
+  methods: [DELETE]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'D'
+    docstore_access_level: 'B'
+
 docstore_update_vocabulary:
   path: '/api/v1/vocabularies/{id}'
   defaults:
@@ -481,104 +566,6 @@ docstore_vocabulary_delete_fields:
     _auth: ['docstore_auth']
     docstore_crud: 'D'
     docstore_access_level: 'A'
-
-# Terms
-docstore_get_terms:
-  path: '/api/v1/terms'
-  defaults:
-    _controller: 'docstore.vocabulary_controller:getTerms'
-    _title: 'Get terms'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'B'
-docstore_create_term:
-  path: '/api/v1/terms'
-  defaults:
-    _controller: 'docstore.vocabulary_controller:createTerm'
-    _title: 'Create term'
-  methods: [POST]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'C'
-    docstore_access_level: 'B'
-docstore_get_term:
-  path: '/api/v1/terms/{id}'
-  defaults:
-    _controller: 'docstore.vocabulary_controller:getTerm'
-    _title: 'Get term'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'B'
-docstore_get_term_revisions:
-  path: '/api/v1/terms/{id}/revisions'
-  defaults:
-    _controller: 'docstore.vocabulary_controller:getTermRevisions'
-    _title: 'Get term'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'B'
-docstore_get_term_revision:
-  path: '/api/v1/terms/{id}/revisions/{revision_id}'
-  defaults:
-    _controller: 'docstore.vocabulary_controller:getTermRevision'
-    _title: 'Get term'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'B'
-docstore_publish_term_revision:
-  path: '/api/v1/terms/{id}/revisions/{revision_id}/publish'
-  defaults:
-    _controller: 'docstore.vocabulary_controller:publishTermRevision'
-    _title: 'Publish term revision'
-  methods: [PUT, PATCH]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'C'
-    docstore_access_level: 'B'
-docstore_update_term:
-  path: '/api/v1/terms/{id}'
-  defaults:
-    _controller: 'docstore.vocabulary_controller:updateTerm'
-    _title: 'Update term'
-  methods: [PUT, PATCH]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'U'
-    docstore_access_level: 'B'
-docstore_delete_term:
-  path: '/api/v1/terms/{id}'
-  defaults:
-    _controller: 'docstore.vocabulary_controller:DeleteTerm'
-    _title: 'Delete term'
-  methods: [DELETE]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'D'
-    docstore_access_level: 'B'
 
 # Media
 docstore_get_all_media:

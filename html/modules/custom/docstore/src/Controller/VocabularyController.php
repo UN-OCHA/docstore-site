@@ -486,47 +486,6 @@ class VocabularyController extends ControllerBase {
   }
 
   /**
-   * Get Terms.
-   */
-  public function getTerms(Request $request) {
-    // Allow filtering by vocabularies.
-    $vids = [];
-    if ($request->get('vocabularies')) {
-      if (is_array($request->get('vocabularies'))) {
-        $vids = $request->get('vocabularies');
-      }
-      else {
-        $vids = explode(',', $request->get('vocabularies'));
-      }
-    }
-    else {
-      // List of own and shared vocabularies.
-      $vids = [];
-    }
-
-    $offset = $request->get('offset') ?? 0;
-    $limit = $request->get('limit') ?? 100;
-    $data = $this->loadTerms($vids, NULL, $offset, $limit);
-
-    // Add cache tags.
-    $cache_tags['#cache'] = [
-      'tags' => [
-        'terms',
-      ],
-    ];
-
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
-      'user',
-      'url.query_args:filter',
-      'url.query_args:sort',
-      'url.query_args:page',
-    ]));
-
-    return $response;
-  }
-
-  /**
    * Create term on vocabulary.
    */
   public function createTermOnVocabulary($id, Request $request) {
@@ -545,13 +504,16 @@ class VocabularyController extends ControllerBase {
   /**
    * Create term.
    */
-  public function createTerm(Request $request) {
+  public function createTerm($id, Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
     if (empty($params) || !is_array($params)) {
       throw new BadRequestHttpException('You have to pass a JSON object');
     }
 
+    $vocabulary = $this->loadVocabulary($id);
+
+    $params['vocabulary'] = $vocabulary->uuid();
     return $this->createTermFromUserParameters($params);
   }
 
@@ -610,10 +572,14 @@ class VocabularyController extends ControllerBase {
   /**
    * Get term.
    */
-  public function getTerm($id) {
+  public function getTerm($id, $term_id) {
+    $vocabulary = $this->loadVocabulary($id);
+
+    $params['vocabulary'] = $vocabulary->uuid();
+
     // Load term.
-    $term = $this->loadTerm($id);
-    $terms = $this->loadTerms([], $term->id(), 0, 1);
+    $term = $this->loadTerm($term_id);
+    $terms = $this->loadTerms([$id], $term->id(), 0, 1);
     $data = reset($terms);
 
     // Add cache tags.
@@ -637,10 +603,10 @@ class VocabularyController extends ControllerBase {
   /**
    * Get term revisions.
    */
-  public function getTermRevisions($id, Request $request) {
+  public function getTermRevisions($id, $term_id, Request $request) {
     // Load term.
-    $term = $this->loadTerm($id);
-    $terms = $this->loadTerms([], $term->id(), 0, 1);
+    $term = $this->loadTerm($term_id);
+    $terms = $this->loadTerms([$id], $term->id(), 0, 1);
     $data = reset($terms);
 
     $revisions = $this->database->select('taxonomy_term_revision', 'tr')
@@ -677,10 +643,16 @@ class VocabularyController extends ControllerBase {
   /**
    * Get term revision.
    */
-  public function getTermRevision($id, $revision_id, Request $request) {
+  public function getTermRevision($id, $term_id, $revision_id, Request $request) {
+    $vocabulary = $this->loadVocabulary($id);
+
     /** @var \Drupal\term\Entity\Term $term */
     $term = $this->entityTypeManager->getStorage('taxonomy_term')->loadRevision($revision_id);
-    if ($term->uuid() !== $id) {
+    if ($term->uuid() !== $term_id) {
+      throw new BadRequestHttpException('Revision not found');
+    }
+
+    if ($term->getVocabularyId() !== $vocabulary->id()) {
       throw new BadRequestHttpException('Revision not found');
     }
 
@@ -729,7 +701,7 @@ class VocabularyController extends ControllerBase {
   /**
    * Update term.
    */
-  public function updateTerm($id, Request $request) {
+  public function updateTerm($id, $term_id, Request $request) {
     $protected_fields = [
       'author',
       'provider_uuid',
@@ -757,7 +729,12 @@ class VocabularyController extends ControllerBase {
     }
 
     // Load term.
-    $term = $this->loadTerm($id);
+    $term = $this->loadTerm($term_id);
+
+    $vocabulary = $this->loadVocabulary($id);
+    if ($term->getVocabularyId() !== $vocabulary->id()) {
+      throw new BadRequestHttpException('Revision not found');
+    }
 
     // Get provider.
     $provider = $this->requireProvider();
@@ -773,9 +750,6 @@ class VocabularyController extends ControllerBase {
         throw new BadRequestHttpException('Label is required');
       }
     }
-
-    // Load vocabulary.
-    $vocabulary = $this->loadVocabulary($term->getVocabularyId());
 
     // Label is actually name.
     if (isset($params['label'])) {
@@ -904,7 +878,7 @@ class VocabularyController extends ControllerBase {
   /**
    * Publish term revision.
    */
-  public function publishTermRevision($id, $revision_id, Request $request) {
+  public function publishTermRevision($id, $term_id, $revision_id, Request $request) {
     // Parse JSON.
     $params = json_decode($request->getContent(), TRUE);
     if (empty($params) || !is_array($params)) {
@@ -913,7 +887,12 @@ class VocabularyController extends ControllerBase {
 
     /** @var \Drupal\term\Entity\Term $term */
     $term = $this->entityTypeManager->getStorage('taxonomy_term')->loadRevision($revision_id);
-    if ($term->uuid() !== $id) {
+    if ($term->uuid() !== $term_id) {
+      throw new BadRequestHttpException('Revision not found');
+    }
+
+    $vocabulary = $this->loadVocabulary($id);
+    if ($term->getVocabularyId() !== $vocabulary->id()) {
       throw new BadRequestHttpException('Revision not found');
     }
 
@@ -923,10 +902,6 @@ class VocabularyController extends ControllerBase {
     // Provider can only update own terms.
     if ($term->provider_uuid->entity->uuid() !== $provider->uuid()) {
       throw new BadRequestHttpException('Term is not owned by you');
-    }
-
-    if ($term->uuid() !== $id) {
-      throw new BadRequestHttpException('Revision not found');
     }
 
     if (!$term->isDefaultRevision()) {
@@ -954,12 +929,17 @@ class VocabularyController extends ControllerBase {
   /**
    * Delete term.
    */
-  public function deleteTerm($id, Request $request) {
+  public function deleteTerm($id, $term_id, Request $request) {
     // Load term.
-    $term = $this->loadTerm($id);
+    $term = $this->loadTerm($term_id);
 
     // Get provider.
     $provider = $this->requireProvider();
+
+    $vocabulary = $this->loadVocabulary($id);
+    if ($term->getVocabularyId() !== $vocabulary->id()) {
+      throw new BadRequestHttpException('Wrong vocabulary');
+    }
 
     // Provider can only update own terms.
     if ($term->provider_uuid->entity->uuid() !== $provider->uuid()) {

@@ -514,6 +514,10 @@ class ManageFields {
 
     // Allow acces to own or shared document type.
     $node_type = NodeType::load($this->nodeType);
+    if (!$node_type) {
+      throw new \Exception('Document type does not exist');
+    }
+
     if ($node_type->getThirdPartySetting('docstore', 'provider_uuid') !== $this->provider->uuid()) {
       if (!$node_type->getThirdPartySetting('docstore', 'fields_allowed')) {
         throw new \Exception('You cannot add fields to this document type');
