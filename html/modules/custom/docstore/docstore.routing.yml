@@ -138,6 +138,68 @@ docstore_document_delete_type:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 
+# Document fields
+docstore_document_get_fields:
+  path: '/api/v1/types/{node_type}/fields'
+  defaults:
+    _controller: 'docstore.doctype_controller:getDocumentFields'
+    _title: 'Get document fields'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_document_create_fields:
+  path: '/api/v1/types/{node_type}/fields'
+  defaults:
+    _controller: 'docstore.doctype_controller:createDocumentField'
+    _title: 'Create document field'
+  methods: [POST]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'C'
+    docstore_access_level: 'A'
+docstore_document_get_field:
+  path: '/api/v1/types/{node_type}/fields/{id}'
+  defaults:
+    _controller: 'docstore.doctype_controller:getDocumentField'
+    _title: 'Get document field'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_document_update_field:
+  path: '/api/v1/types/{node_type}/fields/{id}'
+  defaults:
+    _controller: 'docstore.doctype_controller:updateDocumentField'
+    _title: 'Update document field'
+  methods: [PUT, PATCH]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_document_delete_field:
+  path: '/api/v1/types/{node_type}/fields/{id}'
+  defaults:
+    _controller: 'docstore.doctype_controller:deleteDocumentField'
+    _title: 'Delete document field'
+  methods: [DELETE]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+
 # Documents
 docstore_get_any_document:
   path: '/api/v1/documents'
@@ -283,68 +345,6 @@ docstore_delete_document:
     _auth: ['docstore_auth']
     docstore_crud: 'D'
     docstore_access_level: 'B'
-
-# Document fields
-docstore_document_get_fields:
-  path: '/api/v1/types/{node_type}/fields'
-  defaults:
-    _controller: 'docstore.doctype_controller:getDocumentFields'
-    _title: 'Get document fields'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'A'
-docstore_document_create_fields:
-  path: '/api/v1/types/{node_type}/fields'
-  defaults:
-    _controller: 'docstore.doctype_controller:createDocumentField'
-    _title: 'Create document field'
-  methods: [POST]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'C'
-    docstore_access_level: 'A'
-docstore_document_get_field:
-  path: '/api/v1/types/{node_type}/fields/{id}'
-  defaults:
-    _controller: 'docstore.doctype_controller:getDocumentField'
-    _title: 'Get document field'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'A'
-docstore_document_update_field:
-  path: '/api/v1/types/{node_type}/fields/{id}'
-  defaults:
-    _controller: 'docstore.doctype_controller:updateDocumentField'
-    _title: 'Update document field'
-  methods: [PUT, PATCH]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'A'
-docstore_document_delete_field:
-  path: '/api/v1/types/{node_type}/fields/{id}'
-  defaults:
-    _controller: 'docstore.doctype_controller:deleteDocumentField'
-    _title: 'Delete document field'
-  methods: [DELETE]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'A'
 
 # Vocabularies
 docstore_get_vocabularies:
