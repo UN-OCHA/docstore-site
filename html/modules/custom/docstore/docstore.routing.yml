@@ -102,7 +102,7 @@ docstore_document_create_type:
     docstore_crud: 'C'
     docstore_access_level: 'A'
 docstore_document_get_type:
-  path: '/api/v1/types/{type}'
+  path: '/api/v1/types/{node_type}'
   defaults:
     _controller: 'docstore.doctype_controller:getDocumentType'
     _title: 'Get document type'
@@ -114,7 +114,7 @@ docstore_document_get_type:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 docstore_document_update_type:
-  path: '/api/v1/types/{type}'
+  path: '/api/v1/types/{node_type}'
   defaults:
     _controller: 'docstore.doctype_controller:updateDocumentType'
     _title: 'Update document type'
@@ -126,7 +126,7 @@ docstore_document_update_type:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 docstore_document_delete_type:
-  path: '/api/v1/types/{type}'
+  path: '/api/v1/types/{node_type}'
   defaults:
     _controller: 'docstore.doctype_controller:deleteDocumentType'
     _title: 'Delete document type'

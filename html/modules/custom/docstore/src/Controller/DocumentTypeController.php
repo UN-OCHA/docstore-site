@@ -116,15 +116,15 @@ class DocumentTypeController extends ControllerBase {
   /**
    * Get document type.
    */
-  public function getDocumentType($type, Request $request) {
-    /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->entityTypeManager->getStorage('node_type')->load($type);
+  public function getDocumentType($node_type, Request $request) {
+    /** @var \Drupal\node\Entity\NodeType $type */
+    $type = $this->entityTypeManager->getStorage('node_type')->load($node_type);
 
-    if (!$node_type) {
+    if (!$type) {
       throw new BadRequestHttpException('Type not supported.');
     }
 
-    $data = $this->buildJsonOutput($node_type);
+    $data = $this->buildJsonOutput($type);
 
     $response = new JsonResponse($data);
     return $response;
@@ -133,11 +133,11 @@ class DocumentTypeController extends ControllerBase {
   /**
    * Update document type.
    */
-  public function updateDocumentType($type, Request $request) {
-    /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->entityTypeManager->getStorage('node_type')->load($type);
+  public function updateDocumentType($node_type, Request $request) {
+    /** @var \Drupal\node\Entity\NodeType $type */
+    $type = $this->entityTypeManager->getStorage('node_type')->load($node_type);
 
-    if (!$node_type) {
+    if (!$type) {
       throw new BadRequestHttpException('Type not supported.');
     }
 
@@ -154,7 +154,7 @@ class DocumentTypeController extends ControllerBase {
     $this->rebuildEndpoints();
 
     $manager = new ManageFields($provider, '', $this->entityFieldManager);
-    $data = $this->buildJsonOutput($manager->updateDocumentType($type, $params));
+    $data = $this->buildJsonOutput($manager->updateDocumentType($node_type, $params));
 
     $response = new JsonResponse($data);
     $response->setStatusCode(200);
@@ -164,19 +164,19 @@ class DocumentTypeController extends ControllerBase {
   /**
    * Delete document type.
    */
-  public function deleteDocumentType($type, Request $request) {
+  public function deleteDocumentType($node_type, Request $request) {
     /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->entityTypeManager->getStorage('node_type')->load($type);
+    $type = $this->entityTypeManager->getStorage('node_type')->load($node_type);
 
-    if (!$node_type) {
+    if (!$type) {
       throw new BadRequestHttpException('Type not supported.');
     }
 
     $data = [
-      'message' => strtr('@type deleted', ['@type' => $node_type->label()]),
+      'message' => strtr('@type deleted', ['@type' => $type->label()]),
     ];
 
-    $node_type->delete();
+    $type->delete();
 
     // Rebuild endpoints.
     $this->rebuildEndpoints();
