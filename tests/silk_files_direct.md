@@ -67,7 +67,7 @@ Get private file, wrong hash.
 
 * Status: `400`
 
-## PATCH /api/me
+## PATCH /api/v1/me
 
 Update shared secret
 

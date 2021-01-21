@@ -28,7 +28,7 @@ function post($url, $data) {
 }
 
 function createNodeType() {
-  post(API_URL . 'api/types', [
+  post(API_URL . 'api/v1/types', [
     'machine_name' => 'knowledge_management',
     'endpoint' => 'knowledge-managements',
     'label' => 'Knowledge management',
@@ -49,7 +49,7 @@ function createVocabularies() {
   ];
 
   foreach ($vocabularies as $vocabulary => $machine_name) {
-    post(API_URL . 'api/vocabularies', [
+    post(API_URL . 'api/v1/vocabularies', [
       'label' => $vocabulary,
       'machine_name' => $machine_name,
       'author' => 'AR',
@@ -125,7 +125,7 @@ function createKMFields() {
       $data['target'] = $field['target'];
     }
 
-    post(API_URL . 'api/fields/knowledge-managements', $data);
+    post(API_URL . 'api/v1/fields/knowledge-managements', $data);
   }
 }
 
@@ -212,7 +212,7 @@ function syncKM() {
     'documents' => $documents,
   ];
 
-  post(API_URL . 'api/knowledge-managements/bulk', $data);
+  post(API_URL . 'api/v1/knowledge-managements/bulk', $data);
 }
 
 createNodeType();
