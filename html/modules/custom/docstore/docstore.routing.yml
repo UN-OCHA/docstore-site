@@ -1,6 +1,6 @@
 # General
 docstore_wait:
-  path: '/api/wait'
+  path: '/api/v1/wait'
   defaults:
     _controller: 'docstore.document_read_controller:wait'
     _title: 'Wait a second'
@@ -14,7 +14,7 @@ docstore_wait:
 
 # me
 docstore_get_me:
-  path: '/api/me'
+  path: '/api/v1/me'
   defaults:
     _controller: 'docstore.provider_controller:getInfo'
     _title: 'Get provider info'
@@ -26,7 +26,7 @@ docstore_get_me:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_update_me:
-  path: '/api/me'
+  path: '/api/v1/me'
   defaults:
     _controller: 'docstore.provider_controller:updateInfo'
     _title: 'Update provider info'
@@ -40,7 +40,7 @@ docstore_update_me:
 
 # hooks
 docstore_get_hooks:
-  path: '/api/webhooks'
+  path: '/api/v1/webhooks'
   defaults:
     _controller: 'docstore.webhook_controller:getWebhooks'
     _title: 'Get hooks'
@@ -52,7 +52,7 @@ docstore_get_hooks:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_create_hook:
-  path: '/api/webhooks'
+  path: '/api/v1/webhooks'
   defaults:
     _controller: 'docstore.webhook_controller:createWebhook'
     _title: 'Create hook'
@@ -64,7 +64,7 @@ docstore_create_hook:
     docstore_crud: 'C'
     docstore_access_level: 'B'
 docstore_delete_hook:
-  path: '/api/webhooks/{id}'
+  path: '/api/v1/webhooks/{id}'
   defaults:
     _controller: 'docstore.webhook_controller:deleteWebhook'
     _title: 'Delete hook'
@@ -78,7 +78,7 @@ docstore_delete_hook:
 
 # Document types
 docstore_document_get_types:
-  path: '/api/types'
+  path: '/api/v1/types'
   defaults:
     _controller: 'docstore.doctype_controller:getDocumentTypes'
     _title: 'Get document types'
@@ -90,7 +90,7 @@ docstore_document_get_types:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 docstore_document_create_type:
-  path: '/api/types'
+  path: '/api/v1/types'
   defaults:
     _controller: 'docstore.doctype_controller:createDocumentType'
     _title: 'Create document type'
@@ -102,7 +102,7 @@ docstore_document_create_type:
     docstore_crud: 'C'
     docstore_access_level: 'A'
 docstore_document_get_type:
-  path: '/api/types/{type}'
+  path: '/api/v1/types/{type}'
   defaults:
     _controller: 'docstore.doctype_controller:getDocumentType'
     _title: 'Get document type'
@@ -114,7 +114,7 @@ docstore_document_get_type:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 docstore_document_update_type:
-  path: '/api/types/{type}'
+  path: '/api/v1/types/{type}'
   defaults:
     _controller: 'docstore.doctype_controller:updateDocumentType'
     _title: 'Update document type'
@@ -126,7 +126,7 @@ docstore_document_update_type:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 docstore_document_delete_type:
-  path: '/api/types/{type}'
+  path: '/api/v1/types/{type}'
   defaults:
     _controller: 'docstore.doctype_controller:deleteDocumentType'
     _title: 'Delete document type'
@@ -140,7 +140,7 @@ docstore_document_delete_type:
 
 # Documents
 docstore_get_documents:
-  path: '/api/{type}'
+  path: '/api/v1/{type}'
   defaults:
     _controller: 'docstore.document_read_controller:getDocuments'
     _title: 'Get documents'
@@ -152,7 +152,7 @@ docstore_get_documents:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_create_document:
-  path: '/api/{type}'
+  path: '/api/v1/{type}'
   defaults:
     _controller: 'docstore.document_controller:createDocument'
     _title: 'Create document'
@@ -164,7 +164,7 @@ docstore_create_document:
     docstore_crud: 'C'
     docstore_access_level: 'B'
 docstore_create_document_in_bulk:
-  path: '/api/{type}/bulk'
+  path: '/api/v1/{type}/bulk'
   defaults:
     _controller: 'docstore.document_controller:createDocumentInBulk'
     _title: 'Create documents in bulk'
@@ -176,7 +176,7 @@ docstore_create_document_in_bulk:
     docstore_crud: 'C'
     docstore_access_level: 'B'
 docstore_get_document:
-  path: '/api/{type}/{id}'
+  path: '/api/v1/{type}/{id}'
   defaults:
     _controller: 'docstore.document_read_controller:getDocument'
     _title: 'Get document'
@@ -188,7 +188,7 @@ docstore_get_document:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_get_document_revisions:
-  path: '/api/{type}/{id}/revisions'
+  path: '/api/v1/{type}/{id}/revisions'
   defaults:
     _controller: 'docstore.document_read_controller:getDocumentRevisions'
     _title: 'Get document revisions'
@@ -200,7 +200,7 @@ docstore_get_document_revisions:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_get_document_revision:
-  path: '/api/{type}/{id}/revisions/{vid}'
+  path: '/api/v1/{type}/{id}/revisions/{vid}'
   defaults:
     _controller: 'docstore.document_read_controller:getDocumentRevision'
     _title: 'Get document revision'
@@ -212,7 +212,7 @@ docstore_get_document_revision:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_publish_document_revision:
-  path: '/api/{type}/{id}/revisions/{vid}/publish'
+  path: '/api/v1/{type}/{id}/revisions/{vid}/publish'
   defaults:
     _controller: 'docstore.document_controller:publishDocumentRevision'
     _title: 'Set document revision'
@@ -224,7 +224,7 @@ docstore_publish_document_revision:
     docstore_crud: 'C'
     docstore_access_level: 'B'
 docstore_get_document_files:
-  path: '/api/{type}/{id}/files'
+  path: '/api/v1/{type}/{id}/files'
   defaults:
     _controller: 'docstore.document_read_controller:getDocumentFiles'
     _title: 'Get document files'
@@ -236,7 +236,7 @@ docstore_get_document_files:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_get_document_terms:
-  path: '/api/{type}/{id}/terms'
+  path: '/api/v1/{type}/{id}/terms'
   defaults:
     _controller: 'docstore.document_read_controller:getDocumentTerms'
     _title: 'Get document terms'
@@ -248,7 +248,7 @@ docstore_get_document_terms:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_update_document:
-  path: '/api/{type}/{id}'
+  path: '/api/v1/{type}/{id}'
   defaults:
     _controller: 'docstore.document_controller:updateDocument'
     _title: 'Update document'
@@ -260,7 +260,7 @@ docstore_update_document:
     docstore_crud: 'U'
     docstore_access_level: 'B'
 docstore_delete_document:
-  path: '/api/{type}/{id}'
+  path: '/api/v1/{type}/{id}'
   defaults:
     _controller: 'docstore.document_controller:DeleteDocument'
     _title: 'Delete document'
@@ -274,7 +274,7 @@ docstore_delete_document:
 
 # Document fields
 docstore_document_get_fields:
-  path: '/api/fields/{type}'
+  path: '/api/v1/fields/{type}'
   defaults:
     _controller: 'docstore.document_controller:getDocumentFields'
     _title: 'Get document fields'
@@ -286,7 +286,7 @@ docstore_document_get_fields:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 docstore_document_create_fields:
-  path: '/api/fields/{type}'
+  path: '/api/v1/fields/{type}'
   defaults:
     _controller: 'docstore.document_controller:createDocumentField'
     _title: 'Create document field'
@@ -298,7 +298,7 @@ docstore_document_create_fields:
     docstore_crud: 'C'
     docstore_access_level: 'A'
 docstore_document_get_field:
-  path: '/api/fields/{type}/{id}'
+  path: '/api/v1/fields/{type}/{id}'
   defaults:
     _controller: 'docstore.document_controller:getDocumentField'
     _title: 'Get document field'
@@ -310,7 +310,7 @@ docstore_document_get_field:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 docstore_document_update_field:
-  path: '/api/fields/{type}/{id}'
+  path: '/api/v1/fields/{type}/{id}'
   defaults:
     _controller: 'docstore.document_controller:updateDocumentField'
     _title: 'Update document field'
@@ -322,7 +322,7 @@ docstore_document_update_field:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 docstore_document_delete_field:
-  path: '/api/fields/{type}/{id}'
+  path: '/api/v1/fields/{type}/{id}'
   defaults:
     _controller: 'docstore.document_controller:deleteDocumentField'
     _title: 'Delete document field'
@@ -336,7 +336,7 @@ docstore_document_delete_field:
 
 # Vocabularies
 docstore_get_vocabularies:
-  path: '/api/vocabularies'
+  path: '/api/v1/vocabularies'
   defaults:
     _controller: 'docstore.vocabulary_controller:getVocabularies'
     _title: 'Get vocabularies'
@@ -348,7 +348,7 @@ docstore_get_vocabularies:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_create_vocabulary:
-  path: '/api/vocabularies'
+  path: '/api/v1/vocabularies'
   defaults:
     _controller: 'docstore.vocabulary_controller:createVocabulary'
     _title: 'Create vocabulary'
@@ -360,7 +360,7 @@ docstore_create_vocabulary:
     docstore_crud: 'C'
     docstore_access_level: 'A'
 docstore_get_vocabulary:
-  path: '/api/vocabularies/{id}'
+  path: '/api/v1/vocabularies/{id}'
   defaults:
     _controller: 'docstore.vocabulary_controller:getVocabulary'
     _title: 'Get vocabulary'
@@ -372,7 +372,7 @@ docstore_get_vocabulary:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_get_vocabulary_terms:
-  path: '/api/vocabularies/{id}/terms'
+  path: '/api/v1/vocabularies/{id}/terms'
   defaults:
     _controller: 'docstore.vocabulary_controller:getVocabularyTerms'
     _title: 'Get vocabulary terms'
@@ -384,7 +384,7 @@ docstore_get_vocabulary_terms:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_create_term_in_vocabulary:
-  path: '/api/vocabularies/{id}/terms'
+  path: '/api/v1/vocabularies/{id}/terms'
   defaults:
     _controller: 'docstore.vocabulary_controller:createTermOnVocabulary'
     _title: 'Create term'
@@ -396,7 +396,7 @@ docstore_create_term_in_vocabulary:
     docstore_crud: 'C'
     docstore_access_level: 'B'
 docstore_update_vocabulary:
-  path: '/api/vocabularies/{id}'
+  path: '/api/v1/vocabularies/{id}'
   defaults:
     _controller: 'docstore.vocabulary_controller:updateVocabulary'
     _title: 'Update vocabulary'
@@ -408,7 +408,7 @@ docstore_update_vocabulary:
     docstore_crud: 'U'
     docstore_access_level: 'B'
 docstore_delete_vocabulary:
-  path: '/api/vocabularies/{id}'
+  path: '/api/v1/vocabularies/{id}'
   defaults:
     _controller: 'docstore.vocabulary_controller:deleteVocabulary'
     _title: 'Delete vocabulary'
@@ -422,7 +422,7 @@ docstore_delete_vocabulary:
 
 # Vocabulary fields
 docstore_vocabulary_getfields:
-  path: '/api/vocabularies/{id}/fields'
+  path: '/api/v1/vocabularies/{id}/fields'
   defaults:
     _controller: 'docstore.vocabulary_controller:getVocabularyFields'
     _title: 'Get vocabulary fields'
@@ -434,7 +434,7 @@ docstore_vocabulary_getfields:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 docstore_vocabulary_create_fields:
-  path: '/api/vocabularies/{id}/fields'
+  path: '/api/v1/vocabularies/{id}/fields'
   defaults:
     _controller: 'docstore.vocabulary_controller:createVocabularyField'
     _title: 'Create vocabulary field'
@@ -446,7 +446,7 @@ docstore_vocabulary_create_fields:
     docstore_crud: 'C'
     docstore_access_level: 'A'
 docstore_vocabulary_get_field:
-  path: '/api/vocabularies/{id}/fields/{field_id}'
+  path: '/api/v1/vocabularies/{id}/fields/{field_id}'
   defaults:
     _controller: 'docstore.vocabulary_controller:getVocabularyField'
     _title: 'Get vocabulary field'
@@ -458,7 +458,7 @@ docstore_vocabulary_get_field:
     docstore_crud: 'U'
     docstore_access_level: 'A'
 docstore_vocabulary_update_fields:
-  path: '/api/vocabularies/{id}/fields/{field_id}'
+  path: '/api/v1/vocabularies/{id}/fields/{field_id}'
   defaults:
     _controller: 'docstore.vocabulary_controller:updateVocabularyField'
     _title: 'Update vocabulary field'
@@ -470,7 +470,7 @@ docstore_vocabulary_update_fields:
     docstore_crud: 'U'
     docstore_access_level: 'A'
 docstore_vocabulary_delete_fields:
-  path: '/api/vocabularies/{id}/fields/{field_id}'
+  path: '/api/v1/vocabularies/{id}/fields/{field_id}'
   defaults:
     _controller: 'docstore.vocabulary_controller:deleteVocabularyField'
     _title: 'Delete vocabulary field'
@@ -484,7 +484,7 @@ docstore_vocabulary_delete_fields:
 
 # Terms
 docstore_get_terms:
-  path: '/api/terms'
+  path: '/api/v1/terms'
   defaults:
     _controller: 'docstore.vocabulary_controller:getTerms'
     _title: 'Get terms'
@@ -496,7 +496,7 @@ docstore_get_terms:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_create_term:
-  path: '/api/terms'
+  path: '/api/v1/terms'
   defaults:
     _controller: 'docstore.vocabulary_controller:createTerm'
     _title: 'Create term'
@@ -508,7 +508,7 @@ docstore_create_term:
     docstore_crud: 'C'
     docstore_access_level: 'B'
 docstore_get_term:
-  path: '/api/terms/{id}'
+  path: '/api/v1/terms/{id}'
   defaults:
     _controller: 'docstore.vocabulary_controller:getTerm'
     _title: 'Get term'
@@ -520,7 +520,7 @@ docstore_get_term:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_get_term_revisions:
-  path: '/api/terms/{id}/revisions'
+  path: '/api/v1/terms/{id}/revisions'
   defaults:
     _controller: 'docstore.vocabulary_controller:getTermRevisions'
     _title: 'Get term'
@@ -532,7 +532,7 @@ docstore_get_term_revisions:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_get_term_revision:
-  path: '/api/terms/{id}/revisions/{revision_id}'
+  path: '/api/v1/terms/{id}/revisions/{revision_id}'
   defaults:
     _controller: 'docstore.vocabulary_controller:getTermRevision'
     _title: 'Get term'
@@ -544,7 +544,7 @@ docstore_get_term_revision:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_publish_term_revision:
-  path: '/api/terms/{id}/revisions/{revision_id}/publish'
+  path: '/api/v1/terms/{id}/revisions/{revision_id}/publish'
   defaults:
     _controller: 'docstore.vocabulary_controller:publishTermRevision'
     _title: 'Publish term revision'
@@ -556,7 +556,7 @@ docstore_publish_term_revision:
     docstore_crud: 'C'
     docstore_access_level: 'B'
 docstore_update_term:
-  path: '/api/terms/{id}'
+  path: '/api/v1/terms/{id}'
   defaults:
     _controller: 'docstore.vocabulary_controller:updateTerm'
     _title: 'Update term'
@@ -568,7 +568,7 @@ docstore_update_term:
     docstore_crud: 'U'
     docstore_access_level: 'B'
 docstore_delete_term:
-  path: '/api/terms/{id}'
+  path: '/api/v1/terms/{id}'
   defaults:
     _controller: 'docstore.vocabulary_controller:DeleteTerm'
     _title: 'Delete term'
@@ -582,7 +582,7 @@ docstore_delete_term:
 
 # Media
 docstore_get_all_media:
-  path: '/api/media'
+  path: '/api/v1/media'
   defaults:
     _controller: 'docstore.document_controller:getAllMedia'
     _title: 'Get all media'
@@ -594,7 +594,7 @@ docstore_get_all_media:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_get_media:
-  path: '/api/media/{id}'
+  path: '/api/v1/media/{id}'
   defaults:
     _controller: 'docstore.document_controller:getMedia'
     _title: 'Get media'
@@ -606,7 +606,7 @@ docstore_get_media:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_get_media_revisions:
-  path: '/api/media/{id}/revisions/{vid}'
+  path: '/api/v1/media/{id}/revisions/{vid}'
   defaults:
     _controller: 'docstore.document_controller:getMediaRevision'
     _title: 'Get media revision'
@@ -618,7 +618,7 @@ docstore_get_media_revisions:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_get_media_content:
-  path: '/api/media/{id}/content'
+  path: '/api/v1/media/{id}/content'
   defaults:
     _controller: 'docstore.document_controller:getMediaContent'
     _title: 'Get media content'
@@ -630,7 +630,7 @@ docstore_get_media_content:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_get_media_revisions_content:
-  path: '/api/media/{id}/revisions/{vid}/content'
+  path: '/api/v1/media/{id}/revisions/{vid}/content'
   defaults:
     _controller: 'docstore.document_controller:getMediaRevisionContent'
     _title: 'Get media revision content'
@@ -644,7 +644,7 @@ docstore_get_media_revisions_content:
 
 # Files
 docstore_get_files:
-  path: '/api/files'
+  path: '/api/v1/files'
   defaults:
     _controller: 'docstore.document_controller:getFiles'
     _title: 'Get files'
@@ -656,7 +656,7 @@ docstore_get_files:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_create_file:
-  path: '/api/files'
+  path: '/api/v1/files'
   defaults:
     _controller: 'docstore.document_controller:createFile'
     _title: 'Create file'
@@ -668,7 +668,7 @@ docstore_create_file:
     docstore_crud: 'C'
     docstore_access_level: 'A'
 docstore_get_file:
-  path: '/api/files/{id}'
+  path: '/api/v1/files/{id}'
   defaults:
     _controller: 'docstore.document_controller:getFile'
     _title: 'Get file'
@@ -680,7 +680,7 @@ docstore_get_file:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_get_file_usage:
-  path: '/api/files/{id}/usage'
+  path: '/api/v1/files/{id}/usage'
   defaults:
     _controller: 'docstore.document_controller:getFileUsage'
     _title: 'Get file usage'
@@ -692,7 +692,7 @@ docstore_get_file_usage:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_update_file:
-  path: '/api/files/{id}'
+  path: '/api/v1/files/{id}'
   defaults:
     _controller: 'docstore.document_controller:updateFile'
     _title: 'Update file'
@@ -704,7 +704,7 @@ docstore_update_file:
     docstore_crud: 'U'
     docstore_access_level: 'A'
 docstore_delete_file:
-  path: '/api/files/{id}'
+  path: '/api/v1/files/{id}'
   defaults:
     _controller: 'docstore.document_controller:DeleteFile'
     _title: 'Delete file'
@@ -716,7 +716,7 @@ docstore_delete_file:
     docstore_crud: 'D'
     docstore_access_level: 'B'
 docstore_get_file_content:
-  path: '/api/files/{id}/content'
+  path: '/api/v1/files/{id}/content'
   defaults:
     _controller: 'docstore.document_controller:getFileContent'
     _title: 'Get file content'
@@ -728,7 +728,7 @@ docstore_get_file_content:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_create_file_content:
-  path: '/api/files/{id}/content'
+  path: '/api/v1/files/{id}/content'
   defaults:
     _controller: 'docstore.document_controller:createFileContent'
     _title: 'Create file content'
@@ -740,7 +740,7 @@ docstore_create_file_content:
     docstore_crud: 'C'
     docstore_access_level: 'B'
 docstore_update_file_content:
-  path: '/api/files/{id}/content'
+  path: '/api/v1/files/{id}/content'
   defaults:
     _controller: 'docstore.document_controller:updateFileContent'
     _title: 'Update file content'

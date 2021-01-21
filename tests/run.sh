@@ -1,7 +1,7 @@
 # Env vars
 DRUSH=${DRUSH:-"fin drush"}
 HOST=${HOST:-"http://docstore.local.docksal"}
-API=${API:-"$HOST/api"}
+API=${API:-"$HOST/api/v1"}
 
 # Clear docstore, test vocabulary CRUD
 $DRUSH eval "_docstore_setup_testing()"
