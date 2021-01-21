@@ -18,7 +18,6 @@ use Drupal\docstore\ProviderTrait;
 use Drupal\docstore\ManageFields;
 use Drupal\docstore\MetadataTrait;
 use Drupal\entity_usage\EntityUsage;
-use League\Container\Exception\NotFoundException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
