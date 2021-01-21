@@ -543,6 +543,9 @@ class DocumentController extends ControllerBase {
       'uuid' => $document->uuid(),
     ];
 
+    // Invalidate cache.
+    Cache::invalidateTags(['documents']);
+
     // Add cache tags.
     $cache_tags['#cache'] = [
       'tags' => $document->getCacheTags(),
@@ -578,6 +581,9 @@ class DocumentController extends ControllerBase {
     ];
 
     $document->delete();
+
+    // Invalidate cache.
+    Cache::invalidateTags(['documents']);
 
     $response = new JsonResponse($data);
 
