@@ -904,10 +904,6 @@ class VocabularyController extends ControllerBase {
       throw new BadRequestHttpException('Term is not owned by you');
     }
 
-    if ($term->uuid() !== $id) {
-      throw new BadRequestHttpException('Revision not found');
-    }
-
     if (!$term->isDefaultRevision()) {
       $term->setRevisionCreationTime(time());
       $term->revision_log = 'Updated';
