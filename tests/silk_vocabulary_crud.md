@@ -20,6 +20,7 @@ Register a [webhook](https://webhook.site/#!/596df11a-21f8-4790-bb90-f79ba4ef9df
 * Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Webhook created"
+* Data.machine_name: /^[0-9a-z_]+$/ // Machine_name {webhook_id}
 
 ## POST /vocabularies
 
@@ -88,6 +89,7 @@ Create vocabulary.
 ```json
 {
   "label": "City",
+  "machine_name": "voc_crud_city",
   "author": "hid_123456789"
 }
 ```
@@ -592,6 +594,26 @@ Update non existing field.
 * Content-Type: "application/json"
 * Data.message: "Field does not exist"
 
+## GET /vocabularies/{machine_name}/fields/xyzzy
+
+Get non existing field.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "description": "Field does not exist"
+}
+```
+
+===
+
+* Status: `404`
+* Content-Type: "application/json"
+* Data.message: "Field does not exist"
+
 ## PATCH /vocabularies/{machine_name}/fields/{field_iso3}
 
 Update field type.
@@ -908,7 +930,7 @@ Get field.
 }
 ```
 
-* Status: `400`
+* Status: `404`
 * Content-Type: "application/json"
 
 ## DELETE /vocabularies/{uuid}
@@ -1362,3 +1384,15 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.message: "Vocabulary updated"
+
+## DELETE /webhooks/{webhook_id}
+
+Delete webhook.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Data.message: "Webhook deleted"

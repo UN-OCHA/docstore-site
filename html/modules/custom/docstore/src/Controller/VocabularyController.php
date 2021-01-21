@@ -336,7 +336,7 @@ class VocabularyController extends ControllerBase {
       $data = $manager->getVocabularyField($vocabulary, $field_id);
     }
     catch (\Exception $exception) {
-      throw new BadRequestHttpException($exception->getMessage());
+      throw new NotFoundHttpException($exception->getMessage());
     }
 
     // Add cache tags.
