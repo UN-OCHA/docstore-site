@@ -165,7 +165,7 @@ Get a vocabulary.
 * Status: `200`
 * Content-Type: "application/json"
 
-## DELETE /terms/{term_uuid}
+## DELETE /vocabularies/{machine_name}/terms/{term_uuid}
 
 Delete term.
 
