@@ -171,7 +171,7 @@ Example output.
 
 Create city terms.
 
-## POST /terms
+## POST /vocabularies/{city}/terms
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -202,7 +202,7 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_antwerp}
 
-## POST /terms
+## POST /vocabularies/{city}/terms
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -231,7 +231,7 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_brussels}
 
-## GET /terms/{city_brussels}
+## GET /vocabularies/{city}/terms/{city_brussels}
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -254,7 +254,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## POST /terms
+## POST /vocabularies/{city}/terms
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -286,7 +286,7 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_borgerhout}
 
-## GET /terms/{city_borgerhout}
+## GET /vocabularies/{city}/terms/{city_borgerhout}
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -311,7 +311,7 @@ Example output.
 * Data.label: /./
 * Data.vocabulary_name: {city}
 
-## PUT /terms/{city_borgerhout}
+## PUT /vocabularies/{city}/terms/{city_borgerhout}
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -340,7 +340,7 @@ Example output.
 * Data.message: "Term updated"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_borgerhout}
 
-## GET /terms/{city_borgerhout}
+## GET /vocabularies/{city}/terms/{city_borgerhout}
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -364,7 +364,7 @@ Example output.
 * Data.description: null
 * Data.vocabulary_name: {city}
 
-## PATCH /terms/{city_borgerhout}
+## PATCH /vocabularies/{city}/terms/{city_borgerhout}
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -393,7 +393,7 @@ Example output.
 * Data.message: "Term updated"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_borgerhout}
 
-## DELETE /terms/{city_brussels}
+## DELETE /vocabularies/{city}/terms/{city_brussels}
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -414,7 +414,7 @@ Example output.
 * Data.message: "Term deleted"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
 
-## GET /terms/{city_brussels}
+## GET /vocabularies/{city}/terms/{city_brussels}
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -426,7 +426,7 @@ Example output.
 * Status: `404`
 * Content-Type: "application/json"
 
-## POST /terms
+## POST /vocabularies/{organization}/terms
 
 Create organization terms.
 
@@ -460,7 +460,7 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {organization_cerf}
 
-## POST /terms
+## POST /vocabularies/{organization}/terms
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -491,7 +491,7 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {organization_unocha}
 
-## POST /terms
+## POST /vocabularies/{organization}/terms
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -525,7 +525,7 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {organization_wfp}
 
-## GET /terms/{organization_wfp}
+## GET /vocabularies/{organization}/terms/{organization_wfp}
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -553,7 +553,7 @@ Example output.
 * Data.label: /./
 * Data.vocabulary_name: {organization}
 
-## PUT /terms/{organization_wfp}
+## PUT /vocabularies/{organization}/terms/{organization_wfp}
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -586,7 +586,7 @@ Example output.
 * Data.message: "Term updated"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
 
-## GET /terms/{organization_wfp}
+## GET /vocabularies/{organization}/terms/{organization_wfp}
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -1146,7 +1146,7 @@ Get private document as other provider.
 * Content-Type: "application/json"
 * Data.message: "Document {doc5} does not exist"
 
-## DELETE /terms/{organization_wfp}
+## DELETE /vocabularies/{organization}/terms/{organization_wfp}
 
 Delete a term which is in use.
 
