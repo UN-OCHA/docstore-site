@@ -508,7 +508,12 @@ class VocabularyController extends ControllerBase {
     }
 
     $params['vocabulary'] = $vocabulary->uuid();
-    return $this->createTermFromUserParameters($params);
+    $data = $this->createTermFromUserParameters($params);
+
+    $response = new JsonResponse($data);
+    $response->setStatusCode(201);
+
+    return $response;
   }
 
   /**
@@ -537,22 +542,19 @@ class VocabularyController extends ControllerBase {
       throw new BadRequestHttpException('terms is required');
     }
 
-    $terms = $params['terms'];
-    foreach ($terms as $term) {
+    $data = [];
+
+    foreach ($params['terms'] as $term) {
       // Add common fields.
       $term['author'] = $params['author'];
       $term['vocabulary'] = $vocabulary->uuid();
 
       // Create term.
-      $this->createTermFromUserParameters($term);
+      $data[] = $this->createTermFromUserParameters($term);
     }
 
-    $data = [
-      'message' => 'Processed',
-    ];
-
     $response = new JsonResponse($data);
-    $response->setStatusCode(200);
+    $response->setStatusCode(201);
 
     return $response;
   }
@@ -570,7 +572,12 @@ class VocabularyController extends ControllerBase {
     $vocabulary = $this->loadVocabulary($id);
 
     $params['vocabulary'] = $vocabulary->uuid();
-    return $this->createTermFromUserParameters($params);
+    $data = $this->createTermFromUserParameters($params);
+
+    $response = new JsonResponse($data);
+    $response->setStatusCode(201);
+
+    return $response;
   }
 
   /**
@@ -619,10 +626,7 @@ class VocabularyController extends ControllerBase {
       'uuid' => $term->uuid(),
     ];
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(201);
-
-    return $response;
+    return $data;
   }
 
   /**
