@@ -16,6 +16,7 @@ $DRUSH eval "docstore_create_node_type('document', 'documents')"
 ./silk -test.v -silk.url $API silk_vocabulary_anon_cud.md || exit 1;
 ./silk -test.v -silk.url $API silk_vocabulary_anon_r.md || exit 1;
 ./silk -test.v -silk.url $API silk_document_types_crud.md || exit 1;
+./silk -test.v -silk.url $API silk_document_bulk.md || exit 1;
 ./silk -test.v -silk.url $API silk_geofield.md || exit 1;
 ./silk -test.v -silk.url $API silk_linkfield.md || exit 1;
 ./silk -test.v -silk.url $API silk_child_terms.md || exit 1;

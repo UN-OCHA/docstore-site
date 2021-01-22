@@ -347,21 +347,22 @@ class DocumentController extends ControllerBase {
       throw new BadRequestHttpException('documents is required');
     }
 
-    $documents = $params['documents'];
-    foreach ($documents as $document) {
+    $data = [];
+    foreach ($params['documents'] as $document) {
       // Add common fields.
       $document['author'] = $params['author'];
 
       // Create document.
-      $this->createDocumentForProvider($node_type, $document, $provider);
+      $doc = $this->createDocumentForProvider($node_type, $document, $provider);
+
+      $data[] = [
+        'message' => strtr('@type created', ['@type' => $this->getNodeTypeLabel($node_type)]),
+        'uuid' => $doc->uuid(),
+      ];
     }
 
-    $data = [
-      'message' => 'Processed',
-    ];
-
     $response = new JsonResponse($data);
-    $response->setStatusCode(200);
+    $response->setStatusCode(201);
 
     return $response;
   }
