@@ -174,7 +174,7 @@ Get doc.
 * Content-Type: "application/json"
 * Data.title: "Doc3"
 
-## DELETE /documents/test-document-crud/{doc1}
+## DELETE /documents/test-document-bulk/{doc1}
 
 Delete private document as owner.
 
@@ -185,22 +185,9 @@ Delete private document as owner.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data.message: "Test document CRUD deleted"
+* Data.message: "Test document bulk deleted"
 
-## DELETE /documents/test-document-crud/{doc2}
-
-Delete private document as owner.
-
-* Accept: "application/json"
-* API-KEY: abcd
-
-===
-
-* Status: `200`
-* Content-Type: "application/json"
-* Data.message: "Test document CRUD deleted"
-
-## DELETE /documents/test-document-crud/{doc3}
+## DELETE /documents/test-document-bulk/{doc2}
 
 Delete private document as owner.
 
@@ -211,7 +198,20 @@ Delete private document as owner.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data.message: "Test document CRUD deleted"
+* Data.message: "Test document bulk deleted"
+
+## DELETE /documents/test-document-bulk/{doc3}
+
+Delete private document as owner.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Test document bulk deleted"
 
 ## DELETE /types/test_doc_bulk
 
