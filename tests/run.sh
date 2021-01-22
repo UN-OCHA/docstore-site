@@ -12,6 +12,7 @@ $DRUSH eval "docstore_create_node_type('document', 'documents')"
 
 ./silk -test.v -silk.url $API silk_webhooks.md || exit 1;
 ./silk -test.v -silk.url $API silk_vocabulary_crud.md || exit 1;
+./silk -test.v -silk.url $API silk_vocabulary_bulk.md || exit 1;
 ./silk -test.v -silk.url $API silk_vocabulary_anon_cud.md || exit 1;
 ./silk -test.v -silk.url $API silk_vocabulary_anon_r.md || exit 1;
 ./silk -test.v -silk.url $API silk_document_types_crud.md || exit 1;

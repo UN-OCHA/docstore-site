@@ -407,6 +407,18 @@ docstore_create_term_in_vocabulary:
     _auth: ['docstore_auth']
     docstore_crud: 'C'
     docstore_access_level: 'B'
+docstore_create_term_in_bulk:
+  path: '/api/v1/vocabularies/{id}/terms/bulk'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:createTermOnVocabularyInBulk'
+    _title: 'Create term in bulk'
+  methods: [POST]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'C'
+    docstore_access_level: 'B'
 docstore_get_term:
   path: '/api/v1/vocabularies/{id}/terms/{term_id}'
   defaults:
