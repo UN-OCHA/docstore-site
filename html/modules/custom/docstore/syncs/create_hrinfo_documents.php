@@ -39,12 +39,11 @@ function createVocabularies() {
     'Operations' => 'hrinfo_operations',
     'Organizations' => 'hrinfo_organizations',
     'Sectors' => 'hrinfo_sectors',
-    'Themes' => 'hrinfo_themes',
     'Webspaces' => 'hrinfo_webspaces',
   ];
 
   foreach ($vocabularies as $vocabulary => $machine_name) {
-    post(API_URL . 'api/vocabularies', [
+    post(API_URL . 'api/v1/vocabularies', [
       'label' => $vocabulary,
       'machine_name' => $machine_name,
       'author' => 'hrinfo',
@@ -174,7 +173,7 @@ function createHrinfoFields() {
       $data['target'] = $field['target'];
     }
 
-    post(API_URL . 'api/fields/documents', $data);
+    post(API_URL . 'api/v1/fields/documents', $data);
   }
 }
 
@@ -405,9 +404,9 @@ function syncDocuments($url = '', $counter = 1) {
     ];
   }
 
-  post(API_URL . 'api/documents/bulk', $post_data);
+  post(API_URL . 'api/v1/documents/bulk', $post_data);
   // Give it some time to process.
-  sleep(60);
+  sleep(20);
 
   // Check for more data but stop before we overload with files.
   if ($counter > 50) {
@@ -415,7 +414,7 @@ function syncDocuments($url = '', $counter = 1) {
   }
   elseif (isset($data->next->href)) {
     $counter++;
-    print $data->next->href;
+    print "\nNext up:\n" . $data->next->href . "\n";
     syncDocuments($data->next->href, $counter);
   }
 }
