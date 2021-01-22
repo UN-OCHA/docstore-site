@@ -497,8 +497,64 @@ class VocabularyController extends ControllerBase {
 
     $vocabulary = $this->loadVocabulary($id);
 
+    // Get provider.
+    $provider = $this->requireProvider();
+
+    // Check if provider can create terms.
+    if ($vocabulary->getThirdPartySetting('docstore', 'provider_uuid') !== $provider->uuid()) {
+      if (!$vocabulary->getThirdPartySetting('docstore', 'content_allowed', FALSE)) {
+        throw new \Exception(strtr('You are not allowed to create new terms in @vocabulary', ['@vocabulary' => $vocabulary->label()]));
+      }
+    }
+
     $params['vocabulary'] = $vocabulary->uuid();
     return $this->createTermFromUserParameters($params);
+  }
+
+  /**
+   * Create term on vocabulary.
+   */
+  public function createTermOnVocabularyInBulk($id, Request $request) {
+    // Parse JSON.
+    $params = json_decode($request->getContent(), TRUE);
+    if (empty($params) || !is_array($params)) {
+      throw new BadRequestHttpException('You have to pass a JSON object');
+    }
+
+    $vocabulary = $this->loadVocabulary($id);
+
+    // Get provider.
+    $provider = $this->requireProvider();
+
+    // Check if provider can create terms.
+    if ($vocabulary->getThirdPartySetting('docstore', 'provider_uuid') !== $provider->uuid()) {
+      if (!$vocabulary->getThirdPartySetting('docstore', 'content_allowed', FALSE)) {
+        throw new \Exception(strtr('You are not allowed to create new terms in @vocabulary', ['@vocabulary' => $vocabulary->label()]));
+      }
+    }
+
+    if (empty($params['terms'])) {
+      throw new BadRequestHttpException('terms is required');
+    }
+
+    $terms = $params['terms'];
+    foreach ($terms as $term) {
+      // Add common fields.
+      $term['author'] = $params['author'];
+      $term['vocabulary'] = $vocabulary->uuid();
+
+      // Create term.
+      $this->createTermFromUserParameters($term);
+    }
+
+    $data = [
+      'message' => 'Processed',
+    ];
+
+    $response = new JsonResponse($data);
+    $response->setStatusCode(200);
+
+    return $response;
   }
 
   /**
