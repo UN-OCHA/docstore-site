@@ -171,7 +171,7 @@ Example output.
 
 Create city terms.
 
-## POST /terms
+## POST /vocabularies/{city}/terms
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -202,7 +202,7 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_antwerp}
 
-## POST /terms
+## POST /vocabularies/{city}/terms
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -231,7 +231,7 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_brussels}
 
-## GET /terms/{city_brussels}
+## GET /vocabularies/{city}/terms/{city_brussels}
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -254,7 +254,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## POST /terms
+## POST /vocabularies/{city}/terms
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -286,7 +286,7 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_borgerhout}
 
-## GET /terms/{city_borgerhout}
+## GET /vocabularies/{city}/terms/{city_borgerhout}
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -311,7 +311,7 @@ Example output.
 * Data.label: /./
 * Data.vocabulary_name: {city}
 
-## PUT /terms/{city_borgerhout}
+## PUT /vocabularies/{city}/terms/{city_borgerhout}
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -340,7 +340,7 @@ Example output.
 * Data.message: "Term updated"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_borgerhout}
 
-## GET /terms/{city_borgerhout}
+## GET /vocabularies/{city}/terms/{city_borgerhout}
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -364,7 +364,7 @@ Example output.
 * Data.description: null
 * Data.vocabulary_name: {city}
 
-## PATCH /terms/{city_borgerhout}
+## PATCH /vocabularies/{city}/terms/{city_borgerhout}
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -393,7 +393,7 @@ Example output.
 * Data.message: "Term updated"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_borgerhout}
 
-## DELETE /terms/{city_brussels}
+## DELETE /vocabularies/{city}/terms/{city_brussels}
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -414,7 +414,7 @@ Example output.
 * Data.message: "Term deleted"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
 
-## GET /terms/{city_brussels}
+## GET /vocabularies/{city}/terms/{city_brussels}
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -426,7 +426,7 @@ Example output.
 * Status: `404`
 * Content-Type: "application/json"
 
-## POST /terms
+## POST /vocabularies/{organization}/terms
 
 Create organization terms.
 
@@ -460,7 +460,7 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {organization_cerf}
 
-## POST /terms
+## POST /vocabularies/{organization}/terms
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -491,7 +491,7 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {organization_unocha}
 
-## POST /terms
+## POST /vocabularies/{organization}/terms
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -525,7 +525,7 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {organization_wfp}
 
-## GET /terms/{organization_wfp}
+## GET /vocabularies/{organization}/terms/{organization_wfp}
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -553,7 +553,7 @@ Example output.
 * Data.label: /./
 * Data.vocabulary_name: {organization}
 
-## PUT /terms/{organization_wfp}
+## PUT /vocabularies/{organization}/terms/{organization_wfp}
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -586,7 +586,7 @@ Example output.
 * Data.message: "Term updated"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
 
-## GET /terms/{organization_wfp}
+## GET /vocabularies/{organization}/terms/{organization_wfp}
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -617,7 +617,7 @@ Example output.
 
 # Add fields to documents
 
-## POST /fields/documents
+## POST /types/document/fields
 
 Add city field.
 
@@ -648,7 +648,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_city}
 
-## POST /fields/documents
+## POST /types/document/fields
 
 Add organizations field.
 
@@ -680,7 +680,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_organization}
 
-## POST /fields/documents
+## POST /types/document/fields
 
 Add id field.
 
@@ -711,7 +711,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_id}
 
-## POST /documents
+## POST /documents/documents
 
 Add a document without a file.
 
@@ -772,7 +772,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## POST /documents
+## POST /documents/documents
 
 Add a document using term labels.
 
@@ -835,7 +835,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents
+## GET /documents/documents
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -859,7 +859,7 @@ Example output.
 * Content-Type: "application/json"
 * Data[0].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {media1}
 
-## POST /documents
+## POST /documents/documents
 
 Add a document with a file.
 
@@ -918,7 +918,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc3}
+## GET /documents/documents/{doc3}
 
 Get document as owner.
 
@@ -935,7 +935,7 @@ Get document as owner.
 * Data.files[0].private: true
 * Data.files[0].uri: /.*/
 
-## GET /documents/{doc3}
+## GET /documents/documents/{doc3}
 
 Get document as anonymous
 
@@ -951,7 +951,7 @@ Get document as anonymous
 * Data.files[0].private: true
 * Data.files[0].uri: null
 
-## GET /documents/{doc3}
+## GET /documents/documents/{doc3}
 
 Get document as other user
 
@@ -968,7 +968,7 @@ Get document as other user
 * Data.files[0].private: true
 * Data.files[0].uri: null
 
-## POST /documents
+## POST /documents/documents
 
 Add an unpublished document.
 
@@ -1018,7 +1018,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## POST /documents
+## POST /documents/documents
 
 Add a private document.
 
@@ -1068,7 +1068,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc4}
+## GET /documents/documents/{doc4}
 
 Get unpublished document as owner.
 
@@ -1082,7 +1082,7 @@ Get unpublished document as owner.
 * Data.uuid: {doc4}
 * Data.published: false
 
-## GET /documents/{doc5}
+## GET /documents/documents/{doc5}
 
 Get private document as owner.
 
@@ -1096,7 +1096,7 @@ Get private document as owner.
 * Data.uuid: {doc5}
 * Data.private: true
 
-## GET /documents/{doc4}
+## GET /documents/documents/{doc4}
 
 Get unpublished document as anonymous.
 
@@ -1108,7 +1108,7 @@ Get unpublished document as anonymous.
 * Content-Type: "application/json"
 * Data.message: "Document {doc4} does not exist"
 
-## GET /documents/{doc5}
+## GET /documents/documents/{doc5}
 
 Get private document as anonymous.
 
@@ -1120,7 +1120,7 @@ Get private document as anonymous.
 * Content-Type: "application/json"
 * Data.message: "Document {doc5} does not exist"
 
-## GET /documents/{doc4}
+## GET /documents/documents/{doc4}
 
 Get unpublished document as other provider.
 
@@ -1133,7 +1133,7 @@ Get unpublished document as other provider.
 * Content-Type: "application/json"
 * Data.message: "Document {doc4} does not exist"
 
-## GET /documents/{doc5}
+## GET /documents/documents/{doc5}
 
 Get private document as other provider.
 
@@ -1146,7 +1146,7 @@ Get private document as other provider.
 * Content-Type: "application/json"
 * Data.message: "Document {doc5} does not exist"
 
-## DELETE /terms/{organization_wfp}
+## DELETE /vocabularies/{organization}/terms/{organization_wfp}
 
 Delete a term which is in use.
 
@@ -1168,7 +1168,7 @@ Example output.
 * Content-Type: "application/json"
 * Data.message: "Term is in use and can not be deleted"
 
-## GET /documents
+## GET /documents/documents
 
 Test filters.
 
@@ -1184,7 +1184,7 @@ Test filters.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
 
-## GET /documents
+## GET /documents/documents
 
 Test sort.
 
@@ -1198,7 +1198,7 @@ Test sort.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc5}
 
-## GET /documents
+## GET /documents/documents
 
 Test sort as anonymous.
 
@@ -1211,7 +1211,7 @@ Test sort as anonymous.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc3}
 
-## GET /documents
+## GET /documents/documents
 
 Test limit.
 
@@ -1225,7 +1225,7 @@ Test limit.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
 
-## GET /documents
+## GET /documents/documents
 
 Test offset.
 
@@ -1242,7 +1242,7 @@ Test offset.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents
+## GET /documents/documents
 
 Test offset as anonymous.
 
@@ -1258,7 +1258,7 @@ Test offset as anonymous.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents
+## GET /documents/documents
 
 Test illegal sort.
 
@@ -1272,7 +1272,7 @@ Test illegal sort.
 * Content-Type: "application/json"
 * Data.message: "Sort \"createdxx\" is not valid solr field."
 
-## GET /documents
+## GET /documents/documents
 
 Test full text search.
 

@@ -26,7 +26,7 @@ Create document type.
 * Status: `201`
 * Content-Type: "application/json"
 
-## POST /fields/geo-test
+## POST /types/geotest/fields
 
 Add geo field.
 
@@ -57,7 +57,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_geo}
 
-## POST /fields/geo-test
+## POST /types/geotest/fields
 
 Add multi value geo field.
 
@@ -89,7 +89,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_geomulti}
 
-## POST /geo-test
+## POST /documents/geo-test
 
 Add a minimal document.
 
@@ -131,16 +131,16 @@ Example output.
 
 ```json
 {
-  "message": "Geotest created"
+  "message": "Geo test document created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Geotest created"
+* Data.message: "Geo test document created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc1}
 
-## POST /geo-test
+## POST /documents/geo-test
 
 Add a minimal document.
 
@@ -170,16 +170,16 @@ Example output.
 
 ```json
 {
-  "message": "Geotest created"
+  "message": "Geo test document created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Geotest created"
+* Data.message: "Geo test document created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc2}
 
-## POST /geo-test
+## POST /documents/geo-test
 
 Add a minimal document.
 
@@ -217,13 +217,13 @@ Example output.
 
 ```json
 {
-  "message": "Geotest created"
+  "message": "Geo test document created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Geotest created"
+* Data.message: "Geo test document created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc3}
 
 ## GET /wait
@@ -236,7 +236,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /geo-test
+## GET /documents/geo-test
 
 Get docs.
 

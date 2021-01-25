@@ -26,7 +26,7 @@ function post($url, $data) {
 }
 
 function createNodeType() {
-  post(API_URL . 'api/types', [
+  post(API_URL . 'api/v1/types', [
     'machine_name' => 'disaster',
     'endpoint' => 'disasters',
     'label' => 'disaster',
@@ -44,7 +44,7 @@ function createVocabularies() {
   ];
 
   foreach ($vocabularies as $vocabulary) {
-    post(API_URL . 'api/vocabularies', [
+    post(API_URL . 'api/v1/vocabularies', [
       'label' => $vocabulary,
       'author' => 'RW',
     ]);
@@ -114,7 +114,7 @@ function createDisasterFields() {
       $data['target'] = $field['target'];
     }
 
-    post(API_URL . 'api/fields/disasters', $data);
+    post(API_URL . 'api/v1/fields/disasters', $data);
   }
 }
 
@@ -148,7 +148,7 @@ function syncDisasters($url = '') {
 
     // Glide.
     if (isset($row->fields->glide)) {
-      $disaster['metadata'][] = ['glide_number' => $row->fields->glide];
+      $disaster['metadata'][] = ['glide' => $row->fields->glide];
     }
 
     // Profile.
@@ -190,7 +190,7 @@ function syncDisasters($url = '') {
       $disaster['metadata'][] = ['primary_disaster_type' => [$type_data]];
     }
 
-    // Country.
+    // Countries.
     if (isset($row->fields->country) && !empty($row->fields->country)) {
       $country_data = [];
       foreach ($row->fields->country as $country) {
@@ -203,7 +203,7 @@ function syncDisasters($url = '') {
         ];
       }
 
-      $disaster['metadata'][] = ['country' => $country_data];
+      $disaster['metadata'][] = ['countries' => $country_data];
     }
 
     // Primary country.
@@ -228,7 +228,7 @@ function syncDisasters($url = '') {
     'documents' => $disasters,
   ];
 
-  post(API_URL . 'api/disasters/bulk', $post_data);
+  post(API_URL . 'api/v1/disasters/bulk', $post_data);
 
   // Check for more data.
   if (isset($data->links) && isset($data->links->next->href)) {

@@ -29,7 +29,7 @@ function post($url, $data) {
 }
 
 function createNodeType() {
-  post(API_URL . 'api/types', [
+  post(API_URL . 'api/v1/types', [
     'machine_name' => 'assessment',
     'endpoint' => 'assessments',
     'label' => 'Assessment',
@@ -40,7 +40,7 @@ function createNodeType() {
     'allow_duplicates' => true,
   ]);
 
-  post(API_URL . 'api/types', [
+  post(API_URL . 'api/v1/types', [
     'machine_name' => 'assessment_document',
     'endpoint' => 'assessment-documents',
     'label' => 'Assessment document',
@@ -61,7 +61,7 @@ function createVocabularies() {
   ];
 
   foreach ($vocabularies as $vocabulary => $machine_name) {
-    post(API_URL . 'api/vocabularies', [
+    post(API_URL . 'api/v1/vocabularies', [
       'label' => $vocabulary,
       'machine_name' => $machine_name,
       'author' => 'AR',
@@ -82,7 +82,7 @@ function createAssessmentDocumentFields() {
   ];
 
   foreach ($fields as $machine_name => $field) {
-    post(API_URL . 'api/fields/assessment-documents', [
+    post(API_URL . 'api/v1/fields/assessment-documents', [
       'label' => $field['label'],
       'machine_name' => $machine_name,
       'type' => $field['type'],
@@ -236,7 +236,7 @@ function createAssessmentFields() {
       $data['target'] = $field['target'];
     }
 
-    post(API_URL . 'api/fields/assessments', $data);
+    post(API_URL . 'api/v1/fields/assessments', $data);
   }
 }
 
@@ -454,7 +454,7 @@ function syncAssesments($url = '') {
     'documents' => $assessments,
   ];
 
-  post(API_URL . 'api/assessments/bulk', $post_data);
+  post(API_URL . 'api/v1/assessments/bulk', $post_data);
 
   // Check for more data.
   if (isset($data->next->href)) {

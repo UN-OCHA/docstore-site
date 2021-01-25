@@ -1,4 +1,4 @@
-# Create vocabularies
+# Create terms in bulk
 
 ## POST /vocabularies
 
@@ -10,9 +10,9 @@ Create vocabulary.
 
 ```json
 {
-  "label": "City (anon test)",
-  "machine_name": "anontest",
-  "author": "hid_123456789"
+  "label": "Bulk terms",
+  "machine_name": "voc_bulk",
+  "author": "test"
 }
 ```
 
@@ -32,6 +32,27 @@ Example output.
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // UUID {uuid}
 * Data.machine_name: /^[0-9a-z_]+$/ // Machine_name {machine_name}
 
+## `GET /vocabularies/{machine_name}`
+
+Get a vocabulary.
+
+* Accept: "application/json"
+
+===
+
+Example output.
+
+```json
+{
+  "label": "Bulk terms"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: {uuid}
+* Data.label: /./
+
 ## POST /vocabularies/{machine_name}/fields
 
 Add iso3 field to vocabulary.
@@ -43,7 +64,7 @@ Add iso3 field to vocabulary.
 ```json
 {
   "label": "ISO 3 code",
-  "author": "hid_123456789",
+  "author": "test",
   "type": "string"
 }
 ```
@@ -73,8 +94,8 @@ Create city term.
 
 ```json
 {
-  "label": "Antwerp",
-  "author": "23cdf322",
+  "label": "Term1",
+  "author": "Author1",
   "metadata": [
     {
       "{field_iso3}": "BEL"
@@ -96,44 +117,11 @@ Example output.
 * Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Term created"
-* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {term_uuid}
-
-## GET /vocabularies/xx-dd-sgd/fields
-
-Get fields of unknown vocabulary.
-
-* Accept: "application/json"
-
-===
-
-* Status: `403`
-* Content-Type: "application/json"
-
-## GET /vocabularies/{machine_name}/fields
-
-Get fields.
-
-* Accept: "application/json"
-
-===
-
-* Status: `403`
-* Content-Type: "application/json"
-
-## GET /vocabularies/{machine_name}/fields/{field_iso3}
-
-Get field.
-
-* Accept: "application/json"
-
-===
-
-* Status: `403`
-* Content-Type: "application/json"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {term_uuid1}
 
 ## `GET /vocabularies/{machine_name}/terms`
 
-Get a vocabulary.
+Get terms.
 
 * Accept: "application/json"
 
@@ -141,31 +129,48 @@ Get a vocabulary.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].label: "Antwerp"
+* Data[0].label: "Term1"
 
-## GET /vocabularies/{machine_name}/fields/{field_iso3}
+## POST /vocabularies/{machine_name}/terms/bulk
 
-Get field.
+Create city terms.
 
+* Content-Type: "application/json"
 * Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "author": "Author1",
+  "terms": [
+    {
+      "label": "Term2",
+      "metadata": [
+        {
+          "{field_iso3}": "BEL"
+        }
+      ]
+    },
+    {
+      "label": "Term3",
+      "metadata": [
+        {
+          "{field_iso3}": "BEL"
+        }
+      ]
+    }
+  ]
+}
+```
 
 ===
 
-* Status: `403`
+* Status: `201`
 * Content-Type: "application/json"
+* Data[0].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {term_uuid2}
+* Data[1].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {term_uuid3}
 
-## `GET /vocabularies/{machine_name}`
-
-Get a vocabulary.
-
-* Accept: "application/json"
-
-===
-
-* Status: `200`
-* Content-Type: "application/json"
-
-## DELETE /vocabularies/{machine_name}/terms/{term_uuid}
+## DELETE /vocabularies/{uuid}/terms/{term_uuid1}
 
 Delete term.
 
@@ -187,7 +192,51 @@ Example output.
 * Content-Type: "application/json"
 * Data.message: "Term deleted"
 
-## DELETE /vocabularies/{machine_name}
+## DELETE /vocabularies/{uuid}/terms/{term_uuid2}
+
+Delete term.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term deleted"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term deleted"
+
+## DELETE /vocabularies/{uuid}/terms/{term_uuid3}
+
+Delete term.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Term deleted"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "Term deleted"
+
+## DELETE /vocabularies/{uuid}
 
 Delete vocabulary.
 

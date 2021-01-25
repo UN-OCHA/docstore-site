@@ -1,6 +1,28 @@
 # Create documents
 
-## POST /fields/documents
+## POST /types
+
+Create document type.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "machine_name": "test_doc_crud",
+  "endpoint": "test-document-crud",
+  "label": "Test document CRUD",
+  "author": "common"
+}
+```
+
+===
+
+* Status: `201`
+* Content-Type: "application/json"
+
+## POST /types/test_doc_crud/fields
 
 Test empty post.
 
@@ -17,7 +39,7 @@ Test empty post.
 * Content-Type: "application/json"
 * Data.message: "You have to pass a JSON object"
 
-## POST /fields/documents
+## POST /types/test_doc_crud/fields
 
 Test empty post.
 
@@ -35,7 +57,7 @@ Test empty post.
 * Content-Type: "application/json"
 * Data.message: "You have to pass a JSON object"
 
-## POST /fields/documents
+## POST /types/test_doc_crud/fields
 
 Test empty post.
 
@@ -53,7 +75,7 @@ Test empty post.
 * Content-Type: "application/json"
 * Data.message: "You have to pass a JSON object"
 
-## POST /fields/documents
+## POST /types/test_doc_crud/fields
 
 Test illegal json post.
 
@@ -71,7 +93,7 @@ Test illegal json post.
 * Content-Type: "application/json"
 * Data.message: "You have to pass a JSON object"
 
-## POST /fields/documents
+## POST /types/test_doc_crud/fields
 
 Add id field.
 
@@ -102,7 +124,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_id}
 
-## POST /fields/documents
+## POST /types/test_doc_crud/fields
 
 Add country field.
 
@@ -134,7 +156,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_country}
 
-## POST /documents
+## POST /documents/test-document-crud
 
 Add a document as anonymous.
 
@@ -153,7 +175,7 @@ Add a document as anonymous.
 * Status: `403`
 * Content-Type: "application/json"
 
-## POST /documents
+## POST /documents/test-document-crud
 
 Add a document without title.
 
@@ -173,7 +195,7 @@ Add a document without title.
 * Content-Type: "application/json"
 * Data.message: "Title is required"
 
-## POST /documents
+## POST /documents/test-document-crud
 
 Add a document without author.
 
@@ -193,7 +215,7 @@ Add a document without author.
 * Content-Type: "application/json"
 * Data.message: "Author is required"
 
-## POST /documents
+## POST /documents/test-document-crud
 
 Add a minimal document.
 
@@ -219,13 +241,13 @@ Example output.
 
 ```json
 {
-  "message": "Document created"
+  "message": "Test document CRUD created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Document created"
+* Data.message: "Test document CRUD created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc1}
 
 ## GET /wait
@@ -238,7 +260,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents
+## GET /documents/test-document-crud
 
 Test filters.
 
@@ -251,7 +273,7 @@ Test filters.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
 
-## GET /documents
+## GET /documents/test-document-crud
 
 Test filters.
 
@@ -265,7 +287,7 @@ Test filters.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
 
-## GET /documents
+## GET /documents/test-document-crud
 
 Test filters.
 
@@ -279,7 +301,7 @@ Test filters.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
 
-## GET /documents
+## GET /documents/test-document-crud
 
 Test filters.
 
@@ -296,7 +318,7 @@ Test filters.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents
+## GET /documents/test-document-crud
 
 Test filters.
 
@@ -312,7 +334,7 @@ Test filters.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc1}
 
-## GET /documents
+## GET /documents/test-document-crud
 
 Test filters.
 
@@ -332,7 +354,7 @@ Test filters.
 * Status: `200`
 * Content-Type: "application/json"
 
-## POST /documents
+## POST /documents/test-document-crud
 
 Add a private document.
 
@@ -360,13 +382,13 @@ Example output.
 
 ```json
 {
-  "message": "Document created"
+  "message": "Test document CRUD created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Document created"
+* Data.message: "Test document CRUD created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc2}
 
 ## GET /wait
@@ -379,7 +401,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## POST /documents
+## POST /documents/test-document-crud
 
 Add an unpublished document.
 
@@ -406,13 +428,13 @@ Example output.
 
 ```json
 {
-  "message": "Document created"
+  "message": "Test document CRUD created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Document created"
+* Data.message: "Test document CRUD created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc3}
 
 ## GET /wait
@@ -425,7 +447,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## POST /documents
+## POST /documents/test-document-crud
 
 Add an unpublished private document.
 
@@ -453,13 +475,13 @@ Example output.
 
 ```json
 {
-  "message": "Document created"
+  "message": "Test document CRUD created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Document created"
+* Data.message: "Test document CRUD created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc4}
 
 ## GET /wait
@@ -472,7 +494,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc2}
+## GET /documents/test-document-crud/{doc2}
 
 Get private document as owner.
 
@@ -486,7 +508,7 @@ Get private document as owner.
 * Data.uuid: {doc2}
 * Data.silk_country[0].name: "Aruba"
 
-## GET /documents/{doc2}
+## GET /documents/test-document-crud/{doc2}
 
 Get private document as anonymous.
 
@@ -497,7 +519,7 @@ Get private document as anonymous.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /documents/{doc2}
+## GET /documents/test-document-crud/{doc2}
 
 Get private document as other provider.
 
@@ -509,7 +531,7 @@ Get private document as other provider.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /documents/{doc3}
+## GET /documents/test-document-crud/{doc3}
 
 Get unpublished document as owner.
 
@@ -522,7 +544,7 @@ Get unpublished document as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc3}
 
-## GET /documents/{doc3}
+## GET /documents/test-document-crud/{doc3}
 
 Get unpublished document as anonymous.
 
@@ -533,7 +555,7 @@ Get unpublished document as anonymous.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /documents/{doc3}
+## GET /documents/test-document-crud/{doc3}
 
 Get unpublished document as other provider.
 
@@ -545,7 +567,7 @@ Get unpublished document as other provider.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /documents/{doc4}
+## GET /documents/test-document-crud/{doc4}
 
 Get private unpublished document as owner.
 
@@ -558,7 +580,7 @@ Get private unpublished document as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc4}
 
-## GET /documents/{doc4}
+## GET /documents/test-document-crud/{doc4}
 
 Get unpublished document as anonymous.
 
@@ -569,7 +591,7 @@ Get unpublished document as anonymous.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /documents/{doc4}
+## GET /documents/test-document-crud/{doc4}
 
 Get unpublished document as other provider.
 
@@ -581,7 +603,7 @@ Get unpublished document as other provider.
 * Status: `404`
 * Content-Type: "application/json"
 
-## PUT /documents/{doc1}
+## PUT /documents/test-document-crud/{doc1}
 
 Update minimal document.
 
@@ -601,13 +623,13 @@ Example output.
 
 ```json
 {
-  "message": "Document updated"
+  "message": "Test document CRUD updated"
 }
 ```
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data.message: "Document updated"
+* Data.message: "Test document CRUD updated"
 
 ## GET /wait
 
@@ -619,7 +641,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc1}
+## GET /documents/test-document-crud/{doc1}
 
 Get minimal document.
 
@@ -640,7 +662,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## PUT /documents/{doc1}
+## PUT /documents/test-document-crud/{doc1}
 
 Update minimal document as anonymous.
 
@@ -658,7 +680,7 @@ Update minimal document as anonymous.
 * Status: `403`
 * Content-Type: "application/json"
 
-## PUT /documents/{doc1}
+## PUT /documents/test-document-crud/{doc1}
 
 Update minimal document as other provider.
 
@@ -676,7 +698,7 @@ Update minimal document as other provider.
 * Status: `403`
 * Content-Type: "application/json"
 
-## PATCH /documents/{doc2}
+## PATCH /documents/test-document-crud/{doc2}
 
 Update private document.
 
@@ -701,13 +723,13 @@ Example output.
 
 ```json
 {
-  "message": "Document updated"
+  "message": "Test document CRUD updated"
 }
 ```
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data.message: "Document updated"
+* Data.message: "Test document CRUD updated"
 
 ## GET /wait
 
@@ -720,7 +742,7 @@ Example output.
 * Content-Type: "application/json"
 
 
-## GET /documents
+## GET /documents/test-document-crud
 
 Test filters.
 
@@ -734,7 +756,7 @@ Test filters.
 * Content-Type: "application/json"
 * Data[0].uuid: {doc2}
 
-## GET /documents/{doc2}
+## GET /documents/test-document-crud/{doc2}
 
 Get Private document.
 
@@ -755,7 +777,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## PATCH /documents/{doc2}
+## PATCH /documents/test-document-crud/{doc2}
 
 Update private document as anonymous.
 
@@ -773,7 +795,7 @@ Update private document as anonymous.
 * Status: `403`
 * Content-Type: "application/json"
 
-## PATCH /documents/{doc2}
+## PATCH /documents/test-document-crud/{doc2}
 
 Update private document as other provider.
 
@@ -791,7 +813,7 @@ Update private document as other provider.
 * Status: `403`
 * Content-Type: "application/json"
 
-## GET /documents/{doc2}
+## GET /documents/test-document-crud/{doc2}
 
 Get private document as owner.
 
@@ -804,7 +826,7 @@ Get private document as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
 
-## GET /documents/{doc2}
+## GET /documents/test-document-crud/{doc2}
 
 Get private document as anonymous.
 
@@ -815,7 +837,7 @@ Get private document as anonymous.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /documents/{doc2}
+## GET /documents/test-document-crud/{doc2}
 
 Get private document as other provider.
 
@@ -827,7 +849,7 @@ Get private document as other provider.
 * Status: `404`
 * Content-Type: "application/json"
 
-## PATCH /documents/{doc2}
+## PATCH /documents/test-document-crud/{doc2}
 
 Make private document public.
 
@@ -848,13 +870,13 @@ Example output.
 
 ```json
 {
-  "message": "Document updated"
+  "message": "Test document CRUD updated"
 }
 ```
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data.message: "Document updated"
+* Data.message: "Test document CRUD updated"
 
 ## GET /wait
 
@@ -866,7 +888,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc2}
+## GET /documents/test-document-crud/{doc2}
 
 Get Private document.
 
@@ -887,7 +909,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc2}
+## GET /documents/test-document-crud/{doc2}
 
 Get private document as owner.
 
@@ -900,7 +922,7 @@ Get private document as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
 
-## GET /documents/{doc2}
+## GET /documents/test-document-crud/{doc2}
 
 Get private document as anonymous.
 
@@ -912,7 +934,7 @@ Get private document as anonymous.
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
 
-## GET /documents/{doc2}
+## GET /documents/test-document-crud/{doc2}
 
 Get private document as other provider.
 
@@ -925,7 +947,7 @@ Get private document as other provider.
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
 
-## PATCH /documents/{doc3}
+## PATCH /documents/test-document-crud/{doc3}
 
 Make unpublished document public.
 
@@ -946,13 +968,13 @@ Example output.
 
 ```json
 {
-  "message": "Document updated"
+  "message": "Test document CRUD updated"
 }
 ```
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data.message: "Document updated"
+* Data.message: "Test document CRUD updated"
 
 ## GET /wait
 
@@ -964,7 +986,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc3}
+## GET /documents/test-document-crud/{doc3}
 
 Get unpublished document.
 
@@ -985,7 +1007,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc3}
+## GET /documents/test-document-crud/{doc3}
 
 Get unpublished document as owner.
 
@@ -998,7 +1020,7 @@ Get unpublished document as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc3}
 
-## GET /documents/{doc3}
+## GET /documents/test-document-crud/{doc3}
 
 Get unpublished document as anonymous.
 
@@ -1006,10 +1028,10 @@ Get unpublished document as anonymous.
 
 ===
 
-* Status: `404`
+* Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc3}
+## GET /documents/test-document-crud/{doc3}
 
 Get unpublished document as other provider.
 
@@ -1018,10 +1040,10 @@ Get unpublished document as other provider.
 
 ===
 
-* Status: `404`
+* Status: `200`
 * Content-Type: "application/json"
 
-## DELETE /documents/{doc3}
+## DELETE /documents/test-document-crud/{doc3}
 
 Delete private document as anonymous.
 
@@ -1032,7 +1054,7 @@ Delete private document as anonymous.
 * Status: `403`
 * Content-Type: "application/json"
 
-## DELETE /documents/{doc3}
+## DELETE /documents/test-document-crud/{doc3}
 
 Delete private document as other provider.
 
@@ -1044,7 +1066,7 @@ Delete private document as other provider.
 * Status: `400`
 * Content-Type: "application/json"
 
-## DELETE /documents/{doc3}
+## DELETE /documents/test-document-crud/{doc3}
 
 Delete private document as owner.
 
@@ -1055,7 +1077,7 @@ Delete private document as owner.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data.message: "Document deleted"
+* Data.message: "Test document CRUD deleted"
 
 ## GET /wait
 
@@ -1067,7 +1089,7 @@ Delete private document as owner.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/{doc3}
+## GET /documents/test-document-crud/{doc3}
 
 Get deleted unpublished document as owner.
 
@@ -1079,7 +1101,7 @@ Get deleted unpublished document as owner.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /documents/{doc3}
+## GET /documents/test-document-crud/{doc3}
 
 Get deleted unpublished document as anonymous.
 
@@ -1090,7 +1112,7 @@ Get deleted unpublished document as anonymous.
 * Status: `404`
 * Content-Type: "application/json"
 
-## GET /documents/{doc3}
+## GET /documents/test-document-crud/{doc3}
 
 Get deleted unpublished document as other provider.
 
@@ -1102,7 +1124,7 @@ Get deleted unpublished document as other provider.
 * Status: `404`
 * Content-Type: "application/json"
 
-## POST /fields/documents
+## POST /types/test_doc_crud/fields
 
 Add required field.
 
@@ -1134,7 +1156,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_needed}
 
-## POST /documents
+## POST /documents/test-document-crud
 
 Add a minimal document.
 
@@ -1168,7 +1190,7 @@ Example output.
 * Content-Type: "application/json"
 * Data.message: "Unable to save document: This value should not be null. (silk_needed)"
 
-## POST /documents
+## POST /documents/test-document-crud
 
 Add a minimal document.
 
@@ -1194,15 +1216,15 @@ Example output.
 
 ```json
 {
-  "message": "Document created"
+  "message": "Test document CRUD created"
 }
 ```
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Document created"
+* Data.message: "Test document CRUD created"
 
-## POST /documents
+## POST /documents/test-document-crud
 
 Add a minimal document.
 
@@ -1234,4 +1256,3 @@ Example output.
 
 * Content-Type: "application/json"
 * Data.message: "Unable to save document: This value should be of the correct primitive type. (silk_needed.0.value)"
-
