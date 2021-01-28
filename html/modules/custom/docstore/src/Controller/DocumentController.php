@@ -436,6 +436,7 @@ class DocumentController extends ControllerBase {
 
     $updated_fields = [];
     // Update all fields specified in metadata.
+
     if (isset($params['metadata'])) {
       $metadata = $params['metadata'];
       if (!is_array($metadata) || $this->arrayIsAssociative($metadata)) {
@@ -464,7 +465,7 @@ class DocumentController extends ControllerBase {
     // Update all fields specified in params.
     foreach ($params as $name => $values) {
       // Ignore revision fields.
-      if ($name === 'new_revision' || $$name === 'revision_log' || $name === 'draft') {
+      if ($name === 'new_revision' || $name === 'revision_log' || $name === 'draft') {
         continue;
       }
 
@@ -474,7 +475,22 @@ class DocumentController extends ControllerBase {
       }
 
       if ($document->hasField($name)) {
-        $document->set($name, $values);
+        if (is_array($values)) {
+          $massaged = [];
+          foreach ($values as &$value) {
+            if (isset($value['uuid'])) {
+              $massaged[] = $value['uuid'];
+            }
+            else {
+              $massaged[] = $value;
+            }
+          }
+          $document->set($name, $massaged);
+        }
+        else {
+          $document->set($name, $values);
+        }
+
         $updated_fields[] = $name;
       }
       else {

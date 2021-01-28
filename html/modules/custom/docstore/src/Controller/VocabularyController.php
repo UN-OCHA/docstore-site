@@ -1230,24 +1230,24 @@ class VocabularyController extends ControllerBase {
   protected function getAccessibleVocabularies($provider) {
     static $cache = [];
 
-    if (isset($cache[$provider->id])) {
-      return $cache[$provider->id];
+    if (isset($cache[$provider->id()])) {
+      return $cache[$provider->id()];
     }
 
-    $cache[$provider->id] = [];
+    $cache[$provider->id()] = [];
 
     $vocabularies = $this->loadVocabularies();
     foreach ($vocabularies as $vocabulary) {
       if (!$provider->isAnonymous() && $vocabulary->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
-        $cache[$provider->id][] = $vocabulary->id();
+        $cache[$provider->id()][] = $vocabulary->id();
       }
 
       if ($vocabulary->getThirdPartySetting('docstore', 'shared')) {
-        $cache[$provider->id][] = $vocabulary->id();
+        $cache[$provider->id()][] = $vocabulary->id();
       }
     }
 
-    return $cache[$provider->id];
+    return $cache[$provider->id()];
   }
 
   /**
@@ -1256,8 +1256,8 @@ class VocabularyController extends ControllerBase {
   protected function providerCanUseVocabulary($vocabulary_id, $provider) {
     static $cache = [];
 
-    if (isset($cache[$vocabulary_id][$provider->id])) {
-      return $cache[$vocabulary_id][$provider->id];
+    if (isset($cache[$vocabulary_id][$provider->id()])) {
+      return $cache[$vocabulary_id][$provider->id()];
     }
 
     // Load vocabulary.
@@ -1265,17 +1265,17 @@ class VocabularyController extends ControllerBase {
 
     // Owner has access.
     if (!$provider->isAnonymous() && $vocabulary->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
-      $cache[$vocabulary_id][$provider->id] = TRUE;
-      return $cache[$vocabulary_id][$provider->id];
+      $cache[$vocabulary_id][$provider->id()] = TRUE;
+      return $cache[$vocabulary_id][$provider->id()];
     }
 
     if ($vocabulary->getThirdPartySetting('docstore', 'shared')) {
-      $cache[$vocabulary_id][$provider->id] = TRUE;
-      return $cache[$vocabulary_id][$provider->id];
+      $cache[$vocabulary_id][$provider->id()] = TRUE;
+      return $cache[$vocabulary_id][$provider->id()];
     }
 
-    $cache[$vocabulary_id][$provider->id] = FALSE;
-    return $cache[$vocabulary_id][$provider->id];
+    $cache[$vocabulary_id][$provider->id()] = FALSE;
+    return $cache[$vocabulary_id][$provider->id()];
   }
 
 }

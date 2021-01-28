@@ -345,8 +345,8 @@ trait MetadataTrait {
 
     static $cache = [];
 
-    if (isset($cache[$entity_type][$type][$field_name][$provider->id])) {
-      return $cache[$entity_type][$type][$field_name][$provider->id];
+    if (isset($cache[$entity_type][$type][$field_name][$provider->id()])) {
+      return $cache[$entity_type][$type][$field_name][$provider->id()];
     }
 
     $public_fields = [
@@ -361,8 +361,8 @@ trait MetadataTrait {
     ];
 
     if (in_array($field_name, $public_fields)) {
-      $cache[$entity_type][$type][$field_name][$provider->id] = TRUE;
-      return $cache[$entity_type][$type][$field_name][$provider->id];
+      $cache[$entity_type][$type][$field_name][$provider->id()] = TRUE;
+      return $cache[$entity_type][$type][$field_name][$provider->id()];
     }
 
     $field_config = FieldConfig::loadByName($entity_type, $type, $field_name);
@@ -373,17 +373,17 @@ trait MetadataTrait {
     }
 
     if (!$provider->isAnonymous() && $field_config->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
-      $cache[$entity_type][$type][$field_name][$provider->id] = TRUE;
-      return $cache[$entity_type][$type][$field_name][$provider->id];
+      $cache[$entity_type][$type][$field_name][$provider->id()] = TRUE;
+      return $cache[$entity_type][$type][$field_name][$provider->id()];
     }
 
     if (!$field_config->getThirdPartySetting('docstore', 'private', FALSE)) {
-      $cache[$entity_type][$type][$field_name][$provider->id] = TRUE;
-      return $cache[$entity_type][$type][$field_name][$provider->id];
+      $cache[$entity_type][$type][$field_name][$provider->id()] = TRUE;
+      return $cache[$entity_type][$type][$field_name][$provider->id()];
     }
 
-    $cache[$entity_type][$type][$field_name][$provider->id] = FALSE;
-    return $cache[$entity_type][$type][$field_name][$provider->id];
+    $cache[$entity_type][$type][$field_name][$provider->id()] = FALSE;
+    return $cache[$entity_type][$type][$field_name][$provider->id()];
   }
 
 }
