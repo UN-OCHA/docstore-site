@@ -435,8 +435,8 @@ class DocumentController extends ControllerBase {
     }
 
     $updated_fields = [];
-    // Update all fields specified in metadata.
 
+    // Update all fields specified in metadata.
     if (isset($params['metadata'])) {
       $metadata = $params['metadata'];
       if (!is_array($metadata) || $this->arrayIsAssociative($metadata)) {
