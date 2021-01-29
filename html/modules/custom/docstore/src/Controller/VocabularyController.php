@@ -568,17 +568,7 @@ class VocabularyController extends ControllerBase {
   /**
    * Get term.
    */
-  public function getTerm($id, $term_id, Request $request) {
-    // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
-
-    $vocabulary = $this->loadVocabulary($id);
-
-    $params['vocabulary'] = $vocabulary->uuid();
-
+  public function getTerm($id, $term_id) {
     // Load term.
     $term = $this->loadTerm($term_id);
     $terms = $this->loadTerms([$id], $term->id(), 0, 1);
