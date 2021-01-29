@@ -102,7 +102,7 @@ docstore_document_create_type:
     docstore_crud: 'C'
     docstore_access_level: 'A'
 docstore_document_get_type:
-  path: '/api/v1/types/{node_type}'
+  path: '/api/v1/types/{type}'
   defaults:
     _controller: 'docstore.doctype_controller:getDocumentType'
     _title: 'Get document type'
@@ -114,7 +114,7 @@ docstore_document_get_type:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 docstore_document_update_type:
-  path: '/api/v1/types/{node_type}'
+  path: '/api/v1/types/{type}'
   defaults:
     _controller: 'docstore.doctype_controller:updateDocumentType'
     _title: 'Update document type'
@@ -126,7 +126,7 @@ docstore_document_update_type:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 docstore_document_delete_type:
-  path: '/api/v1/types/{node_type}'
+  path: '/api/v1/types/{type}'
   defaults:
     _controller: 'docstore.doctype_controller:deleteDocumentType'
     _title: 'Delete document type'
@@ -140,7 +140,7 @@ docstore_document_delete_type:
 
 # Document fields
 docstore_document_get_fields:
-  path: '/api/v1/types/{node_type}/fields'
+  path: '/api/v1/types/{type}/fields'
   defaults:
     _controller: 'docstore.doctype_controller:getDocumentFields'
     _title: 'Get document fields'
@@ -152,7 +152,7 @@ docstore_document_get_fields:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 docstore_document_create_fields:
-  path: '/api/v1/types/{node_type}/fields'
+  path: '/api/v1/types/{type}/fields'
   defaults:
     _controller: 'docstore.doctype_controller:createDocumentField'
     _title: 'Create document field'
@@ -164,7 +164,7 @@ docstore_document_create_fields:
     docstore_crud: 'C'
     docstore_access_level: 'A'
 docstore_document_get_field:
-  path: '/api/v1/types/{node_type}/fields/{id}'
+  path: '/api/v1/types/{type}/fields/{id}'
   defaults:
     _controller: 'docstore.doctype_controller:getDocumentField'
     _title: 'Get document field'
@@ -176,7 +176,7 @@ docstore_document_get_field:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 docstore_document_update_field:
-  path: '/api/v1/types/{node_type}/fields/{id}'
+  path: '/api/v1/types/{type}/fields/{id}'
   defaults:
     _controller: 'docstore.doctype_controller:updateDocumentField'
     _title: 'Update document field'
@@ -188,7 +188,7 @@ docstore_document_update_field:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 docstore_document_delete_field:
-  path: '/api/v1/types/{node_type}/fields/{id}'
+  path: '/api/v1/types/{type}/fields/{id}'
   defaults:
     _controller: 'docstore.doctype_controller:deleteDocumentField'
     _title: 'Delete document field'

@@ -4,8 +4,6 @@ namespace Drupal\docstore\Controller;
 
 use Drupal\Component\Uuid\Uuid;
 use Drupal\Core\Cache\Cache;
-use Drupal\Core\Cache\CacheableJsonResponse;
-use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
@@ -14,11 +12,11 @@ use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\State\State;
-use Drupal\docstore\ProviderTrait;
 use Drupal\docstore\ManageFields;
 use Drupal\docstore\MetadataTrait;
+use Drupal\docstore\ProviderTrait;
+use Drupal\docstore\ResourceTrait;
 use Drupal\entity_usage\EntityUsage;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -30,6 +28,7 @@ class VocabularyController extends ControllerBase {
 
   use MetadataTrait;
   use ProviderTrait;
+  use ResourceTrait;
 
   /**
    * The config.
@@ -129,14 +128,11 @@ class VocabularyController extends ControllerBase {
     }
 
     // Add cache tags.
-    $cache_tags['#cache'] = [
+    $cache = [
       'tags' => $cache_tags,
     ];
 
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
-
-    return $response;
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
@@ -144,10 +140,7 @@ class VocabularyController extends ControllerBase {
    */
   public function createVocabulary(Request $request) {
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     // Get provider.
     $provider = $this->requireProvider();
@@ -172,10 +165,7 @@ class VocabularyController extends ControllerBase {
       'uuid' => $vocabulary->uuid(),
     ];
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(201);
-
-    return $response;
+    return $this->createJsonResponse($data, 201);
   }
 
   /**
@@ -192,14 +182,11 @@ class VocabularyController extends ControllerBase {
     ];
 
     // Add cache tags.
-    $cache_tags['#cache'] = [
-      'tags' => $vocabulary->getCacheTags() + ['vocabularies'],
+    $cache = [
+      'tags' => array_merge($vocabulary->getCacheTags(), ['vocabularies']),
     ];
 
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
-
-    return $response;
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
@@ -207,10 +194,7 @@ class VocabularyController extends ControllerBase {
    */
   public function updateVocabulary($id, Request $request) {
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     // Load vocabulary.
     $vocabulary = $this->loadVocabulary($id);
@@ -237,9 +221,7 @@ class VocabularyController extends ControllerBase {
     // Invalidate cache.
     Cache::invalidateTags(['vocabularies']);
 
-    $response = new JsonResponse($data);
-
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -274,8 +256,7 @@ class VocabularyController extends ControllerBase {
     // Invalidate cache.
     Cache::invalidateTags(['vocabularies']);
 
-    $response = new JsonResponse($data);
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -284,24 +265,23 @@ class VocabularyController extends ControllerBase {
   public function getVocabularyTerms($id, Request $request) {
     $vocabulary = $this->loadVocabulary($id);
 
+    // @todo add some validation of the parameters.
     $offset = $request->get('offset') ?? 0;
     $limit = $request->get('limit') ?? 100;
     $data = $this->loadTerms([$vocabulary->id()], NULL, $offset, $limit);
 
-    // Add cache tags.
-    $cache_tags['#cache'] = [
+    // Add cache tags and contexts.
+    $cache = [
+      'contexts' => [
+        'user',
+        'url.query_args:filter',
+        'url.query_args:sort',
+        'url.query_args:page',
+      ],
       'tags' => array_merge(['terms'], $vocabulary->getCacheTags()),
     ];
 
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
-      'user',
-      'url.query_args:filter',
-      'url.query_args:sort',
-      'url.query_args:page',
-    ]));
-
-    return $response;
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
@@ -316,8 +296,14 @@ class VocabularyController extends ControllerBase {
       $data[$field_name] = $field_info->getType();
     }
 
-    $response = new JsonResponse($data);
-    return $response;
+    // Add cache tags.
+    $cache = [
+      'tags' => [
+        'vocabulary_fields',
+      ],
+    ];
+
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
@@ -340,16 +326,13 @@ class VocabularyController extends ControllerBase {
     }
 
     // Add cache tags.
-    $cache_tags['#cache'] = [
+    $cache = [
       'tags' => [
         'vocabulary_fields',
       ],
     ];
 
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
-
-    return $response;
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
@@ -357,10 +340,7 @@ class VocabularyController extends ControllerBase {
    */
   public function createVocabularyField($id, Request $request) {
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     // Load provider.
     $provider = $this->requireProvider();
@@ -387,10 +367,7 @@ class VocabularyController extends ControllerBase {
     // Invalidate cache.
     Cache::invalidateTags(['vocabulary_fields']);
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(201);
-
-    return $response;
+    return $this->createJsonResponse($data, 201);
   }
 
   /**
@@ -398,10 +375,7 @@ class VocabularyController extends ControllerBase {
    */
   public function updateVocabularyField($id, $field_id, Request $request) {
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     // Load provider.
     $provider = $this->requireProvider();
@@ -427,10 +401,7 @@ class VocabularyController extends ControllerBase {
     // Invalidate cache.
     Cache::invalidateTags(['vocabulary_fields']);
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(200);
-
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -461,10 +432,7 @@ class VocabularyController extends ControllerBase {
     // Invalidate cache.
     Cache::invalidateTags(['vocabulary_fields']);
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(200);
-
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -490,30 +458,17 @@ class VocabularyController extends ControllerBase {
    */
   public function createTermOnVocabulary($id, Request $request) {
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     $vocabulary = $this->loadVocabulary($id);
 
-    // Get provider.
-    $provider = $this->requireProvider();
-
     // Check if provider can create terms.
-    if ($vocabulary->getThirdPartySetting('docstore', 'provider_uuid') !== $provider->uuid()) {
-      if (!$vocabulary->getThirdPartySetting('docstore', 'content_allowed', FALSE)) {
-        throw new \Exception(strtr('You are not allowed to create new terms in @vocabulary', ['@vocabulary' => $vocabulary->label()]));
-      }
-    }
+    $this->providerCanCreateUpdateDelete($vocabulary);
 
     $params['vocabulary'] = $vocabulary->uuid();
     $data = $this->createTermFromUserParameters($params);
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(201);
-
-    return $response;
+    return $this->createJsonResponse($data, 201);
   }
 
   /**
@@ -521,22 +476,12 @@ class VocabularyController extends ControllerBase {
    */
   public function createTermOnVocabularyInBulk($id, Request $request) {
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     $vocabulary = $this->loadVocabulary($id);
 
-    // Get provider.
-    $provider = $this->requireProvider();
-
     // Check if provider can create terms.
-    if ($vocabulary->getThirdPartySetting('docstore', 'provider_uuid') !== $provider->uuid()) {
-      if (!$vocabulary->getThirdPartySetting('docstore', 'content_allowed', FALSE)) {
-        throw new \Exception(strtr('You are not allowed to create new terms in @vocabulary', ['@vocabulary' => $vocabulary->label()]));
-      }
-    }
+    $this->providerCanCreateUpdateDelete($vocabulary);
 
     if (empty($params['terms'])) {
       throw new BadRequestHttpException('terms is required');
@@ -553,10 +498,7 @@ class VocabularyController extends ControllerBase {
       $data[] = $this->createTermFromUserParameters($term);
     }
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(201);
-
-    return $response;
+    return $this->createJsonResponse($data, 201);
   }
 
   /**
@@ -564,20 +506,14 @@ class VocabularyController extends ControllerBase {
    */
   public function createTerm($id, Request $request) {
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     $vocabulary = $this->loadVocabulary($id);
 
     $params['vocabulary'] = $vocabulary->uuid();
     $data = $this->createTermFromUserParameters($params);
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(201);
-
-    return $response;
+    return $this->createJsonResponse($data, 201);
   }
 
   /**
@@ -642,22 +578,20 @@ class VocabularyController extends ControllerBase {
     $terms = $this->loadTerms([$id], $term->id(), 0, 1);
     $data = reset($terms);
 
-    // Add cache tags.
-    $cache_tags['#cache'] = [
+    // Add cache tags and contexts.
+    $cache = [
+      'contexts' => [
+        'user',
+        'url.query_args:filter',
+        'url.query_args:sort',
+        'url.query_args:page',
+      ],
       'tags' => [
         'terms',
       ],
     ];
 
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
-      'user',
-      'url.query_args:filter',
-      'url.query_args:sort',
-      'url.query_args:page',
-    ]));
-
-    return $response;
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
@@ -684,20 +618,18 @@ class VocabularyController extends ControllerBase {
 
     $data['revisions'] = $revisions;
 
-    // Add cache tags.
-    $cache_tags['#cache'] = [
+    // Add cache tags and contexts.
+    $cache = [
+      'contexts' => [
+        'user',
+        'url.query_args:filter',
+        'url.query_args:sort',
+        'url.query_args:page',
+      ],
       'tags' => $term->getCacheTags(),
     ];
 
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
-      'user',
-      'url.query_args:filter',
-      'url.query_args:sort',
-      'url.query_args:page',
-    ]));
-
-    return $response;
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
@@ -709,11 +641,11 @@ class VocabularyController extends ControllerBase {
     /** @var \Drupal\term\Entity\Term $term */
     $term = $this->entityTypeManager->getStorage('taxonomy_term')->loadRevision($revision_id);
     if ($term->uuid() !== $term_id) {
-      throw new BadRequestHttpException('Revision not found');
+      throw new NotFoundHttpException('Revision not found');
     }
 
     if ($term->getVocabularyId() !== $vocabulary->id()) {
-      throw new BadRequestHttpException('Revision not found');
+      throw new BadRequestHttpException('Wrong vocabulary');
     }
 
     $data = [];
@@ -745,17 +677,15 @@ class VocabularyController extends ControllerBase {
       }
     }
 
-    // Add cache tags.
-    $cache_tags['#cache'] = [
+    // Add cache tags and contexts.
+    $cache = [
+      'contexts' => [
+        'user',
+      ],
       'tags' => $term->getCacheTags(),
     ];
 
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
-      'user',
-    ]));
-
-    return $response;
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
@@ -783,26 +713,21 @@ class VocabularyController extends ControllerBase {
     ];
 
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     // Load term.
     $term = $this->loadTerm($term_id);
 
     $vocabulary = $this->loadVocabulary($id);
     if ($term->getVocabularyId() !== $vocabulary->id()) {
-      throw new BadRequestHttpException('Revision not found');
+      throw new NotFoundHttpException('Revision not found');
     }
 
-    // Get provider.
+    // Get the provider.
     $provider = $this->requireProvider();
 
-    // Provider can only update own terms.
-    if ($term->provider_uuid->entity->uuid() !== $provider->uuid()) {
-      throw new BadRequestHttpException('Term is not owned by you');
-    }
+    // A term can only be updated by its owner.
+    $this->providerIsOwner($term, 'provider_uuid');
 
     // Check required fields.
     if ($request->getMethod() === 'PUT') {
@@ -931,8 +856,7 @@ class VocabularyController extends ControllerBase {
       'uuid' => $term->uuid(),
     ];
 
-    $response = new JsonResponse($data);
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -940,10 +864,7 @@ class VocabularyController extends ControllerBase {
    */
   public function publishTermRevision($id, $term_id, $revision_id, Request $request) {
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     /** @var \Drupal\term\Entity\Term $term */
     $term = $this->entityTypeManager->getStorage('taxonomy_term')->loadRevision($revision_id);
@@ -959,10 +880,8 @@ class VocabularyController extends ControllerBase {
     // Get provider.
     $provider = $this->requireProvider();
 
-    // Provider can only update own terms.
-    if ($term->provider_uuid->entity->uuid() !== $provider->uuid()) {
-      throw new BadRequestHttpException('Term is not owned by you');
-    }
+    // A term can only be updated by its owner.
+    $this->providerIsOwner($term, 'provider_uuid');
 
     if (!$term->isDefaultRevision()) {
       $term->setRevisionCreationTime(time());
@@ -978,12 +897,12 @@ class VocabularyController extends ControllerBase {
     }
 
     $data = [
+      // @todo change message.
       'message' => 'Term updated',
       'uuid' => $term->uuid(),
     ];
 
-    $response = new JsonResponse($data);
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -1001,10 +920,8 @@ class VocabularyController extends ControllerBase {
       throw new BadRequestHttpException('Wrong vocabulary');
     }
 
-    // Provider can only update own terms.
-    if ($term->provider_uuid->entity->uuid() !== $provider->uuid()) {
-      throw new BadRequestHttpException('Term is not owned by you');
-    }
+    // A term can only be updated by its owner.
+    $this->providerIsOwner($term, 'provider_uuid');
 
     // Check if vocabulary is accessible.
     if (!$this->providerCanUseVocabulary($term->getVocabularyId(), $provider)) {
@@ -1023,9 +940,7 @@ class VocabularyController extends ControllerBase {
 
     $term->delete();
 
-    $response = new JsonResponse($data);
-
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -1230,34 +1145,36 @@ class VocabularyController extends ControllerBase {
   protected function getAccessibleVocabularies($provider) {
     static $cache = [];
 
-    if (isset($cache[$provider->id])) {
-      return $cache[$provider->id];
+    if (isset($cache[$provider->id()])) {
+      return $cache[$provider->id()];
     }
 
-    $cache[$provider->id] = [];
+    $cache[$provider->id()] = [];
 
     $vocabularies = $this->loadVocabularies();
     foreach ($vocabularies as $vocabulary) {
       if (!$provider->isAnonymous() && $vocabulary->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
-        $cache[$provider->id][] = $vocabulary->id();
+        $cache[$provider->id()][] = $vocabulary->id();
       }
 
       if ($vocabulary->getThirdPartySetting('docstore', 'shared')) {
-        $cache[$provider->id][] = $vocabulary->id();
+        $cache[$provider->id()][] = $vocabulary->id();
       }
     }
 
-    return $cache[$provider->id];
+    return $cache[$provider->id()];
   }
 
   /**
    * Check if provider can use vocabulary.
+   *
+   * @todo review moving that to the provider trait.
    */
   protected function providerCanUseVocabulary($vocabulary_id, $provider) {
     static $cache = [];
 
-    if (isset($cache[$vocabulary_id][$provider->id])) {
-      return $cache[$vocabulary_id][$provider->id];
+    if (isset($cache[$vocabulary_id][$provider->id()])) {
+      return $cache[$vocabulary_id][$provider->id()];
     }
 
     // Load vocabulary.
@@ -1265,17 +1182,17 @@ class VocabularyController extends ControllerBase {
 
     // Owner has access.
     if (!$provider->isAnonymous() && $vocabulary->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
-      $cache[$vocabulary_id][$provider->id] = TRUE;
-      return $cache[$vocabulary_id][$provider->id];
+      $cache[$vocabulary_id][$provider->id()] = TRUE;
+      return $cache[$vocabulary_id][$provider->id()];
     }
 
     if ($vocabulary->getThirdPartySetting('docstore', 'shared')) {
-      $cache[$vocabulary_id][$provider->id] = TRUE;
-      return $cache[$vocabulary_id][$provider->id];
+      $cache[$vocabulary_id][$provider->id()] = TRUE;
+      return $cache[$vocabulary_id][$provider->id()];
     }
 
-    $cache[$vocabulary_id][$provider->id] = FALSE;
-    return $cache[$vocabulary_id][$provider->id];
+    $cache[$vocabulary_id][$provider->id()] = FALSE;
+    return $cache[$vocabulary_id][$provider->id()];
   }
 
 }
