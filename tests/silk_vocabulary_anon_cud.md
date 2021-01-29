@@ -134,7 +134,7 @@ Delete vocabulary.
 * Status: `403`
 * Content-Type: "application/json"
 
-## DELETE /terms/12345
+## DELETE /vocabularies/{uuid}/terms/12345
 
 Delete term.
 
@@ -146,7 +146,7 @@ Delete term.
 * Status: `403`
 * Content-Type: "application/json"
 
-## PUT /terms/12345
+## PUT /vocabularies/{uuid}/terms/12345
 
 Rename term.
 

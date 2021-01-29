@@ -120,7 +120,7 @@ Example output.
 * Data.message: "Vocabulary created"
 * Data.machine_name: /^[0-9a-z_]+$/ // Machine_name {voc_life_cycle_steps}
 
-## POST /fields/knowledge-managements
+## POST /types/knowledge-managements/fields
 
 Add context field.
 
@@ -153,7 +153,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_context}
 
-## POST /fields/knowledge-managements
+## POST /types/knowledge-managements/fields
 
 Add countries field.
 
@@ -186,7 +186,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_countries}
 
-## POST /fields/knowledge-managements
+## POST /types/knowledge-managements/fields
 
 Add Document type field.
 
@@ -219,7 +219,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_document_type}
 
-## POST /fields/knowledge-managements
+## POST /types/knowledge-managements/fields
 
 Add Global cluster field.
 
@@ -252,7 +252,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_global_cluster}
 
-## POST /fields/knowledge-managements
+## POST /types/knowledge-managements/fields
 
 Add HPC Document Repository field.
 
@@ -285,7 +285,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_hpc_document_repository}
 
-## POST /fields/knowledge-managements
+## POST /types/knowledge-managements/fields
 
 Add Life cycle steps field.
 
@@ -318,7 +318,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_life_cycle_steps}
 
-## POST /fields/knowledge-managements
+## POST /types/knowledge-managements/fields
 
 Add Population Types field.
 
@@ -351,7 +351,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_population_types}
 
-## POST /fields/knowledge-managements
+## POST /types/knowledge-managements/fields
 
 Add description field.
 
@@ -382,7 +382,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_description}
 
-## POST /fields/knowledge-managements
+## POST /types/knowledge-managements/fields
 
 Add Original publication date field.
 

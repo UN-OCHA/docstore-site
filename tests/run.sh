@@ -1,7 +1,7 @@
 # Env vars
 DRUSH=${DRUSH:-"fin drush"}
 HOST=${HOST:-"http://docstore.local.docksal"}
-API=${API:-"$HOST/api"}
+API=${API:-"$HOST/api/v1"}
 
 # Clear docstore, test vocabulary CRUD
 $DRUSH eval "_docstore_setup_testing()"
@@ -12,9 +12,11 @@ $DRUSH eval "docstore_create_node_type('document', 'documents')"
 
 ./silk -test.v -silk.url $API silk_webhooks.md || exit 1;
 ./silk -test.v -silk.url $API silk_vocabulary_crud.md || exit 1;
+./silk -test.v -silk.url $API silk_vocabulary_bulk.md || exit 1;
 ./silk -test.v -silk.url $API silk_vocabulary_anon_cud.md || exit 1;
 ./silk -test.v -silk.url $API silk_vocabulary_anon_r.md || exit 1;
 ./silk -test.v -silk.url $API silk_document_types_crud.md || exit 1;
+./silk -test.v -silk.url $API silk_document_bulk.md || exit 1;
 ./silk -test.v -silk.url $API silk_geofield.md || exit 1;
 ./silk -test.v -silk.url $API silk_linkfield.md || exit 1;
 ./silk -test.v -silk.url $API silk_child_terms.md || exit 1;
@@ -55,25 +57,8 @@ export HASH=$(php -r "print md5('$ME_SHARED$FILEPRIVATETXT$ME_UUID');")
 ./silk -test.v -silk.url $API silk_files.md || exit 1;
 ./silk -test.v -silk.url $API silk_create.md || exit 1;
 ./silk -test.v -silk.url $API silk_exceptions.md || exit 1;
-exit
-$DRUSH eval "_docstore_setup_testing()"
-$DRUSH cr
 
-## Add shared vocabularies.
+## Add countries vocabulary.
 $DRUSH --verbose scr ../html/modules/custom/docstore/syncs/docstore_countries.php
-$DRUSH --verbose scr ../html/modules/custom/docstore/syncs/docstore_disaster_types.php
-$DRUSH --verbose scr ../html/modules/custom/docstore/syncs/docstore_functional_roles.php
-$DRUSH --verbose scr ../html/modules/custom/docstore/syncs/docstore_global_coordination_groups.php
-$DRUSH --verbose scr ../html/modules/custom/docstore/syncs/docstore_local_coordination_groups.php
-$DRUSH --verbose scr ../html/modules/custom/docstore/syncs/docstore_organization_types.php
-$DRUSH --verbose scr ../html/modules/custom/docstore/syncs/docstore_population_types.php
-$DRUSH --verbose scr ../html/modules/custom/docstore/syncs/docstore_themes.php
-$DRUSH --verbose scr ../html/modules/custom/docstore/syncs/docstore_vulnerable_groups.php
 
 ./silk -test.v -silk.url $API silk_document_crud.md || exit 1;
-
-$DRUSH eval "docstore_create_node_type('assessment', 'assessments')"
-./silk -test.v -silk.url $API silk_assessment_crud.md || exit 1;
-
-$DRUSH --verbose eval "docstore_create_node_type('knowledge_management', 'knowledge-managements')"
-./silk -test.v -silk.url $API silk_knowledge_management.md || exit 1;

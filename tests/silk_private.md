@@ -387,7 +387,7 @@ Get terms as other provider.
 * Content-Type: "application/json"
 * Data.message: "You do not have access to this vocabulary"
 
-## DELETE /terms/{term_1}
+## DELETE /vocabularies/{machine_name}/terms/{term_1}
 
 Delete term.
 
@@ -409,7 +409,7 @@ Example output.
 * Content-Type: "application/json"
 * Data.message: "Term deleted"
 
-## DELETE /terms/{term_2}
+## DELETE /vocabularies/{machine_name}/terms/{term_2}
 
 Delete term.
 
@@ -431,7 +431,7 @@ Example output.
 * Content-Type: "application/json"
 * Data.message: "Term is not owned by you"
 
-## DELETE /terms/{term_2}
+## DELETE /vocabularies/{machine_name}/terms/{term_2}
 
 Delete term.
 
@@ -473,7 +473,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## DELETE /terms/{term_2}
+## DELETE /vocabularies/{machine_name}/terms/{term_2}
 
 Delete term.
 
