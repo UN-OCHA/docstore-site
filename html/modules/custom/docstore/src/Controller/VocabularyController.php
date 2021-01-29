@@ -1056,7 +1056,7 @@ class VocabularyController extends ControllerBase {
     // Load terms.
     $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadMultiple($tids);
 
-    /** @var \Drupal\Core\Entity\Term $term */
+    /** @var \Drupal\taxonomy\Entity\Term $term */
     foreach ($terms as $term) {
       // Make sure user has access to the vocabulary.
       if (!$this->providerCanUseVocabulary($term->getVocabularyId(), $provider)) {
@@ -1072,6 +1072,14 @@ class VocabularyController extends ControllerBase {
         'vocabulary_uuid' => $vocabulary->uuid(),
         'changed' => date(DATE_ATOM, $term->getChangedTime()),
       ];
+
+      if ($term->parent && count($term->parent->referencedEntities())) {
+        $parents = $term->parent->referencedEntities();
+        $row['parent'] = [
+          'uuid' => $parents[0]->uuid(),
+          'label' => $parents[0]->label(),
+        ];
+      }
 
       // Add all fields.
       $term_fields = $term->getFields();
