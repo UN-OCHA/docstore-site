@@ -125,7 +125,7 @@ function createKMFields() {
       $data['target'] = $field['target'];
     }
 
-    post(API_URL . 'api/v1/fields/knowledge-managements', $data);
+    post(API_URL . 'api/v1/types/knowledge_management/fields', $data);
   }
 }
 
@@ -212,7 +212,7 @@ function syncKM() {
     'documents' => $documents,
   ];
 
-  post(API_URL . 'api/v1/knowledge-managements/bulk', $data);
+  post(API_URL . 'api/v1/documents/knowledge-managements/bulk', $data);
 }
 
 createNodeType();
