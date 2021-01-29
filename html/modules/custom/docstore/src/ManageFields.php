@@ -1112,6 +1112,12 @@ class ManageFields {
       $field_name = $this->generateUniqueMachineName($label, 'taxonomy_term', $provider_prefix);
     }
 
+    // Check if field already exists.
+    $field_config = FieldConfig::loadByName('taxonomy_term', $bundle, $field_name);
+    if ($field_config) {
+      return $field_name;
+    }
+
     // Create storage.
     $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
     if (!$field_storage) {

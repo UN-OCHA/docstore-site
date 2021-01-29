@@ -569,10 +569,6 @@ class VocabularyController extends ControllerBase {
    * Get term.
    */
   public function getTerm($id, $term_id) {
-    $vocabulary = $this->loadVocabulary($id);
-
-    $params['vocabulary'] = $vocabulary->uuid();
-
     // Load term.
     $term = $this->loadTerm($term_id);
     $terms = $this->loadTerms([$id], $term->id(), 0, 1);
