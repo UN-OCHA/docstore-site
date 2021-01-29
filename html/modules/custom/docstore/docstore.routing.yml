@@ -760,6 +760,8 @@ docstore_download_private_media:
   methods: [GET]
   requirements:
     _access: 'TRUE'
+  options:
+    docstore_crud: 'R'
 
 # Download private file
 docstore_download_private_file:
@@ -770,3 +772,5 @@ docstore_download_private_file:
   methods: [GET]
   requirements:
     _access: 'TRUE'
+  options:
+    docstore_crud: 'R'
