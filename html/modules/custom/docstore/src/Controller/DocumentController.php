@@ -6,8 +6,6 @@ use Drupal\Component\Transliteration\TransliterationInterface;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Component\Uuid\Uuid;
 use Drupal\Core\Cache\Cache;
-use Drupal\Core\Cache\CacheableJsonResponse;
-use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
@@ -22,14 +20,13 @@ use Drupal\Core\StreamWrapper\StreamWrapperManager;
 use Drupal\docstore\DocumentTypeTrait;
 use Drupal\docstore\MetadataTrait;
 use Drupal\docstore\ProviderTrait;
+use Drupal\docstore\ResourceTrait;
 use Drupal\entity_usage\EntityUsage;
 use Drupal\file\Entity\File;
 use Drupal\file\FileUsage\FileUsageInterface;
 use Drupal\media\Entity\Media;
 use Drupal\node\Entity\Node;
 use Drupal\user\Entity\User;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -42,6 +39,7 @@ class DocumentController extends ControllerBase {
   use DocumentTypeTrait;
   use MetadataTrait;
   use ProviderTrait;
+  use ResourceTrait;
 
   /**
    * The config.
@@ -162,44 +160,31 @@ class DocumentController extends ControllerBase {
    */
   public function createDocument($type, Request $request) {
     // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'write');
+    $type = $this->typeAllowed($type, 'write');
 
     // Get provider.
     $provider = $this->requireProvider();
 
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     // Create document.
-    $document = $this->createDocumentForProvider($node_type, $params, $provider);
+    $document = $this->createDocumentForProvider($type, $params, $provider);
 
     $data = [
-      'message' => strtr('@type created', ['@type' => $this->getNodeTypeLabel($node_type)]),
+      'message' => strtr('@type created', ['@type' => $this->getNodeTypeLabel($type)]),
       'uuid' => $document->uuid(),
     ];
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(201);
-
-    return $response;
+    return $this->createJsonResponse($data, 201);
   }
 
   /**
    * Create document for provider.
    */
   protected function createDocumentForProvider($type, $params, $provider) {
-    /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->entityTypeManager->getStorage('node_type')->load($type);
-
-    // Check if provider can create terms.
-    if ($node_type->getThirdPartySetting('docstore', 'provider_uuid') !== $provider->uuid) {
-      if (!$node_type->getThirdPartySetting('docstore', 'content_allowed', FALSE)) {
-        throw new \Exception(strtr('You are not allowed to create new documents in @node_type', ['@node_type' => $node_type->label()]));
-      }
-    }
+    // Check if provider can create documents.
+    $this->providerCanCreateUpdateDelete($this->getNodeType($type));
 
     // Check required fields.
     if (empty($params['title'])) {
@@ -332,16 +317,13 @@ class DocumentController extends ControllerBase {
    */
   public function createDocumentInBulk($type, Request $request) {
     // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'write');
+    $type = $this->typeAllowed($type, 'write');
 
     // Get provider.
     $provider = $this->requireProvider();
 
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     if (empty($params['documents'])) {
       throw new BadRequestHttpException('documents is required');
@@ -353,18 +335,15 @@ class DocumentController extends ControllerBase {
       $document['author'] = $params['author'];
 
       // Create document.
-      $doc = $this->createDocumentForProvider($node_type, $document, $provider);
+      $doc = $this->createDocumentForProvider($type, $document, $provider);
 
       $data[] = [
-        'message' => strtr('@type created', ['@type' => $this->getNodeTypeLabel($node_type)]),
+        'message' => strtr('@type created', ['@type' => $this->getNodeTypeLabel($type)]),
         'uuid' => $doc->uuid(),
       ];
     }
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(201);
-
-    return $response;
+    return $this->createJsonResponse($data, 201);
   }
 
   /**
@@ -403,18 +382,10 @@ class DocumentController extends ControllerBase {
     }
 
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
-    // Get provider.
-    $provider = $this->requireProvider();
-
-    // Provider can only update own document.
-    if ($document->getOwnerId() !== $provider->id()) {
-      throw new BadRequestHttpException('Document is not owned by you');
-    }
+    // A document can only be updated by its owner.
+    $this->providerIsOwner($document);
 
     // Check required fields.
     if ($request->getMethod() === 'PUT') {
@@ -525,8 +496,10 @@ class DocumentController extends ControllerBase {
     $document->setRevisionCreationTime(time());
 
     /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->entityTypeManager->getStorage('node_type')->load($type);
+    $node_type = $this->getNodeType($type);
 
+    // Load provider.
+    $provider = $this->getProvider();
     if ($node_type->isNewRevision() || $params['new_revision'] ?? FALSE) {
       $document->revision_log = 'Updated';
       if (isset($params['revision_log'])) {
@@ -564,14 +537,11 @@ class DocumentController extends ControllerBase {
     Cache::invalidateTags(['documents']);
 
     // Add cache tags.
-    $cache_tags['#cache'] = [
+    $cache = [
       'tags' => $document->getCacheTags(),
     ];
 
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
-
-    return $response;
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
@@ -579,21 +549,16 @@ class DocumentController extends ControllerBase {
    */
   public function deleteDocument($type, $id, Request $request) {
     // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'write');
+    $type = $this->typeAllowed($type, 'write');
 
     // Load document.
     $document = $this->loadDocument($id);
 
-    // Get provider.
-    $provider = $this->requireProvider();
-
-    // Provider can only update own document.
-    if ($document->getOwnerId() !== $provider->id()) {
-      throw new BadRequestHttpException('Document is not owned by you');
-    }
+    // A document can only be deleted by its owner.
+    $this->providerIsOwner($document);
 
     $data = [
-      'message' => strtr('@type deleted', ['@type' => $this->getNodeTypeLabel($node_type)]),
+      'message' => strtr('@type deleted', ['@type' => $this->getNodeTypeLabel($type)]),
       'uuid' => $document->uuid(),
     ];
 
@@ -602,9 +567,7 @@ class DocumentController extends ControllerBase {
     // Invalidate cache.
     Cache::invalidateTags(['documents']);
 
-    $response = new JsonResponse($data);
-
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -612,13 +575,10 @@ class DocumentController extends ControllerBase {
    */
   public function publishDocumentRevision($type, $id, $vid, Request $request) {
     // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'write');
+    $type = $this->typeAllowed($type, 'write');
 
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     // Get provider.
     $provider = $this->requireProvider();
@@ -640,17 +600,15 @@ class DocumentController extends ControllerBase {
     /** @var \Drupal\node\Entity\Node $document */
     $document = $this->entityTypeManager->getStorage('node')->loadRevision($vid);
 
-    // Provider can only update own document.
-    if ($document->getOwnerId() !== $provider->id()) {
-      throw new BadRequestHttpException('Document is not owned by you');
-    }
+    // A document can only be updated by its owner.
+    $this->providerIsOwner($document);
 
     if ($document->uuid() !== $id) {
-      throw new BadRequestHttpException('Revision not found');
+      throw new NotFoundHttpException('Revision not found');
     }
 
-    if ($document->bundle() !== $node_type) {
-      throw new BadRequestHttpException('Wrong node type');
+    if ($document->bundle() !== $type) {
+      throw new BadRequestHttpException('Wrong document type');
     }
 
     if (!$document->isDefaultRevision()) {
@@ -667,19 +625,16 @@ class DocumentController extends ControllerBase {
     }
 
     $data = [
-      'message' => strtr('@type updated', ['@type' => $this->getNodeTypeLabel($node_type)]),
+      'message' => strtr('@type updated', ['@type' => $this->getNodeTypeLabel($type)]),
       'uuid' => $document->uuid(),
     ];
 
     // Add cache tags.
-    $cache_tags['#cache'] = [
+    $cache = [
       'tags' => $document->getCacheTags(),
     ];
 
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
-
-    return $response;
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
@@ -706,9 +661,7 @@ class DocumentController extends ControllerBase {
       ];
     }
 
-    $response = new JsonResponse($data);
-
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -724,13 +677,9 @@ class DocumentController extends ControllerBase {
     /** @var \Drupal\media\Entity\File $file */
     $file = $this->entityTypeManager->getStorage('file')->load($media->getSource()->getSourceFieldValue($media));
 
-    // Get provider.
-    $provider = $this->getProvider();
-
-    // Provider can only get own private files.
-    $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
-    if ($private && $file->getOwnerId() !== $provider->id()) {
-      throw new BadRequestHttpException('Media is not owned by you');
+    // If the file is private check if the provider is its owner.
+    if (StreamWrapperManager::getScheme($file->getFileUri()) === 'private') {
+      $this->providerIsOwner($file);
     }
 
     $data = [
@@ -753,9 +702,7 @@ class DocumentController extends ControllerBase {
 
     $data['revisions'] = array_keys($revisions);
 
-    $response = new JsonResponse($data);
-
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -781,13 +728,9 @@ class DocumentController extends ControllerBase {
     /** @var \Drupal\media\Entity\File $file */
     $file = $this->entityTypeManager->getStorage('file')->load($revision->getSource()->getSourceFieldValue($revision));
 
-    // Get provider.
-    $provider = $this->getProvider();
-
-    // Provider can only get own private files.
-    $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
-    if ($private && $file->getOwnerId() !== $provider->id()) {
-      throw new BadRequestHttpException('File is not owned by you');
+    // If the file is private check if the provider is its owner.
+    if (StreamWrapperManager::getScheme($file->getFileUri()) === 'private') {
+      $this->providerIsOwner($file);
     }
 
     $data = [
@@ -800,9 +743,7 @@ class DocumentController extends ControllerBase {
       'uri' => $request->getSchemeAndHttpHost() . $file->createFileUrl(),
     ];
 
-    $response = new JsonResponse($data);
-
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -818,13 +759,9 @@ class DocumentController extends ControllerBase {
     /** @var \Drupal\media\Entity\File $file */
     $file = $this->entityTypeManager->getStorage('file')->load($media->getSource()->getSourceFieldValue($media));
 
-    // Get provider.
-    $provider = $this->getProvider();
-
-    // Provider can only get own private files.
-    $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
-    if ($private && $file->getOwnerId() !== $provider->id()) {
-      throw new BadRequestHttpException('Media is not owned by you');
+    // If the file is private check if the provider is its owner.
+    if (StreamWrapperManager::getScheme($file->getFileUri()) === 'private') {
+      $this->providerIsOwner($file);
     }
 
     $headers = [
@@ -833,7 +770,7 @@ class DocumentController extends ControllerBase {
       'Cache-Control' => 'private',
     ];
 
-    return new BinaryFileResponse($file->getFileUri(), 200, $headers);
+    return $this->createBinaryFileResponse($file->getFileUri(), 200, $headers);
   }
 
   /**
@@ -843,13 +780,13 @@ class DocumentController extends ControllerBase {
     /** @var \Drupal\media\Entity\Media $media */
     $media = $this->entityRepository->loadEntityByUuid('media', $id);
     if (!$media) {
-      throw new BadRequestHttpException('Media does not exist');
+      throw new NotFoundHttpException('Media does not exist');
     }
 
     /** @var \Drupal\media\Entity\Media $revision */
     $revision = $this->entityTypeManager->getStorage('media')->loadRevision($vid);
     if (!$revision) {
-      throw new BadRequestHttpException('Revision does not exist');
+      throw new NotFoundHttpException('Revision does not exist');
     }
 
     if ($revision->id() !== $media->id()) {
@@ -859,13 +796,9 @@ class DocumentController extends ControllerBase {
     /** @var \Drupal\media\Entity\File $file */
     $file = $this->entityTypeManager->getStorage('file')->load($revision->getSource()->getSourceFieldValue($revision));
 
-    // Get provider.
-    $provider = $this->requireProvider();
-
-    // Provider can only get own private files.
-    $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
-    if ($private && $file->getOwnerId() !== $provider->id()) {
-      throw new BadRequestHttpException('File is not owned by you');
+    // If the file is private check if the provider is its owner.
+    if (StreamWrapperManager::getScheme($file->getFileUri()) === 'private') {
+      $this->providerIsOwner($file);
     }
 
     $headers = [
@@ -874,7 +807,7 @@ class DocumentController extends ControllerBase {
       'Cache-Control' => 'private',
     ];
 
-    return new BinaryFileResponse($file->getFileUri(), 200, $headers);
+    return $this->createBinaryFileResponse($file->getFileUri(), 200, $headers);
   }
 
   /**
@@ -886,6 +819,7 @@ class DocumentController extends ControllerBase {
 
     // Load provider.
     $provider = $this->getProvider();
+    $provider_id = (!$provider || $provider->isAnonymous()) ? FALSE : $provider->id();
 
     /** @var \Drupal\file\Entity\File $file */
     foreach ($files as $file) {
@@ -900,7 +834,7 @@ class DocumentController extends ControllerBase {
       // Hide private files, unless it's the owner.
       if (StreamWrapperManager::getScheme($file->getFileUri()) === 'private') {
         $file_record['private'] = TRUE;
-        if ($provider->isAnonymous() || $file->getOwnerId() !== $provider->uuid()) {
+        if ($file->getOwnerId() !== $provider_id) {
           unset($file_record['uri']);
         }
       }
@@ -908,9 +842,7 @@ class DocumentController extends ControllerBase {
       $data[] = $file_record;
     }
 
-    $response = new JsonResponse($data);
-
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -918,10 +850,7 @@ class DocumentController extends ControllerBase {
    */
   public function createFile(Request $request) {
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     // Load provider.
     $provider = $this->requireProvider();
@@ -994,10 +923,7 @@ class DocumentController extends ControllerBase {
       'uuid' => $file->uuid(),
     ];
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(201);
-
-    return $response;
+    return $this->createJsonResponse($data, 201);
   }
 
   /**
@@ -1007,16 +933,12 @@ class DocumentController extends ControllerBase {
     /** @var \Drupal\file\Entity\File $file */
     $file = $this->entityRepository->loadEntityByUuid('file', $id);
     if (!$file) {
-      throw new BadRequestHttpException('File does not exist');
+      throw new NotFoundHttpException('File does not exist');
     }
 
-    // Get provider.
-    $provider = $this->getProvider();
-
-    // Provider can only get own private files.
-    $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
-    if ($private && $file->getOwnerId() !== $provider->id()) {
-      throw new BadRequestHttpException('File is not owned by you');
+    // If the file is private check if the provider is its owner.
+    if (StreamWrapperManager::getScheme($file->getFileUri()) === 'private') {
+      $this->providerIsOwner($file);
     }
 
     $data = [
@@ -1028,9 +950,7 @@ class DocumentController extends ControllerBase {
       'mimetype' => $file->getMimeType(),
     ];
 
-    $response = new JsonResponse($data);
-
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -1038,24 +958,16 @@ class DocumentController extends ControllerBase {
    */
   public function updateFile($id, Request $request) {
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     /** @var \Drupal\file\Entity\File $file */
     $file = $this->entityRepository->loadEntityByUuid('file', $id);
     if (!$file) {
-      throw new BadRequestHttpException('File does not exist');
+      throw new NotFoundHttpException('File does not exist');
     }
 
-    // Get provider.
-    $provider = $this->requireProvider();
-
-    // Provider can only update own files.
-    if ($file->getOwnerId() !== $provider->id()) {
-      throw new BadRequestHttpException('File is not owned by you');
-    }
+    // A file can only be updated by its owner.
+    $this->providerIsOwner($file);
 
     // Filename is required.
     if (isset($params['filename']) && $params['filename'] !== $file->getFilename()) {
@@ -1087,9 +999,7 @@ class DocumentController extends ControllerBase {
       'message' => 'File updated',
     ];
 
-    $response = new JsonResponse($data);
-
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -1102,13 +1012,8 @@ class DocumentController extends ControllerBase {
       throw new BadRequestHttpException('File does not exist');
     }
 
-    // Get provider.
-    $provider = $this->requireProvider();
-
-    // Provider can only delete own files.
-    if ($file->getOwnerId() !== $provider->id()) {
-      throw new BadRequestHttpException('File is not owned by you');
-    }
+    // A file can only be deleted by its owner.
+    $this->providerIsOwner($file);
 
     $usage_list = $this->fileUsage->listUsage($file);
     $usage_list = isset($usage_list['file']) ? $usage_list['file'] : [];
@@ -1122,9 +1027,7 @@ class DocumentController extends ControllerBase {
       'message' => 'File is deleted',
     ];
 
-    $response = new JsonResponse($data);
-
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -1137,13 +1040,9 @@ class DocumentController extends ControllerBase {
       throw new BadRequestHttpException('File does not exist');
     }
 
-    // Get provider.
-    $provider = $this->requireProvider();
-
-    // Provider can only get own private files.
-    $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
-    if ($private && $file->getOwnerId() !== $provider->id()) {
-      throw new BadRequestHttpException('File is not owned by you');
+    // If the file is private check if the provider is its owner.
+    if (StreamWrapperManager::getScheme($file->getFileUri()) === 'private') {
+      $this->providerIsOwner($file);
     }
 
     $data = [];
@@ -1157,9 +1056,7 @@ class DocumentController extends ControllerBase {
       }
     }
 
-    $response = new JsonResponse($data);
-
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -1172,13 +1069,9 @@ class DocumentController extends ControllerBase {
       throw new BadRequestHttpException('File does not exist');
     }
 
-    // Get provider.
-    $provider = $this->requireProvider();
-
-    // Provider can only get own private files.
-    $private = StreamWrapperManager::getScheme($file->getFileUri()) === 'private';
-    if ($private && $file->getOwnerId() !== $provider->id()) {
-      throw new BadRequestHttpException('File is not owned by you');
+    // If the file is private check if the provider is its owner.
+    if (StreamWrapperManager::getScheme($file->getFileUri()) === 'private') {
+      $this->providerIsOwner($file);
     }
 
     $headers = [
@@ -1187,7 +1080,7 @@ class DocumentController extends ControllerBase {
       'Cache-Control' => 'private',
     ];
 
-    return new BinaryFileResponse($file->getFileUri(), 200, $headers);
+    return $this->createBinaryFileResponse($file->getFileUri(), 200, $headers);
   }
 
   /**
@@ -1197,17 +1090,16 @@ class DocumentController extends ControllerBase {
     /** @var \Drupal\file\Entity\File $file */
     $file = $this->entityRepository->loadEntityByUuid('file', $id);
     if (!$file) {
-      throw new BadRequestHttpException('File does not exist');
+      throw new NotFoundHttpException('File does not exist');
     }
 
     // Get provider.
     $provider = $this->requireProvider();
 
-    // Provider can only update own files.
-    if ($file->getOwnerId() !== $provider->id()) {
-      throw new BadRequestHttpException('File is not owned by you');
-    }
+    // A file can only be deleted by its owner.
+    $this->providerIsOwner($file);
 
+    // @todo add some validation.
     $this->saveFileToDisk($file, $request->getContent(), $provider, TRUE);
 
     $data = [
@@ -1215,10 +1107,7 @@ class DocumentController extends ControllerBase {
       'uuid' => $file->uuid(),
     ];
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(201);
-
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -1404,23 +1293,6 @@ class DocumentController extends ControllerBase {
   }
 
   /**
-   * Get allowed endpoints.
-   */
-  protected function typeAllowed($type, $mode = 'read') {
-    // Allow read operations on "any" endpoint.
-    if ($type === 'any' && $mode === 'read') {
-      return 'any';
-    }
-
-    // Allow read operations on "all" endpoint.
-    if ($type === 'all' && $mode === 'read') {
-      return 'any';
-    }
-
-    return $this->EndpointGetNodeType($type);
-  }
-
-  /**
    * Move file to private file system.
    */
   protected function moveFileToPrivate($file) {
@@ -1470,16 +1342,6 @@ class DocumentController extends ControllerBase {
     if (!file_move($file, $new_uri)) {
       throw new BadRequestHttpException('File could not be moved');
     }
-  }
-
-  /**
-   * Get node type label.
-   */
-  protected function getNodeTypeLabel($node_type) {
-    /** @var \Drupal\node\Entity\NodeType $type */
-    $type = $this->entityTypeManager->getStorage('node_type')->load($node_type);
-
-    return $type->label();
   }
 
 }

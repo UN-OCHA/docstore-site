@@ -4,6 +4,7 @@ namespace Drupal\docstore;
 
 use Drupal\field\Entity\FieldConfig;
 use Drupal\docstore\Controller\VocabularyController;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\user\Entity\User;
@@ -335,55 +336,104 @@ trait MetadataTrait {
   }
 
   /**
-   * Check if user has access to the field.
+   * Check if a provider has access to the field.
+   *
+   * @param string $field_name
+   *   Field name.
+   * @param string $bundle
+   *   Entity bundle (vocabulary or node type).
+   * @param string $entity_type
+   *   Entity type (term, taxonomy_term or node).
+   * @param \Drupal\Core\Session\AccountInterface $provider
+   *   Provider.
+   *
+   * @return bool
+   *   Whether the provider can use the field or not.
+   *
+   * @throw \Exception
+   *   Generic execption when the field doesn't exist.
+   *
+   * @todo review the exception and make that more generic, for example if we
+   * want to allow metadata on providers or files.
+   *
+   * @todo review if this shouldn't be moved to the ProviderTrait instead to
+   * go with the other `providerCan` methods.
    */
-  protected function providerCanUseField($field_name, $type, $entity_type, $provider) {
-    // Use real entity type.
-    if ($entity_type === 'term') {
-      $entity_type = 'taxonomy_term';
+  protected function providerCanUseField($field_name, $bundle, $entity_type, AccountInterface $provider) {
+    switch ($entity_type) {
+      case 'term':
+      case 'taxonomy_term':
+        // Use real entity type.
+        $entity_type = 'taxonomy_term';
+
+        $public_fields = [
+          'default_langcode',
+          'description',
+          'langcode',
+          'name',
+          'revision_default',
+          'revision_translation_affected',
+          'status',
+          'uuid',
+        ];
+        break;
+
+      case 'node':
+        $public_fields = [
+          'boost_document',
+          'changed',
+          'created',
+          'langcode',
+          'provider',
+          'published',
+          'rendered_item',
+          'search_api_id',
+          'search_api_relevance',
+          'title',
+          'type',
+          'uuid',
+          'vid',
+        ];
+        break;
     }
 
     static $cache = [];
 
-    if (isset($cache[$entity_type][$type][$field_name][$provider->id()])) {
-      return $cache[$entity_type][$type][$field_name][$provider->id()];
+    if (isset($cache[$entity_type][$bundle][$field_name][$provider->id()])) {
+      return $cache[$entity_type][$bundle][$field_name][$provider->id()];
     }
 
-    $public_fields = [
-      'uuid',
-      'langcode',
-      'status',
-      'name',
-      'description',
-      'default_langcode',
-      'revision_default',
-      'revision_translation_affected',
-    ];
-
+    // Public fields are usable by any provider.
     if (in_array($field_name, $public_fields)) {
-      $cache[$entity_type][$type][$field_name][$provider->id()] = TRUE;
-      return $cache[$entity_type][$type][$field_name][$provider->id()];
+      $cache[$entity_type][$bundle][$field_name][$provider->id()] = TRUE;
+      return TRUE;
     }
 
-    $field_config = FieldConfig::loadByName($entity_type, $type, $field_name);
+    // Check if the field exists and get its configuration.
+    $field_config = FieldConfig::loadByName($entity_type, $bundle, $field_name);
     if (!$field_config) {
+      // @todo review what type of exception to send.
       throw new \Exception(strtr('Field @field does not exist', [
         '@field' => $field_name,
       ]));
     }
 
+    // Check if the given provider is the provider of the field.
     if (!$provider->isAnonymous() && $field_config->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
-      $cache[$entity_type][$type][$field_name][$provider->id()] = TRUE;
-      return $cache[$entity_type][$type][$field_name][$provider->id()];
+      $cache[$entity_type][$bundle][$field_name][$provider->id()] = TRUE;
+      return TRUE;
     }
 
+    // Otherwise check if the field is not private, in which case any provider
+    // can access the field.
     if (!$field_config->getThirdPartySetting('docstore', 'private', FALSE)) {
-      $cache[$entity_type][$type][$field_name][$provider->id()] = TRUE;
-      return $cache[$entity_type][$type][$field_name][$provider->id()];
+      $cache[$entity_type][$bundle][$field_name][$provider->id()] = TRUE;
+      return TRUE;
     }
 
-    $cache[$entity_type][$type][$field_name][$provider->id()] = FALSE;
-    return $cache[$entity_type][$type][$field_name][$provider->id()];
+    // Otherwise deny access to the field.
+    $cache[$entity_type][$bundle][$field_name][$provider->id()] = FALSE;
+    return FALSE;
   }
 
 }

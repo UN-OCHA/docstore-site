@@ -1,5 +1,6 @@
 # Env vars
 DRUSH=${DRUSH:-"fin drush"}
+SILK=${SILK:-"./silk"}
 HOST=${HOST:-"http://docstore.local.docksal"}
 API=${API:-"$HOST/api/v1"}
 
@@ -10,19 +11,19 @@ $DRUSH cr
 # Add document type
 $DRUSH eval "docstore_create_node_type('document', 'documents')"
 
-./silk -test.v -silk.url $API silk_webhooks.md || exit 1;
-./silk -test.v -silk.url $API silk_vocabulary_crud.md || exit 1;
-./silk -test.v -silk.url $API silk_vocabulary_bulk.md || exit 1;
-./silk -test.v -silk.url $API silk_vocabulary_anon_cud.md || exit 1;
-./silk -test.v -silk.url $API silk_vocabulary_anon_r.md || exit 1;
-./silk -test.v -silk.url $API silk_document_types_crud.md || exit 1;
-./silk -test.v -silk.url $API silk_document_bulk.md || exit 1;
-./silk -test.v -silk.url $API silk_geofield.md || exit 1;
-./silk -test.v -silk.url $API silk_linkfield.md || exit 1;
-./silk -test.v -silk.url $API silk_child_terms.md || exit 1;
-./silk -test.v -silk.url $API silk_private.md || exit 1;
-./silk -test.v -silk.url $API silk_document_revisions.md || exit 1;
-./silk -test.v -silk.url $API silk_term_revisions.md || exit 1;
+$SILK -test.v -silk.url $API silk_webhooks.md || exit 1;
+$SILK -test.v -silk.url $API silk_vocabulary_crud.md || exit 1;
+$SILK -test.v -silk.url $API silk_vocabulary_bulk.md || exit 1;
+$SILK -test.v -silk.url $API silk_vocabulary_anon_cud.md || exit 1;
+$SILK -test.v -silk.url $API silk_vocabulary_anon_r.md || exit 1;
+$SILK -test.v -silk.url $API silk_document_types_crud.md || exit 1;
+$SILK -test.v -silk.url $API silk_document_bulk.md || exit 1;
+$SILK -test.v -silk.url $API silk_geofield.md || exit 1;
+$SILK -test.v -silk.url $API silk_linkfield.md || exit 1;
+$SILK -test.v -silk.url $API silk_child_terms.md || exit 1;
+$SILK -test.v -silk.url $API silk_private.md || exit 1;
+$SILK -test.v -silk.url $API silk_document_revisions.md || exit 1;
+$SILK -test.v -silk.url $API silk_term_revisions.md || exit 1;
 
 # Clear docstore, general tests
 $DRUSH eval "_docstore_setup_testing()"
@@ -53,12 +54,12 @@ export ME_UUID=$(cat me.json | awk -F '"' '{print $4}')
 export ME_SHARED=$(cat me.json | awk -F '"' '{print $16}')
 export HASH=$(php -r "print md5('$ME_SHARED$FILEPRIVATETXT$ME_UUID');")
 
-./silk -test.v -silk.url $HOST silk_files_direct.md || exit 1;
-./silk -test.v -silk.url $API silk_files.md || exit 1;
-./silk -test.v -silk.url $API silk_create.md || exit 1;
-./silk -test.v -silk.url $API silk_exceptions.md || exit 1;
+$SILK -test.v -silk.url $HOST silk_files_direct.md || exit 1;
+$SILK -test.v -silk.url $API silk_files.md || exit 1;
+$SILK -test.v -silk.url $API silk_create.md || exit 1;
+$SILK -test.v -silk.url $API silk_exceptions.md || exit 1;
 
 ## Add countries vocabulary.
 $DRUSH --verbose scr ../html/modules/custom/docstore/syncs/docstore_countries.php
 
-./silk -test.v -silk.url $API silk_document_crud.md || exit 1;
+$SILK -test.v -silk.url $API silk_document_crud.md || exit 1;

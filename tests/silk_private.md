@@ -427,7 +427,7 @@ Example output.
 }
 ```
 
-* Status: `400`
+* Status: `403`
 * Content-Type: "application/json"
 * Data.message: "Term is not owned by you"
 
