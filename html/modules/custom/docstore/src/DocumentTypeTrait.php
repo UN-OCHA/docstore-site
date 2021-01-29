@@ -2,6 +2,8 @@
 
 namespace Drupal\docstore;
 
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+
 /**
  * Document type related functions.
  */
@@ -62,10 +64,19 @@ trait DocumentTypeTrait {
 
   /**
    * Get node type for an endpoint.
+   *
+   * @param string $endpoint
+   *   The document (node) type endpoint.
+   *
+   * @return string
+   *   The node type ID.
+   *
+   * @throw \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+   *   404 Not Found if there is no matching node type.
    */
   protected function endpointGetNodeType($endpoint) {
     if (!$this->EndpointExists($endpoint)) {
-      throw new \Exception('Endpoint does not exist');
+      throw new NotFoundHttpException('Endpoint does not exist');
     }
 
     $document_endpoints = $this->getEndpoints();
@@ -98,37 +109,33 @@ trait DocumentTypeTrait {
   }
 
   /**
-   * Check if provider can read content.
+   * Get the endpoint type allowed for the given resource type.
+   *
+   * @param string $type
+   *   Resource type (currently a node type).
+   * @param string $mode
+   *   The operation (read or something else).
+   *
+   * @return string
+   *   Either "Any" or the endpoint matching the resource type.
+   *
+   * @throw \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+   *   404 Not Found if there is no matching node type.
+   *
+   * @todo review the logic of this.
    */
-  protected function providerCanRead($node_type, $provider) {
-    $type = $this->entityTypeManager->getStorage('node_type')->load($node_type);
-
-    if (!$provider->isAnonymous() && $type->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
-      return TRUE;
+  protected function typeAllowed($type, $mode = 'read') {
+    // Allow read operations on "any" endpoint.
+    if ($type === 'any' && $mode === 'read') {
+      return 'any';
     }
 
-    if ($type->getThirdPartySetting('docstore', 'shared')) {
-      return TRUE;
+    // Allow read operations on "all" endpoint.
+    if ($type === 'all' && $mode === 'read') {
+      return 'any';
     }
 
-    return FALSE;
-  }
-
-  /**
-   * Check if provider can create, update, delete content.
-   */
-  protected function providerCanCreateUpdateDelete($node_type, $provider) {
-    $type = $this->entityTypeManager->getStorage('node_type')->load($node_type);
-
-    if (!$provider->isAnonymous() && $type->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
-      return TRUE;
-    }
-
-    if (!$provider->isAnonymous() && $type->getThirdPartySetting('docstore', 'content_allowed')) {
-      return TRUE;
-    }
-
-    return FALSE;
+    return $this->EndpointGetNodeType($type);
   }
 
   /**
@@ -164,6 +171,45 @@ trait DocumentTypeTrait {
     if ($provider) {
       $this->getAccessibleDocumentTypes($provider);
     }
+  }
+
+  /**
+   * Get a node type entity.
+   *
+   * Note: this assumes that the class using that trait as a `entityTypeManager`
+   * member variable.
+   *
+   * @param string $type
+   *   Node type.
+   *
+   * @return \Drupal\node\Entity\NodeType
+   *   Node type entity.
+   *
+   * @throw \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+   *   404 Not Found if the node type was not found.
+   */
+  protected function getNodeType($type) {
+    /** @var \Drupal\node\Entity\NodeType $type */
+    $node_type = $this->entityTypeManager->getStorage('node_type')->load($type);
+
+    if (!$node_type) {
+      throw new NotFoundHttpException('Document type not found.');
+    }
+
+    return $node_type;
+  }
+
+  /**
+   * Get a node type label.
+   *
+   * @param string $type
+   *   Node type.
+   *
+   * @return string
+   *   Node type label.
+   */
+  protected function getNodeTypeLabel($type) {
+    return $this->getNodeType($type)->label();
   }
 
 }

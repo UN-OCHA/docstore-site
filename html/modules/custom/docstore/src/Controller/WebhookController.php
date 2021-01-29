@@ -7,7 +7,8 @@ use Drupal\Core\Cache\Cache;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Drupal\docstore\ProviderTrait;
+use Drupal\docstore\ResourceTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
@@ -15,6 +16,9 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  * API controller for webhook endpoint.
  */
 class WebhookController extends ControllerBase {
+
+  use ProviderTrait;
+  use ResourceTrait;
 
   /**
    * The entity type manager.
@@ -47,7 +51,7 @@ class WebhookController extends ControllerBase {
     $data = [];
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     $query = $this->entityTypeManager->getStorage('webhook_config')->getQuery();
     $ids = $query->execute();
@@ -66,10 +70,13 @@ class WebhookController extends ControllerBase {
       }
     }
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(200);
+    // Add cache tags.
+    $cache = [
+      'contexts' => ['user'],
+      'tags' => ['webhooks'],
+    ];
 
-    return $response;
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
@@ -77,7 +84,7 @@ class WebhookController extends ControllerBase {
    */
   public function createWebhook(Request $request) {
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
+    $params = $this->getRequestContent($request);
 
     // Check required fields.
     if (empty($params['label'])) {
@@ -101,7 +108,7 @@ class WebhookController extends ControllerBase {
     }
 
     // Get provider.
-    $provider = $this->getProvider();
+    $provider = $this->requireProvider();
 
     // Construct Id.
     $id = $params['label'];
@@ -142,25 +149,18 @@ class WebhookController extends ControllerBase {
       'machine_name' => $id,
     ];
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(201);
-
-    return $response;
+    return $this->createJsonResponse($data, 201);
   }
 
   /**
    * Delete a hook.
    */
   public function deleteWebhook($id, Request $request) {
-    // Get provider.
-    $provider = $this->getProvider();
-
     // Check for duplicate.
     $webhook_config = WebhookConfig::load($id);
 
-    if ($webhook_config->getThirdPartySetting('docstore', 'base_provider_uuid') !== $provider->uuid()) {
-      throw new BadRequestHttpException('Webhook is not owned by you');
-    }
+    // A webhook can only be deleted by its owner.
+    $this->providerIsOwner($webhook_config, 'base_provider_uuid');
 
     $webhook_config->delete();
 
@@ -171,24 +171,7 @@ class WebhookController extends ControllerBase {
     // Invalidate cache.
     Cache::invalidateTags(['webhooks']);
 
-    $response = new JsonResponse($data);
-
-    return $response;
-  }
-
-  /**
-   * Get provider.
-   */
-  protected function getProvider() {
-    /** @var Drupal\Core\Session\AccountProxy $current_user */
-    $current_user = $this->currentUser();
-    $provider = $current_user->getAccount();
-
-    if (!$provider) {
-      throw new BadRequestHttpException('Provider is required');
-    }
-
-    return $provider;
+    return $this->createJsonResponse($data, 200);
   }
 
 }
