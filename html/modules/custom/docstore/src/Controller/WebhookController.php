@@ -72,6 +72,7 @@ class WebhookController extends ControllerBase {
 
     // Add cache tags.
     $cache = [
+      'contexts' => ['user'],
       'tags' => ['webhooks'],
     ];
 
