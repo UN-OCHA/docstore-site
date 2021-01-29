@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Sync global_coordination_groups from vocabulary.
+ * Sync local_coordination_groups from vocabulary.
  */
 
 use Drupal\docstore\ManageFields;
@@ -12,7 +12,7 @@ use Drupal\taxonomy\Entity\Vocabulary;
 /**
  * List of vocabularies.
  */
-function docstore_global_coordination_groups_vocabularies() {
+function docstore_local_coordination_groups_vocabularies() {
   return [
     'local_coordination_groups' => 'Local coordination groups',
   ];
@@ -21,13 +21,36 @@ function docstore_global_coordination_groups_vocabularies() {
 /**
  * List of fields.
  */
-function docstore_global_coordination_groups_fields() {
+function docstore_local_coordination_groups_fields() {
   return [
     'local_coordination_groups' => [
       'id' => 'string',
       'email' => 'string',
       'website' => 'string',
       'type' => 'string',
+      'global_cluster' => [
+        'type' => 'term_reference',
+        'target' => 'global_coordination_groups',
+        'multiple' => FALSE,
+      ],
+      'lead_agencies' => [
+        'type' => 'term_reference',
+        'target' => 'hrinfo_organizations',
+        'multiple' => TRUE,
+      ],
+      'partners' => [
+        'type' => 'term_reference',
+        'target' => 'hrinfo_organizations',
+        'multiple' => TRUE,
+      ],
+      'operation' => [
+        'type' => 'term_reference',
+        'target' => 'hrinfo_operations',
+        'multiple' => TRUE,
+      ],
+      'ngo_participation' => 'boolean',
+      'government_participation' => 'boolean',
+      'inter_cluster' => 'boolean',
     ],
   ];
 }
@@ -35,11 +58,11 @@ function docstore_global_coordination_groups_fields() {
 /**
  * Ensure vocabularies do exist.
  */
-function docstore_global_coordination_groups_ensure_vocabularies() {
+function docstore_local_coordination_groups_ensure_vocabularies() {
   $provider = user_load(2);
   $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('database'));
 
-  foreach (docstore_global_coordination_groups_vocabularies() as $machine_name => $label) {
+  foreach (docstore_local_coordination_groups_vocabularies() as $machine_name => $label) {
     $vocabulary = Vocabulary::load($machine_name);
     if (!$vocabulary) {
       $vocabulary = $manager->createVocabulary([
@@ -55,11 +78,11 @@ function docstore_global_coordination_groups_ensure_vocabularies() {
 /**
  * Ensure vocabulary fields do exist.
  */
-function docstore_global_coordination_groups_ensure_vocabulary_fields() {
+function docstore_local_coordination_groups_ensure_vocabulary_fields() {
   $provider = user_load(2);
   $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('database'));
 
-  foreach (docstore_global_coordination_groups_fields() as $machine_name => $fields) {
+  foreach (docstore_local_coordination_groups_fields() as $machine_name => $fields) {
     $vocabulary = Vocabulary::load($machine_name);
     foreach ($fields as $label => $type) {
       if (is_array($type)) {
@@ -67,6 +90,7 @@ function docstore_global_coordination_groups_ensure_vocabulary_fields() {
           'label' => $label,
           'type' => $type['type'],
           'target' => $type['target'],
+          'multiple' => $type['multiple'],
           'author' => 'Shared',
         ]);
       }
@@ -82,14 +106,16 @@ function docstore_global_coordination_groups_ensure_vocabulary_fields() {
 }
 
 /**
- * Sync global_coordination_groups from vocabulary.
+ * Sync local_coordination_groups from vocabulary.
  */
-function docstore_vulnerable_group_sync() {
-  docstore_global_coordination_groups_ensure_vocabularies();
-  docstore_global_coordination_groups_ensure_vocabulary_fields();
+function docstore_local_coordination_groups_sync($url = '') {
+  if (empty($url)) {
+    docstore_local_coordination_groups_ensure_vocabularies();
+    docstore_local_coordination_groups_ensure_vocabulary_fields();
+    $url = 'https://www.humanitarianresponse.info/en/api/v1.0/bundles';
+  }
 
   $http_client = \Drupal::httpClient();
-  $url = 'https://vocabulary.unocha.org/json/beta-v1/global_coordination_groups.json';
 
   // Load vocabulary.
   $vocabulary = Vocabulary::load('local_coordination_groups');
@@ -103,69 +129,101 @@ function docstore_vulnerable_group_sync() {
     $data = json_decode($raw);
 
     foreach ($data->data as $row) {
-      $term = taxonomy_term_load_multiple_by_name($row->label, $vocabulary->id());
-      if (!$term) {
-        $item = [
-          'name' => $row->label,
-          'vid' => $vocabulary->id(),
-          'created' => [],
-          'base_provider_uuid' => [],
-          'parent' => [],
-          'description' => '',
-        ];
-
-        // Set creation time.
-        $item['created'][] = [
-          'value' => time(),
-        ];
-
-        // Set owner.
-        $item['base_provider_uuid'][] = [
-          'target_uuid' => $provider->uuid(),
-        ];
-
-        // Store HID Id.
-        $item['base_author_hid'][] = [
-          'value' => 'Shared',
-        ];
-
-        $term = Term::create($item);
+      $term = NULL;
+      $possible_terms = taxonomy_term_load_multiple_by_name($row->label, $vocabulary->id());
+      if ($possible_terms) {
+        foreach ($possible_terms as $possible_term) {
+          if ($possible_term->get('id')->value == $row->id) {
+            $term = $possible_term;
+            break;
+          }
+        }
       }
-      else {
-        $term = reset($term);
+      if (isset($term)) {
+        // @todo Consider updating - do we want this script to handle it?
+        print "\nTerm already exists, skipping.\n";
+        continue;
       }
+      $item = [
+        'name' => $row->label,
+        'vid' => $vocabulary->id(),
+        'created' => [],
+        'base_provider_uuid' => [],
+        'parent' => [],
+        'description' => '',
+      ];
 
-      $fields = docstore_global_coordination_groups_fields()[$vocabulary->id()];
+      // Set creation time.
+      $item['created'][] = [
+        'value' => time(),
+      ];
+
+      // Set owner.
+      $item['base_provider_uuid'][] = [
+        'target_uuid' => $provider->uuid(),
+      ];
+
+      // Store HID Id.
+      $item['base_author_hid'][] = [
+        'value' => 'Shared',
+      ];
+
+      $term = Term::create($item);
+
+      $fields = docstore_local_coordination_groups_fields()[$vocabulary->id()];
       foreach ($fields as $name => $type) {
         $field_name = str_replace('-', '_', $name);
         if ($term->hasField($field_name)) {
           $value = FALSE;
-          if (isset($row->{$name})) {
+          if (empty($row->{$name})) {
+            continue;
+          }
+          if (is_array($type) && $type['type'] === 'term_reference') {
+            $lookup = $row->{$name};
+            if (is_array($lookup)) {
+              foreach ($lookup as $lookup_item) {
+                if (empty($lookup_item)) {
+                  continue;
+                }
+                $uuid = '';
+                $entities = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadByProperties([
+                  'name' => $lookup_item->label,
+                  'vid' => $type['target'],
+                ]);
+                if (!empty($entities)) {
+                  $value[] = ['target_uuid' => reset($entities)->uuid()];
+                }
+                else {
+                  // @todo Consider creating missing references here.
+                  print "\n$field_name reference needs creating:\n";
+                  drush_log(serialize($lookup), 'ok');
+                  continue;
+                }
+              }
+            }
+            else {
+              $entities = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadByProperties([
+                'name' => $lookup->label,
+                'vid' => $type['target'],
+              ]);
+              if (!empty($entities)) {
+                $value['target_uuid'] = reset($entities)->uuid();
+              }
+              else {
+                // @todo Consider creating missing references here.
+                print "\n$field_name reference needs creating:\n";
+                drush_log(serialize($lookup), 'ok');
+                continue;
+              }
+            }
+          }
+          else {
             $value = $row->{$name};
           }
 
-          if ($type === 'boolean') {
-            if ($value === 'Y') {
-              $value = TRUE;
-            }
-            else {
-              $value = FALSE;
-            }
+          if (!empty($value)) {
+            $term->set($field_name, $value);
           }
-
-          if ($type === 'geofield') {
-            if (empty($value->lat) || empty($value->lon)) {
-              continue;
-            }
-
-            $value = [
-              'lat' => $value->lat,
-              'lon' => $value->lon,
-              'value' => 'POINT (' . $value->lat . ' ' . $value->lon . ')',
-            ];
-          }
-
-          $term->set($field_name, $value);
         }
       }
 
@@ -179,7 +237,16 @@ function docstore_vulnerable_group_sync() {
       }
     }
   }
+  else {
+    print "\nNo results for $url\n";
+  }
+
+  // Check for more data.
+  if (isset($data->next) && isset($data->next->href)) {
+    print "\nNext up:\n" . $data->next->href;
+    docstore_local_coordination_groups_sync($data->next->href);
+  }
 }
 
 // Auto execute.
-docstore_vulnerable_group_sync();
+docstore_local_coordination_groups_sync();
