@@ -35,7 +35,21 @@ Get private file as anonymous.
 
 ===
 
-* Status: `400`
+* Status: `403`
+* Content-Type: "application/json"
+* Data.message: "Provider is required"
+
+## GET /files/{FILEPRIVATE}
+
+Get private file as a different provider.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: dcba
+
+===
+
+* Status: `403`
 * Content-Type: "application/json"
 * Data.message: "File is not owned by you"
 
@@ -101,9 +115,23 @@ Get private media as anonymous.
 
 ===
 
-* Status: `400`
+* Status: `403`
 * Content-Type: "application/json"
-* Data.message: "Media is not owned by you"
+* Data.message: "Provider is required"
+
+## GET /media/{media_private}
+
+Get private media as a different provider.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: dcba
+
+===
+
+* Status: `403`
+* Content-Type: "application/json"
+* Data.message: "File is not owned by you"
 
 ## GET /media/{media_public}
 
@@ -184,9 +212,22 @@ Get private media content as anonymous.
 
 ===
 
-* Status: `400`
+* Status: `403`
 * Content-Type: "application/json"
-* Data.message: "Media is not owned by you"
+* Data.message: "Provider is required"
+
+## GET /media/{media_private}/content
+
+Get private media content as a different provider.
+
+* Content-Type: "application/json"
+* API-KEY: dcba
+
+===
+
+* Status: `403`
+* Content-Type: "application/json"
+* Data.message: "File is not owned by you"
 
 ## GET /media/{media_public}/content
 
@@ -351,7 +392,7 @@ Make public file private as other provider.
 
 ===
 
-* Status: `400`
+* Status: `403`
 * Content-Type: "application/json"
 
 ## PUT /files/{FILEPUBLIC}
@@ -396,9 +437,24 @@ Get now private file as anonymous.
 
 ===
 
-* Status: `400`
+* Status: `403`
+* Content-Type: "application/json"
+* Data.message: "Provider is required"
+
+## GET /files/{FILEPUBLIC}
+
+Get now private file with a different provider.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: dcba
+
+===
+
+* Status: `403`
 * Content-Type: "application/json"
 * Data.message: "File is not owned by you"
+
 
 ## PUT /files/{FILEPUBLIC}
 

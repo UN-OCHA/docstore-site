@@ -5,14 +5,17 @@ namespace Drupal\docstore\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Drupal\docstore\ProviderTrait;
+use Drupal\docstore\ResourceTrait;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
  * API controller for me endpoint.
  */
 class ProviderController extends ControllerBase {
+
+  use ProviderTrait;
+  use ResourceTrait;
 
   /**
    * The entity manager service.
@@ -52,9 +55,7 @@ class ProviderController extends ControllerBase {
       'shared_secret' => $provider->get('shared_secret')->value ?? '',
     ];
 
-    $response = new JsonResponse($data);
-
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -62,7 +63,7 @@ class ProviderController extends ControllerBase {
    */
   public function updateInfo(Request $request) {
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
+    $params = $this->getRequestContent($request);
 
     /** @var \Drupal\user\Entity\User $provider */
     $provider = $this->requireProvider();
@@ -76,24 +77,7 @@ class ProviderController extends ControllerBase {
       'message' => 'Provider updated',
     ];
 
-    $response = new JsonResponse($data);
-
-    return $response;
-  }
-
-  /**
-   * Get provider.
-   */
-  protected function requireProvider() {
-    /** @var Drupal\Core\Session\AccountProxy $current_user */
-    $current_user = $this->currentUser();
-    $provider = $current_user->getAccount();
-
-    if ($current_user->isAnonymous() || !$provider) {
-      throw new BadRequestHttpException('Provider is required');
-    }
-
-    return $provider;
+    return $this->createJsonResponse($data, 200);
   }
 
 }

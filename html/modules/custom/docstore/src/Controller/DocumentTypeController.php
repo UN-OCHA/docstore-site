@@ -3,8 +3,6 @@
 namespace Drupal\docstore\Controller;
 
 use Drupal\Core\Cache\Cache;
-use Drupal\Core\Cache\CacheableJsonResponse;
-use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
@@ -13,8 +11,8 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\docstore\DocumentTypeTrait;
 use Drupal\docstore\ManageFields;
 use Drupal\docstore\ProviderTrait;
+use Drupal\docstore\ResourceTrait;
 use Drupal\node\Entity\NodeType;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
@@ -25,6 +23,7 @@ class DocumentTypeController extends ControllerBase {
 
   use DocumentTypeTrait;
   use ProviderTrait;
+  use ResourceTrait;
 
   /**
    * The config.
@@ -69,10 +68,7 @@ class DocumentTypeController extends ControllerBase {
     $provider = $this->requireProvider();
 
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     // Make sure endpoints are fresh.
     $this->rebuildEndpoints();
@@ -83,9 +79,7 @@ class DocumentTypeController extends ControllerBase {
     // Rebuild endpoints.
     $this->rebuildEndpoints();
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(201);
-    return $response;
+    return $this->createJsonResponse($data, 201);
   }
 
   /**
@@ -109,74 +103,55 @@ class DocumentTypeController extends ControllerBase {
       $data[] = $this->buildJsonOutput($node_type);
     }
 
-    $response = new JsonResponse($data);
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
    * Get document type.
    */
-  public function getDocumentType($node_type, Request $request) {
-    /** @var \Drupal\node\Entity\NodeType $type */
-    $type = $this->entityTypeManager->getStorage('node_type')->load($node_type);
+  public function getDocumentType($type, Request $request) {
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->getNodeType($type);
 
-    if (!$type) {
-      throw new BadRequestHttpException('Type not supported.');
-    }
+    $data = $this->buildJsonOutput($node_type);
 
-    $data = $this->buildJsonOutput($type);
-
-    $response = new JsonResponse($data);
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
    * Update document type.
    */
-  public function updateDocumentType($node_type, Request $request) {
-    /** @var \Drupal\node\Entity\NodeType $type */
-    $type = $this->entityTypeManager->getStorage('node_type')->load($node_type);
-
-    if (!$type) {
-      throw new BadRequestHttpException('Type not supported.');
-    }
+  public function updateDocumentType($type, Request $request) {
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->getNodeType($type);
 
     // Get provider.
     $provider = $this->requireProvider();
 
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     // Make sure endpoints are fresh.
     $this->rebuildEndpoints();
 
     $manager = new ManageFields($provider, '', $this->entityFieldManager);
-    $data = $this->buildJsonOutput($manager->updateDocumentType($node_type, $params));
+    $data = $this->buildJsonOutput($manager->updateDocumentType($node_type->id(), $params));
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(200);
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
    * Delete document type.
    */
-  public function deleteDocumentType($node_type, Request $request) {
+  public function deleteDocumentType($type, Request $request) {
     /** @var \Drupal\node\Entity\NodeType $node_type */
-    $type = $this->entityTypeManager->getStorage('node_type')->load($node_type);
-
-    if (!$type) {
-      throw new BadRequestHttpException('Type not supported.');
-    }
+    $node_type = $this->getNodeType($type);
 
     $data = [
-      'message' => strtr('@type deleted', ['@type' => $type->label()]),
+      'message' => strtr('@type deleted', ['@type' => $node_type->label()]),
     ];
 
-    $type->delete();
+    $node_type->delete();
 
     // Rebuild endpoints.
     $this->rebuildEndpoints();
@@ -184,50 +159,48 @@ class DocumentTypeController extends ControllerBase {
     // Keep track of private types.
     $this->rebuildDocumentTypes($this->provider);
 
-    $response = new JsonResponse($data);
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
    * Get document fields.
    */
-  public function getDocumentFields($node_type) {
+  public function getDocumentFields($type) {
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->getNodeType($type);
 
     // Load provider.
     $provider = $this->requireProvider();
 
     // Create field.
-    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->database);
     $data = $manager->getDocumentFields();
 
     // Add cache tags.
-    $cache_tags['#cache'] = [
+    $cache = [
       'tags' => [
         'document_fields',
       ],
     ];
 
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
-
-    return $response;
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
    * Create document field.
    */
-  public function createDocumentField($node_type, Request $request) {
+  public function createDocumentField($type, Request $request) {
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->getNodeType($type);
+
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     // Load provider.
     $provider = $this->requireProvider();
 
     // Create field.
-    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->database);
     try {
       $field_name = $manager->addDocumentField($params);
     }
@@ -243,21 +216,21 @@ class DocumentTypeController extends ControllerBase {
     // Invalidate cache.
     Cache::invalidateTags(['document_fields']);
 
-    $response = new JsonResponse($data);
-    $response->setStatusCode(201);
-
-    return $response;
+    return $this->createJsonResponse($data, 201);
   }
 
   /**
    * Get document field.
    */
-  public function getDocumentField($node_type, $id, Request $request) {
+  public function getDocumentField($type, $id, Request $request) {
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->getNodeType($type);
+
     // Get provider.
     $provider = $this->requireProvider();
 
     // Get field config.
-    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->database);
 
     try {
       $data = $manager->getDocumentField($id);
@@ -267,33 +240,30 @@ class DocumentTypeController extends ControllerBase {
     }
 
     // Add cache tags.
-    $cache_tags['#cache'] = [
+    $cache = [
       'tags' => [
         'document_fields',
       ],
     ];
 
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
-
-    return $response;
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
    * Update document field.
    */
-  public function updateDocumentField($node_type, $field, $id, Request $request) {
+  public function updateDocumentField($type, $field, $id, Request $request) {
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->getNodeType($type);
+
     // Parse JSON.
-    $params = json_decode($request->getContent(), TRUE);
-    if (empty($params) || !is_array($params)) {
-      throw new BadRequestHttpException('You have to pass a JSON object');
-    }
+    $params = $this->getRequestContent($request);
 
     // Load provider.
     $provider = $this->requireProvider();
 
     // Get manager.
-    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->database);
 
     // Update field.
     try {
@@ -311,20 +281,21 @@ class DocumentTypeController extends ControllerBase {
     // Invalidate cache.
     Cache::invalidateTags(['document_fields']);
 
-    $response = new JsonResponse($data);
-
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
    * Delete document field.
    */
-  public function deleteDocumentField($node_type, $id, Request $request) {
+  public function deleteDocumentField($type, $id, Request $request) {
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->getNodeType($type);
+
     // Get provider.
     $provider = $this->requireProvider();
 
     // Delete field storage and config.
-    $manager = new ManageFields($provider, $node_type, $this->entityFieldManager, $this->database);
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->database);
 
     // Create field.
     try {
@@ -341,9 +312,7 @@ class DocumentTypeController extends ControllerBase {
       'message' => 'Field deleted',
     ];
 
-    $response = new JsonResponse($data);
-
-    return $response;
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -351,6 +320,9 @@ class DocumentTypeController extends ControllerBase {
    *
    * @param \Drupal\node\Entity\NodeType $node_type
    *   Full node type.
+   *
+   * @return array
+   *   Associative array with the document type details.
    */
   protected function buildJsonOutput(NodeType $node_type) {
     return [
