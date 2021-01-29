@@ -1063,7 +1063,7 @@ Delete private document as other provider.
 
 ===
 
-* Status: `400`
+* Status: `403`
 * Content-Type: "application/json"
 
 ## DELETE /documents/test-document-crud/{doc3}

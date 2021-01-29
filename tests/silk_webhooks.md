@@ -91,7 +91,7 @@ Delete web hooks.
 }
 ```
 
-* Status: `400`
+* Status: `403`
 * Content-Type: "application/json"
 
 ## DELETE /webhooks/{machine_name}

@@ -6,13 +6,15 @@ use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Drupal\docstore\ResourceTrait;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
  * Controller for files endpoint.
  */
 class DownloadController extends ControllerBase {
+
+  use ResourceTrait;
 
   /**
    * The entity manager service.
@@ -42,6 +44,8 @@ class DownloadController extends ControllerBase {
    * Download media file.
    *
    * Downloads the latest published version of the file.
+   *
+   * @todo throw a 404 Not Found instead?
    */
   public function downloadMedia($media_uuid, $provider_uuid, $hash, $filename) {
     /** @var \Drupal\media\Entity\Media $media */
@@ -74,13 +78,15 @@ class DownloadController extends ControllerBase {
       'Cache-Control' => 'private',
     ];
 
-    return new BinaryFileResponse($file->getFileUri(), 200, $headers);
+    return $this->createBinaryFileResponse($file->getFileUri(), 200, $headers);
   }
 
   /**
    * Download file.
    *
    * Downloads the file, regardless if it's the latest version or not.
+   *
+   * @todo throw a 404 Not Found instead?
    */
   public function downloadFile($file_uuid, $provider_uuid, $hash, $filename) {
     /** @var \Drupal\file\Entity\File $file */
@@ -110,7 +116,7 @@ class DownloadController extends ControllerBase {
       'Cache-Control' => 'private',
     ];
 
-    return new BinaryFileResponse($file->getFileUri(), 200, $headers);
+    return $this->createBinaryFileResponse($file->getFileUri(), 200, $headers);
   }
 
 }

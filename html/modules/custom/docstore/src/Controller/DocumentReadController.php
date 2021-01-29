@@ -2,8 +2,6 @@
 
 namespace Drupal\docstore\Controller;
 
-use Drupal\Core\Cache\CacheableJsonResponse;
-use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
@@ -11,15 +9,14 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\State\State;
 use Drupal\docstore\DocumentTypeTrait;
+use Drupal\docstore\MetadataTrait;
 use Drupal\docstore\ProviderTrait;
+use Drupal\docstore\ResourceTrait;
 use Drupal\docstore\ParseQueryParameters;
-use Drupal\field\Entity\FieldConfig;
 use Drupal\search_api_solr\SearchApiSolrException;
 use Drupal\search_api_solr\SolrBackendInterface;
 use Drupal\search_api\Entity\Index;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException;
@@ -30,7 +27,9 @@ use Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException;
 class DocumentReadController extends ControllerBase {
 
   use DocumentTypeTrait;
+  use MetadataTrait;
   use ProviderTrait;
+  use ResourceTrait;
 
   /**
    * The config.
@@ -89,8 +88,7 @@ class DocumentReadController extends ControllerBase {
   public function wait() {
     sleep(1);
 
-    $response = new JsonResponse([]);
-    return $response;
+    return $this->createJsonResponse([], 200);
   }
 
   /**
@@ -98,14 +96,11 @@ class DocumentReadController extends ControllerBase {
    */
   public function getDocuments($type, Request $request) {
     // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'read');
+    $type = $this->typeAllowed($type, 'read');
 
     // Check if provider has access.
-    $provider = $this->getProvider();
-    if ($node_type !== 'any' && !$this->providerCanRead($node_type, $provider)) {
-      throw new AccessDeniedHttpException(strtr('You do not have access to read @type', [
-        '@type' => $node_type,
-      ]));
+    if ($type !== 'any') {
+      $this->providerCanRead($this->getNodeType($type));
     }
 
     // Query index.
@@ -138,8 +133,8 @@ class DocumentReadController extends ControllerBase {
     }
 
     // Add node_type if not any.
-    if ($node_type !== 'any') {
-      $query->addCondition('type', $node_type);
+    if ($type !== 'any') {
+      $query->addCondition('type', $type);
     }
     else {
       // Limit to accessible node types.
@@ -150,6 +145,7 @@ class DocumentReadController extends ControllerBase {
     }
 
     // Check published and private.
+    $provider = $this->getProvider();
     if ($provider->isAnonymous()) {
       $query->addCondition('published', TRUE);
       $query->addCondition('private', TRUE, '<>');
@@ -191,8 +187,14 @@ class DocumentReadController extends ControllerBase {
     // Massage the data.
     $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index, $request->getSchemeAndHttpHost(), $provider);
 
-    // Add cache tags.
-    $cache_tags['#cache'] = [
+    // Add cache tags and contexts.
+    $cache = [
+      'contexts' => [
+        'user',
+        'url.query_args:filter',
+        'url.query_args:sort',
+        'url.query_args:page',
+      ],
       'tags' => [
         'documents',
       ],
@@ -200,19 +202,11 @@ class DocumentReadController extends ControllerBase {
 
     // Add cache tags.
     foreach ($data as &$document) {
-      $cache_tags['#cache']['tags'][] = $document['search_api_id'];
+      $cache['tags'][] = $document['search_api_id'];
       unset($document['search_api_id']);
     }
 
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
-      'user',
-      'url.query_args:filter',
-      'url.query_args:sort',
-      'url.query_args:page',
-    ]));
-
-    return $response;
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
@@ -312,14 +306,14 @@ class DocumentReadController extends ControllerBase {
         elseif (strpos($key, '_latlon') !== FALSE) {
           if (isset($row[str_replace('_latlon', '', $key)])) {
             // Check without _latlon.
-            if (!$this->providerCanUseDocumentField(str_replace('_latlon', '', $key), $row['type'], $provider)) {
+            if (!$this->providerCanUseField(str_replace('_latlon', '', $key), $row['type'], 'node', $provider)) {
               unset($row[$key]);
             }
           }
         }
         else {
           // Check if provider has access to the field.
-          if (!$this->providerCanUseDocumentField($key, $row['type'], $provider)) {
+          if (!$this->providerCanUseField($key, $row['type'], 'node', $provider)) {
             unset($row[$key]);
 
             if (isset($row[$key . '_label'])) {
@@ -388,14 +382,11 @@ class DocumentReadController extends ControllerBase {
    */
   public function getDocument($type, $id, Request $request) {
     // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'read');
+    $type = $this->typeAllowed($type, 'read');
 
     // Check if provider has access.
-    $provider = $this->getProvider();
-    if (!$this->providerCanRead($node_type, $provider)) {
-      throw new AccessDeniedHttpException(strtr('You do not have access to read @type', [
-        '@type' => $node_type,
-      ]));
+    if ($type !== 'any') {
+      $this->providerCanRead($this->getNodeType($type));
     }
 
     // Query index.
@@ -404,8 +395,8 @@ class DocumentReadController extends ControllerBase {
     $query->addCondition('uuid', $id);
 
     // Add node_type if not any.
-    if ($node_type !== 'any') {
-      $query->addCondition('type', $node_type);
+    if ($type !== 'any') {
+      $query->addCondition('type', $type);
     }
 
     // Check published and private.
@@ -449,8 +440,11 @@ class DocumentReadController extends ControllerBase {
 
     $data = reset($data);
 
-    // Add cache tags.
-    $cache_tags['#cache'] = [
+    // Add cache tags and contexts.
+    $cache = [
+      'contexts' => [
+        'user',
+      ],
       'tags' => [
         'documents',
         $data['search_api_id'],
@@ -458,12 +452,7 @@ class DocumentReadController extends ControllerBase {
     ];
     unset($data['search_api_id']);
 
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags)->addCacheContexts([
-      'user',
-    ]));
-
-    return $response;
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
@@ -471,7 +460,7 @@ class DocumentReadController extends ControllerBase {
    */
   public function getDocumentRevisions($type, $id, Request $request) {
     // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'read');
+    $type = $this->typeAllowed($type, 'read');
 
     $data = [];
 
@@ -480,8 +469,8 @@ class DocumentReadController extends ControllerBase {
     $query = $index->query();
 
     // Add node_type if not any.
-    if ($node_type !== 'any') {
-      $query->addCondition('type', $node_type);
+    if ($type !== 'any') {
+      $query->addCondition('type', $type);
     }
 
     $query->addCondition('uuid', $id);
@@ -545,7 +534,7 @@ class DocumentReadController extends ControllerBase {
     $data['revisions'] = $revisions;
 
     // Add cache tags.
-    $cache_tags['#cache'] = [
+    $cache = [
       'tags' => [
         'documents',
         $data['search_api_id'],
@@ -553,10 +542,7 @@ class DocumentReadController extends ControllerBase {
     ];
     unset($data['search_api_id']);
 
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
-
-    return $response;
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
@@ -564,7 +550,7 @@ class DocumentReadController extends ControllerBase {
    */
   public function getDocumentRevision($type, $id, $vid, Request $request) {
     // Check if type is allowed.
-    $node_type = $this->typeAllowed($type, 'read');
+    $type = $this->typeAllowed($type, 'read');
 
     // Check for last.
     if ($vid === 'last') {
@@ -583,11 +569,11 @@ class DocumentReadController extends ControllerBase {
     /** @var \Drupal\node\Entity\Node $document */
     $document = $this->entityTypeManager->getStorage('node')->loadRevision($vid);
     if ($document->uuid() !== $id) {
-      throw new BadRequestHttpException('Revision not found');
+      throw new NotFoundHttpException('Revision not found');
     }
 
-    if ($document->bundle() !== $node_type) {
-      throw new BadRequestHttpException('Wrong node type');
+    if ($document->bundle() !== $type) {
+      throw new BadRequestHttpException('Wrong document type');
     }
 
     $data = [];
@@ -615,16 +601,11 @@ class DocumentReadController extends ControllerBase {
     }
 
     // Add cache tags.
-    $cache_tags['#cache'] = [
-      'tags' => [
-        'documents',
-      ] + $document->getCacheTags(),
+    $cache = [
+      'tags' => array_merge(['documents'], $document->getCacheTags()),
     ];
 
-    $response = new CacheableJsonResponse($data);
-    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($cache_tags));
-
-    return $response;
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
@@ -645,75 +626,6 @@ class DocumentReadController extends ControllerBase {
     $this->typeAllowed($type, 'read');
 
     throw new PreconditionFailedHttpException('Not implemented (yet)');
-  }
-
-  /**
-   * Get allowed endpoints.
-   */
-  protected function typeAllowed($type, $mode = 'read') {
-    // Allow read operations on "any" endpoint.
-    if ($type === 'any' && $mode === 'read') {
-      return 'any';
-    }
-
-    // Allow read operations on "all" endpoint.
-    if ($type === 'all' && $mode === 'read') {
-      return 'any';
-    }
-
-    return $this->EndpointGetNodeType($type);
-  }
-
-  /**
-   * Check if provider can use field.
-   */
-  protected function providerCanUseDocumentField($field_name, $type, $provider) {
-    static $cache = [];
-
-    if (isset($cache[$type][$field_name][$provider->id])) {
-      return $cache[$type][$field_name][$provider->id];
-    }
-
-    $public_fields = [
-      'boost_document',
-      'changed',
-      'created',
-      'langcode',
-      'provider',
-      'published',
-      'rendered_item',
-      'search_api_id',
-      'search_api_relevance',
-      'title',
-      'type',
-      'uuid',
-      'vid',
-    ];
-
-    if (in_array($field_name, $public_fields)) {
-      $cache[$type][$field_name][$provider->id] = TRUE;
-      return TRUE;
-    }
-
-    $field_config = FieldConfig::loadByName('node', $type, $field_name);
-    if (!$field_config) {
-      throw new \Exception(strtr('Field @field does not exist', [
-        '@field' => $field_name,
-      ]));
-    }
-
-    if (!$provider->isAnonymous() && $field_config->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
-      $cache[$type][$field_name][$provider->id] = TRUE;
-      return TRUE;
-    }
-
-    if (!$field_config->getThirdPartySetting('docstore', 'private', FALSE)) {
-      $cache[$type][$field_name][$provider->id] = TRUE;
-      return TRUE;
-    }
-
-    $cache[$type][$field_name][$provider->id] = FALSE;
-    return FALSE;
   }
 
 }
