@@ -1,5 +1,6 @@
 <?php
 
+//const API_URL = 'https://docstore.test/';
 const API_URL = 'https://ocha:dev@dev.docstore-unocha-org.ahconu.org/';
 
 function post($url, $data) {
@@ -13,6 +14,7 @@ function post($url, $data) {
       'Content-Type: application/json'
     ],
     CURLOPT_POSTFIELDS => json_encode($data),
+    //CURLOPT_SSL_VERIFYPEER => 0,
   ]);
 
   // Send the request.
@@ -22,6 +24,7 @@ function post($url, $data) {
 
   // Check for errors.
   if ($response === FALSE || curl_errno($ch)) {
+    print('Curl error:' . curl_error($ch));
     print('Curl HTTP code:' . curl_getinfo($ch, CURLINFO_HTTP_CODE));
     print('Curl url:' . $url);
   }
@@ -33,12 +36,10 @@ function createNodeType() {
 
 function createVocabularies() {
   $vocabularies = [
-    'Bundles' => 'hrinfo_bundles',
     'Coordination hubs' => 'hrinfo_coordination_hubs',
     'Document type' => 'hrinfo_document_type',
     'Operations' => 'hrinfo_operations',
     'Organizations' => 'hrinfo_organizations',
-    'Sectors' => 'hrinfo_sectors',
     'Webspaces' => 'hrinfo_webspaces',
   ];
 
@@ -60,10 +61,11 @@ function createHrinfoFields() {
       'type' => 'string',
       'multiple' => FALSE,
     ],
+    // Local coordination groups. 'Clusters/Sectors'.
     'hrinfo_bundles' => [
       'label' => 'Bundles',
       'type' => 'term_reference',
-      'target' => 'hrinfo_bundles',
+      'target' => 'local_coordination_groups',
       'multiple' => TRUE,
     ],
     'hrinfo_coordination_hubs' => [
@@ -102,9 +104,11 @@ function createHrinfoFields() {
     'hrinfo_sectors' => [
       'label' => 'Sectors',
       'type' => 'term_reference',
-      'target' => 'hrinfo_sectors',
+      'target' => 'global_coordination_groups',
       'multiple' => TRUE,
     ],
+    // @todo HRinfo themes aren't the same as RW themes.
+    // We need another vocab for this.
     'hrinfo_themes' => [
       'label' => 'Themes',
       'type' => 'term_reference',
@@ -173,30 +177,23 @@ function createHrinfoFields() {
       $data['target'] = $field['target'];
     }
 
-    post(API_URL . 'api/v1/fields/documents', $data);
+    post(API_URL . 'api/v1/types/document/fields', $data);
   }
 }
 
+/**
+ * Sync HRinfo Documents.
+ *
+ * This ignores any documents already in the docstore - we could have a check
+ * on the hrinfo id to prevent duplications.
+ */
 function syncDocuments($url = '', $counter = 1) {
   if (empty($url)) {
     $url = 'https://www.humanitarianresponse.info/api/v1.0/documents';
   }
 
   $raw = file_get_contents($url);
-  if ($raw === FALSE) {
-    print "Couldn't get contents from " . $url . "\n";
-    print "Trying again in 10 seconds...\n";
-    sleep(10);
-    syncDocuments($url, $counter);
-  }
   $data = json_decode($raw);
-
-  if ($data === NULL) {
-    print "Couldn't get valid contents from " . $url . "\n";
-    print "Trying again in 10 seconds...\n";
-    sleep(10);
-    syncDocuments($url, $counter);
-  }
 
   $documents = [];
   foreach ($data->data as $row) {
@@ -312,7 +309,7 @@ function syncDocuments($url = '', $counter = 1) {
           $bundle_data[] = [
             '_action' => 'lookup',
             '_reference' => 'term',
-            '_target' => 'hrinfo_bundles',
+            '_target' => 'local_coordination_groups',
             '_field' => 'id',
             'value' => $bundle->id,
           ];
@@ -323,7 +320,7 @@ function syncDocuments($url = '', $counter = 1) {
     }
 
     // Operations.
-    if (isset($row->operation) && !empty($row->operation)) {
+    if (isset($row->operation) && !empty($row->operation[0])) {
       $operation_data = [];
       foreach ($row->operation as $operation) {
         if (isset($operation->label)) {
@@ -402,15 +399,14 @@ function syncDocuments($url = '', $counter = 1) {
       'author' => 'hrinfo',
       'documents' => $documents,
     ];
+    post(API_URL . 'api/v1/documents/documents/bulk', $post_data);
+    // Give it some time to process.
+    sleep(20);
   }
-
-  post(API_URL . 'api/v1/documents/bulk', $post_data);
-  // Give it some time to process.
-  sleep(20);
 
   // Check for more data but stop before we overload with files.
   if ($counter > 50) {
-    print "Stopping at 50 pages";
+    print "\nStopping at 50 pages\n";
   }
   elseif (isset($data->next->href)) {
     $counter++;
