@@ -401,6 +401,17 @@ class ManageFields {
     // Add private.
     $this->createDocumentBaseFieldPrivate($machine_name);
 
+    // Update rendered item on search index.
+    $index = Index::load('documents');
+    if ($rendered_item_field = $index->getField('rendered_item')) {
+      $rendered_item_config = $rendered_item_field->getConfiguration();
+      if (!isset($rendered_item_config['view_mode']['entity:node'][$machine_name])) {
+        $rendered_item_config['view_mode']['entity:node'][$machine_name] = 'search_index';
+        $rendered_item_field->setConfiguration($rendered_item_config);
+        $index->save();
+      }
+    }
+
     // Keep track of private types.
     $this->rebuildDocumentTypes($this->provider);
 
