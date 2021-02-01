@@ -37,14 +37,15 @@ backend_config:
     host: solr
     port: 8983
     path: /
-    core: search_api_solr_8.x-2.0
+    core: search_api_solr_8.x-3.0
     timeout: 5
     index_timeout: 5
     optimize_timeout: 10
     finalize_timeout: 30
     commit_within: 1000
-    solr_version: '7'
+    solr_version: '8'
     http_method: AUTO
+    skip_schema_check: false
     jmx: false
     solr_install_dir: ''
   disabled_field_types: {  }
@@ -59,7 +60,7 @@ backend_config:
   index_single_documents_fallback_count: 10
   retrieve_data: true
   highlight_data: false
-  skip_schema_check: false
+  fallback_multiple: false
   server_prefix: ''
   domain: generic
   environment: default
