@@ -948,6 +948,7 @@ class DocumentController extends ControllerBase {
       'created' => date(DATE_ATOM, $file->getCreatedTime()),
       'changed' => date(DATE_ATOM, $file->getChangedTime()),
       'mimetype' => $file->getMimeType(),
+      'size' => $file->getSize(),
     ];
 
     return $this->createJsonResponse($data, 200);
