@@ -132,6 +132,8 @@ class DocumentReadController extends ControllerBase {
       $query->keys($request->query->get('s'));
     }
 
+    $provider = $this->getProvider();
+
     // Add node_type if not any.
     if ($type !== 'any') {
       $query->addCondition('type', $type);
@@ -145,7 +147,6 @@ class DocumentReadController extends ControllerBase {
     }
 
     // Check published and private.
-    $provider = $this->getProvider();
     if ($provider->isAnonymous()) {
       $query->addCondition('published', TRUE);
       $query->addCondition('private', TRUE, '<>');
