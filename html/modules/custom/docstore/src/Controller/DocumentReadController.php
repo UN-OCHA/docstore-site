@@ -620,6 +620,110 @@ class DocumentReadController extends ControllerBase {
   }
 
   /**
+   * Get all files for this document type.
+   */
+  public function getDocumentAllFiles($type, Request $request) {
+    // Check if type is allowed.
+    $type = $this->typeAllowed($type, 'read');
+
+    // Check if provider has access.
+    if ($type !== 'any') {
+      $this->providerCanRead($this->getNodeType($type));
+    }
+
+    // Query index.
+    $index = Index::load('documents');
+    $query = $index->query();
+
+    // Add default sort.
+    $query->sort('created', 'ASC');
+
+    $provider = $this->getProvider();
+
+    // Add node_type if not any.
+    if ($type !== 'any') {
+      $query->addCondition('type', $type);
+    }
+    else {
+      // Limit to accessible node types.
+      $accessible_types = $this->getAccessibleDocumentTypes($provider);
+      if (!empty($accessible_types)) {
+        $query->addCondition('type', $accessible_types, 'IN');
+      }
+    }
+
+    // Check published and private.
+    $provider = $this->getProvider();
+    if ($provider->isAnonymous()) {
+      $query->addCondition('published', TRUE);
+      $query->addCondition('private', TRUE, '<>');
+    }
+    else {
+      // Return private documents of provider.
+      $group_provider = $query->createConditionGroup('OR');
+      $group_provider->addCondition('provider', $provider->uuid());
+
+      // Or public published documents.
+      $group_published = $query->createConditionGroup('AND');
+      $group_published->addCondition('published', TRUE);
+      $group_published->addCondition('private', TRUE, '<>');
+
+      $group_provider->addConditionGroup($group_published);
+      $query->addConditionGroup($group_provider);
+    }
+
+    try {
+      // Execute.
+      $results = $query->execute();
+    }
+    catch (SearchApiSolrException $exception) {
+      throw new BadRequestHttpException($exception->getMessage());
+    }
+
+    // Use solr response directly.
+    $solr_response = $results->getExtraData('search_api_solr_response', []);
+
+    // Build output data.
+    $server = $index->getServerInstance();
+    $solr = $server->getBackend();
+
+    // Make sure backend is solr.
+    if (!($solr instanceof SolrBackendInterface)) {
+      throw new BadRequestHttpException('Only solr backend is supported');
+    }
+
+    // Massage the data.
+    $data = $this->buildDocumentOutputFromSolr($solr_response['response']['docs'], $solr, $index, $request->getSchemeAndHttpHost(), $provider);
+
+    // Add cache tags and contexts.
+    $cache = [
+      'contexts' => [
+        'user',
+        'url.query_args:filter',
+        'url.query_args:sort',
+        'url.query_args:page',
+      ],
+      'tags' => [
+        'documents',
+      ],
+    ];
+
+    // Add cache tags.
+    foreach ($data as &$document) {
+      $cache['tags'][] = $document['search_api_id'];
+      unset($document['search_api_id']);
+    }
+
+    // Only keep files parts.
+    $files_data = [];
+    foreach ($data as $row) {
+      $files_data = array_merge($files_data, $row['files']);
+    }
+
+    return $this->createCacheableJsonResponse($cache, $files_data, 200);
+  }
+
+  /**
    * Get document terms.
    */
   public function getDocumentTerms($type, $id, Request $request) {
