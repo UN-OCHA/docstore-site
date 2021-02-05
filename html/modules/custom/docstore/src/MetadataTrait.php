@@ -3,11 +3,12 @@
 namespace Drupal\docstore;
 
 use Drupal\field\Entity\FieldConfig;
-use Drupal\docstore\Controller\VocabularyController;
+use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Entity\RevisionableEntityBundleInterface;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\taxonomy\Entity\Term;
-use Drupal\taxonomy\Entity\Vocabulary;
-use Drupal\user\Entity\User;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
  * Build metadata structure.
@@ -53,104 +54,48 @@ trait MetadataTrait {
             $item[$key] = [];
           }
 
-          // Single value with multiple properties or action.
+          // Ensure the values are an array of values/actions.
           if ($this->arrayIsAssociative($values)) {
-            if (isset($values['_action']) && $values['_action'] === 'lookup') {
-              // Lookup target.
-              $entity = $this->findTargetByProperty($values['_reference'], $values['_target'], $values['_field'], $values['value']);
-              if ($entity) {
-                $item[$key][] = [
-                  'target_uuid' => $entity->uuid(),
-                ];
-              }
-            }
-            elseif (isset($values['_action']) && $values['_action'] === 'create') {
-              // Allow on the fly creation of child items.
-              if ($values['_reference'] === 'node') {
-                // Add author.
-                if (!isset($values['_data']['author'])) {
-                  $values['_data']['author'] = $author;
-                }
-
-                $child_document = $this->createDocumentForProvider($values['_target'], $values['_data'], $provider);
-                if ($child_document) {
-                  $item[$key][] = [
-                    'target_uuid' => $child_document->uuid(),
-                  ];
-                }
-              }
-
-              if ($values['_reference'] === 'term') {
-                // Add author.
-                if (!isset($values['_data']['author'])) {
-                  $values['_data']['author'] = $author;
-                }
-
-                $target_vocabulary = $this->loadVocabulary($values['_target']);
-                $child_term = $this->createTermFromParameters($values['_data'], $target_vocabulary, $provider);
-                if ($child_term) {
-                  $item[$key][] = [
-                    'target_uuid' => $child_term->uuid(),
-                  ];
-                }
-              }
-            }
-            else {
-              // No action defined, pass as multi property.
-              $item[$key][] = $values;
-            }
+            $values = [$values];
           }
-          else {
-            // Multiple values as array.
-            foreach ($values as $value) {
-              // Nested array.
-              if (is_array($value)) {
-                if (isset($value['_action']) && $value['_action'] === 'lookup') {
-                  // Lookup target.
-                  $entity = $this->findTargetByProperty($value['_reference'], $value['_target'], $value['_field'], $value['value']);
-                  if ($entity) {
-                    $item[$key][] = [
-                      'target_uuid' => $entity->uuid(),
-                    ];
-                  }
-                }
-                elseif (isset($value['_action']) && $value['_action'] === 'create') {
-                  // Allow on the fly creation of child items.
-                  if ($value['_reference'] === 'node') {
-                    $child_document = $this->createDocumentForProvider($value['_target'], $value['_data'], $provider);
-                    if ($child_document) {
-                      $item[$key][] = [
-                        'target_uuid' => $child_document->uuid(),
-                      ];
-                    }
-                  }
 
-                  if ($value['_reference'] === 'term') {
-                    // Add author.
-                    if (!isset($values['_data']['author'])) {
-                      $values['_data']['author'] = $author;
-                    }
-
-                    $target_vocabulary = $this->vocabularyLoad($value['_target']);
-                    $child_term = $this->createTermFromParameters($value['_data'], $target_vocabulary, $provider);
-                    if ($child_term) {
-                      $item[$key][] = [
-                        'target_uuid' => $child_term->uuid(),
-                      ];
-                    }
-                  }
+          // Multiple values as array.
+          foreach ($values as $value) {
+            // Nested array.
+            if (is_array($value)) {
+              if (isset($value['_action']) && $value['_action'] === 'lookup') {
+                // Lookup target.
+                $entity = $this->findTargetByProperty($value['_reference'], $value['_target'], $value['_field'], $value['value']);
+                if ($entity) {
+                  $item[$key][] = [
+                    'target_uuid' => $entity->uuid(),
+                  ];
                 }
-                else {
-                  // No action defined, pass as multi property.
-                  $item[$key][] = $value;
+              }
+              elseif (isset($value['_action']) && $value['_action'] === 'create') {
+                // Allow on the fly creation of child items.
+                if ($value['_reference'] === 'node') {
+                  $item[$key][] = [
+                    'target_uuid' => $this->createChildDocument($author, $value, $provider),
+                  ];
+                }
+
+                if ($value['_reference'] === 'term') {
+                  $item[$key][] = [
+                    'target_uuid' => $this->createChildTerm($author, $value, $provider),
+                  ];
                 }
               }
               else {
-                // Assume it's a uuid.
-                $item[$key][] = [
-                  'target_uuid' => $value,
-                ];
+                // No action defined, pass as multi property.
+                $item[$key][] = $value;
               }
+            }
+            else {
+              // Assume it's a uuid.
+              $item[$key][] = [
+                'target_uuid' => $value,
+              ];
             }
           }
         }
@@ -158,6 +103,66 @@ trait MetadataTrait {
     }
 
     return $item;
+  }
+
+  /**
+   * Create a child document from the provided data.
+   *
+   * @param string $author
+   *   Author (same as parent).
+   * @param array $data
+   *   Data to create the document with.
+   * @param \Drupal\Core\Session\AccountInterface $provider
+   *   Provider.
+   *
+   * @return string
+   *   Document uuid.
+   */
+  protected function createChildDocument($author, array $data, AccountInterface $provider) {
+    $document_controller = \Drupal::service('docstore.document_controller');
+
+    // Add author.
+    if (!isset($data['_data']['author'])) {
+      $data['_data']['author'] = $author;
+    }
+
+    $node_type = $document_controller
+      ->loadNodeType($data['_target']);
+
+    $result = $document_controller
+      ->createDocumentFromParameters($node_type, $data['_data'], $provider);
+
+    return $result['uuid'];
+  }
+
+  /**
+   * Create a child term from the provided data.
+   *
+   * @param string $author
+   *   Author (same as parent).
+   * @param array $data
+   *   Data to create the term with.
+   * @param \Drupal\Core\Session\AccountInterface $provider
+   *   Provider.
+   *
+   * @return string
+   *   Term uuid.
+   */
+  protected function createChildTerm($author, array $data, AccountInterface $provider) {
+    $vocabulary_controller = \Drupal::service('docstore.vocabulary_controller');
+
+    // Add author.
+    if (!isset($data['_data']['author'])) {
+      $data['_data']['author'] = $author;
+    }
+
+    $vocabulary = $vocabulary_controller
+      ->loadVocabulary($data['_target']);
+
+    $result = $vocabulary_controller
+      ->createTermFromParameters($vocabulary, $data['_data'], $provider);
+
+    return $result['uuid'];
   }
 
   /**
@@ -190,19 +195,11 @@ trait MetadataTrait {
     $bundles = array_values($handler_settings['target_bundles']);
     $bundle = reset($bundles);
 
-    // Load vocabulary.
-    $vocabulary = $this->loadVocabulary($bundle);
+    // Get the vocabulary controller to create the terms.
+    $vocabulary_controller = \Drupal::service('docstore.vocabulary_controller');
 
-    $vocabulary_controller = new VocabularyController(
-      $this->config,
-      $this->database,
-      $this->entityFieldManager,
-      $this->entityRepository,
-      $this->entityTypeManager,
-      $this->loggerFactory,
-      $this->state,
-      $this->entityUsage,
-    );
+    // Load vocabulary.
+    $vocabulary = $vocabulary_controller->loadVocabulary($bundle);
 
     // Loop values.
     if (!is_array($values)) {
@@ -241,8 +238,10 @@ trait MetadataTrait {
         'author' => $author,
       ];
 
-      $term = $vocabulary_controller->createTermFromParameters($params, $vocabulary, $provider);
-      $value = $term->uuid();
+      $result = $vocabulary_controller
+        ->createTermFromParameters($vocabulary, $params, $provider);
+
+      $value = $result['uuid'];
     }
 
     return $values;
@@ -273,66 +272,251 @@ trait MetadataTrait {
   }
 
   /**
-   * Create a term.
+   * Update the fields of an entity.
    *
+   * @param \Drupal\Core\Entity\FieldableEntityInterface $entity
+   *   Fieldable entity (ex: node, term).
    * @param array $params
-   *   Array of values.
-   * @param \Drupal\taxonomy\Entity\Vocabulary $vocabulary
-   *   Vocabulary.
-   * @param \Drupal\user\Entity\User $provider
+   *   Parameters.
+   * @param array $protected_fields
+   *   List of fields that cannot be changed.
+   *
+   * @return array
+   *   List of updated fields with field names as keys.
+   *
+   * @throws \Symfony\Component\HttpKernel\Exception\BadRequestHttpException
+   *   400 Bad Request if the field cannot be changed or doesn't exist.
+   */
+  public function updateEntityFieldsFromParameters(FieldableEntityInterface $entity, array $params, array $protected_fields = []) {
+    $updated_fields = [];
+
+    // Update all fields specified in metadata.
+    if (isset($params['metadata'])) {
+      $metadata = $params['metadata'];
+      if (!is_array($metadata) || $this->arrayIsAssociative($metadata)) {
+        throw new BadRequestHttpException('Metadata has to be an array');
+      }
+
+      foreach ($metadata as $metaitem) {
+        foreach ($metaitem as $name => $values) {
+          $updated_fields[$this->setEntityFieldValue($entity, $name, $values, $protected_fields)] = TRUE;
+        }
+      }
+      unset($params['metadata']);
+    }
+
+    // Update all fields specified in params.
+    foreach ($params as $name => $values) {
+      // Ignore revision fields.
+      if ($name === 'new_revision' || $name === 'revision_log' || $name === 'draft') {
+        continue;
+      }
+
+      $updated_fields[$this->setEntityFieldValue($entity, $name, $values, $protected_fields)] = TRUE;
+    }
+
+    return $updated_fields;
+  }
+
+  /**
+   * Set the field values of an entity.
+   *
+   * @param \Drupal\Core\Entity\FieldableEntityInterface $entity
+   *   Fieldable entity (ex: node, term).
+   * @param string $name
+   *   Field name.
+   * @param mixed $values
+   *   Field values.
+   * @param array $protected_fields
+   *   List of fields that cannot be changed.
+   *
+   * @return string
+   *   Field name.
+   *
+   * @throws \Symfony\Component\HttpKernel\Exception\BadRequestHttpException
+   *   400 Bad Request if the field cannot be changed or doesn't exist.
+   */
+  public function setEntityFieldValue(FieldableEntityInterface $entity, $name, $values, array $protected_fields = []) {
+    // Make sure protected fields aren't set.
+    if (isset($protected_fields[$name])) {
+      throw new BadRequestHttpException(strtr('Field @name cannot be changed', ['@name' => $name]));
+    }
+
+    if ($entity->hasField($name)) {
+      // @todo explain why we do that.
+      // @see https://github.com/UN-OCHA/docstore-site/pull/75
+      if (is_array($values) && !$this->arrayIsAssociative($values)) {
+        foreach ($values as $key => $value) {
+          $values[$key] = isset($value['uuid']) ? $value['uuid'] : $value;
+        }
+      }
+      $entity->set($name, $values);
+    }
+    else {
+      throw new BadRequestHttpException(strtr('Field @name does not exist', ['@name' => $name]));
+    }
+
+    return $name;
+  }
+
+  /**
+   * Empty the given entity's fields.
+   *
+   * @param \Drupal\Core\Entity\FieldableEntityInterface $entity
+   *   Fieldable entity (ex: node, term).
+   * @param array $skip_fields
+   *   List of fields to skip.
+   */
+  public function emptyEntityFields(FieldableEntityInterface $entity, array $skip_fields = []) {
+    $fields = $entity->getFields(FALSE);
+    foreach ($fields as $field) {
+      $name = $field->getName();
+
+      if (!isset($skip_fields[$name]) && !$field->isEmpty()) {
+        $entity->set($name, NULL);
+      }
+    }
+  }
+
+  /**
+   * Create a new revision for the given entity.
+   *
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   Entity (ex: term, node).
+   * @param array $params
+   *   Request parameters.
+   * @param \Drupal\Core\Session\AccountInterface $provider
    *   Provider.
    *
-   * @return \Drupal\taxonomy\Entity\Term
-   *   Newly created term.
+   * @todo maybe this should be moved to the ResourceTrait?
    */
-  public function createTermFromParameters(array $params, Vocabulary $vocabulary, User $provider) {
-    if (empty($params['author'])) {
-      throw new \Exception('Author is required');
+  public function createEntityRevisionFromParameters(ContentEntityInterface $entity, array $params, AccountInterface $provider) {
+    // Check if we need to create a new revision.
+    $entity->setRevisionCreationTime(time());
+
+    // Check if instructed to create a new revision.
+    if (!empty($params['new_revision'])) {
+      $create_revision = TRUE;
     }
+    // Otherwise check if revisions should always be created for this resource.
+    else {
+      // Get the bundle entity (vocabulary, node type etc.).
+      $bundle_entity = $entity->get($entity->getEntityType()->getKey('bundle'))->entity;
 
-    // Term.
-    $item = [
-      'name' => $params['label'],
-      'vid' => $vocabulary->id(),
-      'author' => $params['author'],
-      'created' => [],
-      'provider_uuid' => [],
-      'parent' => [],
-      'description' => $params['description'] ?? '',
-    ];
-
-    // Set creation time.
-    $item['created'][] = [
-      'value' => time(),
-    ];
-
-    // Set owner.
-    $item['provider_uuid'][] = [
-      'target_uuid' => $provider->uuid(),
-    ];
-
-    // Check for meta tags.
-    if (isset($params['metadata']) && $params['metadata']) {
-      $metadata = $params['metadata'];
-      $item = array_merge($item, $this->buildItemDataFromMetaData($metadata, $vocabulary->id(), $provider, $params['author'], 'term'));
-    }
-
-    // Create term.
-    $term = Term::create($item);
-
-    // Check for invalid fields.
-    foreach ($item as $key => $data) {
-      if (!$term->hasField($key)) {
-        throw new \Exception(strtr('Unknown field @field', [
-          '@field' => $key,
-        ]));
+      if ($bundle_entity instanceof RevisionableEntityBundleInterface) {
+        $create_revision = $bundle_entity->shouldCreateNewRevision();
+      }
+      else {
+        $create_revision = $bundle_entity->getThirdPartySetting('docstore', 'use_revisions', TRUE);
       }
     }
 
-    // Save.
-    $term->save();
+    // Create a new revision.
+    if ($create_revision) {
+      $entity->revision_log = 'Updated';
+      // @todo add some validation.
+      if (isset($params['revision_log'])) {
+        $entity->revision_log = $params['revision_log'];
+      }
 
-    return $term;
+      $entity->setNewRevision();
+      $entity->setRevisionUserId($provider->id());
+
+      // Save new revision as draft?
+      $entity->isDefaultRevision(TRUE);
+      if (!empty($params['draft'])) {
+        $entity->isDefaultRevision(FALSE);
+      }
+    }
+  }
+
+  /**
+   * Publish entity revision.
+   *
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   Entity (ex: term, node).
+   * @param array $params
+   *   Request parameters.
+   * @param \Drupal\Core\Session\AccountInterface $provider
+   *   Provider.
+   *
+   * @todo maybe this should be moved to the ResourceTrait?
+   */
+  public function publishEntityRevisionFromParameters(ContentEntityInterface $entity, array $params, AccountInterface $provider) {
+    if (!$entity->isDefaultRevision()) {
+      $entity->setRevisionCreationTime(time());
+
+      $entity->revision_log = 'Updated';
+      // @todo add some validation.
+      if (isset($params['revision_log'])) {
+        $entity->revision_log = $params['revision_log'];
+      }
+
+      $entity->setNewRevision();
+      $entity->setRevisionUserId($provider->id());
+
+      $entity->isDefaultRevision(TRUE);
+      $entity->save();
+    }
+  }
+
+  /**
+   * Validate and save an entity.
+   *
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   Entity (ex: term, node).
+   *
+   * @throws \Symfony\Component\HttpKernel\Exception\BadRequestHttpException
+   *   400 Bad Request if there are validation issues.
+   *
+   * @todo maybe this should be moved to the ResourceTrait?
+   */
+  public function validateAndSaveEntity(ContentEntityInterface $entity) {
+    // Trigger validation.
+    $violations = $entity->validate();
+    if (count($violations) > 0) {
+      // We only show the first violation.
+      throw new BadRequestHttpException(strtr('Unable to save document: @error (@path)', [
+        '@error' => strip_tags($violations->get(0)->getMessage()),
+        '@path' => $violations->get(0)->getPropertyPath(),
+      ]));
+    }
+
+    $entity->save();
+  }
+
+  /**
+   * Validate that an entity's bundle matches the given bundle entity.
+   *
+   * \Drupal\Core\Entity\EntityInterface $entity
+   *   Entity (ex: node, term).
+   * \Drupal\Core\Entity\EntityInterface $bundle_entity
+   *   Bundle entity (ex: node type, vocabulary)
+   *
+   * @throws \Symfony\Component\HttpKernel\Exception\BadRequestHttpException
+   *   400 Bad Request if the bundles don't match.
+   */
+  protected function validateEntityBundle(EntityInterface $entity, EntityInterface $bundle_entity) {
+    if ($entity->bundle() !== $bundle_entity->id()) {
+      throw new BadRequestHttpException(strtr('Wrong @type', [
+        '@type' => $bundle_entity->getEntityTypeId(),
+      ]));
+    }
+  }
+
+  /**
+   * Check if in entity is in use.
+   *
+   * \Drupal\Core\Entity\EntityInterface $entity
+   *   The entity to check.
+   *
+   * @return bool
+   *   TRUE if entity is used somewhere.
+   *
+   * @todo maybe this should be moved to the ResourceTrait?
+   */
+  protected function entityInUse(EntityInterface $entity) {
+    return !empty($this->entityUsage->listSources($entity));
   }
 
   /**
@@ -350,7 +534,7 @@ trait MetadataTrait {
    * @return bool
    *   Whether the provider can use the field or not.
    *
-   * @throw \Exception
+   * @throws \Exception
    *   Generic execption when the field doesn't exist.
    *
    * @todo review the exception and make that more generic, for example if we
@@ -433,6 +617,24 @@ trait MetadataTrait {
 
     // Otherwise deny access to the field.
     $cache[$entity_type][$bundle][$field_name][$provider->id()] = FALSE;
+    return FALSE;
+  }
+
+  /**
+   * Check if an array is associative.
+   *
+   * @param array $array
+   *   Array to check.
+   *
+   * @return bool
+   *   TRUE if the array is an associative array.
+   */
+  protected function arrayIsAssociative(array $array) {
+    foreach ($array as $key => $value) {
+      if (is_string($key)) {
+        return TRUE;
+      }
+    }
     return FALSE;
   }
 

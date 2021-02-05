@@ -85,6 +85,14 @@ function _docstore_setup_testing() {
   $documents = \Drupal::entityTypeManager()->getStorage('node')->loadMultiple();
   \Drupal::entityTypeManager()->getStorage('node')->delete($documents);
 
+  // Delete all node types.
+  $node_types = \Drupal::entityTypeManager()->getStorage('node_type')->loadMultiple();
+  \Drupal::entityTypeManager()->getStorage('node_type')->delete($node_types);
+
+  // Rebuild endpoints.
+  \Drupal::service('docstore.document_controller')
+    ->rebuildEndpoints();
+
   // Delete all terms.
   // @todo skip shared vocabularies.
   $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadMultiple();
@@ -232,6 +240,8 @@ function _docstore_setup_testing() {
   Cache::invalidateTags(['documents']);
   Cache::invalidateTags(['webhooks']);
   Cache::invalidateTags(['document_fields']);
+  Cache::invalidateTags(['terms']);
+  Cache::invalidateTags(['vocabularies']);
 }
 
 /**
@@ -246,6 +256,7 @@ function docstore_create_node_type($type = 'document', $endpoint = 'documents') 
   $manager = new ManageFields($provider, $type, Drupal::service('entity_field.manager'), Drupal::service('database'));
   $manager->createDocumentType([
     'label' => ucfirst($type),
+    'machine_name' => $type,
     'endpoint' => $endpoint,
     'author' => 'common',
     'fields_allowed' => TRUE,

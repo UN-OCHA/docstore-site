@@ -11,14 +11,18 @@ use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\State\State;
 use Drupal\docstore\ManageFields;
 use Drupal\docstore\MetadataTrait;
 use Drupal\docstore\ProviderTrait;
 use Drupal\docstore\ResourceTrait;
 use Drupal\entity_usage\EntityUsage;
+use Drupal\taxonomy\Entity\Term;
+use Drupal\taxonomy\Entity\Vocabulary;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -87,6 +91,31 @@ class VocabularyController extends ControllerBase {
   protected $entityUsage;
 
   /**
+   * Protected term fields.
+   *
+   * @var array
+   */
+  protected static $protectedTermFields = [
+    'author' => TRUE,
+    'provider_uuid' => TRUE,
+    'changed' => TRUE,
+    'created' => TRUE,
+    'default_langcode' => TRUE,
+    'langcode' => TRUE,
+    'parent' => TRUE,
+    'revision_created' => TRUE,
+    'revision_id' => TRUE,
+    'revision_log_message' => TRUE,
+    'revision_user' => TRUE,
+    'status' => TRUE,
+    'tid' => TRUE,
+    'uuid' => TRUE,
+    'vid' => TRUE,
+    'vocabulary' => TRUE,
+    'weight' => TRUE,
+  ];
+
+  /**
    * {@inheritdoc}
    */
   public function __construct(ConfigFactoryInterface $config,
@@ -142,7 +171,7 @@ class VocabularyController extends ControllerBase {
     // Parse JSON.
     $params = $this->getRequestContent($request);
 
-    // Get provider.
+    /** @var \Drupal\Core\Session\AccountInterface $provider */
     $provider = $this->requireProvider();
 
     // Delete field storage and config.
@@ -172,6 +201,7 @@ class VocabularyController extends ControllerBase {
    * Get vocabulary.
    */
   public function getVocabulary($id) {
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
     $vocabulary = $this->loadVocabulary($id);
 
     $data = [
@@ -196,10 +226,10 @@ class VocabularyController extends ControllerBase {
     // Parse JSON.
     $params = $this->getRequestContent($request);
 
-    // Load vocabulary.
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
     $vocabulary = $this->loadVocabulary($id);
 
-    // Get provider.
+    /** @var \Drupal\Core\Session\AccountInterface $provider */
     $provider = $this->requireProvider();
 
     // Delete field storage and config.
@@ -228,7 +258,7 @@ class VocabularyController extends ControllerBase {
    * Delete vocabulary.
    */
   public function deleteVocabulary($id, Request $request) {
-    // Load vocabulary.
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
     $vocabulary = $this->loadVocabulary($id);
 
     // Check if vocabulary is in use.
@@ -236,7 +266,7 @@ class VocabularyController extends ControllerBase {
       throw new BadRequestHttpException('Vocabulary is in use and can not be deleted');
     }
 
-    // Get provider.
+    /** @var \Drupal\Core\Session\AccountInterface $provider */
     $provider = $this->requireProvider();
 
     $manager = new ManageFields($provider, '', $this->entityFieldManager, $this->database);
@@ -263,6 +293,7 @@ class VocabularyController extends ControllerBase {
    * Get vocabulary terms.
    */
   public function getVocabularyTerms($id, Request $request) {
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
     $vocabulary = $this->loadVocabulary($id);
 
     // @todo add some validation of the parameters.
@@ -288,6 +319,7 @@ class VocabularyController extends ControllerBase {
    * Get vocabulary fields.
    */
   public function getVocabularyFields($id) {
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
     $vocabulary = $this->loadVocabulary($id);
 
     $data = [];
@@ -310,9 +342,10 @@ class VocabularyController extends ControllerBase {
    * Get vocabulary field.
    */
   public function getVocabularyField($id, $field_id) {
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
     $vocabulary = $this->loadVocabulary($id);
 
-    // Get provider.
+    /** @var \Drupal\Core\Session\AccountInterface $provider */
     $provider = $this->requireProvider();
 
     // Get field config.
@@ -342,10 +375,10 @@ class VocabularyController extends ControllerBase {
     // Parse JSON.
     $params = $this->getRequestContent($request);
 
-    // Load provider.
+    /** @var \Drupal\Core\Session\AccountInterface $provider */
     $provider = $this->requireProvider();
 
-    // Id is either UUID or machine name.
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
     $vocabulary = $this->loadVocabulary($id);
 
     // Create vocabulary field.
@@ -377,10 +410,10 @@ class VocabularyController extends ControllerBase {
     // Parse JSON.
     $params = $this->getRequestContent($request);
 
-    // Load provider.
+    /** @var \Drupal\Core\Session\AccountInterface $provider */
     $provider = $this->requireProvider();
 
-    // Id is either UUID or machine name.
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
     $vocabulary = $this->loadVocabulary($id);
 
     // Create vocabulary field.
@@ -408,10 +441,10 @@ class VocabularyController extends ControllerBase {
    * Delete vocabulary fields.
    */
   public function deleteVocabularyField($id, $field_id, Request $request) {
-    // Load provider.
+    /** @var \Drupal\Core\Session\AccountInterface $provider */
     $provider = $this->requireProvider();
 
-    // Id is either UUID or machine name.
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
     $vocabulary = $this->loadVocabulary($id);
 
     // Create vocabulary field.
@@ -454,51 +487,84 @@ class VocabularyController extends ControllerBase {
   }
 
   /**
-   * Create term on vocabulary.
+   * Process terms (create, update, delete) in bulk.
+   *
+   * @param string $id
+   *   Vocabulary ID.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   API response.
    */
-  public function createTermOnVocabulary($id, Request $request) {
+  public function processTermsInBulk($id, Request $request) {
     // Parse JSON.
     $params = $this->getRequestContent($request);
 
+    /** @var \Drupal\taxonomy\Entity\Vocabulary */
     $vocabulary = $this->loadVocabulary($id);
 
-    // Check if provider can create terms.
-    $this->providerCanCreateUpdateDelete($vocabulary);
+    /** @var \Drupal\Core\Session\AccountInterface $provider */
+    $provider = $this->requireProvider();
 
-    $params['vocabulary'] = $vocabulary->uuid();
-    $data = $this->createTermFromUserParameters($params);
+    // Check if the provider can create/update/delete terms.
+    $this->providerCanCreateUpdateDelete($vocabulary, $provider);
 
-    return $this->createJsonResponse($data, 201);
-  }
+    // @todo move all those checks in a separate class to validate request
+    // content.
+    //
+    // Check that the author property is set.
+    if (empty($params['author']) || !is_string($params['author'])) {
+      throw new BadRequestHttpException('The "author" property is required and must be a string');
+    }
+    $author = $params['author'];
 
-  /**
-   * Create term on vocabulary.
-   */
-  public function createTermOnVocabularyInBulk($id, Request $request) {
-    // Parse JSON.
-    $params = $this->getRequestContent($request);
-
-    $vocabulary = $this->loadVocabulary($id);
-
-    // Check if provider can create terms.
-    $this->providerCanCreateUpdateDelete($vocabulary);
-
-    if (empty($params['terms'])) {
-      throw new BadRequestHttpException('terms is required');
+    // Check that the list of terms is present.
+    if (empty($params['terms']) || !is_array($params['terms'])) {
+      throw new BadRequestHttpException('The "terms" property is required and must be an array.');
     }
 
     $data = [];
-
     foreach ($params['terms'] as $term) {
-      // Add common fields.
-      $term['author'] = $params['author'];
-      $term['vocabulary'] = $vocabulary->uuid();
+      // Default to creation for compatibility.
+      // @todo add breaking change by requiring the "_action" parameter?
+      $action = $term['_action'] ?? 'create';
+      unset($term['_action']);
 
-      // Create term.
-      $data[] = $this->createTermFromUserParameters($term);
+      try {
+        switch ($action) {
+          case 'create':
+            // We only add the author when creating terms as it cannot be
+            // changed afterwards.
+            $term['author'] = $author;
+            $data[] = $this->createTermFromParameters($vocabulary, $term, $provider);
+            break;
+
+          case 'update':
+            $data[] = $this->updateTermFromParameters($vocabulary, $term, $provider);
+            break;
+
+          case 'delete':
+            $data[] = $this->deleteTermFromParameters($vocabulary, $term, $provider);
+            break;
+
+          default:
+            throw new BadRequestHttpException('Unrecognized action');
+        }
+      }
+      catch (\Exception $exception) {
+        $code = $exception instanceof HttpException ? $exception->getStatusCode() : 500;
+        $data[] = [
+          'error' => [
+            'status' => $code,
+            'message' => $exception->getMessage(),
+          ],
+        ];
+      }
+
     }
 
-    return $this->createJsonResponse($data, 201);
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -508,70 +574,112 @@ class VocabularyController extends ControllerBase {
     // Parse JSON.
     $params = $this->getRequestContent($request);
 
+    /** @var \Drupal\taxonomy\Entity\Vocabulary */
     $vocabulary = $this->loadVocabulary($id);
 
-    $params['vocabulary'] = $vocabulary->uuid();
-    $data = $this->createTermFromUserParameters($params);
+    /** @var \Drupal\Core\Session\AccountInterface $provider */
+    $provider = $this->requireProvider();
+
+    // Create the term.
+    $data = $this->createTermFromParameters($vocabulary, $params, $provider);
 
     return $this->createJsonResponse($data, 201);
   }
 
   /**
-   * Create term.
+   * Create term from a set of parameters.
+   *
+   * @param \Drupal\taxonomy\Entity\Vocabulary $vocabulary
+   *   Vocabulary.
+   * @param array $params
+   *   Parameters to create a term from.
+   * @param \Drupal\Core\Session\AccountInterface $provider
+   *   Provider.
+   *
+   * @return array
+   *   Associative array with the term uuid and a "Term created" message.
    */
-  protected function createTermFromUserParameters($params) {
-    // Get provider.
-    $provider = $this->requireProvider();
+  public function createTermFromParameters(Vocabulary $vocabulary, array $params, AccountInterface $provider) {
+    // Check if provider can create terms.
+    $this->providerCanCreateUpdateDelete($vocabulary, $provider);
 
     // Check required fields.
     if (empty($params['label'])) {
       throw new BadRequestHttpException('Label is required');
     }
-
-    if (empty($params['vocabulary'])) {
-      throw new BadRequestHttpException('Vocabulary is required');
-    }
-
     if (empty($params['author'])) {
       throw new BadRequestHttpException('Author is required');
     }
 
-    // Load vocabulary.
-    $vocabulary = $this->loadVocabulary($params['vocabulary']);
-
+    // Check if a term with the same label already exists.
     if ($vocabulary->getThirdPartySetting('docstore', 'allow_duplicates') === FALSE) {
-      // Check for duplicate labels.
-      $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
-        'name' => $params['label'],
-        'vid' => $vocabulary->id(),
-      ]);
-      if ($terms) {
-        throw new BadRequestHttpException('Term with same label already exists');
+      $this->checkForDuplicates($vocabulary->id(), $params['label']);
+    }
+
+    // Term.
+    $item = [
+      'name' => $params['label'],
+      'vid' => $vocabulary->id(),
+      'author' => $params['author'],
+      'created' => [],
+      'provider_uuid' => [],
+      'parent' => [],
+      'description' => $params['description'] ?? '',
+    ];
+
+    // Set creation time.
+    $item['created'][] = [
+      'value' => time(),
+    ];
+
+    // Set owner.
+    // @todo check that as it seems to be different from other resources
+    // where only provider is allowed.
+    $item['provider_uuid'][] = [
+      'target_uuid' => $provider->uuid(),
+    ];
+
+    // Check for meta tags.
+    if (isset($params['metadata']) && $params['metadata']) {
+      $metadata = $params['metadata'];
+      $item = array_merge($item, $this->buildItemDataFromMetaData($metadata, $vocabulary->id(), $provider, $params['author'], 'term'));
+    }
+
+    // Create term.
+    $term = Term::create($item);
+
+    // Check for invalid fields.
+    foreach ($item as $key => $data) {
+      if (!$term->hasField($key)) {
+        throw new BadRequestHttpException(strtr('Unknown field @field', [
+          '@field' => $key,
+        ]));
       }
     }
 
-    try {
-      $term = $this->createTermFromParameters($params, $vocabulary, $provider);
-    }
-    catch (\Exception $e) {
-      throw new BadRequestHttpException($e->getMessage(), $e, 400);
-    }
+    // Validate and save the term.
+    $this->validateAndSaveEntity($term);
 
-    $data = [
+    // Invalidate cache.
+    Cache::invalidateTags(['terms']);
+
+    // @todo check if we want to return the entire term's data.
+    return [
       'message' => 'Term created',
       'uuid' => $term->uuid(),
     ];
-
-    return $data;
   }
 
   /**
    * Get term.
    */
   public function getTerm($id, $term_id) {
+    /** @var \Drupal\taxonomy\Entity\Vocabulary */
+    $vocabulary = $this->loadVocabulary($id);
+
     // Load term.
     $term = $this->loadTerm($term_id);
-    $terms = $this->loadTerms([$id], $term->id(), 0, 1);
+    $terms = $this->loadTerms([$vocabulary->id()], $term->id(), 0, 1);
     $data = reset($terms);
 
     // Add cache tags and contexts.
@@ -632,6 +740,7 @@ class VocabularyController extends ControllerBase {
    * Get term revision.
    */
   public function getTermRevision($id, $term_id, $revision_id, Request $request) {
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
     $vocabulary = $this->loadVocabulary($id);
 
     /** @var \Drupal\term\Entity\Term $term */
@@ -639,10 +748,8 @@ class VocabularyController extends ControllerBase {
     if ($term->uuid() !== $term_id) {
       throw new NotFoundHttpException('Revision not found');
     }
-
-    if ($term->getVocabularyId() !== $vocabulary->id()) {
-      throw new BadRequestHttpException('Wrong vocabulary');
-    }
+    // Make sure the term belongs to the vocabulary.
+    $this->validateEntityBundle($term, $vocabulary);
 
     $data = [];
     $term_fields = $term->getFields(TRUE);
@@ -688,171 +795,136 @@ class VocabularyController extends ControllerBase {
    * Update term.
    */
   public function updateTerm($id, $term_id, Request $request) {
-    $protected_fields = [
-      'author',
-      'provider_uuid',
-      'changed',
-      'created',
-      'default_langcode',
-      'langcode',
-      'parent',
-      'revision_created',
-      'revision_id',
-      'revision_log_message',
-      'revision_user',
-      'status',
-      'tid',
-      'uuid',
-      'vid',
-      'vocabulary',
-      'weight',
-    ];
-
     // Parse JSON.
     $params = $this->getRequestContent($request);
 
-    // Load term.
-    $term = $this->loadTerm($term_id);
-
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
     $vocabulary = $this->loadVocabulary($id);
-    if ($term->getVocabularyId() !== $vocabulary->id()) {
-      throw new NotFoundHttpException('Revision not found');
-    }
 
-    // Get the provider.
+    /** @var \Drupal\Core\Session\AccountInterface $provider */
     $provider = $this->requireProvider();
 
+    // Pass the term id to load the term.
+    $params['id'] = $term_id;
+
+    // Update the term.
+    $data = $this->updateTermFromParameters($vocabulary, $params, $provider, $request->getMethod() === 'PUT');
+
+    return $this->createJsonResponse($data, 200);
+  }
+
+  /**
+   * Update a term from provided parameters.
+   *
+   * @param \Drupal\taxonomy\Entity\Vocabulary $vocabulary
+   *   Vocabulary.
+   * @param array $params
+   *   Parameters to update the term with.
+   * @param \Drupal\Core\Session\AccountInterface $provider
+   *   Provider.
+   * @param bool $full_update
+   *   Perform a full update or a partial one.
+   *
+   * @return array
+   *   Associative array with the term uuid and a "Term updated" message.
+   */
+  public function updateTermFromParameters(Vocabulary $vocabulary, array $params, AccountInterface $provider, $full_update = TRUE) {
+    // Check if provider can update terms.
+    $this->providerCanCreateUpdateDelete($vocabulary, $provider);
+
+    // Load term.
+    $term_id = $params['uuid'] ?? $params['id'] ?? '';
+    if (empty($term_id)) {
+      throw new BadRequestHttpException('Term id is required');
+    }
+    $term = $this->loadTerm($term_id);
+    unset($params['uuid']);
+    unset($params['id']);
+
+    // Make sure the term belongs to the vocabulary.
+    $this->validateEntityBundle($term, $vocabulary);
+
     // A term can only be updated by its owner.
-    $this->providerIsOwner($term, 'provider_uuid');
+    $this->providerIsOwner($term, $provider, 'provider_uuid');
 
     // Check required fields.
-    if ($request->getMethod() === 'PUT') {
+    if ($full_update) {
       if (empty($params['label'])) {
         throw new BadRequestHttpException('Label is required');
       }
     }
 
-    // Label is actually name.
+    // Set the name parameter and check if a duplicate exists.
     if (isset($params['label'])) {
+      // Label is actually name.
       $params['name'] = $params['label'];
       unset($params['label']);
 
       if ($vocabulary->getThirdPartySetting('docstore', 'allow_duplicates') === FALSE) {
-        // Check for duplicate labels.
-        $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
-          'name' => $params['name'],
-          'vid' => $vocabulary->id(),
-        ]);
-
-        if ($term->label() === $params['name'] && count($terms) > 1) {
-          throw new BadRequestHttpException('Term with same label already exists');
-        }
-
-        if ($term->label() !== $params['name'] && count($terms) >= 1) {
-          throw new BadRequestHttpException('Term with same label already exists');
-        }
+        $this->checkForDuplicates($vocabulary->id(), $params['name'], $term->id());
       }
     }
 
-    $updated_fields = [];
+    // The vocabulary cannot be changed.
+    // No need to throw an error because we already checked earlier that the
+    // term belongs to the given vocabulary.
+    unset($params['vocabulary']);
 
-    // Update all fields specified in metadata.
-    if (isset($params['metadata'])) {
-      $metadata = $params['metadata'];
-      if (!is_array($metadata) || $this->arrayIsAssociative($metadata)) {
-        throw new BadRequestHttpException('Metadata has to be an array');
-      }
+    // Remove the author as it cannot be changed.
+    unset($params['author']);
 
-      foreach ($metadata as $metaitem) {
-        foreach ($metaitem as $name => $values) {
-          // Make sure protected fields aren't set.
-          if (isset($protected_fields[$name])) {
-            throw new BadRequestHttpException(strtr('Field @name cannot be changed', ['@name' => $name]));
-          }
-
-          if ($term->hasField($name)) {
-            $term->set($name, $values);
-            $updated_fields[] = $name;
-          }
-          else {
-            throw new BadRequestHttpException(strtr('Field @name does not exists', ['@name' => $name]));
-          }
-        }
-      }
-      unset($params['metadata']);
-    }
-
-    // Update all fields specified in params.
-    foreach ($params as $name => $values) {
-      // Ignore revision fields.
-      if ($name === 'new_revision' || $name === 'revision_log' || $name === 'draft') {
-        continue;
-      }
-
-      // Make sure protected fields aren't set.
-      if (isset($protected_fields[$name])) {
-        throw new BadRequestHttpException(strtr('Field @name cannot be changed', ['@name' => $name]));
-      }
-
-      if ($term->hasField($name)) {
-        $term->set($name, $values);
-        $updated_fields[] = $name;
-      }
-      else {
-        throw new BadRequestHttpException(strtr('Field @name does not exists', ['@name' => $name]));
-      }
-    }
+    // Update the term fields from the given parameters.
+    $updated_fields = $this->updateEntityFieldsFromParameters($term, $params, static::$protectedTermFields);
 
     // Remove all fields not part of params.
-    if ($request->getMethod() === 'PUT') {
-      $term_fields = $term->getFields(FALSE);
-      foreach ($term_fields as $term_field) {
-        // Skip name field.
-        if ($term_field->getName() === 'name') {
-          continue;
-        }
-
-        if (in_array($term_field->getName(), $updated_fields)) {
-          continue;
-        }
-
-        if (in_array($term_field->getName(), $protected_fields)) {
-          continue;
-        }
-
-        if (!$term_field->isEmpty()) {
-          $term->set($term_field->getName(), NULL);
-        }
-      }
+    if ($full_update) {
+      $this->emptyEntityFields($term, ['name' => TRUE] + $updated_fields + static::$protectedTermFields);
     }
 
-    // Check if we need to create a new revision.
-    $term->setRevisionCreationTime(time());
+    // Create a new revision if necessary.
+    $this->createEntityRevisionFromParameters($term, $params, $provider);
 
-    if ($vocabulary->getThirdPartySetting('docstore', 'use_revisions', TRUE) || $params['new_revision'] ?? FALSE) {
-      $term->revision_log = 'Updated';
-      if (isset($params['revision_log'])) {
-        $term->revision_log = $params['revision_log'];
-        unset($params['revision_log']);
-      }
-      $term->setNewRevision();
-      $term->setRevisionUserId($provider->id());
+    // Validate and save the term.
+    $this->validateAndSaveEntity($term);
 
-      // Save new revision as draft?
-      $term->isDefaultRevision(TRUE);
-      if ($params['draft'] ?? FALSE) {
-        $term->isDefaultRevision(FALSE);
-      }
-    }
+    // Invalidate cache.
+    Cache::invalidateTags(['terms']);
 
-    $term->save();
-
-    $data = [
+    return [
       'message' => 'Term updated',
       'uuid' => $term->uuid(),
     ];
+  }
 
-    return $this->createJsonResponse($data, 200);
+  /**
+   * Check if a term with the same name already exists.
+   *
+   * @param string $vocabulary_id
+   *   Vocabulary id.
+   * @param string $label
+   *   Term label.
+   * @param string $term_id
+   *   Term ID to exclude from the check.
+   *
+   * @throws \Symfony\Component\HttpKernel\Exception\BadRequestHttpException
+   *   400 Bad Request if there are other terms with the same name.
+   */
+  public function checkForDuplicates($vocabulary_id, $label, string $term_id = '') {
+    // Check if there are other terms with the same label for the gien
+    // vocabulary.
+    $query = $this->entityTypeManager->getStorage('taxonomy_term')->getQuery();
+    $query->condition('name', $label, '=');
+    $query->condition('vid', $vocabulary_id, '=');
+
+    // If an existing term is passed, exclude it from the results.
+    if (!empty($term_id)) {
+      $query->condition('tid', $term_id, '<>');
+    }
+
+    // If there are other terms with the same label, throw an error.
+    if ($query->count()->execute() > 0) {
+      throw new BadRequestHttpException('Term with same label already exists');
+    }
   }
 
   /**
@@ -862,35 +934,40 @@ class VocabularyController extends ControllerBase {
     // Parse JSON.
     $params = $this->getRequestContent($request);
 
-    /** @var \Drupal\term\Entity\Term $term */
-    $term = $this->entityTypeManager->getStorage('taxonomy_term')->loadRevision($revision_id);
-    if ($term->uuid() !== $term_id) {
-      throw new BadRequestHttpException('Revision not found');
-    }
-
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
     $vocabulary = $this->loadVocabulary($id);
-    if ($term->getVocabularyId() !== $vocabulary->id()) {
-      throw new BadRequestHttpException('Revision not found');
-    }
 
-    // Get provider.
+    /** @var \Drupal\Core\Session\AccountInterface $provider */
     $provider = $this->requireProvider();
 
-    // A term can only be updated by its owner.
-    $this->providerIsOwner($term, 'provider_uuid');
+    // Check for last.
+    if ($revision_id === 'last') {
+      // Get last revisions.
+      $query = $this->database->select('taxonomy_term_revision', 'ttr')
+        ->fields('ttr', ['revision_id']);
+      $query->innerJoin('taxonomy_term_data', 'ttd', 'ttr.tid = ttd.tid');
+      $revision_id = $query->condition('ttd.uuid', $term_id)
+        ->orderBy('revision_id', 'DESC')
+        ->execute()
+        ->fetchCol(0);
 
-    if (!$term->isDefaultRevision()) {
-      $term->setRevisionCreationTime(time());
-      $term->revision_log = 'Updated';
-      if (isset($params['revision_log'])) {
-        $term->revision_log = $params['revision_log'];
-      }
-      $term->setNewRevision();
-      $term->setRevisionUserId($provider->id());
-
-      $term->isDefaultRevision(TRUE);
-      $term->save();
+      $revision_id = reset($revision_id);
     }
+
+    /** @var \Drupal\term\Entity\Term $term */
+    $term = $this->entityTypeManager->getStorage('taxonomy_term')->loadRevision($revision_id);
+    if (!$term || $term->uuid() !== $term_id) {
+      throw new BadRequestHttpException('Revision not found');
+    }
+
+    // Make sure the term belongs to the vocabulary.
+    $this->validateEntityBundle($term, $vocabulary);
+
+    // A term can only be updated by its owner.
+    $this->providerIsOwner($term, $provider, 'provider_uuid');
+
+    // Publish the revision.
+    $this->publishEntityRevisionFromParameters($term, $params, $provider);
 
     $data = [
       // @todo change message.
@@ -898,29 +975,75 @@ class VocabularyController extends ControllerBase {
       'uuid' => $term->uuid(),
     ];
 
-    return $this->createJsonResponse($data, 200);
+    // Add cache tags.
+    $cache = [
+      'tags' => $term->getCacheTags(),
+    ];
+
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
    * Delete term.
+   *
+   * @param string $id
+   *   Vocabulary uuid or machine_name.
+   * @param string $term_id
+   *   Term uuid or machine_name.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   JSON response.
    */
   public function deleteTerm($id, $term_id, Request $request) {
-    // Load term.
-    $term = $this->loadTerm($term_id);
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
+    $vocabulary = $this->loadVocabulary($id);
 
-    // Get provider.
+    /** @var \Drupal\Core\Session\AccountInterface $provider */
     $provider = $this->requireProvider();
 
-    $vocabulary = $this->loadVocabulary($id);
-    if ($term->getVocabularyId() !== $vocabulary->id()) {
-      throw new BadRequestHttpException('Wrong vocabulary');
-    }
+    // Add the term id to the parameters to load the term.
+    $params['id'] = $term_id;
 
-    // A term can only be updated by its owner.
-    $this->providerIsOwner($term, 'provider_uuid');
+    // Delete the term.
+    $data = $this->deleteTermFromParameters($vocabulary, $params, $provider);
+
+    return $this->createJsonResponse($data, 200);
+  }
+
+  /**
+   * Delete a term from provided parameters.
+   *
+   * @param \Drupal\taxonomy\Entity\Vocabulary $vocabulary
+   *   Vocabulary.
+   * @param array $params
+   *   Parameters to delete the term with.
+   * @param \Drupal\Core\Session\AccountInterface $provider
+   *   Provider.
+   *
+   * @return array
+   *   Associative array with the term uuid and a "Term deleted" message.
+   */
+  public function deleteTermFromParameters(Vocabulary $vocabulary, array $params, AccountInterface $provider) {
+    // Check if provider can delete terms.
+    $this->providerCanCreateUpdateDelete($vocabulary, $provider);
+
+    // Load term.
+    $term_id = $params['uuid'] ?? $params['id'] ?? '';
+    if (empty($term_id)) {
+      throw new BadRequestHttpException('Term id is required');
+    }
+    $term = $this->loadTerm($term_id);
+
+    // Make sure the term belongs to the vocabulary.
+    $this->validateEntityBundle($term, $vocabulary);
+
+    // A term can only be delete by its owner.
+    $this->providerIsOwner($term, $provider, 'provider_uuid');
 
     // Check if vocabulary is accessible.
-    if (!$this->providerCanUseVocabulary($term->getVocabularyId(), $provider)) {
+    if (!$this->providerCanUseVocabulary($term->bundle(), $provider)) {
       throw new BadRequestHttpException('The vocabulary is private');
     }
 
@@ -929,14 +1052,16 @@ class VocabularyController extends ControllerBase {
       throw new BadRequestHttpException('Term is in use and can not be deleted');
     }
 
-    $data = [
+    // Delete the term.
+    $term->delete();
+
+    // Invalidate cache.
+    Cache::invalidateTags(['terms']);
+
+    return [
       'message' => 'Term deleted',
       'uuid' => $term->uuid(),
     ];
-
-    $term->delete();
-
-    return $this->createJsonResponse($data, 200);
   }
 
   /**
@@ -948,7 +1073,7 @@ class VocabularyController extends ControllerBase {
    * @return \Drupal\taxonomy\Entity\Vocabulary
    *   Vocabulary.
    */
-  protected function loadVocabulary($id) {
+  public function loadVocabulary($id) {
     if (Uuid::isValid($id)) {
       $vocabulary = $this->entityRepository->loadEntityByUuid('taxonomy_vocabulary', $id);
     }
@@ -970,7 +1095,7 @@ class VocabularyController extends ControllerBase {
    * @return \Drupal\taxonomy\Entity\Vocabulary[]
    *   Vocabularies.
    */
-  protected function loadVocabularies() {
+  public function loadVocabularies() {
     $vocabularies = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple();
 
     // @todo check access.
@@ -986,7 +1111,7 @@ class VocabularyController extends ControllerBase {
    * @return \Drupal\taxonomy\Entity\Term
    *   Term.
    */
-  protected function loadTerm($id) {
+  public function loadTerm($id) {
     if (Uuid::isValid($id)) {
       $term = $this->entityRepository->loadEntityByUuid('taxonomy_term', $id);
     }
@@ -1006,6 +1131,7 @@ class VocabularyController extends ControllerBase {
    * Fetch terms.
    */
   public function loadTerms($vids = [], $tid = NULL, $offset = 0, $limit = 100) {
+    /** @var \Drupal\Core\Session\AccountInterface $provider */
     $provider = $this->getProvider();
     $data = [];
 
@@ -1059,16 +1185,17 @@ class VocabularyController extends ControllerBase {
     /** @var \Drupal\taxonomy\Entity\Term $term */
     foreach ($terms as $term) {
       // Make sure user has access to the vocabulary.
-      if (!$this->providerCanUseVocabulary($term->getVocabularyId(), $provider)) {
+      if (!$this->providerCanUseVocabulary($term->bundle(), $provider)) {
         continue;
       }
 
-      $vocabulary = $this->loadVocabulary($term->getVocabularyId());
+      /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
+      $vocabulary = $this->loadVocabulary($term->bundle());
       $row = [
         'uuid' => $term->uuid(),
         'label' => $term->label(),
         'machine_name' => $term->id(),
-        'vocabulary_name' => $term->getVocabularyId(),
+        'vocabulary_name' => $term->bundle(),
         'vocabulary_uuid' => $vocabulary->uuid(),
         'changed' => date(DATE_ATOM, $term->getChangedTime()),
       ];
@@ -1089,7 +1216,7 @@ class VocabularyController extends ControllerBase {
         }
 
         // Make sure user has access to the field.
-        if (!$this->providerCanUseField($term_field->getName(), $term->getVocabularyId(), 'taxonomy_term', $provider)) {
+        if (!$this->providerCanUseField($term_field->getName(), $term->bundle(), 'taxonomy_term', $provider)) {
           continue;
         }
 
@@ -1121,26 +1248,6 @@ class VocabularyController extends ControllerBase {
     }
 
     return $data;
-  }
-
-  /**
-   * Check if in entity is in use.
-   *
-   * \Drupal\Core\Entity\EntityInterface $entity
-   *   The entity to check.
-   *
-   * @return bool
-   *   TRUE if entity is used somewhere.
-   */
-  protected function entityInUse($entity) {
-    return !empty($this->entityUsage->listSources($entity));
-  }
-
-  /**
-   * Check if an array is associative.
-   */
-  protected function arrayIsAssociative(array $array) {
-    return count(array_filter(array_keys($array), 'is_string')) > 0;
   }
 
   /**
@@ -1181,7 +1288,7 @@ class VocabularyController extends ControllerBase {
       return $cache[$vocabulary_id][$provider->id()];
     }
 
-    // Load vocabulary.
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
     $vocabulary = $this->loadVocabulary($vocabulary_id);
 
     // Owner has access.

@@ -145,7 +145,7 @@ Add 2 documents.
 
 ===
 
-* Status: `201`
+* Status: `200`
 * Content-Type: "application/json"
 * Data[0].message: "Test document bulk created"
 * Data[0].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {doc2}

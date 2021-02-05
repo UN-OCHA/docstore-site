@@ -960,7 +960,7 @@ class ManageFields {
         $updated_fields[] = $name;
       }
       else {
-        throw new \Exception(strtr('Field @name does not exists', ['@name' => $name]));
+        throw new \Exception(strtr('Field @name does not exist', ['@name' => $name]));
       }
     }
 

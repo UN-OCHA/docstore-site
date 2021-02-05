@@ -159,8 +159,11 @@ class WebhookController extends ControllerBase {
     // Check for duplicate.
     $webhook_config = WebhookConfig::load($id);
 
+    // Get provider.
+    $provider = $this->requireProvider();
+
     // A webhook can only be deleted by its owner.
-    $this->providerIsOwner($webhook_config, 'base_provider_uuid');
+    $this->providerIsOwner($webhook_config, $provider, 'base_provider_uuid');
 
     $webhook_config->delete();
 

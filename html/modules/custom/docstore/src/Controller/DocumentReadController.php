@@ -100,7 +100,7 @@ class DocumentReadController extends ControllerBase {
 
     // Check if provider has access.
     if ($type !== 'any') {
-      $this->providerCanRead($this->getNodeType($type));
+      $this->providerCanRead($this->loadNodeType($type));
     }
 
     // Query index.
@@ -387,7 +387,7 @@ class DocumentReadController extends ControllerBase {
 
     // Check if provider has access.
     if ($type !== 'any') {
-      $this->providerCanRead($this->getNodeType($type));
+      $this->providerCanRead($this->loadNodeType($type));
     }
 
     // Query index.
