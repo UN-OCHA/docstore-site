@@ -119,24 +119,7 @@ Create terms in bulk.
 
 ===
 
-Example output.
-
-```json
-[
-  {
-    "message": "Term created"
-  },
-  {
-    "message": "Term created"
-  },
-  {
-    "message": "Term created"
-  },
-  {
-    "message": "Term created"
-  }
-]
-```
+Expected output.
 
 * Status: `200`
 * Content-Type: "application/json"
@@ -260,30 +243,15 @@ update a non existing term in the same request.
 
 ===
 
-Example output.
-
-```json
-[
-  {
-    "message": "Term updated",
-    "uuid": "{term_uuid1}"
-  },
-  {
-    "message": "Term deleted",
-    "uuid": "{term_uuid4}"
-  },
-  {
-    "message": "Term created"
-  },
-  {
-    "error": {
-      "status": 404,
-      "message": "Term does not exist"
-    }
-  }
-]
-```
+Expected output.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[2].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Term5 uuid {term_uuid5}
+* Data[0].message: "Term updated"
+* Data[0].uuid: {term_uuid1}
+* Data[1].message: "Term deleted"
+* Data[1].uuid: {term_uuid4}
+* Data[2].message: "Term created"
+* Data[2].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Doc5 uuid {term_uuid5}
+* Data[3].error.status: 404
+* Data[3].error.message: "Term does not exist"

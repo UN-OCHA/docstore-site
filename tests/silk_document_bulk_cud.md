@@ -107,24 +107,7 @@ Create documents in bulk.
 
 ===
 
-Example output.
-
-```json
-[
-  {
-    "message": "Test document bulk CUD created"
-  },
-  {
-    "message": "Test document bulk CUD created"
-  },
-  {
-    "message": "Test document bulk CUD created"
-  },
-  {
-    "message": "Test document bulk CUD created"
-  }
-]
-```
+Expected output.
 
 * Status: `200`
 * Content-Type: "application/json"
@@ -189,30 +172,15 @@ and attempt to update a non existing document in same request.
 
 ===
 
-Example output.
-
-```json
-[
-  {
-    "message": "Test document bulk CUD updated",
-    "uuid": "{doc_uuid1}"
-  },
-  {
-    "message": "Test document bulk CUD deleted",
-    "uuid": "{doc_uuid4}"
-  },
-  {
-    "message": "Test document bulk CUD created"
-  },
-  {
-    "error": {
-      "status": 404,
-      "message": "Document does not exist"
-    }
-  }
-]
-```
+Expected output.
 
 * Status: `200`
 * Content-Type: "application/json"
+* Data[0].message: "Test document bulk CUD updated"
+* Data[0].uuid: {doc_uuid1}
+* Data[1].message: "Test document bulk CUD deleted"
+* Data[1].uuid: {doc_uuid4}
+* Data[2].message: "Test document bulk CUD created"
 * Data[2].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Doc5 uuid {doc_uuid5}
+* Data[3].error.status: 404
+* Data[3].error.message: "Document does not exist"
