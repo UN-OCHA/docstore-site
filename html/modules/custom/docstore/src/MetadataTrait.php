@@ -476,7 +476,7 @@ trait MetadataTrait {
     $violations = $entity->validate();
     if (count($violations) > 0) {
       // We only show the first violation.
-      throw new BadRequestHttpException(strtr('Unable to save document: @error (@path)', [
+      throw new BadRequestHttpException(strtr('Unable to save resource: @error (@path)', [
         '@error' => strip_tags($violations->get(0)->getMessage()),
         '@path' => $violations->get(0)->getPropertyPath(),
       ]));
