@@ -66,7 +66,6 @@ Create documents in bulk.
   "author": "Author",
   "documents": [
     {
-      "_action": "create",
       "title": "Doc1",
       "metadata": [
         {
@@ -75,7 +74,6 @@ Create documents in bulk.
       ]
     },
     {
-      "_action": "create",
       "title": "Doc2",
       "metadata": [
         {
@@ -84,7 +82,6 @@ Create documents in bulk.
       ]
     },
     {
-      "_action": "create",
       "title": "Doc3",
       "metadata": [
         {
@@ -93,7 +90,6 @@ Create documents in bulk.
       ]
     },
     {
-      "_action": "create",
       "title": "Doc4",
       "metadata": [
         {
@@ -120,10 +116,9 @@ Expected output.
 * Data[2].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Doc3 uuid {doc_uuid3}
 * Data[3].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Doc4 uuid {doc_uuid4}
 
-## POST /documents/test-document-bulk-cud/bulk
+## PUT /documents/test-document-bulk-cud/bulk
 
-Update an existing document, delete an existing document, create new document
-and attempt to update a non existing document in same request.
+Update documents in bulk. This is a full update so the `title` is mandatory.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -134,7 +129,6 @@ and attempt to update a non existing document in same request.
   "author": "Author",
   "documents": [
     {
-      "_action": "update",
       "uuid": "{doc_uuid1}",
       "title": "Doc1 with new label",
       "metadata": [
@@ -144,20 +138,14 @@ and attempt to update a non existing document in same request.
       ]
     },
     {
-      "_action": "delete",
-      "uuid": "{doc_uuid4}"
-    },
-    {
-      "_action": "create",
-      "title": "Doc5",
+      "uuid": "{doc_uuid2}",
       "metadata": [
         {
-          "{field_id}": "doc5"
+          "{field_id}": "doc2_new"
         }
       ]
     },
     {
-      "_action": "update",
       "uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
       "title": "Non existing document",
       "metadata": [
@@ -178,9 +166,146 @@ Expected output.
 * Content-Type: "application/json"
 * Data[0].message: "Test document bulk CUD updated"
 * Data[0].uuid: {doc_uuid1}
+* Data[1].error.status: 400
+* Data[1].error.message: "Title is required"
+* Data[2].error.status: 404
+* Data[2].error.message: "Document does not exist"
+
+## GET /documents/test-document-bulk-cud/{doc_uuid1}
+
+Check the `title` and `field_id` of the first document have been updated.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Expected output.
+
+```json
+{
+  "uuid": "{doc_uuid1}",
+  "title": "Doc1 with new label",
+  "{field_id}": "doc1_new"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## PATCH /documents/test-document-bulk-cud/bulk
+
+Update (partially) documents in bulk.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "author": "Author",
+  "documents": [
+    {
+      "uuid": "{doc_uuid2}",
+      "metadata": [
+        {
+          "{field_id}": "doc2_new"
+        }
+      ]
+    },
+    {
+      "uuid": "{doc_uuid3}",
+      "metadata": [
+        {
+          "{field_id}": "doc3_new"
+        }
+      ]
+    }
+  ]
+}
+```
+
+===
+
+Expected output.
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].message: "Test document bulk CUD updated"
+* Data[0].uuid: {doc_uuid2}
+* Data[1].message: "Test document bulk CUD updated"
+* Data[1].uuid: {doc_uuid3}
+
+## GET /documents/test-document-bulk-cud/{doc_uuid3}
+
+Check the `field_id` of the third document has been updated and that the
+`title` is still the same.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Expected output.
+
+```json
+{
+  "uuid": "{doc_uuid3}",
+  "title": "Doc3",
+  "{field_id}": "doc3_new"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## DELETE /documents/test-document-bulk-cud/bulk
+
+Delete elements in bulk.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "author": "Author",
+  "documents": [
+    {
+      "uuid": "{doc_uuid3}"
+    },
+    {
+      "uuid": "{doc_uuid4}"
+    },
+    {
+      "uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    }
+  ]
+}
+```
+
+===
+
+Expected output.
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].message: "Test document bulk CUD deleted"
+* Data[0].uuid: {doc_uuid3}
 * Data[1].message: "Test document bulk CUD deleted"
 * Data[1].uuid: {doc_uuid4}
-* Data[2].message: "Test document bulk CUD created"
-* Data[2].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Doc5 uuid {doc_uuid5}
-* Data[3].error.status: 404
-* Data[3].error.message: "Document does not exist"
+* Data[2].error.status: 404
+* Data[2].error.message: "Document does not exist"
+
+## GET /documents/test-document-bulk-cud/{doc_uuid4}
+
+Check that the fourth document doesn't exist anymore.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Expected output.
+
+* Status: `404`
