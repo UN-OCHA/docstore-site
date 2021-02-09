@@ -1182,13 +1182,13 @@ Example output.
 
 ```json
 {
-  "message": "Unable to save document: This value should not be null. (silk_needed)"
+  "message": "Unable to save resource: This value should not be null. (silk_needed)"
 }
 ```
 
 * Status: `400`
 * Content-Type: "application/json"
-* Data.message: "Unable to save document: This value should not be null. (silk_needed)"
+* Data.message: "Unable to save resource: This value should not be null. (silk_needed)"
 
 ## POST /documents/test-document-crud
 
@@ -1250,9 +1250,9 @@ Example output.
 
 ```json
 {
-  "message": "Unable to save document: This value should be of the correct primitive type. (silk_needed.0.value)"
+  "message": "Unable to save resource: This value should be of the correct primitive type. (silk_needed.0.value)"
 }
 ```
 
 * Content-Type: "application/json"
-* Data.message: "Unable to save document: This value should be of the correct primitive type. (silk_needed.0.value)"
+* Data.message: "Unable to save resource: This value should be of the correct primitive type. (silk_needed.0.value)"
