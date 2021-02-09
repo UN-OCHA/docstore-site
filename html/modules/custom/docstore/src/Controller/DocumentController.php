@@ -393,36 +393,32 @@ class DocumentController extends ControllerBase {
       throw new BadRequestHttpException('The "documents" property is required and must be an array.');
     }
 
-    // @todo either throw an error if any of the term is not correct (perhaps
-    // do some validation before actually attempting to create the terms or
-    // catch any exception and return that, letting the entire list be processed
-    // or some intermediary.
     $data = [];
+    $method = $request->getMethod();
     foreach ($params['documents'] as $document) {
-      // Default to creation for compatibility.
-      // @todo add breaking change by requiring the "_action" parameter?
-      $action = $document['_action'] ?? 'create';
-      unset($document['_action']);
-
       try {
-        switch ($action) {
-          case 'create':
+        switch ($method) {
+          case 'POST':
             // We only add the author when creating terms as it cannot be
             // changed afterwards.
             $document['author'] = $author;
             $data[] = $this->createDocumentFromParameters($node_type, $document, $provider);
             break;
 
-          case 'update':
-            $data[] = $this->updateDocumentFromParameters($node_type, $document, $provider);
+          case 'PUT':
+            $data[] = $this->updateDocumentFromParameters($node_type, $document, $provider, TRUE);
             break;
 
-          case 'delete':
+          case 'PATCH':
+            $data[] = $this->updateDocumentFromParameters($node_type, $document, $provider, FALSE);
+            break;
+
+          case 'DELETE':
             $data[] = $this->deleteDocumentFromParameters($node_type, $document, $provider);
             break;
 
           default:
-            throw new BadRequestHttpException('Unrecognized action');
+            throw new BadRequestHttpException('Unrecognized bulk operation');
         }
       }
       catch (\Exception $exception) {

@@ -525,31 +525,31 @@ class VocabularyController extends ControllerBase {
     }
 
     $data = [];
+    $method = $request->getMethod();
     foreach ($params['terms'] as $term) {
-      // Default to creation for compatibility.
-      // @todo add breaking change by requiring the "_action" parameter?
-      $action = $term['_action'] ?? 'create';
-      unset($term['_action']);
-
       try {
-        switch ($action) {
-          case 'create':
+        switch ($method) {
+          case 'POST':
             // We only add the author when creating terms as it cannot be
             // changed afterwards.
             $term['author'] = $author;
             $data[] = $this->createTermFromParameters($vocabulary, $term, $provider);
             break;
 
-          case 'update':
-            $data[] = $this->updateTermFromParameters($vocabulary, $term, $provider);
+          case 'PUT':
+            $data[] = $this->updateTermFromParameters($vocabulary, $term, $provider, TRUE);
             break;
 
-          case 'delete':
+          case 'PATCH':
+            $data[] = $this->updateTermFromParameters($vocabulary, $term, $provider, FALSE);
+            break;
+
+          case 'DELETE':
             $data[] = $this->deleteTermFromParameters($vocabulary, $term, $provider);
             break;
 
           default:
-            throw new BadRequestHttpException('Unrecognized action');
+            throw new BadRequestHttpException('Unrecognized bulk operation');
         }
       }
       catch (\Exception $exception) {

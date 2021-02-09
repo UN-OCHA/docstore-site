@@ -241,8 +241,8 @@ docstore_create_document_in_bulk:
   path: '/api/v1/documents/{type}/bulk'
   defaults:
     _controller: 'docstore.document_controller:processDocumentsInBulk'
-    _title: 'Create, udpate or delete documents in bulk'
-  methods: [POST]
+    _title: 'Create, update or delete documents in bulk'
+  methods: [POST, 'PUT', 'PATCH', 'DELETE']
   requirements:
     _docstore_access_check: 'TRUE'
   options:
@@ -411,8 +411,8 @@ docstore_create_term_in_bulk:
   path: '/api/v1/vocabularies/{id}/terms/bulk'
   defaults:
     _controller: 'docstore.vocabulary_controller:processTermsInBulk'
-    _title: 'Create, udpate or delete terms in bulk'
-  methods: [POST]
+    _title: 'Create, update or delete terms in bulk'
+  methods: [POST, 'PUT', 'PATCH', 'DELETE']
   requirements:
     _docstore_access_check: 'TRUE'
   options:

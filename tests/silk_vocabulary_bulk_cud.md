@@ -191,10 +191,9 @@ Example output.
 * Content-Type: "application/json"
 
 
-## POST /vocabularies/{machine_name}/terms/bulk
+## PUT /vocabularies/{machine_name}/terms/bulk
 
-Update an existing term, delete an existing term, create new term and attempt to
-update a non existing term in the same request.
+Update terms in bulk. This is a full update so the `label` is mandatory.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -205,35 +204,28 @@ update a non existing term in the same request.
   "author": "Author",
   "terms": [
     {
-      "_action": "update",
       "uuid": "{term_uuid1}",
       "label": "Term1 with new label",
       "metadata": [
         {
-          "{field_iso3}": "AFG"
+          "{field_iso3}": "FFF"
         }
       ]
     },
     {
-      "_action": "delete",
-      "uuid": "{term_uuid4}"
-    },
-    {
-      "_action": "create",
-      "label": "Term5",
+      "uuid": "{term_uuid2}",
       "metadata": [
         {
-          "{field_iso3}": "AFG"
+          "{field_iso3}": "GGGG"
         }
       ]
     },
     {
-      "_action": "update",
       "uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
       "label": "Non existing term",
       "metadata": [
         {
-          "{field_iso3}": "AFG"
+          "{field_iso3}": "nothing"
         }
       ]
     }
@@ -249,9 +241,146 @@ Expected output.
 * Content-Type: "application/json"
 * Data[0].message: "Term updated"
 * Data[0].uuid: {term_uuid1}
+* Data[1].error.status: 400
+* Data[1].error.message: "Label is required"
+* Data[2].error.status: 404
+* Data[2].error.message: "Term does not exist"
+
+## GET /vocabularies/{machine_name}/terms/{term_uuid1}
+
+Check the `label` and `field_iso3` of the first term have been updated.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Expected output.
+
+```json
+{
+  "uuid": "{term_uuid1}",
+  "label": "Term1 with new label",
+  "{field_iso3}": "FFF"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## PATCH /vocabularies/{machine_name}/terms/bulk
+
+Update (partially) terms in bulk.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "author": "Author",
+  "terms": [
+    {
+      "uuid": "{term_uuid2}",
+      "metadata": [
+        {
+          "{field_iso3}": "HHH"
+        }
+      ]
+    },
+    {
+      "uuid": "{term_uuid3}",
+      "metadata": [
+        {
+          "{field_iso3}": "III"
+        }
+      ]
+    }
+  ]
+}
+```
+
+===
+
+Expected output.
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].message: "Term updated"
+* Data[0].uuid: {term_uuid2}
+* Data[1].message: "Term updated"
+* Data[1].uuid: {term_uuid3}
+
+## GET /vocabularies/{machine_name}/terms/{term_uuid3}
+
+Check the `field_iso3` of the third term has been updated and that the
+`label` is still the same.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Expected output.
+
+```json
+{
+  "uuid": "{term_uuid3}",
+  "label": "Term3",
+  "{field_iso3}": "III"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## DELETE /vocabularies/{machine_name}/terms/bulk
+
+Delete elements in bulk.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "author": "Author",
+  "terms": [
+    {
+      "uuid": "{term_uuid3}"
+    },
+    {
+      "uuid": "{term_uuid4}"
+    },
+    {
+      "uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    }
+  ]
+}
+```
+
+===
+
+Expected output.
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].message: "Term deleted"
+* Data[0].uuid: {term_uuid3}
 * Data[1].message: "Term deleted"
 * Data[1].uuid: {term_uuid4}
-* Data[2].message: "Term created"
-* Data[2].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Doc5 uuid {term_uuid5}
-* Data[3].error.status: 404
-* Data[3].error.message: "Term does not exist"
+* Data[2].error.status: 404
+* Data[2].error.message: "Term does not exist"
+
+## GET /vocabularies/{machine_name}/terms/{term_uuid4}
+
+Check that the fourth term doesn't exist anymore.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Expected output.
+
+* Status: `404`
