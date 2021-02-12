@@ -921,6 +921,12 @@ class DocumentController extends ControllerBase {
     $data = [
       'message' => 'File created',
       'uuid' => $file->uuid(),
+      'filename' => $file->getFilename(),
+      'url' => $file->createFileUrl(),
+      'created' => date(DATE_ATOM, $file->getCreatedTime()),
+      'changed' => date(DATE_ATOM, $file->getChangedTime()),
+      'mimetype' => $file->getMimeType(),
+      'size' => $file->getSize(),
     ];
 
     return $this->createJsonResponse($data, 201);
