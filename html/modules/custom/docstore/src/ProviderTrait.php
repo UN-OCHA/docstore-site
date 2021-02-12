@@ -4,6 +4,7 @@ namespace Drupal\docstore;
 
 // @todo consider creating a docstore `Resource`?
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Session\AccountInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
@@ -49,6 +50,8 @@ trait ProviderTrait {
    *
    * @param \Drupal\Core\Entity\EntityInterface $resource
    *   Docstore resource (node type or vocabulary).
+   * @param \Drupal\Core\Session\AccountInterface|null $provider
+   *   Provider.
    *
    * @return bool
    *   TRUE if the provider is allowed to create content for the resource.
@@ -57,14 +60,14 @@ trait ProviderTrait {
    *   403 Access Denied if no valid provider is found or if the provider
    *   doesn't have read access to the resource.
    */
-  protected function providerCanRead(EntityInterface $resource) {
+  protected function providerCanRead(EntityInterface $resource, ?AccountInterface $provider = NULL) {
     // Shared resources are always readable.
     if ($resource->getThirdPartySetting('docstore', 'shared')) {
       return TRUE;
     }
 
     // Otherwise a provider is required.
-    $provider = $this->requireProvider();
+    $provider = $provider ?: $this->requireProvider();
 
     // Check if the current provider is the provider of the resource.
     if ($type->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
@@ -81,6 +84,8 @@ trait ProviderTrait {
    *
    * @param \Drupal\Core\Entity\EntityInterface $resource
    *   Docstore resource (node type or vocabulary).
+   * @param \Drupal\Core\Session\AccountInterface|null $provider
+   *   Provider.
    *
    * @return bool
    *   TRUE if the provider is allowed to create content for the resource.
@@ -89,9 +94,9 @@ trait ProviderTrait {
    *   403 Access Denied if no valid provider is found or if the provider
    *   doesn't have create/update/delete access to the resource.
    */
-  protected function providerCanCreateUpdateDelete(EntityInterface $resource) {
+  protected function providerCanCreateUpdateDelete(EntityInterface $resource, ?AccountInterface $provider = NULL) {
     // A provider is required to create, update or delete a resource.
-    $provider = $this->requireProvider();
+    $provider = $provider ?: $this->requireProvider();
 
     // Check if the current provider is the provider of the resource.
     if ($resource->getThirdPartySetting('docstore', 'provider_uuid') == $provider->uuid()) {
@@ -114,6 +119,8 @@ trait ProviderTrait {
    *
    * @param \Drupal\Core\Entity\EntityInterface $resource
    *   Docstore resource (node, term, file etc.).
+   * @param \Drupal\Core\Session\AccountInterface|null $provider
+   *   Provider.
    * @param string $check_type
    *   Type of check to perform:
    *   - owner_id: check the owner id against the current provider's id.
@@ -125,8 +132,8 @@ trait ProviderTrait {
    * @return bool
    *   TRUE if the provider is the owner of the resource.
    */
-  protected function providerIsOwner(EntityInterface $resource, $check_type = 'owner_id') {
-    $provider = $this->requireProvider();
+  protected function providerIsOwner(EntityInterface $resource, ?AccountInterface $provider = NULL, $check_type = 'owner_id') {
+    $provider = $provider ?: $this->requireProvider();
 
     switch ($resource->getEntityTypeId()) {
       case 'node':

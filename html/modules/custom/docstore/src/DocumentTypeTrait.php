@@ -2,6 +2,7 @@
 
 namespace Drupal\docstore;
 
+use Drupal\Component\Uuid\Uuid;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -103,7 +104,7 @@ trait DocumentTypeTrait {
   /**
    * Rebuild endpoints state.
    */
-  protected function rebuildEndpoints() {
+  public function rebuildEndpoints() {
     \Drupal::state()->delete($this->getEndpointStateKey());
     $this->GetEndpoints();
   }
@@ -174,13 +175,10 @@ trait DocumentTypeTrait {
   }
 
   /**
-   * Get a node type entity.
+   * Load a node type entity.
    *
-   * Note: this assumes that the class using that trait as a `entityTypeManager`
-   * member variable.
-   *
-   * @param string $type
-   *   Node type.
+   * @param string $id
+   *   Node type uuid or machine_name.
    *
    * @return \Drupal\node\Entity\NodeType
    *   Node type entity.
@@ -188,28 +186,20 @@ trait DocumentTypeTrait {
    * @throw \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
    *   404 Not Found if the node type was not found.
    */
-  protected function getNodeType($type) {
-    /** @var \Drupal\node\Entity\NodeType $type */
-    $node_type = $this->entityTypeManager->getStorage('node_type')->load($type);
+  protected function loadNodeType($id) {
+    if (Uuid::isValid($id)) {
+      $node_type = $this->entityRepository->loadEntityByUuid('node_type', $id);
+    }
+    else {
+      // Assume it's the machine name.
+      $node_type = $this->entityTypeManager->getStorage('node_type')->load($id);
+    }
 
     if (!$node_type) {
       throw new NotFoundHttpException('Document type not found.');
     }
 
     return $node_type;
-  }
-
-  /**
-   * Get a node type label.
-   *
-   * @param string $type
-   *   Node type.
-   *
-   * @return string
-   *   Node type label.
-   */
-  protected function getNodeTypeLabel($type) {
-    return $this->getNodeType($type)->label();
   }
 
 }

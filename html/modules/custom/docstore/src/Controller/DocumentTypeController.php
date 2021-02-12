@@ -111,7 +111,7 @@ class DocumentTypeController extends ControllerBase {
    */
   public function getDocumentType($type, Request $request) {
     /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->getNodeType($type);
+    $node_type = $this->loadNodeType($type);
 
     $data = $this->buildJsonOutput($node_type);
 
@@ -123,7 +123,7 @@ class DocumentTypeController extends ControllerBase {
    */
   public function updateDocumentType($type, Request $request) {
     /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->getNodeType($type);
+    $node_type = $this->loadNodeType($type);
 
     // Get provider.
     $provider = $this->requireProvider();
@@ -145,7 +145,7 @@ class DocumentTypeController extends ControllerBase {
    */
   public function deleteDocumentType($type, Request $request) {
     /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->getNodeType($type);
+    $node_type = $this->loadNodeType($type);
 
     $data = [
       'message' => strtr('@type deleted', ['@type' => $node_type->label()]),
@@ -167,7 +167,7 @@ class DocumentTypeController extends ControllerBase {
    */
   public function getDocumentFields($type) {
     /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->getNodeType($type);
+    $node_type = $this->loadNodeType($type);
 
     // Load provider.
     $provider = $this->requireProvider();
@@ -191,7 +191,7 @@ class DocumentTypeController extends ControllerBase {
    */
   public function createDocumentField($type, Request $request) {
     /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->getNodeType($type);
+    $node_type = $this->loadNodeType($type);
 
     // Parse JSON.
     $params = $this->getRequestContent($request);
@@ -224,7 +224,7 @@ class DocumentTypeController extends ControllerBase {
    */
   public function getDocumentField($type, $id, Request $request) {
     /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->getNodeType($type);
+    $node_type = $this->loadNodeType($type);
 
     // Get provider.
     $provider = $this->requireProvider();
@@ -254,7 +254,7 @@ class DocumentTypeController extends ControllerBase {
    */
   public function updateDocumentField($type, $field, $id, Request $request) {
     /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->getNodeType($type);
+    $node_type = $this->loadNodeType($type);
 
     // Parse JSON.
     $params = $this->getRequestContent($request);
@@ -289,7 +289,7 @@ class DocumentTypeController extends ControllerBase {
    */
   public function deleteDocumentField($type, $id, Request $request) {
     /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->getNodeType($type);
+    $node_type = $this->loadNodeType($type);
 
     // Get provider.
     $provider = $this->requireProvider();

@@ -240,9 +240,9 @@ docstore_create_document:
 docstore_create_document_in_bulk:
   path: '/api/v1/documents/{type}/bulk'
   defaults:
-    _controller: 'docstore.document_controller:createDocumentInBulk'
-    _title: 'Create documents in bulk'
-  methods: [POST]
+    _controller: 'docstore.document_controller:processDocumentsInBulk'
+    _title: 'Create, update or delete documents in bulk'
+  methods: [POST, 'PUT', 'PATCH', 'DELETE']
   requirements:
     _docstore_access_check: 'TRUE'
   options:
@@ -398,7 +398,7 @@ docstore_get_vocabulary_terms:
 docstore_create_term_in_vocabulary:
   path: '/api/v1/vocabularies/{id}/terms'
   defaults:
-    _controller: 'docstore.vocabulary_controller:createTermOnVocabulary'
+    _controller: 'docstore.vocabulary_controller:createTerm'
     _title: 'Create term'
   methods: [POST]
   requirements:
@@ -410,9 +410,9 @@ docstore_create_term_in_vocabulary:
 docstore_create_term_in_bulk:
   path: '/api/v1/vocabularies/{id}/terms/bulk'
   defaults:
-    _controller: 'docstore.vocabulary_controller:createTermOnVocabularyInBulk'
-    _title: 'Create term in bulk'
-  methods: [POST]
+    _controller: 'docstore.vocabulary_controller:processTermsInBulk'
+    _title: 'Create, update or delete terms in bulk'
+  methods: [POST, 'PUT', 'PATCH', 'DELETE']
   requirements:
     _docstore_access_check: 'TRUE'
   options:

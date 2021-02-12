@@ -226,6 +226,7 @@ Disable revisions.
 
 * Status: `200`
 * Content-Type: "application/json"
+* Data.use_revisions: false
 
 ## PUT /documents/test-revisions/{doc1}
 

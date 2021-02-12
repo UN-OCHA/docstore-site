@@ -15,6 +15,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystem;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\State\State;
 use Drupal\Core\StreamWrapper\StreamWrapperManager;
 use Drupal\docstore\DocumentTypeTrait;
@@ -26,9 +27,11 @@ use Drupal\file\Entity\File;
 use Drupal\file\FileUsage\FileUsageInterface;
 use Drupal\media\Entity\Media;
 use Drupal\node\Entity\Node;
+use Drupal\node\Entity\NodeType;
 use Drupal\user\Entity\User;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -126,6 +129,33 @@ class DocumentController extends ControllerBase {
   protected $entityUsage;
 
   /**
+   * Proteced node fields.
+   *
+   * @var array
+   */
+  protected static $protectedNodeFields = [
+    'author' => TRUE,
+    'provider_uuid' => TRUE,
+    'changed' => TRUE,
+    'created' => TRUE,
+    'default_langcode' => TRUE,
+    'langcode' => TRUE,
+    'parent' => TRUE,
+    'revision_created' => TRUE,
+    'revision_id' => TRUE,
+    'revision_log_message' => TRUE,
+    'revision_user' => TRUE,
+    'status' => TRUE,
+    'promote' => TRUE,
+    'sticky' => TRUE,
+    'type' => TRUE,
+    'nid' => TRUE,
+    'uuid' => TRUE,
+    'vid' => TRUE,
+    'uid' => TRUE,
+  ];
+
+  /**
    * {@inheritdoc}
    */
   public function __construct(ConfigFactoryInterface $config,
@@ -162,42 +192,49 @@ class DocumentController extends ControllerBase {
     // Check if type is allowed.
     $type = $this->typeAllowed($type, 'write');
 
-    // Get provider.
-    $provider = $this->requireProvider();
-
     // Parse JSON.
     $params = $this->getRequestContent($request);
 
-    // Create document.
-    $document = $this->createDocumentForProvider($type, $params, $provider);
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->loadNodeType($type);
 
-    $data = [
-      'message' => strtr('@type created', ['@type' => $this->getNodeTypeLabel($type)]),
-      'uuid' => $document->uuid(),
-    ];
+    /** @var \Drupal\Core\Session\AccountInterface $provider */
+    $provider = $this->requireProvider();
+
+    // Create document.
+    $data = $this->createDocumentFromParameters($node_type, $params, $provider);
 
     return $this->createJsonResponse($data, 201);
   }
 
   /**
-   * Create document for provider.
+   * Create document from the given parameters.
+   *
+   * @param \Drupal\node\Entity\NodeType $node_type
+   *   Node type entity.
+   * @param array $params
+   *   Parameters to create the document with.
+   * @param \Drupal\Core\Session\AccountInterface $provider
+   *   Provider.
+   *
+   * @return array
+   *   Associative array with the document uuid and a "Doctype created" message.
    */
-  protected function createDocumentForProvider($type, $params, $provider) {
+  protected function createDocumentFromParameters(NodeType $node_type, array $params, AccountInterface $provider) {
     // Check if provider can create documents.
-    $this->providerCanCreateUpdateDelete($this->getNodeType($type));
+    $this->providerCanCreateUpdateDelete($node_type, $provider);
 
     // Check required fields.
     if (empty($params['title'])) {
       throw new BadRequestHttpException('Title is required');
     }
-
     if (empty($params['author'])) {
       throw new BadRequestHttpException('Author is required');
     }
 
     // Create node.
     $item = [
-      'type' => $type,
+      'type' => $node_type->id(),
       'title' => $params['title'],
       'uid' => $provider->id(),
       'author' => [],
@@ -223,7 +260,7 @@ class DocumentController extends ControllerBase {
       ];
     }
 
-    // Store HID Id.
+    // Store author.
     $item['author'][] = [
       'value' => $params['author'],
     ];
@@ -262,28 +299,31 @@ class DocumentController extends ControllerBase {
     // Check for meta tags.
     if (isset($params['metadata']) && $params['metadata']) {
       $metadata = $params['metadata'];
-      $item = array_merge($item, $this->buildItemDataFromMetaData($metadata, $type, $provider, $params['author'], 'node'));
+      $item = array_merge($item, $this->buildItemDataFromMetaData($metadata, $node_type->id(), $provider, $params['author'], 'node'));
     }
 
     /** @var \Drupal\node\Entity\Node $document */
     $document = Node::create($item);
 
-    // Trigger validation.
-    $violations = $document->validate();
-    if (count($violations) > 0) {
-      throw new BadRequestHttpException(strtr('Unable to save document: @error (@path)', [
-        '@error' => strip_tags($violations->get(0)->getMessage()),
-        '@path' => $violations->get(0)->getPropertyPath(),
-      ]));
+    // Check for invalid fields.
+    foreach ($item as $key => $data) {
+      if (!$document->hasField($key)) {
+        throw new BadRequestHttpException(strtr('Unknown field @field', [
+          '@field' => $key,
+        ]));
+      }
     }
 
-    // Save document.
-    $document->save();
+    // Validate and save the document.
+    $this->validateAndSaveEntity($document);
 
     // Invalidate cache.
     Cache::invalidateTags(['documents']);
 
-    return $document;
+    return [
+      'message' => strtr('@type created', ['@type' => $node_type->label()]),
+      'uuid' => $document->uuid(),
+    ];
   }
 
   /**
@@ -313,261 +353,282 @@ class DocumentController extends ControllerBase {
   }
 
   /**
-   * Create document.
+   * Process documents (create, update, delete) in bulk.
+   *
+   * @param string $type
+   *   Document type.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   API response.
    */
-  public function createDocumentInBulk($type, Request $request) {
+  public function processDocumentsInBulk($type, Request $request) {
     // Check if type is allowed.
     $type = $this->typeAllowed($type, 'write');
-
-    // Get provider.
-    $provider = $this->requireProvider();
 
     // Parse JSON.
     $params = $this->getRequestContent($request);
 
-    if (empty($params['documents'])) {
-      throw new BadRequestHttpException('documents is required');
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->loadNodeType($type);
+
+    // Get the provider.
+    $provider = $this->requireProvider();
+
+    // Check if the provider can create/update/delete this type of documents.
+    $this->providerCanCreateUpdateDelete($node_type, $provider);
+
+    // @todo move all those checks in a separate class to validate request
+    // content.
+    //
+    // Check that the author property is set.
+    if (empty($params['author']) || !is_string($params['author'])) {
+      throw new BadRequestHttpException('The "author" property is required and must be a string');
+    }
+    $author = $params['author'];
+
+    // Check that the list of terms is present.
+    if (empty($params['documents']) || !is_array($params['documents'])) {
+      throw new BadRequestHttpException('The "documents" property is required and must be an array.');
     }
 
     $data = [];
+    $method = $request->getMethod();
     foreach ($params['documents'] as $document) {
-      // Add common fields.
-      $document['author'] = $params['author'];
+      try {
+        switch ($method) {
+          case 'POST':
+            // We only add the author when creating terms as it cannot be
+            // changed afterwards.
+            $document['author'] = $author;
+            $data[] = $this->createDocumentFromParameters($node_type, $document, $provider);
+            break;
 
-      // Create document.
-      $doc = $this->createDocumentForProvider($type, $document, $provider);
+          case 'PUT':
+            $data[] = $this->updateDocumentFromParameters($node_type, $document, $provider, TRUE);
+            break;
 
-      $data[] = [
-        'message' => strtr('@type created', ['@type' => $this->getNodeTypeLabel($type)]),
-        'uuid' => $doc->uuid(),
-      ];
+          case 'PATCH':
+            $data[] = $this->updateDocumentFromParameters($node_type, $document, $provider, FALSE);
+            break;
+
+          case 'DELETE':
+            $data[] = $this->deleteDocumentFromParameters($node_type, $document, $provider);
+            break;
+
+          default:
+            throw new BadRequestHttpException('Unrecognized bulk operation');
+        }
+      }
+      catch (\Exception $exception) {
+        $code = $exception instanceof HttpException ? $exception->getStatusCode() : 500;
+        $data[] = [
+          'error' => [
+            'status' => $code,
+            'message' => $exception->getMessage(),
+          ],
+        ];
+      }
+
     }
 
-    return $this->createJsonResponse($data, 201);
+    return $this->createJsonResponse($data, 200);
   }
 
   /**
    * Update document.
+   *
+   * @param string $type
+   *   Document type.
+   * @param string $id
+   *   Document uuid.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   API response.
    */
   public function updateDocument($type, $id, Request $request) {
     // Check if type is allowed.
     $type = $this->typeAllowed($type, 'write');
 
-    $protected_fields = [
-      'author',
-      'provider_uuid',
-      'changed',
-      'created',
-      'default_langcode',
-      'langcode',
-      'parent',
-      'revision_created',
-      'revision_id',
-      'revision_log_message',
-      'revision_user',
-      'status',
-      'promote',
-      'sticky',
-      'type',
-      'nid',
-      'uuid',
-      'vid',
-      'uid',
-    ];
-
-    // Load document.
-    $document = $this->loadDocument($id);
-    if (!$document) {
-      throw new NotFoundHttpException(strtr('Document @uuid does not exist', ['@uuid' => $id]));
-    }
-
     // Parse JSON.
     $params = $this->getRequestContent($request);
 
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->loadNodeType($type);
+
+    /** @var \Drupal\Core\Session\AccountInterface $provider */
+    $provider = $this->requireProvider();
+
+    // Pass the document id to load the document.
+    $params['id'] = $id;
+
+    // Update the document.
+    $data = $this->updateDocumentFromParameters($node_type, $params, $provider, $request->getMethod() === 'PUT');
+
+    return $this->createJsonResponse($data, 200);
+  }
+
+  /**
+   * Update a document from a set of parameters.
+   *
+   * @param \Drupal\node\Entity\NodeType $node_type
+   *   Document type.
+   * @param array $params
+   *   Paramaters to update the document with.
+   * @param \Drupal\Core\Session\AccountInterface $provider
+   *   Provider.
+   * @param bool $full_update
+   *   Whether to perform a full or partial update of the document.
+   *
+   * @return array
+   *   Associative array with the document uuid and a "Doctype updated" message.
+   */
+  public function updateDocumentFromParameters(NodeType $node_type, array $params, AccountInterface $provider, $full_update = TRUE) {
+    // Check if the provider can create/update/delete this type of documents.
+    $this->providerCanCreateUpdateDelete($node_type, $provider);
+
+    // Load document.
+    $document_id = $params['uuid'] ?? $params['id'] ?? '';
+    if (empty($document_id)) {
+      throw new BadRequestHttpException('Document id is required');
+    }
+    $document = $this->loadDocument($document_id);
+    unset($params['uuid']);
+    unset($params['id']);
+
+    // Remove the author as it cannot be changed.
+    unset($params['author']);
+
+    // Make sure the node belongs to the node type.
+    $this->validateEntityBundle($document, $node_type);
+
     // A document can only be updated by its owner.
-    $this->providerIsOwner($document);
+    $this->providerIsOwner($document, $provider);
 
     // Check required fields.
-    if ($request->getMethod() === 'PUT') {
+    if ($full_update) {
       if (empty($params['title'])) {
         throw new BadRequestHttpException('Title is required');
       }
     }
 
     // Re-map fields.
+    // @todo check that it's a boolean.
     if (isset($params['private'])) {
       $document->set('private', $params['private']);
       unset($params['private']);
     }
 
+    // @todo check that it's a boolean.
     if (isset($params['published'])) {
       $document->setPublished($params['published']);
       unset($params['published']);
     }
 
-    $updated_fields = [];
-
-    // Update all fields specified in metadata.
-    if (isset($params['metadata'])) {
-      $metadata = $params['metadata'];
-      if (!is_array($metadata) || $this->arrayIsAssociative($metadata)) {
-        throw new BadRequestHttpException('Metadata has to be an array');
-      }
-
-      foreach ($metadata as $metaitem) {
-        foreach ($metaitem as $name => $values) {
-          // Make sure protected fields aren't set.
-          if (isset($protected_fields[$name])) {
-            throw new BadRequestHttpException(strtr('Field @name cannot be changed', ['@name' => $name]));
-          }
-
-          if ($document->hasField($name)) {
-            $document->set($name, $values);
-            $updated_fields[] = $name;
-          }
-          else {
-            throw new BadRequestHttpException(strtr('Field @name does not exists', ['@name' => $name]));
-          }
-        }
-      }
-      unset($params['metadata']);
-    }
-
-    // Update all fields specified in params.
-    foreach ($params as $name => $values) {
-      // Ignore revision fields.
-      if ($name === 'new_revision' || $name === 'revision_log' || $name === 'draft') {
-        continue;
-      }
-
-      // Make sure protected fields aren't set.
-      if (isset($protected_fields[$name])) {
-        throw new BadRequestHttpException(strtr('Field @name cannot be changed', ['@name' => $name]));
-      }
-
-      if ($document->hasField($name)) {
-        if (is_array($values)) {
-          $massaged = [];
-          foreach ($values as &$value) {
-            if (isset($value['uuid'])) {
-              $massaged[] = $value['uuid'];
-            }
-            else {
-              $massaged[] = $value;
-            }
-          }
-          $document->set($name, $massaged);
-        }
-        else {
-          $document->set($name, $values);
-        }
-
-        $updated_fields[] = $name;
-      }
-      else {
-        throw new BadRequestHttpException(strtr('Field @name does not exists', ['@name' => $name]));
-      }
-    }
+    // Update the document fields from the given parameters.
+    $updated_fields = $this->updateEntityFieldsFromParameters($document, $params, static::$protectedNodeFields);
 
     // Remove all fields not part of params.
-    if ($request->getMethod() === 'PUT') {
-      $document_fields = $document->getFields(FALSE);
-      foreach ($document_fields as $document_field) {
-        // Skip name field.
-        if ($document_field->getName() === 'title') {
-          continue;
-        }
-
-        if (in_array($document_field->getName(), $updated_fields)) {
-          continue;
-        }
-
-        if (in_array($document_field->getName(), $protected_fields)) {
-          continue;
-        }
-
-        if (!$document_field->isEmpty()) {
-          $document->set($document_field->getName(), NULL);
-        }
-      }
+    if ($full_update) {
+      $this->emptyEntityFields($document, ['title' => TRUE] + $updated_fields + static::$protectedNodeFields);
     }
 
-    // Check if we need to create a new revision.
-    $document->setRevisionCreationTime(time());
+    // Create a new revision if necessary.
+    $this->createEntityRevisionFromParameters($document, $params, $provider);
 
-    /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->getNodeType($type);
-
-    // Load provider.
-    $provider = $this->getProvider();
-    if ($node_type->isNewRevision() || $params['new_revision'] ?? FALSE) {
-      $document->revision_log = 'Updated';
-      if (isset($params['revision_log'])) {
-        $document->revision_log = $params['revision_log'];
-        unset($params['revision_log']);
-      }
-      $document->setNewRevision();
-      $document->setRevisionUserId($provider->id());
-
-      // Save new revision as draft?
-      $document->isDefaultRevision(TRUE);
-      if ($params['draft'] ?? FALSE) {
-        $document->isDefaultRevision(FALSE);
-      }
-    }
-
-    // Trigger validation.
-    $violations = $document->validate();
-    if (count($violations) > 0) {
-      throw new BadRequestHttpException(strtr('Unable to save document: @error (@path)', [
-        '@error' => strip_tags($violations->get(0)->getMessage()),
-        '@path' => $violations->get(0)->getPropertyPath(),
-      ]));
-    }
-
-    // Save document.
-    $document->save();
-
-    $data = [
-      'message' => strtr('@type updated', ['@type' => $this->getNodeTypeLabel($type)]),
-      'uuid' => $document->uuid(),
-    ];
+    // Validate and save the document.
+    $this->validateAndSaveEntity($document);
 
     // Invalidate cache.
     Cache::invalidateTags(['documents']);
 
-    // Add cache tags.
-    $cache = [
-      'tags' => $document->getCacheTags(),
+    return [
+      'message' => strtr('@type updated', ['@type' => $node_type->label()]),
+      'uuid' => $document->uuid(),
     ];
-
-    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
    * Delete document.
+   *
+   * @param string $type
+   *   Document type.
+   * @param string $id
+   *   Document uuid.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   API response.
    */
   public function deleteDocument($type, $id, Request $request) {
     // Check if type is allowed.
     $type = $this->typeAllowed($type, 'write');
 
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->loadNodeType($type);
+
+    /** @var \Drupal\Core\Session\AccountInterface $provider */
+    $provider = $this->requireProvider();
+
+    // Pass the document id to load the document.
+    $params['id'] = $id;
+
+    // Delete the document.
+    $data = $this->deleteDocumentFromParameters($node_type, $params, $provider);
+
+    return $this->createJsonResponse($data, 200);
+  }
+
+  /**
+   * Delete a node from provided parameters.
+   *
+   * @param \Drupal\node\Entity\NodeType $node_type
+   *   Node type.
+   * @param array $params
+   *   Parameters to delete the term with.
+   * @param \Drupal\Core\Session\AccountInterface $provider
+   *   Provider.
+   *
+   * @return array
+   *   Associative array with the node uuid and a "Doctype deleted" message.
+   */
+  public function deleteDocumentFromParameters(NodeType $node_type, array $params, AccountInterface $provider) {
+    // Check if provider can create documents.
+    $this->providerCanCreateUpdateDelete($node_type, $provider);
+
     // Load document.
-    $document = $this->loadDocument($id);
+    $document_id = $params['uuid'] ?? $params['id'] ?? '';
+    if (empty($document_id)) {
+      throw new BadRequestHttpException('Document id is required');
+    }
+    $document = $this->loadDocument($document_id);
+
+    // Make sure the node belongs to the node type.
+    $this->validateEntityBundle($document, $node_type);
 
     // A document can only be deleted by its owner.
-    $this->providerIsOwner($document);
+    $this->providerIsOwner($document, $provider);
 
-    $data = [
-      'message' => strtr('@type deleted', ['@type' => $this->getNodeTypeLabel($type)]),
-      'uuid' => $document->uuid(),
-    ];
+    // Check if document is in use.
+    // @todo discuss if this should be removed.
+    if ($this->entityInUse($document)) {
+      throw new BadRequestHttpException('Document is referenced elsewhere and can not be deleted');
+    }
 
+    // Delete the document.
     $document->delete();
 
     // Invalidate cache.
     Cache::invalidateTags(['documents']);
 
-    return $this->createJsonResponse($data, 200);
+    return [
+      'message' => strtr('@type deleted', ['@type' => $node_type->label()]),
+      'uuid' => $document->uuid(),
+    ];
   }
 
   /**
@@ -580,7 +641,10 @@ class DocumentController extends ControllerBase {
     // Parse JSON.
     $params = $this->getRequestContent($request);
 
-    // Get provider.
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->loadNodeType($type);
+
+    /** @var \Drupal\Core\Session\AccountInterface $provider */
     $provider = $this->requireProvider();
 
     // Check for last.
@@ -599,33 +663,22 @@ class DocumentController extends ControllerBase {
 
     /** @var \Drupal\node\Entity\Node $document */
     $document = $this->entityTypeManager->getStorage('node')->loadRevision($vid);
-
-    // A document can only be updated by its owner.
-    $this->providerIsOwner($document);
-
-    if ($document->uuid() !== $id) {
+    if (!$document || $document->uuid() !== $id) {
       throw new NotFoundHttpException('Revision not found');
     }
 
-    if ($document->bundle() !== $type) {
-      throw new BadRequestHttpException('Wrong document type');
-    }
+    // Make sure the node belongs to the node type.
+    $this->validateEntityBundle($document, $node_type);
 
-    if (!$document->isDefaultRevision()) {
-      $document->setRevisionCreationTime(time());
-      $document->revision_log = 'Updated';
-      if (isset($params['revision_log'])) {
-        $document->revision_log = $params['revision_log'];
-      }
-      $document->setNewRevision();
-      $document->setRevisionUserId($provider->id());
+    // A document can only be updated by its owner.
+    $this->providerIsOwner($document, $provider);
 
-      $document->isDefaultRevision(TRUE);
-      $document->save();
-    }
+    // Publish the revision.
+    $this->publishEntityRevisionFromParameters($document, $params, $provider);
 
     $data = [
-      'message' => strtr('@type updated', ['@type' => $this->getNodeTypeLabel($type)]),
+      // @todo change message.
+      'message' => strtr('@type updated', ['@type' => $node_type->label()]),
       'uuid' => $document->uuid(),
     ];
 
@@ -1118,31 +1171,6 @@ class DocumentController extends ControllerBase {
   }
 
   /**
-   * Load a vocabulary.
-   *
-   * @param string $id
-   *   The vocabulary uuid or entity_id.
-   *
-   * @return \Drupal\taxonomy\Entity\Vocabulary
-   *   Vocabulary.
-   */
-  protected function loadVocabulary($id) {
-    if (Uuid::isValid($id)) {
-      $vocabulary = $this->entityRepository->loadEntityByUuid('taxonomy_vocabulary', $id);
-    }
-    else {
-      // Assume it's the machine name.
-      $vocabulary = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->load($id);
-    }
-
-    if (!$vocabulary) {
-      throw new NotFoundHttpException('Vocabulary does not exist');
-    }
-
-    return $vocabulary;
-  }
-
-  /**
    * Load a document.
    *
    * @param string $id
@@ -1270,26 +1298,6 @@ class DocumentController extends ControllerBase {
     }
 
     return $media_entity;
-  }
-
-  /**
-   * Check if in entity is in use.
-   *
-   * \Drupal\Core\Entity\EntityInterface $entity
-   *   The entity to check.
-   *
-   * @return bool
-   *   TRUE if entity is used somewhere.
-   */
-  protected function entityInUse($entity) {
-    return !empty($this->entityUsage->listSources($entity));
-  }
-
-  /**
-   * Check if an array is associative.
-   */
-  protected function arrayIsAssociative(array $array) {
-    return count(array_filter(array_keys($array), 'is_string')) > 0;
   }
 
   /**

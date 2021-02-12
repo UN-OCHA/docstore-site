@@ -14,10 +14,12 @@ $DRUSH eval "docstore_create_node_type('document', 'documents')"
 $SILK -test.v -silk.url $API silk_webhooks.md || exit 1;
 $SILK -test.v -silk.url $API silk_vocabulary_crud.md || exit 1;
 $SILK -test.v -silk.url $API silk_vocabulary_bulk.md || exit 1;
+$SILK -test.v -silk.url $API silk_vocabulary_bulk_cud.md || exit 1;
 $SILK -test.v -silk.url $API silk_vocabulary_anon_cud.md || exit 1;
 $SILK -test.v -silk.url $API silk_vocabulary_anon_r.md || exit 1;
 $SILK -test.v -silk.url $API silk_document_types_crud.md || exit 1;
 $SILK -test.v -silk.url $API silk_document_bulk.md || exit 1;
+$SILK -test.v -silk.url $API silk_document_bulk_cud.md || exit 1;
 $SILK -test.v -silk.url $API silk_geofield.md || exit 1;
 $SILK -test.v -silk.url $API silk_linkfield.md || exit 1;
 $SILK -test.v -silk.url $API silk_child_terms.md || exit 1;
@@ -28,6 +30,9 @@ $SILK -test.v -silk.url $API silk_term_revisions.md || exit 1;
 # Clear docstore, general tests
 $DRUSH eval "_docstore_setup_testing()"
 $DRUSH cr
+
+# Add document type
+$DRUSH eval "docstore_create_node_type('document', 'documents')"
 
 # Add files
 (echo -n '{"private":true,"filename":"private.pdf","mime":"application/pdf","data": "'; base64 ./files/private.pdf; echo '"}') | curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" -H "Content-Type: application/json" -d @-  $API/files > newfile_private.json

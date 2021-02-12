@@ -242,13 +242,13 @@ Example output.
 
 ```json
 {
-  "message": "Field author does not exists"
+  "message": "Field author does not exist"
 }
 ```
 
 * Status: `400`
 * Content-Type: "application/json"
-* Data.message: "Field author does not exists"
+* Data.message: "Field author does not exist"
 
 ## PUT /vocabularies/{machine_name}
 
