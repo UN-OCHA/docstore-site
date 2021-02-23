@@ -452,6 +452,9 @@ class DocumentController extends ControllerBase {
             if (isset($value['uuid'])) {
               $massaged[] = $value['uuid'];
             }
+            elseif (isset($value['media_uuid'])) {
+              $massaged[] = $value['media_uuid'];
+            }
             else {
               $massaged[] = $value;
             }
@@ -893,10 +896,16 @@ class DocumentController extends ControllerBase {
     $file->setFileUri($destination);
     $file->setTemporary();
 
+    $media = FALSE;
     if (isset($params['data'])) {
       // Decode data.
       $content = base64_decode($params['data']);
-      $this->saveFileToDisk($file, $content, $provider, FALSE);
+      $media = $this->saveFileToDisk($file, $content, $provider, FALSE);
+    }
+    elseif (isset($params['uri'])) {
+      // Fetch file.
+      $content = file_get_contents($params['uri']);
+      $media = $this->saveFileToDisk($file, $content, $provider, FALSE);
     }
     elseif (isset($params['use_dropfolder']) && $params['use_dropfolder']) {
       if (!$provider->get('dropfolder')->value) {
@@ -908,7 +917,7 @@ class DocumentController extends ControllerBase {
         $files = array_keys($files);
         $first = reset($files);
         $content = file_get_contents($first);
-        $this->saveFileToDisk($file, $content, $provider, FALSE);
+        $media = $this->saveFileToDisk($file, $content, $provider, FALSE);
       }
       else {
         throw new BadRequestHttpException('File not found in dropfolder');
@@ -927,7 +936,12 @@ class DocumentController extends ControllerBase {
       'changed' => date(DATE_ATOM, $file->getChangedTime()),
       'mimetype' => $file->getMimeType(),
       'size' => $file->getSize(),
+      'private' => $private,
     ];
+
+    if ($media) {
+      $data['media_uuid'] = $media->uuid();
+    }
 
     return $this->createJsonResponse($data, 201);
   }
