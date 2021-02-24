@@ -37,7 +37,7 @@ class AuthenticationService {
   /**
    * The entity manager service.
    *
-   * @var \Drupal\Core\Entity\EntityTypeManager
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
 

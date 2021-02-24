@@ -5,8 +5,11 @@ namespace Drupal\docstore\Controller;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Http\Exception\CacheableAccessDeniedHttpException;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\docstore\DocumentTypeTrait;
 use Drupal\docstore\ManageFields;
@@ -14,7 +17,7 @@ use Drupal\docstore\ProviderTrait;
 use Drupal\docstore\ResourceTrait;
 use Drupal\node\Entity\NodeType;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * Controller for document type endpoints.
@@ -28,9 +31,16 @@ class DocumentTypeController extends ControllerBase {
   /**
    * The config.
    *
-   * @var \Drupal\Core\Config\Config
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
-  protected $config;
+  protected $configFactory;
+
+  /**
+   * The database connection.
+   *
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected $database;
 
   /**
    * The entity field manager service.
@@ -40,6 +50,14 @@ class DocumentTypeController extends ControllerBase {
   protected $entityFieldManager;
 
   /**
+   * The entity manager service.
+   *
+   * @var \Drupal\Core\Entity\EntityRepositoryInterface
+   */
+  protected $entityRepository;
+
+
+  /**
    * The entity type manager.
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
@@ -47,21 +65,157 @@ class DocumentTypeController extends ControllerBase {
   protected $entityTypeManager;
 
   /**
+   * The logger factory.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   */
+  protected $loggerFactory;
+
+  /**
    * {@inheritdoc}
    */
-  public function __construct(ConfigFactoryInterface $config,
+  public function __construct(ConfigFactoryInterface $configFactory,
+      Connection $database,
       EntityFieldManagerInterface $entityFieldManager,
+      EntityRepositoryInterface $entityRepository,
       EntityTypeManagerInterface $entityTypeManager,
       LoggerChannelFactoryInterface $logger_factory
     ) {
-    $this->config = $config;
+    $this->configFactory = $configFactory;
+    $this->database = $database;
     $this->entityFieldManager = $entityFieldManager;
+    $this->entityRepository = $entityRepository;
     $this->entityTypeManager = $entityTypeManager;
     $this->loggerFactory = $logger_factory;
   }
 
   /**
+   * Get document types.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Drupal\Core\Cache\CacheableJsonResponse
+   *   JSON response with the list of vocabularies.
+   */
+  public function getDocumentTypes(Request $request) {
+    $data = [];
+    $entity_type_id = 'node_type';
+
+    // Set the response cache.
+    $cache = $this->createResponseCache()->addCacheTags(['document_types']);
+
+    /** @var \Drupal\user\UserInterface $provider */
+    $provider = $this->getProvider();
+
+    // Get the list of documen types accessible to the provider.
+    $node_type_ids = $this->getAccessibleResourceTypes($entity_type_id, $provider);
+
+    // Get the node type storage and the id field.
+    $storage = $this->entityTypeManager->getStorage($entity_type_id);
+    $id_key = $storage->getEntityType()->getKey('id');
+
+    /** @var \Drupal\node\Entity\NodeType[] $node_types */
+    $node_types = $storage->loadByProperties([$id_key => $node_type_ids]);
+
+    // Prepare the vocabularies data.
+    foreach ($node_types as $node_type) {
+      $data[] = $this->buildDocumentTypeJsonOutput($node_type);
+      $cache->addCacheableDependency($node_type);
+    }
+
+    return $this->createCacheableJsonResponse($cache, $data, 200);
+  }
+
+  /**
+   * Get document type.
+   *
+   * @param string $type
+   *   Document type.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Drupal\Core\Cache\CacheableJsonResponse
+   *   JSON response with the list of vocabularies.
+   */
+  public function getDocumentType($type, Request $request) {
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->loadNodeType($type);
+
+    /** @var \Drupal\user\UserInterface $provider */
+    $provider = $this->getProvider();
+
+    // Set the response cache.
+    $cache = $this->createResponseCache()
+      ->addCacheTags(['document_types'])
+      ->addCacheableDependency($node_type);
+
+    // Check if the vocabulary is accessible to the provider.
+    try {
+      $this->getAccessibleResourceTypes('node_type', $provider, $node_type->id());
+    }
+    catch (AccessDeniedHttpException $exception) {
+      throw new CacheableAccessDeniedHttpException($cache, 'You are not allowed to access the document type');
+    }
+
+    $data = $this->buildDocumentTypeJsonOutput($node_type);
+
+    return $this->createCacheableJsonResponse($cache, $data, 200);
+  }
+
+  /**
+   * Get the document type or document types accessible to the provider.
+   *
+   * @param string $id
+   *   Node type ID. If not defined, return all the document types accessible
+   *   to the provider.
+   *
+   * @return \Drupal\Core\Cache\CacheableJsonResponse
+   *   JSON response with the list of document types or document type's data.
+   */
+  public function getAccessibleDocumentTypes($id = NULL) {
+    $data = [];
+    $entity_type_id = 'node_type';
+
+    // Set the response cache.
+    $cache = $this->createResponseCache()->addCacheTags(['document_types']);
+
+    /** @var \Drupal\user\UserInterface $provider */
+    $provider = $this->getProvider();
+
+    // Get the list of documen types accessible to the provider.
+    // If `id` is set, then the list will just contain it.
+    $node_type_ids = $this->getAccessibleResourceTypes($entity_type_id, $provider, $id);
+
+    // Get the node type storage and the id field.
+    $storage = $this->entityTypeManager->getStorage($entity_type_id);
+    $id_key = $storage->getEntityType()->getKey('id');
+
+    /** @var \Drupal\node\Entity\NodeType[] $node_types */
+    $node_types = $storage->loadByProperties([$id_key => $node_type_ids]);
+
+    // Prepare the vocabularies data.
+    foreach ($node_types as $node_type) {
+      $data[] = $this->buildDocumentTypeJsonOutput($node_type);
+      $cache->addCacheableDependency($node_type);
+    }
+
+    // Only return the data for the given document type id.
+    if (isset($id)) {
+      $data = reset($data);
+    }
+
+    return $this->createCacheableJsonResponse($cache, $data, 200);
+  }
+
+  /**
    * Create document type.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   API response.
    */
   public function createDocumentType(Request $request) {
     // Get provider.
@@ -71,252 +225,312 @@ class DocumentTypeController extends ControllerBase {
     $params = $this->getRequestContent($request);
 
     // Make sure endpoints are fresh.
+    // @todo necessary? We already refresh after creating the document type.
     $this->rebuildEndpoints();
 
-    $manager = new ManageFields($provider, '', $this->entityFieldManager);
-    $data = $this->buildJsonOutput($manager->createDocumentType($params));
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, '', $this->entityFieldManager, $this->entityTypeManager, $this->database);
+
+    // Create document type.
+    $node_type = $manager->createDocumentType($params);
 
     // Rebuild endpoints.
     $this->rebuildEndpoints();
+
+    // Reset the list of accessible document types.
+    $this->rebuildAccessibleResourceTypes('node_type');
+
+    // Invalidate cache.
+    Cache::invalidateTags(['document_types']);
+
+    $data = [
+      'message' => 'Document type created',
+    ] + $this->buildDocumentTypeJsonOutput($node_type);
 
     return $this->createJsonResponse($data, 201);
   }
 
   /**
-   * Get document types.
-   */
-  public function getDocumentTypes(Request $request) {
-    // Get provider.
-    $provider = $this->requireProvider();
-
-    $data = [];
-
-    $node_types = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
-
-    /** @var \Drupal\node\Entity\NodeType $node_type */
-    foreach ($node_types as $node_type) {
-      // Skip private types.
-      if ($node_type->getThirdPartySetting('docstore', 'private') && $node_type->getThirdPartySetting('docstore', 'provider_uuid') !== $provider->uuid()) {
-        continue;
-      }
-
-      $data[] = $this->buildJsonOutput($node_type);
-    }
-
-    return $this->createJsonResponse($data, 200);
-  }
-
-  /**
-   * Get document type.
-   */
-  public function getDocumentType($type, Request $request) {
-    /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->loadNodeType($type);
-
-    $data = $this->buildJsonOutput($node_type);
-
-    return $this->createJsonResponse($data, 200);
-  }
-
-  /**
    * Update document type.
+   *
+   * @param string $type
+   *   Document type.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   JSON response.
+   *
+   * @todo consolidate logic with VocabularyController::updateVocabulary().
    */
   public function updateDocumentType($type, Request $request) {
-    /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->loadNodeType($type);
-
-    // Get provider.
-    $provider = $this->requireProvider();
-
     // Parse JSON.
     $params = $this->getRequestContent($request);
 
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->loadNodeType($type);
+
+    /** @var \Drupal\user\UserInterface $provider */
+    $provider = $this->requireProvider();
+
     // Make sure endpoints are fresh.
+    // @todo necessary? We already refresh after updating the document type.
     $this->rebuildEndpoints();
 
-    $manager = new ManageFields($provider, '', $this->entityFieldManager);
-    $data = $this->buildJsonOutput($manager->updateDocumentType($node_type->id(), $params));
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, '', $this->entityFieldManager, $this->entityTypeManager, $this->database);
+
+    // Update the node type.
+    $node_type = $manager->updateDocumentType($node_type->id(), $params);
+
+    // Rebuild endpoints.
+    $this->rebuildEndpoints();
+
+    // Reset the list of accessible document types.
+    $this->rebuildAccessibleResourceTypes('node_type');
+
+    // Invalidate cache.
+    Cache::invalidateTags(['document_types']);
+
+    // Response data.
+    //
+    // @todo for other resources, we only return the "Resource updated" message
+    // and the resource uuid. Check if we should do the same here.
+    $data = [
+      'message' => 'Document type updated',
+    ] + $this->buildDocumentTypeJsonOutput($node_type);
 
     return $this->createJsonResponse($data, 200);
   }
 
   /**
    * Delete document type.
+   *
+   * @param string $type
+   *   Document type.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   JSON response.
    */
   public function deleteDocumentType($type, Request $request) {
     /** @var \Drupal\node\Entity\NodeType $node_type */
     $node_type = $this->loadNodeType($type);
 
-    $data = [
-      'message' => strtr('@type deleted', ['@type' => $node_type->label()]),
-    ];
-
+    // Delete the node type.
     $node_type->delete();
 
     // Rebuild endpoints.
     $this->rebuildEndpoints();
 
-    // Keep track of private types.
-    $this->rebuildDocumentTypes($this->provider);
+    // Reset the list of accessible document types.
+    $this->rebuildAccessibleResourceTypes('node_type');
+
+    // Invalidate cache.
+    Cache::invalidateTags(['document_types']);
+
+    $data = [
+      'message' => strtr('@type deleted', ['@type' => $node_type->label()]),
+      'uuid' => $node_type->uuid(),
+    ];
 
     return $this->createJsonResponse($data, 200);
   }
 
   /**
    * Get document fields.
+   *
+   * @param string $type
+   *   Document type.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Drupal\Core\Cache\CacheableJsonResponse
+   *   JSON response with the list of vocabularies.
    */
-  public function getDocumentFields($type) {
+  public function getDocumentFields($type, Request $request) {
     /** @var \Drupal\node\Entity\NodeType $node_type */
     $node_type = $this->loadNodeType($type);
 
-    // Load provider.
+    /** @var \Drupal\user\UserInterface $provider */
     $provider = $this->requireProvider();
 
-    // Create field.
-    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->database);
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->entityTypeManager, $this->database);
+
+    // Get the document fields.
     $data = $manager->getDocumentFields();
 
-    // Add cache tags.
-    $cache = [
-      'tags' => [
-        'document_fields',
-      ],
-    ];
+    // Add cache.
+    $cache = $this->createResponseCache()->addCacheTags(['document_fields']);
 
     return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
    * Create document field.
+   *
+   * @param string $type
+   *   Document type.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   JSON response.
    */
   public function createDocumentField($type, Request $request) {
-    /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->loadNodeType($type);
-
     // Parse JSON.
     $params = $this->getRequestContent($request);
 
-    // Load provider.
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->loadNodeType($type);
+
+    /** @var \Drupal\user\UserInterface $provider */
     $provider = $this->requireProvider();
 
-    // Create field.
-    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->database);
-    try {
-      $field_name = $manager->addDocumentField($params);
-    }
-    catch (\Exception $exception) {
-      throw new BadRequestHttpException($exception->getMessage());
-    }
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->entityTypeManager, $this->database);
+
+    // Create the field.
+    $field_name = $manager->addDocumentField($params);
+
+    // Invalidate cache.
+    Cache::invalidateTags(['document_fields']);
 
     $data = [
       'message' => 'Field created',
       'field_name' => $field_name,
     ];
 
-    // Invalidate cache.
-    Cache::invalidateTags(['document_fields']);
-
     return $this->createJsonResponse($data, 201);
   }
 
   /**
    * Get document field.
+   *
+   * @param string $type
+   *   Document type.
+   * @param string $id
+   *   Field id.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Drupal\Core\Cache\CacheableJsonResponse
+   *   JSON response with the field data.
    */
   public function getDocumentField($type, $id, Request $request) {
     /** @var \Drupal\node\Entity\NodeType $node_type */
     $node_type = $this->loadNodeType($type);
 
-    // Get provider.
+    /** @var \Drupal\user\UserInterface $provider */
     $provider = $this->requireProvider();
 
-    // Get field config.
-    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->database);
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->entityTypeManager, $this->database);
 
-    try {
-      $data = $manager->getDocumentField($id);
-    }
-    catch (\Exception $exception) {
-      throw new BadRequestHttpException($exception->getMessage());
-    }
+    // Get the field.
+    $data = $manager->getDocumentField($id);
 
-    // Add cache tags.
-    $cache = [
-      'tags' => [
-        'document_fields',
-      ],
-    ];
+    // Add cache.
+    $cache = $this->createResponseCache()->addCacheTags(['document_fields']);
 
     return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
    * Update document field.
+   *
+   * @param string $type
+   *   Document type.
+   * @param string $id
+   *   Field id.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   JSON response.
    */
-  public function updateDocumentField($type, $field, $id, Request $request) {
-    /** @var \Drupal\node\Entity\NodeType $node_type */
-    $node_type = $this->loadNodeType($type);
-
+  public function updateDocumentField($type, $id, Request $request) {
     // Parse JSON.
     $params = $this->getRequestContent($request);
 
-    // Load provider.
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->loadNodeType($type);
+
+    /** @var \Drupal\user\UserInterface $provider */
     $provider = $this->requireProvider();
 
-    // Get manager.
-    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->database);
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->entityTypeManager, $this->database);
 
     // Update field.
-    try {
-      $field_name = $manager->updateDocumentField($id, $params);
-    }
-    catch (\Exception $exception) {
-      throw new BadRequestHttpException($exception->getMessage());
-    }
+    $field_name = $manager->updateDocumentField($id, $params);
+
+    // Invalidate cache.
+    Cache::invalidateTags(['document_fields']);
 
     $data = [
       'message' => 'Field updated',
       'field_name' => $field_name,
     ];
 
-    // Invalidate cache.
-    Cache::invalidateTags(['document_fields']);
-
     return $this->createJsonResponse($data, 200);
   }
 
   /**
    * Delete document field.
+   *
+   * @param string $type
+   *   Document type.
+   * @param string $id
+   *   Field id.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   JSON response.
    */
   public function deleteDocumentField($type, $id, Request $request) {
     /** @var \Drupal\node\Entity\NodeType $node_type */
     $node_type = $this->loadNodeType($type);
 
-    // Get provider.
+    /** @var \Drupal\user\UserInterface $provider */
     $provider = $this->requireProvider();
 
-    // Delete field storage and config.
-    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->database);
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->entityTypeManager, $this->database);
 
-    // Create field.
-    try {
-      $manager->deleteDocumentField($id);
-    }
-    catch (\Exception $exception) {
-      throw new BadRequestHttpException($exception->getMessage());
-    }
+    // Delete field.
+    $field_name = $manager->deleteDocumentField($id);
 
     // Invalidate cache.
     Cache::invalidateTags(['document_fields']);
 
     $data = [
       'message' => 'Field deleted',
+      'field_name' => $field_name,
     ];
 
     return $this->createJsonResponse($data, 200);
   }
 
   /**
-   * Build JSON data.
+   * Load a node type entity.
+   *
+   * @param string $id
+   *   Node type uuid or machine_name.
+   *
+   * @return \Drupal\node\Entity\NodeType
+   *   Node type entity.
+   */
+  protected function loadNodeType($id) {
+    /** @var \Drupal\node\Entity\NodeType */
+    return $this->loadResourceEntity('node_type', $id);
+  }
+
+  /**
+   * Build the document type data for the response.
    *
    * @param \Drupal\node\Entity\NodeType $node_type
    *   Full node type.
@@ -324,7 +538,7 @@ class DocumentTypeController extends ControllerBase {
    * @return array
    *   Associative array with the document type details.
    */
-  protected function buildJsonOutput(NodeType $node_type) {
+  protected function buildDocumentTypeJsonOutput(NodeType $node_type) {
     return [
       'machine_name' => $node_type->id(),
       'label' => $node_type->label(),

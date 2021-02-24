@@ -89,10 +89,6 @@ function _docstore_setup_testing() {
   $node_types = \Drupal::entityTypeManager()->getStorage('node_type')->loadMultiple();
   \Drupal::entityTypeManager()->getStorage('node_type')->delete($node_types);
 
-  // Rebuild endpoints.
-  \Drupal::service('docstore.document_controller')
-    ->rebuildEndpoints();
-
   // Delete all terms.
   // @todo skip shared vocabularies.
   $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadMultiple();
@@ -112,7 +108,7 @@ function _docstore_setup_testing() {
   \Drupal::entityTypeManager()->getStorage('file')->delete($file);
 
   // Delete document fields.
-  /** @var Drupal\Core\Entity\EntityFieldManager $entityFieldManager */
+  /** @var \Drupal\Core\Entity\EntityFieldManager $entityFieldManager */
   $entityFieldManager = Drupal::service('entity_field.manager');
 
   // @todo Reset node types.
@@ -151,12 +147,29 @@ function _docstore_setup_testing() {
     }
   }
 
-  // Reset index.
+  // Reset documents index.
   $config_path = drupal_get_path('module', 'docstore') . '/config/install/search_api.index.documents.yml';
   $data = Yaml::parseFile($config_path);
   \Drupal::configFactory()->getEditable('search_api.index.documents')->setData($data)->save(TRUE);
 
   $index = Index::load('documents');
+  $index->clear();
+
+  $server = $index->getServerInstance();
+  $solr = $server->getBackend();
+  if ($solr instanceof SolrBackendInterface) {
+    $connector = $solr->getSolrConnector();
+    $update_query = $connector->getUpdateQuery();
+    $update_query->addDeleteQuery('*:*');
+    $connector->update($update_query);
+  }
+
+  // Reset terms index.
+  $config_path = drupal_get_path('module', 'docstore') . '/config/install/search_api.index.terms.yml';
+  $data = Yaml::parseFile($config_path);
+  \Drupal::configFactory()->getEditable('search_api.index.terms')->setData($data)->save(TRUE);
+
+  $index = Index::load('terms');
   $index->clear();
 
   $server = $index->getServerInstance();
@@ -236,12 +249,20 @@ function _docstore_setup_testing() {
     ])->save();
   }
 
+  // Rebuild endpoints and accessible resources.
+  \Drupal::service('docstore.document_controller')->rebuildEndpoints();
+  \Drupal::service('docstore.document_controller')->rebuildAccessibleResourceTypes('node_type');
+  \Drupal::service('docstore.vocabulary_controller')->rebuildAccessibleResourceTypes('taxonomy_vocabulary');
+
   // Invalidate caches.
   Cache::invalidateTags(['documents']);
-  Cache::invalidateTags(['webhooks']);
   Cache::invalidateTags(['document_fields']);
   Cache::invalidateTags(['terms']);
   Cache::invalidateTags(['vocabularies']);
+  Cache::invalidateTags(['vocabulary_fields']);
+  Cache::invalidateTags(['media']);
+  Cache::invalidateTags(['files']);
+  Cache::invalidateTags(['webhooks']);
 }
 
 /**
@@ -253,7 +274,7 @@ function docstore_create_node_type($type = 'document', $endpoint = 'documents') 
   }
 
   $provider = user_load(2);
-  $manager = new ManageFields($provider, $type, Drupal::service('entity_field.manager'), Drupal::service('database'));
+  $manager = new ManageFields($provider, $type, Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
   $manager->createDocumentType([
     'label' => ucfirst($type),
     'machine_name' => $type,
@@ -413,7 +434,7 @@ function docstore_rebuild_index_fields() {
 
   $entityFieldManager = Drupal::service('entity_field.manager');
   $provider = user_load(2);
-  $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('database'));
+  $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
 
   $types = _docstore_get_defined_node_types();
   foreach ($types as $type) {

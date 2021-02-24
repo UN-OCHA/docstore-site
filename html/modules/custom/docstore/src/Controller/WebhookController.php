@@ -5,6 +5,8 @@ namespace Drupal\docstore\Controller;
 use Drupal\webhooks\Entity\WebhookConfig;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\docstore\ProviderTrait;
@@ -21,6 +23,20 @@ class WebhookController extends ControllerBase {
   use ResourceTrait;
 
   /**
+   * The entity field manager service.
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
+   */
+  protected $entityFieldManager;
+
+  /**
+   * The entity manager service.
+   *
+   * @var \Drupal\Core\Entity\EntityRepositoryInterface
+   */
+  protected $entityRepository;
+
+  /**
    * The entity type manager.
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
@@ -30,27 +46,37 @@ class WebhookController extends ControllerBase {
   /**
    * The logger factory.
    *
-   * @var \Drupal\Core\Logger\LoggerChannelFactory
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
    */
   protected $loggerFactory;
 
   /**
    * {@inheritdoc}
    */
-  public function __construct(EntityTypeManagerInterface $entityTypeManager,
-    LoggerChannelFactoryInterface $logger_factory
-  ) {
+  public function __construct(EntityFieldManagerInterface $entityFieldManager,
+      EntityRepositoryInterface $entityRepository,
+      EntityTypeManagerInterface $entityTypeManager,
+      LoggerChannelFactoryInterface $logger_factory
+    ) {
+    $this->entityFieldManager = $entityFieldManager;
+    $this->entityRepository = $entityRepository;
     $this->entityTypeManager = $entityTypeManager;
     $this->loggerFactory = $logger_factory;
   }
 
   /**
    * Get hooks.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Drupal\Core\Cache\CacheableJsonResponse
+   *   JSON response with the list of webhooks.
    */
   public function getWebhooks(Request $request) {
     $data = [];
 
-    // Get provider.
+    /** @var \Drupal\user\UserInterface $provider */
     $provider = $this->requireProvider();
 
     $query = $this->entityTypeManager->getStorage('webhook_config')->getQuery();
@@ -62,7 +88,7 @@ class WebhookController extends ControllerBase {
         $data[] = [
           'display_name' => $webhook_config->label(),
           'machine_name' => $webhook_config->id(),
-          'type' => $this->t('@type', ['@type' => $webhook_config->getType()]),
+          'type' => $this->t('@type', ['@type' => $webhook_config->get('type')->value]),
           'status' => $webhook_config->status() ? $this->t('active') : $this->t('inactive'),
           'payload_url' => $webhook_config->getPayloadUrl(),
           'events' => array_keys($webhook_config->getEvents()),
@@ -71,16 +97,19 @@ class WebhookController extends ControllerBase {
     }
 
     // Add cache tags.
-    $cache = [
-      'contexts' => ['user'],
-      'tags' => ['webhooks'],
-    ];
+    $cache = $this->createResponseCache()->addCacheTags(['webhooks']);
 
     return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
    * Create hook.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   API response.
    */
   public function createWebhook(Request $request) {
     // Parse JSON.
@@ -107,7 +136,7 @@ class WebhookController extends ControllerBase {
       $params['events'] = array_combine(array_keys($allowed_events), array_keys($allowed_events));
     }
 
-    // Get provider.
+    /** @var \Drupal\user\UserInterface $provider */
     $provider = $this->requireProvider();
 
     // Construct Id.
@@ -154,12 +183,20 @@ class WebhookController extends ControllerBase {
 
   /**
    * Delete a hook.
+   *
+   * @param string $id
+   *   Webhook id.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   API response.
    */
   public function deleteWebhook($id, Request $request) {
-    // Check for duplicate.
+    /** @var \Drupal\webhooks\Entity\WebhookConfig $webhook_config */
     $webhook_config = WebhookConfig::load($id);
 
-    // Get provider.
+    /** @var \Drupal\user\UserInterface $provider */
     $provider = $this->requireProvider();
 
     // A webhook can only be deleted by its owner.
@@ -167,12 +204,13 @@ class WebhookController extends ControllerBase {
 
     $webhook_config->delete();
 
-    $data = [
-      'message' => 'Webhook deleted',
-    ];
-
     // Invalidate cache.
     Cache::invalidateTags(['webhooks']);
+
+    $data = [
+      'message' => 'Webhook deleted',
+      'machine_name' => $webhook_config->id(),
+    ];
 
     return $this->createJsonResponse($data, 200);
   }

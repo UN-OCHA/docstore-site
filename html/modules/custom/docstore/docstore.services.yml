@@ -17,27 +17,30 @@ services:
       public: false
       tags:
         - { name: page_cache_request_policy }
+  docstore.doctype_controller:
+    class: \Drupal\docstore\Controller\DocumentTypeController
+    arguments: ['@config.factory', '@database', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@logger.factory']
   docstore.document_controller:
     class: \Drupal\docstore\Controller\DocumentController
     arguments: ['@config.factory', '@database', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@transliteration', '@file.mime_type.guesser', '@file_system', '@file.usage', '@logger.factory', '@state', '@entity_usage.usage']
-  docstore.document_read_controller:
-    class: \Drupal\docstore\Controller\DocumentReadController
-    arguments: ['@config.factory', '@database', '@entity_type.manager', '@logger.factory', '@state']
+  docstore.media_controller:
+    class: \Drupal\docstore\Controller\MediaController
+    arguments: ['@config.factory', '@database', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@transliteration', '@file.mime_type.guesser', '@file_system', '@file.usage', '@logger.factory', '@state', '@entity_usage.usage']
   docstore.vocabulary_controller:
     class: \Drupal\docstore\Controller\VocabularyController
     arguments: ['@config.factory', '@database', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@logger.factory', '@state', '@entity_usage.usage']
-  docstore.doctype_controller:
-    class: \Drupal\docstore\Controller\DocumentTypeController
-    arguments: ['@config.factory', '@entity_field.manager', '@entity_type.manager', '@logger.factory']
+  docstore.term_controller:
+    class: \Drupal\docstore\Controller\TermController
+    arguments: ['@config.factory', '@database', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@logger.factory', '@state', '@entity_usage.usage']
   docstore.download_controller:
     class: \Drupal\docstore\Controller\DownloadController
-    arguments: ['@entity.repository', '@logger.factory']
+    arguments: ['@entity_field.manager', '@entity.repository', '@entity_type.manager', '@file.mime_type.guesser', '@file_system', '@file.usage', '@logger.factory']
   docstore.provider_controller:
     class: \Drupal\docstore\Controller\ProviderController
-    arguments: ['@entity.repository', '@logger.factory']
+    arguments: ['@entity_field.manager', '@entity.repository', '@entity_type.manager', '@logger.factory']
   docstore.webhook_controller:
     class: \Drupal\docstore\Controller\WebhookController
-    arguments: ['@entity_type.manager', '@logger.factory']
+    arguments: ['@entity_field.manager', '@entity.repository', '@entity_type.manager', '@logger.factory']
   docstore.config_sync.event_subscriber:
     class: Drupal\docstore\EventSubscriber\DocstoreConfigEventSubscriber
     arguments: ['@config.storage', '@settings', '@config.manager']

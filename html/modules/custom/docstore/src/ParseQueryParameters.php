@@ -339,8 +339,8 @@ class ParseQueryParameters {
    * @param array $items
    *   The normalized entity conditions and groups.
    *
-   * @return \Drupal\jsonapi\Query\EntityConditionGroup
-   *   The entity condition group
+   * @return array
+   *   Filter tree structure.
    */
   protected static function buildTree(array $root, array $items) {
     $id = $root['id'];

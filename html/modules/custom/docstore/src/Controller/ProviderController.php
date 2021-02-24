@@ -3,7 +3,9 @@
 namespace Drupal\docstore\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\docstore\ProviderTrait;
 use Drupal\docstore\ResourceTrait;
@@ -18,6 +20,13 @@ class ProviderController extends ControllerBase {
   use ResourceTrait;
 
   /**
+   * The entity field manager service.
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
+   */
+  protected $entityFieldManager;
+
+  /**
    * The entity manager service.
    *
    * @var \Drupal\Core\Entity\EntityRepositoryInterface
@@ -25,27 +34,44 @@ class ProviderController extends ControllerBase {
   protected $entityRepository;
 
   /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
    * The logger factory.
    *
-   * @var \Drupal\Core\Logger\LoggerChannelFactory
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
    */
   protected $loggerFactory;
 
   /**
    * {@inheritdoc}
    */
-  public function __construct(EntityRepositoryInterface $entityRepository,
+  public function __construct(EntityFieldManagerInterface $entityFieldManager,
+      EntityRepositoryInterface $entityRepository,
+      EntityTypeManagerInterface $entityTypeManager,
       LoggerChannelFactoryInterface $logger_factory
     ) {
+    $this->entityFieldManager = $entityFieldManager;
     $this->entityRepository = $entityRepository;
+    $this->entityTypeManager = $entityTypeManager;
     $this->loggerFactory = $logger_factory;
   }
 
   /**
    * Get info.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   API response.
    */
-  public function getInfo() {
-    /** @var \Drupal\user\Entity\User $provider */
+  public function getInfo(Request $request) {
+    /** @var \Drupal\user\UserInterface $provider */
     $provider = $this->requireProvider();
 
     $data = [
@@ -60,12 +86,18 @@ class ProviderController extends ControllerBase {
 
   /**
    * Update info.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   API response.
    */
   public function updateInfo(Request $request) {
     // Parse JSON.
     $params = $this->getRequestContent($request);
 
-    /** @var \Drupal\user\Entity\User $provider */
+    /** @var \Drupal\user\UserInterface $provider */
     $provider = $this->requireProvider();
 
     if (isset($params['shared_secret'])) {

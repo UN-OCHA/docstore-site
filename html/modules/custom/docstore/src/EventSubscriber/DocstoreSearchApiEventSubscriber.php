@@ -46,7 +46,9 @@ class DocstoreSearchApiEventSubscriber implements EventSubscriberInterface {
    *   The items indexed event.
    */
   public function itemsIndexed(ItemsIndexedEvent $event) {
-    Cache::invalidateTags(['documents']);
+    // The index id is the same as cache name: documents or terms.
+    // @todo review if we add indices that don't fit that pattern.
+    Cache::invalidateTags([$event->getIndex()->id()]);
   }
 
 }
