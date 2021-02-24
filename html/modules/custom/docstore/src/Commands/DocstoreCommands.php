@@ -146,6 +146,9 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
    * @validate-module-enabled docstore
    */
   public function resetTesting() {
+    // Create/reset the test users.
+    $this->createTestUsers();
+
     // Reload the configuration of the solr indices.
     // @todo do we really need to do that? This looks like the site's config
     // may become out of sync if those files are not properly maintained.
@@ -240,9 +243,6 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
       $this->state->delete('docstore.endpoints.' . $resource_type);
     }
 
-    // Create the test users.
-    $this->createTestUsers();
-
     // Rebuild cache.
     /** @var \Drush\SiteAlias\ProcessManager $process_manager */
     $process_manager = $this->processManager();
@@ -312,19 +312,13 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
   public function createTestUsers() {
     // Base provider.
     $this->createProvider(2, [
-      'status' => 1,
       'name' => 'Base provider',
-      'type' => 'provider',
-      'pass' => '',
       'prefix' => '',
     ]);
 
     // Test provider 1.
     $this->createProvider(3, [
-      'status' => 1,
       'name' => 'Silk test',
-      'type' => 'provider',
-      'pass' => '',
       'prefix' => 'silk_',
       'api_keys' => 'abcd',
       'api_keys_read_only' => 'xyzzy',
@@ -334,21 +328,13 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
 
     // Test provider 2.
     $this->createProvider(4, [
-      'status' => 1,
       'name' => 'Another test',
-      'type' => 'provider',
-      'pass' => '',
-      'prefix' => [
-        'value' => 'another_',
-      ],
-      'api_keys' => [
-        'value' => 'dcba',
-      ],
-      'api_keys_read_only' => [
-        'value' => 'yzzyx',
-      ],
+      'prefix' => 'another_',
+      'api_keys' => 'dcba',
+      'api_keys_read_only' => 'yzzyx',
     ]);
 
+    $this->logger->success('Successfully created/resetted test users.');
     return TRUE;
   }
 
@@ -456,7 +442,12 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
     $storage = $this->entityTypeManager->getStorage('user');
 
     /** @var \Drupal\Core\Entity\ContentEntityInterface $user */
-    $user = $storage->load($uid) ?? User::create([]);
+    $user = $storage->load($uid) ?? User::create([
+      'uid' => $uid,
+      'type' => 'provider',
+      'status' => 1,
+      'pass' => '',
+    ]);
 
     foreach ($data as $field => $value) {
       $user->set($field, $value);
