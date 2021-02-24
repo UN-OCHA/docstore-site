@@ -478,3 +478,21 @@ function docstore_rebuild_index_fields() {
     $view_display->save();
   }
 }
+
+/**
+ * Implements hook_search_api_solr_documents_alter().
+ */
+function docstore_search_api_solr_documents_alter(&$documents, $index, $items) {
+  foreach ($documents as $document) {
+    $document->setKey('key', $document->id);
+
+    $files = [];
+    foreach ($document->sm_files_file_filename as $index => $filename) {
+      $files[] = $filename
+      . '||' . $document->sm_files_file_uri[$index]
+      . '||' . $document->sm_files_media_uuid[$index]
+      . '||' . $document->sm_files_file_uuid[$index];
+    }
+    $document->addField('sm_files', $files);
+  }
+}

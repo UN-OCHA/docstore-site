@@ -248,7 +248,29 @@ class DocumentReadController extends ControllerBase {
 
       // Re-write file information.
       $row['files'] = [];
-      if (isset($row['files_media_uuid'])) {
+      if (isset($solr_row['sm_files'])) {
+        foreach ($solr_row['sm_files'] as $key => $value) {
+          $parts = explode('||', $value);
+          $file_record = [
+            'private' => FALSE,
+            'media_uuid' => $parts[2],
+            'file_uuid' => $parts[3] ?? '',
+            'filename' => $parts[0] ?? '',
+            'uri' => $base_url . $parts[1] ?? '',
+          ];
+
+          // Hide private files, unless it's the owner.
+          if (strpos($parts[1], '/system/files') === 0) {
+            $file_record['private'] = TRUE;
+            if ($provider->isAnonymous() || $row['provider'] !== $provider->uuid()) {
+              unset($file_record['uri']);
+            }
+          }
+
+          $row['files'][] = $file_record;
+        }
+      }
+      elseif (isset($row['files_media_uuid'])) {
         foreach ($row['files_media_uuid'] as $key => $value) {
           $file_record = [
             'private' => FALSE,
