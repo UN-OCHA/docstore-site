@@ -110,7 +110,7 @@ Example output.
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // UUID {uuid}
 * Data.machine_name: /^[0-9a-z_]+$/ // Machine_name {machine_name}
 
-## `GET /vocabularies/abc`
+## GET /vocabularies/abc
 
 Get a non existing vocabulary.
 
@@ -129,7 +129,7 @@ Example output.
 * Status: `404`
 * Content-Type: "application/json"
 
-## `GET /vocabularies/1321`
+## GET /vocabularies/1321
 
 Get a non existing vocabulary.
 
@@ -148,7 +148,7 @@ Example output.
 * Status: `404`
 * Content-Type: "application/json"
 
-## `GET /vocabularies/{machine_name}`
+## GET /vocabularies/{machine_name}
 
 Get a vocabulary.
 
@@ -170,7 +170,7 @@ Example output.
 * Data.label: /./
 * Data.machine_name: {machine_name}
 
-## `GET /vocabularies/{uuid}`
+## GET /vocabularies/{uuid}
 
 Get a vocabulary.
 
@@ -280,7 +280,7 @@ Example output.
 * Data.message: "Vocabulary updated"
 * Data.uuid: {uuid}
 
-## `GET /vocabularies/{uuid}`
+## GET /vocabularies/{uuid}
 
 Get a vocabulary.
 
@@ -358,7 +358,7 @@ Example output.
 * Data.message: "Vocabulary updated"
 * Data.uuid: {uuid}
 
-## `GET /vocabularies/{uuid}`
+## GET /vocabularies/{uuid}
 
 Get a vocabulary.
 
@@ -590,7 +590,7 @@ Update non existing field.
 
 ===
 
-* Status: `400`
+* Status: `404`
 * Content-Type: "application/json"
 * Data.message: "Field does not exist"
 
@@ -911,7 +911,7 @@ Delete already deleted field.
 
 ===
 
-* Status: `400`
+* Status: `404`
 * Content-Type: "application/json"
 * Data.message: "Field does not exist"
 

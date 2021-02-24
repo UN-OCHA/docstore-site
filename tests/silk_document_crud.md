@@ -506,7 +506,7 @@ Get private document as owner.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
-* Data.silk_country[0].name: "Aruba"
+* Data.silk_country.name: "Aruba"
 
 ## GET /documents/test-document-crud/{doc2}
 

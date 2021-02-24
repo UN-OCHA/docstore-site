@@ -101,7 +101,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.revisions[0].vid: /^[0-9]+$/ // Machine_name {doc1_rev1}
+* Data.revisions[0].id: /^[0-9]+$/ // Machine_name {doc1_rev1}
 
 ## GET /documents/test-revisions/{doc1}/revisions/{doc1_rev1}
 
@@ -115,7 +115,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.vid: {doc1_rev1}
+* Data.revision_id: {doc1_rev1}
 * Data.title: "Version 1"
 
 ## PUT /documents/test-revisions/{doc1}
@@ -176,7 +176,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.revisions[0].vid: /^[0-9]+$/ // Machine_name {doc1_rev2}
+* Data.revisions[0].id: /^[0-9]+$/ // Machine_name {doc1_rev2}
 
 ## GET /documents/test-revisions/{doc1}/revisions/{doc1_rev1}
 
@@ -190,7 +190,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.vid: {doc1_rev1}
+* Data.revision_id: {doc1_rev1}
 * Data.title: "Version 1"
 
 ## GET /documents/test-revisions/{doc1}/revisions/{doc1_rev2}
@@ -205,7 +205,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.vid: {doc1_rev2}
+* Data.revision_id: {doc1_rev2}
 * Data.title: "Version 2"
 
 ## PATCH /types/testrev
@@ -286,7 +286,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.revisions[0].vid: {doc1_rev2}
+* Data.revisions[0].id: {doc1_rev2}
 
 ## GET /documents/test-revisions/{doc1}/revisions/{doc1_rev1}
 
@@ -300,7 +300,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.vid: {doc1_rev1}
+* Data.revision_id: {doc1_rev1}
 * Data.title: "Version 1"
 
 ## GET /documents/test-revisions/{doc1}/revisions/{doc1_rev2}
@@ -315,7 +315,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.vid: {doc1_rev2}
+* Data.revision_id: {doc1_rev2}
 * Data.title: "Version 3"
 
 ## PUT /documents/test-revisions/{doc1}
@@ -378,7 +378,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.revisions[0].vid: /^[0-9]+$/ // Machine_name {doc1_rev4}
+* Data.revisions[0].id: /^[0-9]+$/ // Machine_name {doc1_rev4}
 
 ## GET /documents/test-revisions/{doc1}/revisions/{doc1_rev1}
 
@@ -392,7 +392,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.vid: {doc1_rev1}
+* Data.revision_id: {doc1_rev1}
 * Data.title: "Version 1"
 
 ## GET /documents/test-revisions/{doc1}/revisions/{doc1_rev2}
@@ -407,7 +407,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.vid: {doc1_rev2}
+* Data.revision_id: {doc1_rev2}
 * Data.title: "Version 3"
 
 ## GET /documents/test-revisions/{doc1}/revisions/{doc1_rev4}
@@ -422,7 +422,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.vid: {doc1_rev4}
+* Data.revision_id: {doc1_rev4}
 * Data.title: "Version 4"
 
 ## PUT /documents/test-revisions/{doc1}
@@ -486,7 +486,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.revisions[0].vid: /^[0-9]+$/ // Machine_name {doc1_rev5}
+* Data.revisions[0].id: /^[0-9]+$/ // Machine_name {doc1_rev5}
 
 ## GET /documents/test-revisions/{doc1}/revisions/{doc1_rev1}
 
@@ -500,7 +500,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.vid: {doc1_rev1}
+* Data.revision_id: {doc1_rev1}
 * Data.title: "Version 1"
 
 ## GET /documents/test-revisions/{doc1}/revisions/{doc1_rev2}
@@ -515,7 +515,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.vid: {doc1_rev2}
+* Data.revision_id: {doc1_rev2}
 * Data.title: "Version 3"
 
 ## GET /documents/test-revisions/{doc1}/revisions/{doc1_rev4}
@@ -530,7 +530,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.vid: {doc1_rev4}
+* Data.revision_id: {doc1_rev4}
 * Data.title: "Version 4"
 
 ## GET /documents/test-revisions/{doc1}/revisions/{doc1_rev5}
@@ -545,7 +545,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.vid: {doc1_rev5}
+* Data.revision_id: {doc1_rev5}
 * Data.title: "Version 5"
 
 ## PUT /documents/test-revisions/{doc1}/revisions/{doc1_rev5}/publish
@@ -566,7 +566,7 @@ Publish version 5.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data.message: "Test document (revisions) updated"
+* Data.message: "Test document (revisions) revision published"
 * Data.uuid: {doc1}
 
 ## GET /wait
@@ -605,7 +605,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.revisions[0].vid: /^[0-9]+$/ // Machine_name {doc1_rev6}
+* Data.revisions[0].id: /^[0-9]+$/ // Machine_name {doc1_rev6}
 
 ## GET /documents/test-revisions/{doc1}/revisions/{doc1_rev1}
 
@@ -619,7 +619,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.vid: {doc1_rev1}
+* Data.revision_id: {doc1_rev1}
 * Data.title: "Version 1"
 
 ## GET /documents/test-revisions/{doc1}/revisions/{doc1_rev2}
@@ -634,7 +634,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.vid: {doc1_rev2}
+* Data.revision_id: {doc1_rev2}
 * Data.title: "Version 3"
 
 ## GET /documents/test-revisions/{doc1}/revisions/{doc1_rev4}
@@ -649,7 +649,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.vid: {doc1_rev4}
+* Data.revision_id: {doc1_rev4}
 * Data.title: "Version 4"
 
 ## GET /documents/test-revisions/{doc1}/revisions/{doc1_rev5}
@@ -664,7 +664,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.vid: {doc1_rev5}
+* Data.revision_id: {doc1_rev5}
 * Data.title: "Version 5"
 
 ## GET /documents/test-revisions/{doc1}/revisions/{doc1_rev6}
@@ -679,7 +679,7 @@ Get document revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc1}
-* Data.vid: {doc1_rev6}
+* Data.revision_id: {doc1_rev6}
 * Data.title: "Version 5"
 
 ## DELETE /documents/test-revisions/{doc1}

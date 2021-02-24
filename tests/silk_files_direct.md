@@ -1,25 +1,8 @@
 # Files
 
-## GET /files/{FILEPRIVATETXT}/{ME_UUID}/{HASH}/test.pdf
+## GET /files/{FILE_UUID}/{ME_UUID}/{FILE_HASH}/direct.txt
 
-Get private file.
-
-* Content-Type: "application/json"
-* Accept: "text/plain"
-
-===
-
-```txt
-Private txt
-
-```
-
-* Status: `200`
-* Content-Type: "text/plain;charset=UTF-8"
-
-## GET /files/{FILEPRIVATETXT}/{ME_UUID}/{HASH}/not_really_used.txt
-
-Get private file.
+Get private file with real file name.
 
 * Content-Type: "application/json"
 * Accept: "text/plain"
@@ -27,14 +10,29 @@ Get private file.
 ===
 
 ```txt
-Private txt
-
+Direct txt
 ```
 
 * Status: `200`
 * Content-Type: "text/plain;charset=UTF-8"
 
-## GET /files/file-uuid/{ME_UUID}/{HASH}/test.txt
+## GET /files/{FILE_UUID}/{ME_UUID}/{FILE_HASH}/not_really_used.txt
+
+Get private file with a different filename.
+
+* Content-Type: "application/json"
+* Accept: "text/plain"
+
+===
+
+```txt
+Direct txt
+```
+
+* Status: `200`
+* Content-Type: "text/plain;charset=UTF-8"
+
+## GET /files/file-uuid/{ME_UUID}/{FILE_HASH}/direct.txt
 
 Get private file, wrong file uuid.
 
@@ -43,9 +41,9 @@ Get private file, wrong file uuid.
 
 ===
 
-* Status: `400`
+* Status: `404`
 
-## GET /files/{FILEPRIVATETXT}/provider-uuid/{HASH}/test.txt
+## GET /files/{FILE_UUID}/provider-uuid/{FILE_HASH}/direct.txt
 
 Get private file, wrong provider uuid.
 
@@ -54,9 +52,9 @@ Get private file, wrong provider uuid.
 
 ===
 
-* Status: `400`
+* Status: `404`
 
-## GET /files/{FILEPRIVATETXT}/{ME_UUID}/hash/test.txt
+## GET /files/{FILE_UUID}/{ME_UUID}/hash/direct.txt
 
 Get private file, wrong hash.
 
@@ -69,7 +67,7 @@ Get private file, wrong hash.
 
 ## PATCH /api/v1/me
 
-Update shared secret
+Update shared secret.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -77,7 +75,7 @@ Update shared secret
 
 ```json
 {
-  "shared_secret": "AnotherSecret"
+  "shared_secret": "AnotherVeryVerySecret"
 }
 ```
 
@@ -87,9 +85,9 @@ Update shared secret
 * Content-Type: "application/json"
 * Data.message: "Provider updated"
 
-## GET /files/{FILEPRIVATETXT}/{ME_UUID}/{HASH}/not_really_used.txt
+## GET /files/{FILE_UUID}/{ME_UUID}/{FILE_HASH}/direct.txt
 
-Get private file.
+Check that links become invalid after changing the secret.
 
 * Content-Type: "application/json"
 * Accept: "text/plain"

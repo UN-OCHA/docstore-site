@@ -34,7 +34,8 @@ Add id field.
 {
   "label": "My Id",
   "author": "test",
-  "type": "string"
+  "type": "string",
+  "machine_name": "test_doc_bulk_cud_field_id"
 }
 ```
 
