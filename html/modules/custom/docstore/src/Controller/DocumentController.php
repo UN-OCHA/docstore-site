@@ -703,30 +703,7 @@ class DocumentController extends ControllerBase {
       ->pager(50)
       ->execute();
 
-    // Was $data['revisions'] = array_keys($revisions);.
-    foreach (array_keys($revisions) as $vid) {
-      /** @var \Drupal\media\Entity\Media $revision */
-      $revision = $this->entityTypeManager->getStorage('media')->loadRevision($vid);
-
-      /** @var \Drupal\media\Entity\File $file */
-      $file = $this->entityTypeManager->getStorage('file')->load($revision->getSource()->getSourceFieldValue($revision));
-
-      // If the file is private check if the provider is its owner.
-      if (StreamWrapperManager::getScheme($file->getFileUri()) === 'private') {
-        $this->providerIsOwner($file);
-      }
-
-      $data['revisions'][] = [
-        'vid' => $vid,
-        'uuid' => $revision->uuid(),
-        'name' => $revision->getName(),
-        'created' => date(DATE_ATOM, $revision->getCreatedTime()),
-        'changed' => date(DATE_ATOM, $revision->getChangedTime()),
-        'mimetype' => $file->getMimeType(),
-        'file_uuid' => $file->uuid(),
-        'uri' => $request->getSchemeAndHttpHost() . $file->createFileUrl(),
-      ];
-    }
+    $data['revisions'] = array_keys($revisions);
 
     return $this->createJsonResponse($data, 200);
   }
