@@ -1,8 +1,5 @@
-html/sites/default
-html/sites/default/*
-html/sites/default/files
-html/sites/default/files/*
-html/tmp
+html
+!html/modules/custom
 /vendor
 /behat/vendor
 *.DS_Store
