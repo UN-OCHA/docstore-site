@@ -1,5 +1,5 @@
 # Build the code.
-FROM unocha/unified-builder:7.3-develop as builder
+FROM unocha/unified-builder:7.4-develop as builder
 
 ARG  BRANCH_ENVIRONMENT
 
@@ -27,7 +27,7 @@ RUN mkdir -m 0775 -p html/sites/default && \
 ################################################################################
 
 # Generate the image.
-FROM unocha/php7-k8s:7.3-NR-develop
+FROM unocha/php7-k8s:7.4-NR-develop
 
 ARG VCS_REF
 ARG VCS_URL

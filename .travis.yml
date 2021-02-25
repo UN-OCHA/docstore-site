@@ -5,7 +5,7 @@ cache:
   - solr_downloads
 
 php:
-  - 7.3
+  - 7.4
 
 mysql:
   database: drupal
@@ -20,7 +20,7 @@ env:
      - PHPCS_VERSION='2.9.*@dev'
      - CODER_VERSION='dev-8.x-2.x'
      - DB=sqlite
-     - SOLR_VERSION=7.5.0
+     - SOLR_VERSION=8.8.0
 
 before_script:
   # Composer.
