@@ -61,11 +61,14 @@ trait SearchableResourceTrait {
    * @param bool $with_revisions
    *   If a id is provided and with_revisions is set to TRUE, then add the
    *   list of revisions to the returned resource.
+   * @param bool $files_only
+   *   If TRUE, return only the list of files associated with the matching
+   *   documents.
    *
    * @return \Drupal\Core\Cache\CacheableJsonResponse
    *   JSON response with the found resources.
    */
-  public function searchResources(Request $request, $entity_type_id, ?ConfigEntityBundleBase $bundle_entity = NULL, $id = NULL, $with_revisions = FALSE) {
+  public function searchResources(Request $request, $entity_type_id, ?ConfigEntityBundleBase $bundle_entity = NULL, $id = NULL, $with_revisions = FALSE, $files_only = FALSE) {
     // Load the search API index.
     $index = Index::load($this->getResourceType($entity_type_id));
     if (empty($index)) {
@@ -188,10 +191,23 @@ trait SearchableResourceTrait {
     // Prepare the data to return.
     $data = $this->prepareResultSetData($results, $provider);
 
+    // If instructed so, only return the list of unique files associated with
+    // the document(s).
+    if (!empty($files_only)) {
+      $files = [];
+      foreach ($data as $item) {
+        if (isset($item['files'])) {
+          foreach ($item['files'] as $file) {
+            $files[$file['media_uuid']] = $file;
+          }
+        }
+      }
+      $data = array_values($files);
+    }
     // Throw a 404 Not Found if no resource was found for the given id.
     // Cache it to avoid doing another query until something changes for
     // this resource.
-    if (isset($id)) {
+    elseif (isset($id)) {
       if (empty($data)) {
         throw new CacheableNotFoundHttpException($cache, strtr('@label @id does not exist', [
           '@label' => $this->getResourceTypeLabel($entity_type_id, FALSE),
@@ -647,7 +663,7 @@ trait SearchableResourceTrait {
       'created' => $this->extractSearchResultAdditionalFieldValues($name . '_media_created_', $fields),
       'changed' => $this->extractSearchResultAdditionalFieldValues($name . '_media_changed_', $fields),
       'mimetype' => $this->extractSearchResultAdditionalFieldValues($name . '_file_filemime_', $fields),
-      'size' => $this->extractSearchResultAdditionalFieldValues($name . '_field_filesize_', $fields),
+      'size' => $this->extractSearchResultAdditionalFieldValues($name . '_file_filesize_', $fields),
       'file_uuid' => $this->extractSearchResultAdditionalFieldValues($name . '_file_uuid_', $fields),
     ];
 
@@ -687,7 +703,7 @@ trait SearchableResourceTrait {
         // generate the direct url.
         // Note: no strict equality for ids as they can be strings or ints.
         elseif (!$provider->isAnonymous() & isset($provider_ids[$key]) && $provider_ids[$key] == $provider->id() && isset($file['filename'])) {
-          $file['uri'] = $this->createDirectUrl('media', $file['uuid'], $file['filename'], $provider);
+          $file['uri'] = $this->createDirectUrl('media', $file['media_uuid'], $file['filename'], $provider);
         }
       }
 

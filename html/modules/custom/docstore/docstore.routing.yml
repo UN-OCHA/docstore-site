@@ -250,6 +250,18 @@ docstore_create_document_in_bulk:
     _auth: ['docstore_auth']
     docstore_crud: 'C'
     docstore_access_level: 'B'
+docstore_get_document_all_files:
+   path: '/api/v1/documents/{type}/files'
+   defaults:
+     _controller: 'docstore.document_controller:getAllDocumentFiles'
+     _title: 'Get all files for this document type'
+   methods: [GET]
+   requirements:
+     _docstore_access_check: 'TRUE'
+   options:
+     _auth: ['docstore_auth']
+     docstore_crud: 'R'
+     docstore_access_level: 'B'
 docstore_get_document:
   path: '/api/v1/documents/{type}/{id}'
   defaults:

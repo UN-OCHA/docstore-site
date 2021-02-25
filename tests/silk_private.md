@@ -300,11 +300,6 @@ Get terms. They are sorted by default by creation date descending.
 Get terms. The `{field_private2}` field in the first result should not be
 visible at it's private for another provider.
 
-**Note:** This is not really captured in this test. Silk doesn't provide a way
-to test for the non existence of a field in the result set.
-
-**@todo:** Add a way to check for missing value in Silk.
-
 * Accept: "application/json"
 * API-KEY: abcd
 
@@ -313,6 +308,7 @@ to test for the non existence of a field in the result set.
 * Status: `200`
 * Content-Type: "application/json"
 * Data[0].test_public: "I can be used"
+* Data[0].test_private_2: null
 * Data[1].test_public: "I'm visible"
 * Data[1].test_private: "I'm not visible"
 

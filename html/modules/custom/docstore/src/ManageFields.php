@@ -250,7 +250,7 @@ class ManageFields {
             'uuid' => 'string',
             'uri' => 'string',
             'filemime' => 'string',
-            'filesize' => 'string',
+            'filesize' => 'integer',
           ];
           foreach ($file_fields as $extra_field_name => $extra_field_type) {
             $field = new Field($index, $field_name . '_file_' . $extra_field_name . '_');

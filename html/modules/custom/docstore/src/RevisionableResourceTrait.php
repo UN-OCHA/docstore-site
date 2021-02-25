@@ -195,7 +195,7 @@ trait RevisionableResourceTrait {
     $fields = [
       'id' => $revision_fields['revision_id'],
       'created' => $revision_fields['revision_created'],
-      'message' => $revision_fields['revision_log_message'],
+      'log' => $revision_fields['revision_log_message'],
       'default' => $revision_fields['revision_default'],
       'provider_uuid' => $user_uuid_field,
     ];

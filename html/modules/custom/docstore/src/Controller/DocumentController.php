@@ -181,6 +181,28 @@ class DocumentController extends ControllerBase {
   }
 
   /**
+   * Get all document files.
+   *
+   * @param string $type
+   *   Document type, "any" or "all".
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   Docstore API request.
+   *
+   * @return \Drupal\Core\Cache\CacheableJsonResponse
+   *   JSON response with the list of resources.
+   */
+  public function getAllDocumentFiles($type, Request $request) {
+    // Check if type is allowed.
+    $type = $this->typeAllowed($type, 'read');
+
+    // Load the node type if not a request against all types of documents.
+    $node_type = $type !== 'any' ? $this->loadDocumentType($type) : NULL;
+
+    // Get the documents.
+    return $this->searchResources($request, 'node', $node_type, NULL, NULL, TRUE);
+  }
+
+  /**
    * Get a single document.
    *
    * @param string $type
@@ -283,16 +305,18 @@ class DocumentController extends ControllerBase {
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   Docstore API request.
    *
-   * @throws \Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException
-   *   412 Precondition Failed because not implemented yet.
-   *
-   * @todo Implement or remove.
+   * @return \Drupal\Core\Cache\CacheableJsonResponse
+   *   JSON response with the resource's list of files.
    */
   public function getDocumentFiles($type, $id, Request $request) {
     // Check if type is allowed.
-    $this->typeAllowed($type, 'read');
+    $type = $this->typeAllowed($type, 'read');
 
-    throw new PreconditionFailedHttpException('Not implemented (yet)');
+    // Load the node type if not a request against all types of documents.
+    $node_type = $type !== 'any' ? $this->loadDocumentType($type) : NULL;
+
+    // Get the document's data.
+    return $this->searchResources($request, 'node', $node_type, $id, FALSE, TRUE);
   }
 
   /**
