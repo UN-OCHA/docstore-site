@@ -154,13 +154,13 @@ trait SearchableResourceTrait {
     // Add a default sort if not was provided.
     $sorts = $query->getSorts();
     if (empty($sorts)) {
-      // Default to the creation date in the document store. returning the
-      // most recent resources first.
-      if ($index->getField('created') !== NULL) {
-        $query->sort('created', 'DESC');
+      // Sort by ID descending which basically corresponds to sorting by
+      // creation date descending.
+      if ($index->getField($entity_type->getKey('id')) !== NULL) {
+        $query->sort($entity_type->getKey('id'), 'DESC');
       }
       // Otherwise sort by label.
-      else {
+      elseif ($index->getField($entity_type->getKey('label')) !== NULL) {
         $query->sort($entity_type->getKey('label'), 'ASC');
       }
     }
