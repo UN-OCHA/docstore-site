@@ -388,6 +388,22 @@ trait SearchableResourceTrait {
     // Get the list of readable fields for this bundle.
     $readable_fields = $this->getReadableFields($entity_type_id, $bundle, $provider);
 
+    // Should always be true.
+    if (isset($fields['document'])) {
+      $document = unserialize($fields['document']->getValues()[0]);
+      foreach ($document as $name => $field) {
+        if (!isset($readable_fields[$name])) {
+          //continue;
+        }
+        $data[$readable_fields[$name]] = $field;
+      }
+
+      // Update the data based on the entity type.
+      $this->massageResourceDataForEntityType($data, $entity_type_id, $bundle);
+
+      return $data;
+    }
+
     // Sort the fields by key, this will put base field like `myfield` before
     // additional property fields like `myfield_label` and simplify the field
     // data handling.
