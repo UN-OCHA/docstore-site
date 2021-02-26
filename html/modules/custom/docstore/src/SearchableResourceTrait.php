@@ -393,7 +393,7 @@ trait SearchableResourceTrait {
       $document = unserialize($fields['document']->getValues()[0]);
       foreach ($document as $name => $field) {
         if (!isset($readable_fields[$name])) {
-          //continue;
+          continue;
         }
         $data[$readable_fields[$name]] = $field;
       }

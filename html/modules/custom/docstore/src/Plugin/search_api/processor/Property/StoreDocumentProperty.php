@@ -65,7 +65,11 @@ class StoreDocumentProperty extends ConfigurablePropertyBase {
         $description = $property->getDescription();
       }
       $form['fields'][$combined_id] = [
-        '#attributes' => ['title' => $this->t('Machine name: @name', ['@name' => $name])],
+        '#attributes' => [
+          'title' => $this->t('Machine name: @name', [
+            '@name' => $name,
+          ]),
+        ],
         '#description' => $description,
       ];
     }
