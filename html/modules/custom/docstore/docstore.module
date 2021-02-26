@@ -93,9 +93,8 @@ function docstore_search_api_solr_converted_query_alter(SolariumQueryInterface $
  * @todo use processor instead or define a search api data type.
  */
 function docstore_search_api_solr_documents_alter(&$documents, IndexInterface $index, $items) {
-  foreach ($documents as $document) {
+  foreach ($documents as &$document) {
     $document->setKey('key', $document->id);
-
     // Concatenate the file info so that the order is preserved. The first
     // concatenated value is the delta of the field value. This will allow
     // us to reorder the date when parsing the solr response.
@@ -107,7 +106,7 @@ function docstore_search_api_solr_documents_alter(&$documents, IndexInterface $i
       // When there is only one item, search api (solr?) flatten that to
       // a scalar instead of keeping it as an array.
       if (!is_array($document->sm_files)) {
-        $files[] = implode('||', [
+        $files[] = [
           0,
           $document->sm_files,
           $document->sm_files_file_filemime_,
@@ -118,25 +117,25 @@ function docstore_search_api_solr_documents_alter(&$documents, IndexInterface $i
           $document->dm_files_media_created_,
           $document->sm_files_media_name_,
           $document->itm_files_media_uid_,
-        ]);
+        ];
       }
       else {
-        foreach ($document->sm_files as $index => $media_uuid) {
-          $files[] = implode('||', [
-            $index,
+        foreach ($document->sm_files as $file_delta => $media_uuid) {
+          $files[] = [
+            $file_delta,
             $media_uuid,
-            $document->sm_files_file_filemime_[$index],
-            $document->itm_files_file_filesize_[$index],
-            $document->sm_files_file_uri_[$index],
-            $document->sm_files_file_uuid_[$index],
-            $document->dm_files_media_changed_[$index],
-            $document->dm_files_media_created_[$index],
-            $document->sm_files_media_name_[$index],
-            $document->itm_files_media_uid_[$index],
-          ]);
+            $document->sm_files_file_filemime_[$file_delta],
+            $document->itm_files_file_filesize_[$file_delta],
+            $document->sm_files_file_uri_[$file_delta],
+            $document->sm_files_file_uuid_[$file_delta],
+            $document->dm_files_media_changed_[$file_delta],
+            $document->dm_files_media_created_[$file_delta],
+            $document->sm_files_media_name_[$file_delta],
+            $document->itm_files_media_uid_[$file_delta],
+          ];
         }
       }
-      $document->addField('sm_concatenated_files_', $files);
+      $document->addField('zs_files', serialize($files));
     }
   }
 }
@@ -170,8 +169,8 @@ function docstore_search_api_solr_search_results_alter(ResultSetInterface $resul
   foreach ($result as $document) {
     $item = $iterator->current();
 
-    if (isset($document->sm_concatenated_files_)) {
-      $concatenated_files = $document->sm_concatenated_files_;
+    if (isset($document->z_files)) {
+      $concatenated_files = $document->z_files;
       if (!is_array($concatenated_files)) {
         $concatenated_files = [$concatenated_files];
       }
@@ -180,7 +179,7 @@ function docstore_search_api_solr_search_results_alter(ResultSetInterface $resul
       // each field with its list of values in delta order.
       $values = [];
       foreach ($concatenated_files as $concatenated_file) {
-        $file_data = explode('||', $concatenated_file);
+        $file_data = unserialize($concatenated_file);
         $delta = (int) array_shift($file_data);
         foreach ($file_data as $index => $value) {
           $values[$fields[$index]][$delta] = $value;
