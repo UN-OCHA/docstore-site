@@ -1,5 +1,5 @@
 # Build the code.
-FROM unocha/unified-builder:7.3.20-r0-202007-01 as builder
+FROM unocha/unified-builder:7.3-develop as builder
 
 ARG  BRANCH_ENVIRONMENT
 
