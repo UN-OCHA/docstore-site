@@ -2,7 +2,6 @@
 
 namespace Drupal\docstore;
 
-use Drupal\Component\Uuid\Uuid;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -14,14 +13,7 @@ trait DocumentTypeTrait {
    * Name of the key.
    */
   protected function getEndpointStateKey() {
-    return 'document_endpoints';
-  }
-
-  /**
-   * Name of the key.
-   */
-  protected function getDocumentTypeStateKey() {
-    return 'document_document_types';
+    return 'docstore.endpoints.document_types';
   }
 
   /**
@@ -90,6 +82,7 @@ trait DocumentTypeTrait {
   protected function getEndpoints() {
     $document_endpoints = \Drupal::state()->get($this->getEndpointStateKey(), []);
     if (empty($document_endpoints) && isset($this->entityTypeManager)) {
+      /** @var \Drupal\Core\Config\Entity\ConfigEntityBundleBase[] $node_types */
       $node_types = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
       foreach ($node_types as $node_type) {
         $document_endpoints[$node_type->getThirdPartySetting('docstore', 'endpoint')] = $node_type->id();
@@ -137,69 +130,6 @@ trait DocumentTypeTrait {
     }
 
     return $this->EndpointGetNodeType($type);
-  }
-
-  /**
-   * List of accessible document types by provider.
-   */
-  protected function getAccessibleDocumentTypes($provider) {
-    $document_types = \Drupal::state()->get($this->getDocumentTypeStateKey(), []);
-    if (empty($document_types) || !isset($document_types[$provider->id()])) {
-      if (isset($this->entityTypeManager)) {
-        $node_types = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
-        foreach ($node_types as $node_type) {
-          if ($this->providerCanRead($node_type->id(), $provider)) {
-            $document_types[$provider->id()][] = $node_type->id();
-          }
-        }
-
-        \Drupal::state()->set($this->getDocumentTypeStateKey(), $document_types);
-      }
-      else {
-        return [];
-      }
-    }
-
-    return $document_types[$provider->id()];
-  }
-
-  /**
-   * Rebuild endpoints state.
-   */
-  protected function rebuildDocumentTypes($provider = NULL) {
-    \Drupal::state()->delete($this->getDocumentTypeStateKey());
-
-    if ($provider) {
-      $this->getAccessibleDocumentTypes($provider);
-    }
-  }
-
-  /**
-   * Load a node type entity.
-   *
-   * @param string $id
-   *   Node type uuid or machine_name.
-   *
-   * @return \Drupal\node\Entity\NodeType
-   *   Node type entity.
-   *
-   * @throw \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
-   *   404 Not Found if the node type was not found.
-   */
-  protected function loadNodeType($id) {
-    if (Uuid::isValid($id)) {
-      $node_type = $this->entityRepository->loadEntityByUuid('node_type', $id);
-    }
-    else {
-      // Assume it's the machine name.
-      $node_type = $this->entityTypeManager->getStorage('node_type')->load($id);
-    }
-
-    if (!$node_type) {
-      throw new NotFoundHttpException('Document type not found.');
-    }
-
-    return $node_type;
   }
 
 }

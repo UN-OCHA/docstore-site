@@ -50,7 +50,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
-* Data.label: /./
+* Data.label: /.+/
 * Data.machine_name: {city}
 
 ## POST /vocabularies
@@ -102,7 +102,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
-* Data.label: /./
+* Data.label: /.+/
 * Data.machine_name: {organization}
 
 ## POST /vocabularies/{organization}/fields
@@ -241,10 +241,9 @@ Example output.
 ```json
 {
   "label": "Brussels",
-  "vocabulary_name": "silk_city",
+  "vocabulary": "silk_city",
   "langcode": "en",
-  "status": "1",
-  "name": "Brussels",
+  "published": true,
   "author": "23cdf322"
 }
 ```
@@ -298,18 +297,17 @@ Example output.
 ```json
 {
   "label": "Borgerhout",
-  "vocabulary_name": "{city}",
+  "vocabulary": "{city}",
   "langcode": "en",
-  "status": "1",
-  "name": "Borgerhout"
+  "published": true
 }
 ```
 
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
-* Data.label: /./
-* Data.vocabulary_name: {city}
+* Data.label: /.+/
+* Data.vocabulary: {city}
 
 ## PUT /vocabularies/{city}/terms/{city_borgerhout}
 
@@ -352,9 +350,9 @@ Example output.
 ```json
 {
   "label": "Borgerhout district",
-  "vocabulary_name": "{city}",
+  "vocabulary": "{city}",
   "langcode": "en",
-  "status": "1"
+  "published": true
 }
 ```
 
@@ -362,7 +360,7 @@ Example output.
 * Content-Type: "application/json"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
 * Data.description: null
-* Data.vocabulary_name: {city}
+* Data.vocabulary: {city}
 
 ## PATCH /vocabularies/{city}/terms/{city_borgerhout}
 
@@ -537,10 +535,9 @@ Example output.
 ```json
 {
   "label": "WFP",
-  "vocabulary_name": "{organization}",
+  "vocabulary": "{organization}",
   "langcode": "en",
-  "status": "1",
-  "name": "WFP",
+  "published": true,
   "{field_iso3}": "BEL"
 }
 ```
@@ -550,8 +547,8 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
-* Data.label: /./
-* Data.vocabulary_name: {organization}
+* Data.label: /.+/
+* Data.vocabulary: {organization}
 
 ## PUT /vocabularies/{organization}/terms/{organization_wfp}
 
@@ -598,10 +595,10 @@ Example output.
 ```json
 {
   "label": "WFP",
-  "vocabulary_name": "{organization}",
+  "vocabulary": "{organization}",
   "langcode": "en",
-  "status": "1",
-  "name": "WFP",
+  "published": true,
+  "description": "Term updated",
   "{field_iso3}": "NED"
 }
 ```
@@ -611,9 +608,9 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
-* Data.label: /./
+* Data.label: /.+/
 * Data.description: "Term updated"
-* Data.vocabulary_name: {organization}
+* Data.vocabulary: {organization}
 
 # Add fields to documents
 
@@ -844,9 +841,12 @@ Example output.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc1}
-* Data[0].title: "Doc with term, no files"
+* Data[0].uuid: {doc2}
+* Data[0].title: "Doc with term labels, no files"
 * Data[0].silk_my_id: 42 // Hard-coded field name!
+* Data[1].uuid: {doc1}
+* Data[1].title: "Doc with term, no files"
+* Data[1].silk_my_id: 42 // Hard-coded field name!
 
 ## GET /media
 
@@ -933,7 +933,7 @@ Get document as owner.
 * Data.title: "Doc term and file"
 * Data.files[0].media_uuid: "{media1}"
 * Data.files[0].private: true
-* Data.files[0].uri: /.*/
+* Data.files[0].uri: /.+/
 
 ## GET /documents/documents/{doc3}
 
@@ -1182,7 +1182,7 @@ Test filters.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc1}
+* Data[1].uuid: {doc1}
 
 ## GET /documents/documents
 
@@ -1223,7 +1223,7 @@ Test limit.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc1}
+* Data[0].uuid: {doc5}
 
 ## GET /documents/documents
 

@@ -6,6 +6,7 @@ use Drupal\Component\Uuid\Uuid;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
@@ -14,6 +15,7 @@ use Drupal\search_api\Entity\Index;
 use Drupal\search_api\Item\Field;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\user_bundle\Entity\TypedUser;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Provides helper methods for parsing query parameters.
@@ -44,6 +46,13 @@ class ManageFields {
   protected $entityFieldManager;
 
   /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
    * The database connection.
    *
    * @var \Drupal\Core\Database\Connection
@@ -56,11 +65,13 @@ class ManageFields {
   public function __construct(TypedUser $provider,
     $nodeType,
     EntityFieldManagerInterface $entityFieldManager,
+    EntityTypeManagerInterface $entityTypeManager,
     Connection $database = NULL
     ) {
     $this->provider = $provider;
     $this->nodeType = $nodeType;
     $this->entityFieldManager = $entityFieldManager;
+    $this->entityTypeManager = $entityTypeManager;
     $this->database = $database;
   }
 
@@ -126,79 +137,175 @@ class ManageFields {
   }
 
   /**
-   * Add field to index.
+   * Add document field to index.
+   *
+   * @param \Drupal\field\Entity\FieldConfig $field_config
+   *   Field config.
+   * @param string $label
+   *   Field label.
    */
-  public function addDocumentFieldToIndex($field_name, $field_type, $label) {
-    $field_type_mapping = $this->allowedFieldTypes();
+  public function addDocumentFieldToIndex(FieldConfig $field_config, $label) {
+    $this->addFieldToIndex('documents', 'entity:node', $field_config, $label);
+  }
+
+  /**
+   * Add document field to index.
+   *
+   * @param \Drupal\field\Entity\FieldConfig $field_config
+   *   Field config.
+   * @param string $label
+   *   Field label.
+   */
+  public function addTermFieldToIndex(FieldConfig $field_config, $label) {
+    $this->addFieldToIndex('terms', 'entity:taxonomy_term', $field_config, $label);
+  }
+
+  /**
+   * Add field to index.
+   *
+   * Note: additional fields ends with a `_` to avoid clash with the machine
+   * names of user created fields. This is indeed a forbidden pattern.
+   * We use `_` as suffix and not prefix so that sorting a list of fields by
+   * field names will ensure the extra fields appear after the base fields,
+   * easing their processing.
+   *
+   * @param string $index_name
+   *   Search API index name.
+   * @param string $datasource_id
+   *   Source of the data for the field. For example `entity:node` for the a
+   *   node field.
+   * @param \Drupal\field\Entity\FieldConfig $field_config
+   *   Field config.
+   * @param string $label
+   *   Field label.
+   */
+  public function addFieldToIndex($index_name, $datasource_id, FieldConfig $field_config, $label) {
+    $field_name = $field_config->getName();
+    $field_type = $field_config->getType();
 
     // Skip unknown field types.
+    $field_type_mapping = $this->allowedFieldTypes();
     if (!isset($field_type_mapping[$field_type])) {
       return;
     }
 
-    $index = Index::load('documents');
+    // Load the search api index.
+    $index = Index::load($index_name);
+    if (empty($index)) {
+      return;
+    }
 
     // Skip existing fields.
     if ($index->getField($field_name)) {
       return;
     }
 
-    // Add node title if needed.
-    if ($field_type === 'geofield') {
-      $field = new Field($index, $field_name . '_latlon');
-      $field->setType('string');
-      $field->setPropertyPath($field_name . ':latlon');
-      $field->setDatasourceId('entity:node');
-      $field->setLabel($label . ' (latlon)');
-      $index->addField($field);
-    }
-    else {
+    // Add the base field.
+    if ($field_type !== 'geofield') {
       $field = new Field($index, $field_name);
       $field->setType($field_type_mapping[$field_type]);
       $field->setPropertyPath($field_name);
-      $field->setDatasourceId('entity:node');
+      $field->setDatasourceId($datasource_id);
       $field->setLabel($label);
       $index->addField($field);
     }
-
-    // Add node title if needed.
-    if ($field_type === 'node_reference') {
-      $field = new Field($index, $field_name . '_label');
+    // For geofield fields we index the latlon property which is a string
+    // with the latitude and longitude separated by a comma.
+    // @todo review if that's the most appropriate wau to store a geofield.
+    // @see https://www.drupal.org/project/search_api_location
+    else {
+      $field = new Field($index, $field_name . '_latlon_');
       $field->setType('string');
-      $field->setPropertyPath($field_name . ':entity:title');
-      $field->setDatasourceId('entity:node');
-      $field->setLabel($label . ' (title)');
+      $field->setPropertyPath($field_name . ':latlon');
+      $field->setDatasourceId($datasource_id);
+      $field->setLabel($label . ' (latlon)');
       $index->addField($field);
     }
 
-    // Add term name if needed.
-    if ($field_type === 'term_reference') {
-      $field = new Field($index, $field_name . '_label');
-      $field->setType('string');
-      $field->setPropertyPath($field_name . ':entity:name');
-      $field->setDatasourceId('entity:node');
-      $field->setLabel($label . ' (name)');
-      $index->addField($field);
-    }
+    // Add extra fields.
+    switch ($field_type) {
+      // For entity reference fields, index the referenced entity label.
+      case 'node_reference':
+      case 'term_reference':
+      case 'entity_reference':
+      case 'entity_reference_uuid':
+        // Index file data.
+        if ($field_name === 'files') {
+          $media_fields = [
+            'uid' => 'integer',
+            'name' => 'string',
+            'created' => 'date',
+            'changed' => 'date',
+          ];
+          foreach ($media_fields as $extra_field_name => $extra_field_type) {
+            $field = new Field($index, $field_name . '_media_' . $extra_field_name . '_');
+            $field->setType($extra_field_type);
+            $field->setPropertyPath($field_name . ':entity:' . $extra_field_name);
+            $field->setDatasourceId($datasource_id);
+            $field->setLabel($label . ' (media ' . $extra_field_name . ')');
+            $index->addField($field);
+          }
 
-    // Add link title if needed.
-    if ($field_type === 'link') {
-      $field = new Field($index, $field_name . '_title');
-      $field->setType('string');
-      $field->setPropertyPath($field_name . ':title');
-      $field->setDatasourceId('entity:node');
-      $field->setLabel($label . ' (title)');
-      $index->addField($field);
-    }
+          $file_fields = [
+            'uuid' => 'string',
+            'uri' => 'string',
+            'filemime' => 'string',
+            'filesize' => 'integer',
+          ];
+          foreach ($file_fields as $extra_field_name => $extra_field_type) {
+            $field = new Field($index, $field_name . '_file_' . $extra_field_name . '_');
+            $field->setType($extra_field_type);
+            $field->setPropertyPath($field_name . ':entity:field_media_file:entity:' . $extra_field_name);
+            $field->setDatasourceId($datasource_id);
+            $field->setLabel($label . ' (file ' . $extra_field_name . ')');
+            $index->addField($field);
+          }
+        }
+        // Otherwise index the referenced entity label field.
+        else {
+          // Get the type of entity referenced by this field.
+          $target_entity_type_id = $field_config
+            ->getFieldStorageDefinition()
+            ->getSetting('target_type');
 
-    // Add end date.
-    if ($field_type === 'daterange') {
-      $field = new Field($index, $field_name . '_end');
-      $field->setType('date');
-      $field->setPropertyPath($field_name . ':end_value');
-      $field->setDatasourceId('entity:node');
-      $field->setLabel($label . ' (end)');
-      $index->addField($field);
+          // Get the label field for the target entity type.
+          $label_field = $this->entityTypeManager
+            ->getStorage($target_entity_type_id)
+            ->getEntityType()
+            ->getKey('label');
+
+          // Index the label field.
+          $field = new Field($index, $field_name . '_label_');
+          $field->setType('string');
+          $field->setPropertyPath($field_name . ':entity:' . $label_field);
+          $field->setDatasourceId($datasource_id);
+          $field->setLabel($label . ' (' . $label_field . ')');
+          $index->addField($field);
+        }
+        break;
+
+      // For link fields, index the link title.
+      case 'link':
+        $field = new Field($index, $field_name . '_title_');
+        $field->setType('string');
+        $field->setPropertyPath($field_name . ':title');
+        $field->setDatasourceId($datasource_id);
+        $field->setLabel($label . ' (title)');
+        $index->addField($field);
+        break;
+
+      // For daterange fields, index the end date.
+      // @todo check the search api daterange type to see if it's
+      // necessary to index the end date like that.
+      case 'datarange':
+        $field = new Field($index, $field_name . '_end_');
+        $field->setType('date');
+        $field->setPropertyPath($field_name . ':end_value');
+        $field->setDatasourceId($datasource_id);
+        $field->setLabel($label . ' (end)');
+        $index->addField($field);
+        break;
+
     }
 
     // Save.
@@ -412,9 +519,6 @@ class ManageFields {
       }
     }
 
-    // Keep track of private types.
-    $this->rebuildDocumentTypes($this->provider);
-
     docstore_notify_webhooks('document_type:create', $machine_name);
 
     return $node_type;
@@ -491,9 +595,6 @@ class ManageFields {
 
     $node_type->save();
 
-    // Keep track of private types.
-    $this->rebuildDocumentTypes($this->provider);
-
     docstore_notify_webhooks('document_type:update', $type);
 
     return $node_type;
@@ -503,6 +604,7 @@ class ManageFields {
    * Get document fields.
    */
   public function getDocumentFields() {
+    $data = [];
     $map = $this->entityFieldManager->getFieldDefinitions('node', $this->nodeType);
     foreach ($map as $field_name => $field_info) {
       $data[$field_name] = $field_info->getType();
@@ -565,7 +667,7 @@ class ManageFields {
     // Create storage if needed.
     $field_storage = FieldStorageConfig::loadByName('node', $field_name);
 
-    if (!$field_storage) {
+    if (empty($field_storage)) {
       $new_field = TRUE;
 
       $field_storage = FieldStorageConfig::create([
@@ -599,7 +701,7 @@ class ManageFields {
     /** @var \Drupal\Core\Entity\Entity\EntityViewDisplay $view_display */
     $view_display = $storage->load('node.' . $this->nodeType . '.search_index');
 
-    if (!$view_display) {
+    if (empty($view_display)) {
       $view_display = EntityViewDisplay::create([
         'targetEntityType' => 'node',
         'bundle' => $this->nodeType,
@@ -618,8 +720,8 @@ class ManageFields {
     ])->save();
 
     // Add to index.
-    if ($new_field) {
-      $this->addDocumentFieldToIndex($field_name, $field_type, $label);
+    if (!empty($new_field)) {
+      $this->addDocumentFieldToIndex($field_config, $label);
     }
 
     docstore_notify_webhooks('field:document:create', $field_name);
@@ -648,7 +750,7 @@ class ManageFields {
     // Create storage if needed.
     $field_storage = FieldStorageConfig::loadByName('node', $field_name);
 
-    if (!$field_storage) {
+    if (empty($field_storage)) {
       $new_field = TRUE;
 
       $field_storage = FieldStorageConfig::create([
@@ -692,7 +794,7 @@ class ManageFields {
 
     /** @var \Drupal\Core\Entity\Entity\EntityViewDisplay $view_display */
     $view_display = $storage->load('node.' . $this->nodeType . '.search_index');
-    if (!$view_display) {
+    if (empty($view_display)) {
       $view_display = EntityViewDisplay::create([
         'targetEntityType' => 'node',
         'bundle' => $this->nodeType,
@@ -712,8 +814,8 @@ class ManageFields {
     ])->save();
 
     // Add to index.
-    if ($new_field) {
-      $this->addDocumentFieldToIndex($field_name, $type, $label);
+    if (!empty($new_field)) {
+      $this->addDocumentFieldToIndex($field_config, $label);
     }
 
     docstore_notify_webhooks('field:document:create', $field_name);
@@ -725,8 +827,8 @@ class ManageFields {
    */
   public function getDocumentField($field_name) {
     $field_config = FieldConfig::loadByName('node', $this->nodeType, $field_name);
-    if (!$field_config) {
-      throw new \Exception('Field does not exist');
+    if (empty($field_config)) {
+      throw new NotFoundHttpException('Field does not exist');
     }
 
     return [
@@ -745,8 +847,8 @@ class ManageFields {
    */
   public function updateDocumentField($field_name, $params) {
     $field_config = FieldConfig::loadByName('node', $this->nodeType, $field_name);
-    if (!$field_config) {
-      throw new \Exception('Field does not exist');
+    if (empty($field_config)) {
+      throw new NotFoundHttpException('Field does not exist');
     }
 
     if (isset($params['label'])) {
@@ -763,6 +865,8 @@ class ManageFields {
 
     docstore_notify_webhooks('field:document:update', $field_name);
     $field_config->save();
+
+    return $field_name;
   }
 
   /**
@@ -772,12 +876,14 @@ class ManageFields {
    */
   public function deleteDocumentField($field_name) {
     $field_storage = FieldStorageConfig::loadByName('node', $field_name);
-    if (!$field_storage) {
-      throw new \Exception('Field does not exist');
+    if (empty($field_storage)) {
+      throw new NotFoundHttpException('Field does not exist');
     }
 
     docstore_notify_webhooks('field:document:delete', $field_name);
     $field_storage->delete();
+
+    return $field_name;
   }
 
   /**
@@ -854,7 +960,7 @@ class ManageFields {
    *   Either PUT or PATCH.
    *
    * @return \Drupal\taxonomy\Entity\Vocabulary
-   *   Newly created vocabulary.
+   *   Updated vocabulary.
    */
   public function updateVocabulary(Vocabulary $vocabulary, array $params, string $method) {
     $protected_fields = [
@@ -928,6 +1034,7 @@ class ManageFields {
     // Check allow_duplicate changes.
     if (isset($params['allow_duplicates']) && $params['allow_duplicates'] === FALSE && $vocabulary->getThirdPartySetting('docstore', 'allow_duplicates') === TRUE) {
       // Check all existing terms.
+      // @todo we only need to check if there is at least one duplicate.
       $query = $this->database->select('taxonomy_term_field_data', 't')
         ->fields('t', [
           'name',
@@ -940,6 +1047,9 @@ class ManageFields {
 
       $terms = $query->execute()->fetchAll();
       if (!empty($terms)) {
+        // @todo review the type of exception and make the message more explicit
+        // to indicate that it's not possible to update the `allow_duplicates`
+        // setting.
         throw new \Exception('Vocabulary contains duplicate terms');
       }
 
@@ -982,6 +1092,9 @@ class ManageFields {
    *
    * @param \Drupal\taxonomy\Entity\Vocabulary $vocabulary
    *   Vocabulary to delete.
+   *
+   * @return \Drupal\taxonomy\Entity\Vocabulary
+   *   Delete vocabulary.
    */
   public function deleteVocabulary(Vocabulary $vocabulary) {
     // Provider can only update own vocabulary.
@@ -991,6 +1104,8 @@ class ManageFields {
 
     docstore_notify_webhooks('vocabulary:delete', $vocabulary->id());
     $vocabulary->delete();
+
+    return $vocabulary;
   }
 
   /**
@@ -1045,8 +1160,8 @@ class ManageFields {
    */
   public function getVocabularyField(Vocabulary $vocabulary, string $field_name) {
     $field_config = FieldConfig::loadByName('taxonomy_term', $vocabulary->id(), $field_name);
-    if (!$field_config) {
-      throw new \Exception('Field does not exist');
+    if (empty($field_config)) {
+      throw new NotFoundHttpException('Field does not exist');
     }
 
     return [
@@ -1071,8 +1186,8 @@ class ManageFields {
    */
   public function updateVocabularyField(Vocabulary $vocabulary, string $field_name, array $params) {
     $field_config = FieldConfig::loadByName('taxonomy_term', $vocabulary->id(), $field_name);
-    if (!$field_config) {
-      throw new \Exception('Field does not exist');
+    if (empty($field_config)) {
+      throw new NotFoundHttpException('Field does not exist');
     }
 
     if (isset($params['type'])) {
@@ -1093,6 +1208,8 @@ class ManageFields {
 
     docstore_notify_webhooks('field:vocabulary:update', $field_name);
     $field_config->save();
+
+    return $field_name;
   }
 
   /**
@@ -1105,18 +1222,21 @@ class ManageFields {
    */
   public function deleteVocabularyField(Vocabulary $vocabulary, string $field_name) {
     $field_config = FieldConfig::loadByName('taxonomy_term', $vocabulary->id(), $field_name);
-    if (!$field_config) {
-      throw new \Exception('Field does not exist');
+    if (empty($field_config)) {
+      throw new NotFoundHttpException('Field does not exist');
     }
 
     docstore_notify_webhooks('field:vocabulary:delete', $field_name);
     $field_config->delete();
+
+    return $field_name;
   }
 
   /**
    * Create a vocabulary field for a provider.
    */
   protected function createVocabularyField($author, $bundle, $label, $machine_name, $field_type, $multiple, $required, $private) {
+    $new_field = FALSE;
     $field_name = $machine_name;
     if (empty($field_name)) {
       $provider_prefix = $bundle . '_';
@@ -1125,13 +1245,14 @@ class ManageFields {
 
     // Check if field already exists.
     $field_config = FieldConfig::loadByName('taxonomy_term', $bundle, $field_name);
-    if ($field_config) {
+    if (!empty($field_config)) {
       return $field_name;
     }
 
     // Create storage.
     $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
-    if (!$field_storage) {
+    if (empty($field_storage)) {
+      $new_field = TRUE;
       $field_storage = FieldStorageConfig::create([
         'field_name' => $field_name,
         'entity_type' => 'taxonomy_term',
@@ -1157,6 +1278,11 @@ class ManageFields {
     $field_config->setThirdPartySetting('docstore', 'private', $private);
     $field_config->save();
 
+    // Add to index.
+    if (!empty($new_field)) {
+      $this->addTermFieldToIndex($field_config, $label);
+    }
+
     docstore_notify_webhooks('field:vocabulary:create', $field_name);
     return $field_name;
   }
@@ -1165,6 +1291,7 @@ class ManageFields {
    * Create a reference field on a vocabulary for a provider.
    */
   protected function createVocabularyReferenceField($author, $bundle, $label, $machine_name, $target, $multiple, $required, $private) {
+    $new_field = FALSE;
     $field_type = 'entity_reference_uuid';
 
     $field_name = $machine_name;
@@ -1175,7 +1302,8 @@ class ManageFields {
 
     // Create storage.
     $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
-    if (!$field_storage) {
+    if (empty($field_storage)) {
+      $new_field = TRUE;
       $field_storage = FieldStorageConfig::create([
         'field_name' => $field_name,
         'entity_type' => 'taxonomy_term',
@@ -1212,6 +1340,11 @@ class ManageFields {
     $field_config->setThirdPartySetting('docstore', 'private', $private);
     $field_config->save();
 
+    // Add to index.
+    if (!empty($new_field)) {
+      $this->addTermFieldToIndex($field_config, $label);
+    }
+
     docstore_notify_webhooks('field:vocabulary:create', $field_name);
     return $field_name;
   }
@@ -1228,7 +1361,7 @@ class ManageFields {
     $field_type = 'timestamp';
 
     $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
-    if (!$field_storage) {
+    if (empty($field_storage)) {
       $field_storage = FieldStorageConfig::create([
         'field_name' => $field_name,
         'entity_type' => 'taxonomy_term',
@@ -1247,6 +1380,8 @@ class ManageFields {
 
     $field_config->setThirdPartySetting('docstore', 'private', FALSE);
     $field_config->save();
+
+    $this->addTermFieldToIndex($field_config, $label);
   }
 
   /**
@@ -1261,7 +1396,7 @@ class ManageFields {
     $field_type = 'entity_reference_uuid';
 
     $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
-    if (!$field_storage) {
+    if (empty($field_storage)) {
       // Create storage.
       $field_storage = FieldStorageConfig::create([
         'field_name' => $field_name,
@@ -1292,6 +1427,8 @@ class ManageFields {
 
     $field_config->setThirdPartySetting('docstore', 'private', FALSE);
     $field_config->save();
+
+    $this->addTermFieldToIndex($field_config, $label);
   }
 
   /**
@@ -1306,7 +1443,7 @@ class ManageFields {
     $field_type = 'string';
 
     $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
-    if (!$field_storage) {
+    if (empty($field_storage)) {
       // Create storage.
       $field_storage = FieldStorageConfig::create([
         'field_name' => $field_name,
@@ -1326,6 +1463,8 @@ class ManageFields {
 
     $field_config->setThirdPartySetting('docstore', 'private', FALSE);
     $field_config->save();
+
+    $this->addTermFieldToIndex($field_config, $label);
   }
 
   /**
@@ -1340,7 +1479,7 @@ class ManageFields {
     $field_type = 'string';
 
     $field_storage = FieldStorageConfig::load('node.' . $field_name);
-    if (!$field_storage) {
+    if (empty($field_storage)) {
       // Create storage.
       $field_storage = FieldStorageConfig::create([
         'field_name' => $field_name,
@@ -1360,6 +1499,8 @@ class ManageFields {
 
     $field_config->setThirdPartySetting('docstore', 'private', FALSE);
     $field_config->save();
+
+    $this->addDocumentFieldToIndex($field_config, $label);
   }
 
   /**
@@ -1374,7 +1515,7 @@ class ManageFields {
     $field_type = 'boolean';
 
     $field_storage = FieldStorageConfig::load('node.' . $field_name);
-    if (!$field_storage) {
+    if (empty($field_storage)) {
       // Create storage.
       $field_storage = FieldStorageConfig::create([
         'field_name' => $field_name,
@@ -1394,6 +1535,8 @@ class ManageFields {
 
     $field_config->setThirdPartySetting('docstore', 'private', FALSE);
     $field_config->save();
+
+    $this->addDocumentFieldToIndex($field_config, $label);
   }
 
   /**
@@ -1408,7 +1551,7 @@ class ManageFields {
     $field_type = 'entity_reference_uuid';
 
     $field_storage = FieldStorageConfig::load('node.' . $field_name);
-    if (!$field_storage) {
+    if (empty($field_storage)) {
       // Create storage.
       $field_storage = FieldStorageConfig::create([
         'field_name' => $field_name,
@@ -1439,6 +1582,106 @@ class ManageFields {
 
     $field_config->setThirdPartySetting('docstore', 'private', FALSE);
     $field_config->save();
+
+    $this->addDocumentFieldToIndex($field_config, $label);
+  }
+
+  /**
+   * Get the list of protected fields that cannot be created.
+   *
+   * @param string $entity_type_id
+   *   Entity type (ex: taxonomy_term, node).
+   *
+   * @return array
+   *   List of fields with the field name as keys.
+   *
+   * @todo use that function when creating fields to force the generation
+   * of a machine_name.
+   * @todo add another function to check validity of field and prohibit field
+   * names starting with a `_`.
+   */
+  public function getProtectedFields($entity_type_id) {
+    static $cache;
+
+    // Store in a static cache as this can be called many times.
+    if (isset($cache[$entity_type_id])) {
+      return $cache[$entity_type_id];
+    }
+
+    $protected_fields = [
+      // Response often include a message so we mark it as protected to prohibit
+      // the creation of custom fields named `message`.
+      'message' => TRUE,
+      // New revision is a flag to instruct the docstore to create a revision.
+      'new_revision' => TRUE,
+      // Normalized field name for the revision id field.
+      'revision_id' => TRUE,
+      // Normalized field name for the revision default field.
+      'draft' => TRUE,
+      // For entity without a provider_uuid base field (ex: nodes).
+      'provider_uuid' => TRUE,
+      // Special properties.
+      'files' => TRUE,
+      'metadata' => TRUE,
+      'private' => TRUE,
+      // Search api fields.
+      // @todo there are possibly more fields and it would be better to
+      // investigate how to get the full list.
+      'boost_document' => TRUE,
+      'rendered_item' => TRUE,
+      'search_api_datasource' => TRUE,
+      'search_api_id' => TRUE,
+      'search_api_language' => TRUE,
+      'search_api_relevance' => TRUE,
+    ];
+
+    /** @var \Drupal\Core\Entity\ContentEntityTypeInterface $entity_type */
+    $entity_type = $this->entityTypeManager
+      ->getStorage($entity_type_id)
+      ->getEntityType();
+
+    // Add the entity keys and their normalized $field name.
+    foreach ($entity_type->getKeys() as $key => $field) {
+      $protected_fields[$key] = TRUE;
+      $protected_fields[$field] = TRUE;
+    }
+    // Normalized label for the revision field.
+    $protected_fields['revision_id'] = TRUE;
+
+    // Add the revision keys and their normalized $field name.
+    foreach ($entity_type->getRevisionMetadataKeys() as $key => $field) {
+      $protected_fields[$key] = TRUE;
+      $protected_fields[$field] = TRUE;
+    }
+
+    // Get the field definitions that include base and custom fields.
+    $base_field_definitions = $this->entityFieldManager
+      ->getBaseFieldDefinitions($entity_type_id);
+    foreach ($base_field_definitions as $field => $definition) {
+      $protected_fields[$field] = TRUE;
+    }
+
+    // Additional fields. That corresponds to the transformations performed
+    // when "massaging" the resource data before responding.
+    // @see \Drupal\docstore\ResourceTrait::massageResourceDataForEntityType()
+    switch ($entity_type_id) {
+      case 'taxonomy_term':
+        $protected_fields += [
+          'vocabulary' => TRUE,
+          'vocabulary_uuid' => TRUE,
+        ];
+        break;
+
+      case 'node':
+        $protected_fields += [
+          'type' => TRUE,
+          'type_uuid' => TRUE,
+        ];
+        break;
+    }
+
+    $cache[$entity_type_id] = $protected_fields;
+    return $protected_fields;
   }
 
 }

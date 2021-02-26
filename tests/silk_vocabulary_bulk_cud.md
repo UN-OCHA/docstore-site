@@ -11,7 +11,7 @@ Create vocabulary.
 ```json
 {
   "label": "Bulk CUD terms",
-  "machine_name": "voc_bulk_cud",
+  "machine_name": "test_voc_bulk_cud",
   "author": "test",
   "allow_duplicates": false
 }
@@ -45,7 +45,8 @@ Add iso3 field to vocabulary.
 {
   "label": "ISO 3 code",
   "author": "test",
-  "type": "string"
+  "type": "string",
+  "machine_name": "test_voc_bulk_cud_field_iso3"
 }
 ```
 

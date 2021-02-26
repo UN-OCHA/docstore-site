@@ -48,7 +48,7 @@ class DocStoreAuthenticationProvider implements AuthenticationProviderInterface 
       }
     }
 
-    return [];
+    return NULL;
   }
 
 }

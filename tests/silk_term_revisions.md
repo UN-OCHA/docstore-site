@@ -90,7 +90,7 @@ Get term revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {term1}
-* Data.revisions[0].revision_id: /^[0-9]+$/ // Machine_name {term1_rev1}
+* Data.revisions[0].id: /^[0-9]+$/ // Machine_name {term1_rev1}
 
 ## GET /vocabularies/testrev/terms/{term1}/revisions/{term1_rev1}
 
@@ -155,7 +155,7 @@ Get term revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {term1}
-* Data.revisions[0].revision_id: /^[0-9]+$/ // Machine_name {term1_rev2}
+* Data.revisions[0].id: /^[0-9]+$/ // Machine_name {term1_rev2}
 
 ## GET /vocabularies/testrev/terms/{term1}/revisions/{term1_rev1}
 
@@ -275,7 +275,7 @@ Get term revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {term1}
-* Data.revisions[0].revision_id: {term1_rev2}
+* Data.revisions[0].id: {term1_rev2}
 
 ## GET /vocabularies/testrev/terms/{term1}/revisions/{term1_rev1}
 
@@ -357,7 +357,7 @@ Get term revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {term1}
-* Data.revisions[0].revision_id: /^[0-9]+$/ // Machine_name {term1_rev4}
+* Data.revisions[0].id: /^[0-9]+$/ // Machine_name {term1_rev4}
 
 ## GET /vocabularies/testrev/terms/{term1}/revisions/{term1_rev1}
 
@@ -455,7 +455,7 @@ Get term revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {term1}
-* Data.revisions[0].revision_id: /^[0-9]+$/ // Machine_name {term1_rev5}
+* Data.revisions[0].id: /^[0-9]+$/ // Machine_name {term1_rev5}
 
 ## GET /vocabularies/testrev/terms/{term1}/revisions/{term1_rev1}
 
@@ -535,7 +535,7 @@ Publish version 5.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data.message: "Term updated"
+* Data.message: "Term revision published"
 * Data.uuid: {term1}
 
 ## GET /vocabularies/testrev/terms/{term1}
@@ -564,7 +564,7 @@ Get term revisions.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {term1}
-* Data.revisions[0].revision_id: /^[0-9]+$/ // Machine_name {term1_rev6}
+* Data.revisions[0].id: /^[0-9]+$/ // Machine_name {term1_rev6}
 
 ## GET /vocabularies/testrev/terms/{term1}/revisions/{term1_rev1}
 

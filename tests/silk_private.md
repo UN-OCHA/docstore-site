@@ -165,7 +165,7 @@ Example output.
 }
 ```
 
-* Status: `400`
+* Status: `403`
 * Content-Type: "application/json"
 * Data.message: "You do not have access to field test_private_2"
 
@@ -240,7 +240,7 @@ Example output.
 }
 ```
 
-* Status: `400`
+* Status: `403`
 * Content-Type: "application/json"
 * Data.message: "You do not have access to field test_private"
 
@@ -284,7 +284,7 @@ Example output.
 
 ## `GET /vocabularies/{machine_name}/terms`
 
-Get terms.
+Get terms. They are sorted by default by creation date descending.
 
 * Accept: "application/json"
 
@@ -292,11 +292,13 @@ Get terms.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].test_public: "I'm visible"
+* Data[0].test_public: "I can be used"
+* Data[1].test_public: "I'm visible"
 
 ## `GET /vocabularies/{machine_name}/terms`
 
-Get terms.
+Get terms. The `{field_private2}` field in the first result should not be
+visible at it's private for another provider.
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -305,8 +307,10 @@ Get terms.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].test_public: "I'm visible"
-* Data[0].test_private: "I'm not visible"
+* Data[0].test_public: "I can be used"
+* Data[0].test_private_2: null
+* Data[1].test_public: "I'm visible"
+* Data[1].test_private: "I'm not visible"
 
 ## `GET /vocabularies/{machine_name}/terms`
 
@@ -319,7 +323,9 @@ Get terms as other provider.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].test_public: "I'm visible"
+* Data[0].test_public: "I can be used"
+* Data[0].test_private_2: "Private from other provider"
+* Data[1].test_public: "I'm visible"
 
 ## PATCH /vocabularies/{machine_name}
 
@@ -350,19 +356,19 @@ Example output.
 
 ## `GET /vocabularies/{machine_name}/terms`
 
-Get terms.
+Get terms as anonymous.
 
 * Accept: "application/json"
 
 ===
 
-* Status: `400`
+* Status: `403`
 * Content-Type: "application/json"
 * Data.message: "You do not have access to this vocabulary"
 
 ## `GET /vocabularies/{machine_name}/terms`
 
-Get terms.
+Get terms as owner.
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -371,8 +377,9 @@ Get terms.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].test_public: "I'm visible"
-* Data[0].test_private: "I'm not visible"
+* Data[0].test_public: "I can be used"
+* Data[1].test_public: "I'm visible"
+* Data[1].test_private: "I'm not visible"
 
 ## `GET /vocabularies/{machine_name}/terms`
 
@@ -383,7 +390,7 @@ Get terms as other provider.
 
 ===
 
-* Status: `400`
+* Status: `403`
 * Content-Type: "application/json"
 * Data.message: "You do not have access to this vocabulary"
 
@@ -442,9 +449,9 @@ Delete term.
 ===
 
 
-* Status: `400`
+* Status: `403`
 * Content-Type: "application/json"
-* Data.message: "The vocabulary is private"
+* Data.message: "You do not have access to this vocabulary"
 
 ## PATCH /vocabularies/{machine_name}
 

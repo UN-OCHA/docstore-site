@@ -13,12 +13,17 @@ use Drupal\docstore\ManageFields;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\node\Entity\NodeType;
 use Drupal\search_api\Entity\Index;
+use Drupal\search_api\IndexInterface;
+use Drupal\search_api\Query\QueryInterface as SearchApiQueryInterface;
+use Drupal\search_api\Query\ResultSetInterface;
 use Drupal\search_api_solr\SolrBackendInterface;
 use Drupal\user\Entity\User;
 use Drupal\webhooks\Webhook;
+use Symfony\Component\VarDumper\Cloner\VarCloner;
+use Symfony\Component\VarDumper\Dumper\CliDumper;
 use Symfony\Component\Yaml\Yaml;
-use Solarium\Core\Query\QueryInterface;
-use Drupal\search_api\Query\QueryInterface as search_apiQueryInterface;
+use Solarium\Core\Query\QueryInterface as SolariumQueryInterface;
+use Solarium\QueryType\Select\Result\Result as SolariumResult;
 
 /**
  * Implements hook_file_download().
@@ -59,7 +64,7 @@ function docstore_form_field_ui_field_overview_form_remove_field_prefix(&$form, 
 /**
  * Implements hook_search_api_solr_converted_query_alter().
  */
-function docstore_search_api_solr_converted_query_alter(QueryInterface $solarium_query, search_apiQueryInterface $query) {
+function docstore_search_api_solr_converted_query_alter(SolariumQueryInterface $solarium_query, SearchApiQueryInterface $query) {
   /** @var \Solarium\QueryType\Select\Query\Query $solarium_query */
   foreach ($solarium_query->getFilterQueries() as &$filter) {
     $parts = explode(':', $filter->getQuery());
@@ -78,6 +83,131 @@ function docstore_search_api_solr_converted_query_alter(QueryInterface $solarium
 }
 
 /**
+ * Implements hook_search_api_solr_documents_alter().
+ *
+ * Concatenate multi-properties fields.
+ *
+ * @todo get the list of fields from the index, retrieve their type and
+ * if they are entity reference fields or links, concatenate their indexed
+ * properties.
+ * @todo use processor instead or define a search api data type.
+ */
+function docstore_search_api_solr_documents_alter(&$documents, IndexInterface $index, $items) {
+  foreach ($documents as $document) {
+    $document->setKey('key', $document->id);
+
+    // Concatenate the file info so that the order is preserved. The first
+    // concatenated value is the delta of the field value. This will allow
+    // us to reorder the date when parsing the solr response.
+    //
+    // @todo there seems to be some `*s_*` versions of the below fields,
+    // remove them?
+    if (isset($document->sm_files)) {
+      $files = [];
+      // When there is only one item, search api (solr?) flatten that to
+      // a scalar instead of keeping it as an array.
+      if (!is_array($document->sm_files)) {
+        $files[] = implode('||', [
+          0,
+          $document->sm_files,
+          $document->sm_files_file_filemime_,
+          $document->itm_files_file_filesize_,
+          $document->sm_files_file_uri_,
+          $document->sm_files_file_uuid_,
+          $document->dm_files_media_changed_,
+          $document->dm_files_media_created_,
+          $document->sm_files_media_name_,
+          $document->itm_files_media_uid_,
+        ]);
+      }
+      else {
+        foreach ($document->sm_files as $index => $media_uuid) {
+          $files[] = implode('||', [
+            $index,
+            $media_uuid,
+            $document->sm_files_file_filemime_[$index],
+            $document->itm_files_file_filesize_[$index],
+            $document->sm_files_file_uri_[$index],
+            $document->sm_files_file_uuid_[$index],
+            $document->dm_files_media_changed_[$index],
+            $document->dm_files_media_created_[$index],
+            $document->sm_files_media_name_[$index],
+            $document->itm_files_media_uid_[$index],
+          ]);
+        }
+      }
+      $document->addField('sm_concatenated_files_', $files);
+    }
+  }
+}
+
+/**
+ * Implements search_api_solr_search_results_alter().
+ *
+ * This update the file fields with the data in the correct order as Solr
+ * doesn't seem to preserve the order of multi-values fields.
+ *
+ * @todo handle entity reference fields and link fields with the same logic.
+ */
+function docstore_search_api_solr_search_results_alter(ResultSetInterface $result_set, SearchApiQueryInterface $query, SolariumResult $result) {
+  $fields = [
+    'files',
+    'files_file_filemime_',
+    'files_file_filesize_',
+    'files_file_uri_',
+    'files_file_uuid_',
+    'files_media_changed_',
+    'files_media_created_',
+    'files_media_name_',
+    'files_media_uid_',
+  ];
+
+  // Get the iteraror for the result set, we will iterator through it at the
+  // same time as we iterate through the solr results which, normally, have the
+  // same number of items as the result set was already pupulated with the
+  // solr data.
+  $iterator = $result_set->getIterator();
+  foreach ($result as $document) {
+    $item = $iterator->current();
+
+    if (isset($document->sm_concatenated_files_)) {
+      $concatenated_files = $document->sm_concatenated_files_;
+      if (!is_array($concatenated_files)) {
+        $concatenated_files = [$concatenated_files];
+      }
+
+      // Extract the file data for each file and store that in array mapping
+      // each field with its list of values in delta order.
+      $values = [];
+      foreach ($concatenated_files as $concatenated_file) {
+        $file_data = explode('||', $concatenated_file);
+        $delta = (int) array_shift($file_data);
+        foreach ($file_data as $index => $value) {
+          $values[$fields[$index]][$delta] = $value;
+        }
+      }
+
+      // Update the result item file fields.
+      foreach ($fields as $name) {
+        $field = $item->getField($name, FALSE);
+        // Reset the values.
+        $field->setValues([]);
+        // Ensure the values respect the delta order.
+        ksort($values[$name]);
+        // Add the values one by one, so that they are processed by the
+        // data type plugin associated with the field, for example to convert
+        // to int.
+        foreach ($values[$name] as $value) {
+          $field->addValue($value);
+        }
+      }
+    }
+
+    $iterator->next();
+  }
+}
+
+/**
  * Setup testing.
  */
 function _docstore_setup_testing() {
@@ -88,10 +218,6 @@ function _docstore_setup_testing() {
   // Delete all node types.
   $node_types = \Drupal::entityTypeManager()->getStorage('node_type')->loadMultiple();
   \Drupal::entityTypeManager()->getStorage('node_type')->delete($node_types);
-
-  // Rebuild endpoints.
-  \Drupal::service('docstore.document_controller')
-    ->rebuildEndpoints();
 
   // Delete all terms.
   // @todo skip shared vocabularies.
@@ -112,7 +238,7 @@ function _docstore_setup_testing() {
   \Drupal::entityTypeManager()->getStorage('file')->delete($file);
 
   // Delete document fields.
-  /** @var Drupal\Core\Entity\EntityFieldManager $entityFieldManager */
+  /** @var \Drupal\Core\Entity\EntityFieldManager $entityFieldManager */
   $entityFieldManager = Drupal::service('entity_field.manager');
 
   // @todo Reset node types.
@@ -151,12 +277,29 @@ function _docstore_setup_testing() {
     }
   }
 
-  // Reset index.
+  // Reset documents index.
   $config_path = drupal_get_path('module', 'docstore') . '/config/install/search_api.index.documents.yml';
   $data = Yaml::parseFile($config_path);
   \Drupal::configFactory()->getEditable('search_api.index.documents')->setData($data)->save(TRUE);
 
   $index = Index::load('documents');
+  $index->clear();
+
+  $server = $index->getServerInstance();
+  $solr = $server->getBackend();
+  if ($solr instanceof SolrBackendInterface) {
+    $connector = $solr->getSolrConnector();
+    $update_query = $connector->getUpdateQuery();
+    $update_query->addDeleteQuery('*:*');
+    $connector->update($update_query);
+  }
+
+  // Reset terms index.
+  $config_path = drupal_get_path('module', 'docstore') . '/config/install/search_api.index.terms.yml';
+  $data = Yaml::parseFile($config_path);
+  \Drupal::configFactory()->getEditable('search_api.index.terms')->setData($data)->save(TRUE);
+
+  $index = Index::load('terms');
   $index->clear();
 
   $server = $index->getServerInstance();
@@ -236,12 +379,20 @@ function _docstore_setup_testing() {
     ])->save();
   }
 
+  // Rebuild endpoints and accessible resources.
+  \Drupal::service('docstore.document_controller')->rebuildEndpoints();
+  \Drupal::service('docstore.document_controller')->rebuildAccessibleResourceTypes('node_type');
+  \Drupal::service('docstore.vocabulary_controller')->rebuildAccessibleResourceTypes('taxonomy_vocabulary');
+
   // Invalidate caches.
   Cache::invalidateTags(['documents']);
-  Cache::invalidateTags(['webhooks']);
   Cache::invalidateTags(['document_fields']);
   Cache::invalidateTags(['terms']);
   Cache::invalidateTags(['vocabularies']);
+  Cache::invalidateTags(['vocabulary_fields']);
+  Cache::invalidateTags(['media']);
+  Cache::invalidateTags(['files']);
+  Cache::invalidateTags(['webhooks']);
 }
 
 /**
@@ -253,7 +404,7 @@ function docstore_create_node_type($type = 'document', $endpoint = 'documents') 
   }
 
   $provider = user_load(2);
-  $manager = new ManageFields($provider, $type, Drupal::service('entity_field.manager'), Drupal::service('database'));
+  $manager = new ManageFields($provider, $type, Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
   $manager->createDocumentType([
     'label' => ucfirst($type),
     'machine_name' => $type,
@@ -413,7 +564,7 @@ function docstore_rebuild_index_fields() {
 
   $entityFieldManager = Drupal::service('entity_field.manager');
   $provider = user_load(2);
-  $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('database'));
+  $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
 
   $types = _docstore_get_defined_node_types();
   foreach ($types as $type) {
@@ -488,4 +639,36 @@ function docstore_rebuild_index_fields() {
 
     $view_display->save();
   }
+}
+
+/**
+ * Debug helper to dump a variable into a string.
+ *
+ * This handles complex data as opposed to `print_r` or `var_dump`.
+ *
+ * @param mixed $variable
+ *   Variable to dump to a string.
+ * @param string $id
+ *   Id of the log. If not defined, the dump will not be logged.
+ *
+ * @return string
+ *   String representation of the variable.
+ */
+function _docstore_vardump($variable, $id = '_docstore_vardump') {
+  $cloner = new VarCloner();
+  $dumper = new CliDumper();
+  $output = '';
+
+  $dumper->dump($cloner->cloneVar($variable), function ($line, $depth) use (&$output) {
+    // A negative depth means "end of dump".
+    if ($depth >= 0) {
+      // Adds a two spaces indentation to the line.
+      $output .= str_repeat('  ', $depth) . $line . "\n";
+    }
+  });
+
+  if (!empty($id)) {
+    \Drupal::logger($id)->notice($output);
+  }
+  return $output;
 }

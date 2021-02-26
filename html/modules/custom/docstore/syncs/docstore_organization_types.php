@@ -8,6 +8,7 @@
 use Drupal\docstore\ManageFields;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\taxonomy\Entity\Vocabulary;
+use Drupal\user\Entity\User;
 
 /**
  * List of vocabularies.
@@ -36,8 +37,8 @@ function docstore_organization_types_fields() {
  * Ensure vocabularies do exist.
  */
 function docstore_organization_types_ensure_vocabularies() {
-  $provider = user_load(2);
-  $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('database'));
+  $provider = User::load(2);
+  $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
 
   foreach (docstore_organization_types_vocabularies() as $machine_name => $label) {
     $vocabulary = Vocabulary::load($machine_name);
@@ -56,8 +57,8 @@ function docstore_organization_types_ensure_vocabularies() {
  * Ensure vocabulary fields do exist.
  */
 function docstore_organization_types_ensure_vocabulary_fields() {
-  $provider = user_load(2);
-  $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('database'));
+  $provider = User::load(2);
+  $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
 
   foreach (docstore_organization_types_fields() as $machine_name => $fields) {
     $vocabulary = Vocabulary::load($machine_name);
@@ -95,7 +96,7 @@ function docstore_organization_types_sync() {
   $vocabulary = Vocabulary::load('organization_types');
 
   // Load provider.
-  $provider = user_load(2);
+  $provider = User::load(2);
 
   $response = $http_client->request('GET', $url);
   if ($response->getStatusCode() === 200) {

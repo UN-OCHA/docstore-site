@@ -99,8 +99,8 @@ final class DocstoreConfigEventSubscriber implements EventSubscriberInterface {
 
       // Remove config created by providers.
       foreach ($collection->listAll() as $configName) {
-        // Ignore index.
-        if ($configName === 'search_api.index.documents') {
+        // Ignore indices.
+        if (strpos($configName, 'search_api.index.') === 0) {
           $collection->delete($configName);
         }
 
@@ -110,6 +110,7 @@ final class DocstoreConfigEventSubscriber implements EventSubscriberInterface {
         }
 
         // Ignore all taxonomy fields.
+        // @todo review.
         if (strpos($configName, 'field.storage.taxonomy_term.') === 0) {
           // Except base_provider_uuid and created.
           if ($configName === 'field.storage.taxonomy_term.base_provider_uuid') {
