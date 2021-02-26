@@ -40,13 +40,18 @@ $SILK -test.v -silk.url $API silk_document_types_crud.md || exit 1;
 $SILK -test.v -silk.url $API silk_document_crud.md || exit 1;
 $SILK -test.v -silk.url $API silk_document_bulk.md || exit 1;
 $SILK -test.v -silk.url $API silk_document_bulk_cud.md || exit 1;
-$SILK -test.v -silk.url $API silk_document_files.md || exit 1;
 $SILK -test.v -silk.url $API silk_geofield.md || exit 1;
 $SILK -test.v -silk.url $API silk_linkfield.md || exit 1;
 $SILK -test.v -silk.url $API silk_child_terms.md || exit 1;
 $SILK -test.v -silk.url $API silk_private.md || exit 1;
 $SILK -test.v -silk.url $API silk_document_revisions.md || exit 1;
 $SILK -test.v -silk.url $API silk_term_revisions.md || exit 1;
+
+# Reset docstore for testing.
+$DRUSH docstore:test-reset
+
+# Test the document files endpoint.
+$SILK -test.v -silk.url $API silk_document_files.md || exit 1;
 
 # Reset docstore for testing.
 $DRUSH docstore:test-reset
