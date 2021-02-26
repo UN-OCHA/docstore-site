@@ -176,18 +176,14 @@ function docstore_search_api_solr_search_results_alter(ResultSetInterface $resul
         $concatenated_files = [$concatenated_files];
       }
 
-      // The concatenate_files start with their delta, sort then to ensure
-      // they are in the correct order.
-      sort($concatenated_files);
-
       // Extract the file data for each file and store that in array mapping
       // each field with its list of values in delta order.
       $values = [];
       foreach ($concatenated_files as $concatenated_file) {
-        // This gets the file data after the delta.
-        $file_data = array_slice(explode('||', $concatenated_file), 1);
+        $file_data = explode('||', $concatenated_file);
+        $delta = (int) array_shift($file_data);
         foreach ($file_data as $index => $value) {
-          $values[$fields[$index]][] = $value;
+          $values[$fields[$index]][$delta] = $value;
         }
       }
 
@@ -196,6 +192,8 @@ function docstore_search_api_solr_search_results_alter(ResultSetInterface $resul
         $field = $item->getField($name, FALSE);
         // Reset the values.
         $field->setValues([]);
+        // Ensure the values respect the delta order.
+        ksort($values[$name]);
         // Add the values one by one, so that they are processed by the
         // data type plugin associated with the field, for example to convert
         // to int.
@@ -672,5 +670,5 @@ function _docstore_vardump($variable, $id = '_docstore_vardump') {
   if (!empty($id)) {
     \Drupal::logger($id)->notice($output);
   }
-  return $log;
+  return $output;
 }
