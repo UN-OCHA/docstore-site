@@ -323,7 +323,7 @@ class StoreDocuments extends ProcessorPluginBase {
   public function prepareSearchResultIntegerField(FieldItemListInterface $field) {
     $data = [];
     foreach ($field as $value) {
-      $data[] = $value->value;
+      $data[] = (int) $value->value;
     }
 
     if ($field->getFieldDefinition()->getFieldStorageDefinition()->isMultiple()) {
