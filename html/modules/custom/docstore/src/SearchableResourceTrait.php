@@ -398,6 +398,17 @@ trait SearchableResourceTrait {
         $data[$readable_fields[$name]] = $field;
       }
 
+      // Remove private files.
+      if (isset($data['files']) && is_array($data['files'])) {
+        foreach ($data['files'] as &$file) {
+          if ($file['private']) {
+            if ($provider->uuid() !== $file['provider_uuid']) {
+              unset($file['uri']);
+            }
+          }
+        }
+      }
+
       // Update the data based on the entity type.
       $this->massageResourceDataForEntityType($data, $entity_type_id, $bundle);
 

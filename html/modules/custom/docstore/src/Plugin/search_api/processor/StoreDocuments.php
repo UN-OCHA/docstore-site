@@ -260,6 +260,7 @@ class StoreDocuments extends ProcessorPluginBase {
         'size' => $value->entity->field_media_file->entity->getSize(),
         'uri' => static::createFileUrl($uri),
         'private' => $this->uriIsPrivate($uri),
+        'provider_uuid' => $value->entity->getOwner()->uuid(),
       ];
     }
 
