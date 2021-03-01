@@ -16,7 +16,7 @@ use Drupal\search_api\Processor\ProcessorPluginBase;
  *
  * @SearchApiProcessor(
  *   id = "docstore_store_document",
- *   label = @Translation("Store fields of document"),
+ *   label = @Translation("Store fields of a document"),
  *   description = @Translation("Store structured fields."),
  *   stages = {
  *     "add_properties" = 20,
@@ -37,8 +37,8 @@ class StoreDocuments extends ProcessorPluginBase {
 
     if (!$datasource) {
       $definition = [
-        'label' => $this->t('Aggregated field'),
-        'description' => $this->t('An aggregation of multiple other fields.'),
+        'label' => $this->t('Store fields of a document'),
+        'description' => $this->t('Store fields of a document.'),
         'type' => 'string',
         'processor_id' => $this->getPluginId(),
         'is_list' => FALSE,
@@ -289,7 +289,7 @@ class StoreDocuments extends ProcessorPluginBase {
       else {
         $data[] = [
           'uuid' => $value->entity->uuid(),
-          'label' => $value->entity->getName(),
+          'name' => $value->entity->getName(),
         ];
       }
     }
