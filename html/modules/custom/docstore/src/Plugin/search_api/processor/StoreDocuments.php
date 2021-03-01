@@ -294,8 +294,12 @@ class StoreDocuments extends ProcessorPluginBase {
       }
     }
 
-    return $data;
-
+    if ($field->getFieldDefinition()->getFieldStorageDefinition()->isMultiple()) {
+      return $data;
+    }
+    else {
+      return reset($data);
+    }
   }
 
 }
