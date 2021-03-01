@@ -16,6 +16,7 @@ use Drupal\docstore\ManageFields;
 use Drupal\docstore\ProviderTrait;
 use Drupal\docstore\ResourceTrait;
 use Drupal\node\Entity\NodeType;
+use Drupal\search_api\Entity\Index;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -329,6 +330,10 @@ class DocumentTypeController extends ControllerBase {
 
     // Invalidate cache.
     Cache::invalidateTags(['document_types']);
+
+    // Delete index.
+    $index = Index::load('documents_' . $type);
+    $index->delete();
 
     $data = [
       'message' => strtr('@type deleted', ['@type' => $node_type->label()]),
