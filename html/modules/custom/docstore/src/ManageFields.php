@@ -146,7 +146,7 @@ class ManageFields {
    *   Field label.
    */
   public function addDocumentFieldToIndex(FieldConfig $field_config, $label) {
-    $this->addFieldToIndex('documents', 'entity:node', $field_config, $label);
+    $this->addFieldToIndex('documents_' . $this->nodeType, 'entity:node', $field_config, $label);
   }
 
   /**
@@ -651,8 +651,6 @@ class ManageFields {
    * Create basic document field.
    */
   protected function createDocumentField($author, $label, $machine_name, $field_type, $multiple, $required, $private) {
-    $new_field = FALSE;
-
     // Create new machine name if needed.
     $field_name = $machine_name;
     if (empty($field_name)) {
@@ -663,8 +661,6 @@ class ManageFields {
     $field_storage = FieldStorageConfig::loadByName('node', $field_name);
 
     if (empty($field_storage)) {
-      $new_field = TRUE;
-
       $field_storage = FieldStorageConfig::create([
         'field_name' => $field_name,
         'entity_type' => 'node',
@@ -715,11 +711,11 @@ class ManageFields {
     ])->save();
 
     // Add to index.
-    if (!empty($new_field)) {
-      $this->addDocumentFieldToIndex($field_config, $label);
-    }
+    $this->addDocumentFieldToIndex($field_config, $label);
 
+    // Trigger webhook.
     docstore_notify_webhooks('field:document:create', $field_name);
+
     return $field_name;
   }
 
