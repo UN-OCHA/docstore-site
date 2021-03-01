@@ -224,7 +224,7 @@ class StoreDocuments extends ProcessorPluginBase {
     $data = [];
     foreach ($field as $value) {
       $data[] = [
-        'uri' => $value->getUrl(),
+        'uri' => $value->uri,
         'title' => $value->title,
       ];
     }
