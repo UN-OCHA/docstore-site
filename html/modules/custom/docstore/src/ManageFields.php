@@ -232,10 +232,7 @@ class ManageFields {
         // Index file data.
         if ($field_name === 'files') {
           $media_fields = [
-            'uid' => 'integer',
             'name' => 'string',
-            'created' => 'date',
-            'changed' => 'date',
           ];
           foreach ($media_fields as $extra_field_name => $extra_field_type) {
             $field = new Field($index, $field_name . '_media_' . $extra_field_name . '_');
@@ -243,21 +240,6 @@ class ManageFields {
             $field->setPropertyPath($field_name . ':entity:' . $extra_field_name);
             $field->setDatasourceId($datasource_id);
             $field->setLabel($label . ' (media ' . $extra_field_name . ')');
-            $index->addField($field);
-          }
-
-          $file_fields = [
-            'uuid' => 'string',
-            'uri' => 'string',
-            'filemime' => 'string',
-            'filesize' => 'integer',
-          ];
-          foreach ($file_fields as $extra_field_name => $extra_field_type) {
-            $field = new Field($index, $field_name . '_file_' . $extra_field_name . '_');
-            $field->setType($extra_field_type);
-            $field->setPropertyPath($field_name . ':entity:field_media_file:entity:' . $extra_field_name);
-            $field->setDatasourceId($datasource_id);
-            $field->setLabel($label . ' (file ' . $extra_field_name . ')');
             $index->addField($field);
           }
         }

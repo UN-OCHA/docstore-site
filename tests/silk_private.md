@@ -282,6 +282,16 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {term_2}
 
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
 ## `GET /vocabularies/{machine_name}/terms`
 
 Get terms. They are sorted by default by creation date descending.

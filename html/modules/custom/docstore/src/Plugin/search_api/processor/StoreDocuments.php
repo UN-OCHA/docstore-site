@@ -58,6 +58,7 @@ class StoreDocuments extends ProcessorPluginBase {
 
     $fields_to_exclude = [
       'nid',
+      'vid',
       'uid',
       'revision_timestamp',
       'revision_uid',
@@ -66,6 +67,7 @@ class StoreDocuments extends ProcessorPluginBase {
       'sticky',
       'default_langcode',
       'revision_default',
+      'revision_user',
       'revision_translation_affected',
     ];
 
@@ -78,7 +80,7 @@ class StoreDocuments extends ProcessorPluginBase {
 
       // Track private fields.
       if ($field->getFieldDefinition()->getConfig($entity->bundle())->getThirdPartySetting('docstore', 'private', FALSE)) {
-        $data['_metadata']['private_fields'][] = $field->getName();
+        $data['_metadata']['private_fields'][$field->getName()] = $field->getFieldDefinition()->getConfig($entity->bundle())->getThirdPartySetting('docstore', 'provider_uuid', FALSE);
       }
 
       switch ($field->getFieldDefinition()->getType()) {
@@ -114,6 +116,9 @@ class StoreDocuments extends ProcessorPluginBase {
           }
           elseif ($field->getName() === 'files') {
             $data[$field->getName()] = $this->prepareSearchResultFilesField($field);
+          }
+          elseif ($field->getName() === 'parent') {
+            // @todo Decide how to handle this.
           }
           else {
             $data[$field->getName()] = $this->prepareSearchResultEntityReferenceField($field);
@@ -298,7 +303,7 @@ class StoreDocuments extends ProcessorPluginBase {
       else {
         $data[] = [
           'uuid' => $value->entity->uuid(),
-          'name' => $value->entity->getName(),
+          'name' => $value->entity->label(),
         ];
       }
     }
