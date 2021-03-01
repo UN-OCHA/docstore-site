@@ -120,6 +120,10 @@ class StoreDocuments extends ProcessorPluginBase {
           }
           break;
 
+        case 'integer':
+          $data[$field->getName()] = $this->prepareSearchResultIntegerField($field);
+          break;
+
         default:
           $data[$field->getName()] = $field->value;
           break;
@@ -297,6 +301,29 @@ class StoreDocuments extends ProcessorPluginBase {
           'name' => $value->entity->getName(),
         ];
       }
+    }
+
+    if ($field->getFieldDefinition()->getFieldStorageDefinition()->isMultiple()) {
+      return $data;
+    }
+    else {
+      return reset($data);
+    }
+  }
+
+  /**
+   * Prepare the data for an integer field.
+   *
+   * @param \Drupal\Core\Field\FieldItemListInterface $field
+   *   Field.
+   *
+   * @return array
+   *   List of referenced entities with their uuid and label.
+   */
+  public function prepareSearchResultIntegerField(FieldItemListInterface $field) {
+    $data = [];
+    foreach ($field as $value) {
+      $data[] = $value->value;
     }
 
     if ($field->getFieldDefinition()->getFieldStorageDefinition()->isMultiple()) {
