@@ -221,21 +221,19 @@ class StoreDocuments extends ProcessorPluginBase {
    *   List of values with link uri and title.
    */
   public function prepareSearchResultLinkField(FieldItemListInterface $field) {
+    $data = [];
+    foreach ($field as $value) {
+      $data[] = [
+        'uri' => $value->getUrl(),
+        'title' => $value->title,
+      ];
+    }
+
     if ($field->getFieldDefinition()->getFieldStorageDefinition()->isMultiple()) {
-      $data = [];
-      foreach ($field as $value) {
-        $data[] = [
-          'uri' => $value['uri'],
-          'title' => $value['title'],
-        ];
-      }
       return $data;
     }
     else {
-      return [
-        'uri' => $field->value['uri'],
-        'title' => $field->value['title'],
-      ];
+      return reset($data);
     }
   }
 
