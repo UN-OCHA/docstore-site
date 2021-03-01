@@ -16,6 +16,7 @@ use Drupal\search_api\Item\Field;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\user_bundle\Entity\TypedUser;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * Provides helper methods for parsing query parameters.
@@ -145,7 +146,7 @@ class ManageFields {
    *   Field label.
    */
   public function addDocumentFieldToIndex(FieldConfig $field_config, $label) {
-    $this->addFieldToIndex('documents', 'entity:node', $field_config, $label);
+    $this->addFieldToIndex('documents_' . $this->nodeType, 'entity:node', $field_config, $label);
   }
 
   /**
@@ -490,8 +491,20 @@ class ManageFields {
     // Add private.
     $this->createDocumentBaseFieldPrivate($machine_name);
 
+    // Create index.
+    $config_path = drupal_get_path('module', 'docstore') . '/config/install/search_api.index.documents.yml';
+    $data = Yaml::parseFile($config_path);
+
+    $uuid_service = \Drupal::service('uuid');
+    $data['uuid'] = $uuid_service->generate();
+    $data['id'] = 'documents_' . $machine_name;
+    $data['name'] = 'Index for ' . $machine_name;
+    $data['datasource_settings']['entity:node']['bundles']['default'] = FALSE;
+    $data['datasource_settings']['entity:node']['bundles']['selected'] = [$machine_name];
+    \Drupal::configFactory()->getEditable('search_api.index.documents_' . $machine_name)->setData($data)->save(TRUE);
+
     // Update rendered item on search index.
-    $index = Index::load('documents');
+    $index = Index::load('documents_' . $machine_name);
     if ($rendered_item_field = $index->getField('rendered_item')) {
       $rendered_item_config = $rendered_item_field->getConfiguration();
       if (!isset($rendered_item_config['view_mode']['entity:node'][$machine_name])) {
@@ -638,8 +651,6 @@ class ManageFields {
    * Create basic document field.
    */
   protected function createDocumentField($author, $label, $machine_name, $field_type, $multiple, $required, $private) {
-    $new_field = FALSE;
-
     // Create new machine name if needed.
     $field_name = $machine_name;
     if (empty($field_name)) {
@@ -650,8 +661,6 @@ class ManageFields {
     $field_storage = FieldStorageConfig::loadByName('node', $field_name);
 
     if (empty($field_storage)) {
-      $new_field = TRUE;
-
       $field_storage = FieldStorageConfig::create([
         'field_name' => $field_name,
         'entity_type' => 'node',
@@ -702,11 +711,11 @@ class ManageFields {
     ])->save();
 
     // Add to index.
-    if (!empty($new_field)) {
-      $this->addDocumentFieldToIndex($field_config, $label);
-    }
+    $this->addDocumentFieldToIndex($field_config, $label);
 
+    // Trigger webhook.
     docstore_notify_webhooks('field:document:create', $field_name);
+
     return $field_name;
   }
 

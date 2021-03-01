@@ -68,7 +68,19 @@ trait SearchableResourceTrait {
    */
   public function searchResources(Request $request, $entity_type_id, ?ConfigEntityBundleBase $bundle_entity = NULL, $id = NULL, $with_revisions = FALSE, $files_only = FALSE) {
     // Load the search API index.
-    $index = Index::load($this->getResourceType($entity_type_id));
+    if ($entity_type_id === 'node') {
+      if (is_null($bundle_entity)) {
+        // @todo Search across all document indexes.
+        throw new BadRequestHttpException('Any request not allowed');
+      }
+      else {
+        $index = Index::load('documents_' . $bundle_entity->id());
+      }
+    }
+    else {
+      $index = Index::load($this->getResourceType($entity_type_id));
+    }
+
     if (empty($index)) {
       throw new BadRequestHttpException('The endpoint does not accept filter/search requests');
     }
