@@ -250,7 +250,7 @@ class StoreDocuments extends ProcessorPluginBase {
     $data = [];
     foreach ($field as $value) {
       $uri = $value->entity->field_media_file->entity->getFileUri();
-      $data[] = [
+      $row = [
         'media_uuid' => $value->entity->uuid(),
         'file_uuid' => $value->entity->field_media_file->entity->uuid(),
         'filename' => $value->entity->getName(),
@@ -260,8 +260,14 @@ class StoreDocuments extends ProcessorPluginBase {
         'size' => $value->entity->field_media_file->entity->getSize(),
         'uri' => static::createFileUrl($uri),
         'private' => $this->uriIsPrivate($uri),
-        'provider_uuid' => $value->entity->getOwner()->uuid(),
       ];
+
+      if ($this->uriIsPrivate($uri)) {
+        $row['provider_uuid'] = $value->entity->getOwner()->uuid();
+        $row['uri'] = $this->createDirectUrl('media', $value->entity->uuid(), $value->entity->getName(), $value->entity->getOwner());
+      }
+
+      $data[] = $row;
     }
 
     return $data;
