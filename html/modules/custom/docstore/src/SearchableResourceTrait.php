@@ -5,9 +5,7 @@ namespace Drupal\docstore;
 use Drupal\Component\Uuid\Uuid;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\Entity\ConfigEntityBundleBase;
-use Drupal\Core\Field\TypedData\FieldItemDataDefinition;
 use Drupal\Core\Http\Exception\CacheableNotFoundHttpException;
-use Drupal\search_api\Item\FieldInterface;
 use Drupal\search_api\Query\QueryInterface;
 use Drupal\search_api\Query\ResultSetInterface;
 use Drupal\search_api_solr\SearchApiSolrException;
@@ -388,100 +386,33 @@ trait SearchableResourceTrait {
     // Get the list of readable fields for this bundle.
     $readable_fields = $this->getReadableFields($entity_type_id, $bundle, $provider);
 
-    // Sort the fields by key, this will put base field like `myfield` before
-    // additional property fields like `myfield_label` and simplify the field
-    // data handling.
-    ksort($fields);
+    // Use stored data.
+    $stored_data = [];
+    if ($entity_type_id === 'node') {
+      $stored_data = unserialize($fields['document']->getValues()[0]);
+    }
+    elseif ($entity_type_id === 'taxonomy_term') {
+      $stored_data = unserialize($fields['terms']->getValues()[0]);
+    }
+    else {
+      throw new BadRequestHttpException('Unknown entity');
+    }
 
-    // Prepare the fields.
-    foreach ($fields as $name => $field) {
-      // Skip fields that were removed.
-      if (!isset($fields[$name])) {
-        continue;
-      }
-
-      $field_data = [];
-
-      // Remove the standard field type prefix.
-      $field_type = str_replace('field_item:', '', $field->getOriginalType());
-
-      // Special handling of geofield for which the `latlon` property is indexed
-      // rather than the base field.
-      // @see \Drupal\docstore\ManageFields::addFieldToIndex()
-      if (substr_compare($name, '_latlon_', -8) === 0) {
-        $name = substr($name, 0, -8);
-        $field_type = 'geofield';
-      }
-
-      // Skip if the field is not readable.
+    foreach ($stored_data as $name => $field) {
       if (!isset($readable_fields[$name])) {
         continue;
       }
-      $output_field_name = $readable_fields[$name];
+      $data[$readable_fields[$name]] = $field;
+    }
 
-      // Parse search result field.
-      switch ($field_type) {
-        // Process boolean fields, ensuring they are booleans.
-        case 'boolean':
-          $field_data = $this->prepareSearchResultBooleanField($field);
-          break;
-
-        // Process date fields, converting them to ISO 8601 dates.
-        case 'timestamp':
-        case 'datetime':
-        case 'created':
-        case 'changed':
-          $field_data = $this->prepareSearchResultDateField($field);
-          break;
-
-        // Process daterange fields, extracting the start and end dates and
-        // converting them to ISO 8601 dates.
-        case 'datarange':
-          $field_data = $this->prepareSearchResultDateRangeField($field, $name, $fields);
-          break;
-
-        // Process link fields, extracting the uri and title.
-        case 'link':
-          $field_data = $this->prepareSearchResultLinkField($field, $name, $fields);
-          break;
-
-        // Process geofield, extracting lat and lon properties.
-        case 'geofield':
-          $field_data = $this->prepareSearchResultGeofieldField($field);
-          break;
-
-        // Process entity reference, extracting the uuid and label.
-        case 'node_reference':
-        case 'term_reference':
-        case 'entity_reference':
-        case 'entity_reference_uuid':
-          if ($name === 'files') {
-            $field_data = $this->prepareSearchResultFilesField($field, $name, $field_type, $fields, $provider);
+    // Remove private files.
+    if (isset($data['files']) && is_array($data['files'])) {
+      foreach ($data['files'] as &$file) {
+        if ($file['private']) {
+          if ($provider->uuid() !== $file['provider_uuid']) {
+            unset($file['uri']);
           }
-          else {
-            $field_data = $this->prepareSearchResultEntityReferenceField($field, $name, $field_type, $fields);
-          }
-          break;
-
-        // For other fields, simply copy the values.
-        default:
-          $field_data = $field->getValues();
-      }
-
-      // Skip if there is no data for the field.
-      if (empty($field_data)) {
-        continue;
-      }
-
-      // Check if the field accept multiple values.
-      $multiple = $this->isSearchResultFieldMultiple($field, $name, $field_type, $entity_type_id);
-
-      // Convert field value based on cardinality.
-      if (empty($multiple)) {
-        $data[$output_field_name] = reset($field_data);
-      }
-      else {
-        $data[$output_field_name] = array_values($field_data);
+        }
       }
     }
 
@@ -489,357 +420,6 @@ trait SearchableResourceTrait {
     $this->massageResourceDataForEntityType($data, $entity_type_id, $bundle);
 
     return $data;
-  }
-
-  /**
-   * Prepare the data for a boolean field.
-   *
-   * @param \Drupal\search_api\Item\FieldInterface $field
-   *   Search result item field.
-   *
-   * @return array
-   *   List of values all converted to booleans.
-   */
-  public function prepareSearchResultBooleanField(FieldInterface $field) {
-    $data = [];
-    foreach ($field->getValues() as $value) {
-      $data[] = !empty($value);
-    }
-    return $data;
-  }
-
-  /**
-   * Prepare the data for a date like field.
-   *
-   * @param \Drupal\search_api\Item\FieldInterface $field
-   *   Search result item field.
-   *
-   * @return array
-   *   List of values all converted to ISO 8601 dates.
-   */
-  public function prepareSearchResultDateField(FieldInterface $field) {
-    $data = [];
-    foreach ($field->getValues() as $value) {
-      $value = $this->formatIso8601Date($value);
-      if (!empty($value)) {
-        $data[] = $value;
-      }
-    }
-    return $data;
-  }
-
-  /**
-   * Prepare the data for a date range field.
-   *
-   * @param \Drupal\search_api\Item\FieldInterface $field
-   *   Search result item field.
-   * @param string $name
-   *   Field name.
-   * @param array $fields
-   *   List of search result item fields. It will be used to look for the end
-   *   date values.
-   *
-   * @return array
-   *   List of values all converted to ISO 8601 dates.
-   */
-  public function prepareSearchResultDateRangeField(FieldInterface $field, $name, array &$fields) {
-    $data = [];
-
-    // Retrieve the end values.
-    $end_values = $this->extractSearchResultAdditionalFieldValues($name . '_end_', $fields);
-
-    // Parse the start values and add the corresponding end one if found.
-    foreach ($field->getValues() as $key => $value) {
-      $date = [];
-
-      $start = $this->formatIso8601Date($value);
-      if (!empty($start)) {
-        $date['start'] = $start;
-      }
-
-      if (isset($end_values[$key])) {
-        $end = $this->formatIso8601Date($end_values[$key]);
-        if (!empty($end)) {
-          $date['end'] = $end;
-        }
-      }
-
-      if (!empty($date)) {
-        $data[] = $date;
-      }
-    }
-
-    return $data;
-  }
-
-  /**
-   * Prepare the data for a geofield field.
-   *
-   * @param \Drupal\search_api\Item\FieldInterface $field
-   *   Search result item field.
-   *
-   * @return array
-   *   List of values with lat and lon.
-   */
-  public function prepareSearchResultGeofieldField(FieldInterface $field) {
-    $data = [];
-    foreach ($field->getValues() as $value) {
-      // The value contains the lat and lon separated by a comma.
-      if (strpos($value, ',') !== FALSE) {
-        list($lat, $lon) = explode(',', $value);
-        $data[] = [
-          'lat' => $lat,
-          'lon' => $lon,
-        ];
-      }
-    }
-    return $data;
-  }
-
-  /**
-   * Prepare the data for a link field.
-   *
-   * @param \Drupal\search_api\Item\FieldInterface $field
-   *   Search result item field.
-   * @param string $name
-   *   Field name.
-   * @param array $fields
-   *   List of search result item fields. It will be used to look for the end
-   *   date values.
-   *
-   * @return array
-   *   List of values with link uri and title.
-   */
-  public function prepareSearchResultLinkField(FieldInterface $field, $name, array &$fields) {
-    $data = [];
-
-    // Retrieve the link title values.
-    $title_values = $this->extractSearchResultAdditionalFieldValues($name . '_title_', $fields);
-
-    // Parse the uri values and add the corresponding title value if found.
-    foreach ($field->getValues() as $key => $value) {
-      $link = ['uri' => $value];
-      if (isset($title_values[$key])) {
-        $link['title'] = $title_values[$key];
-      }
-      $data[] = $link;
-    }
-
-    return $data;
-  }
-
-  /**
-   * Prepare the data for the files field.
-   *
-   * @param \Drupal\search_api\Item\FieldInterface $field
-   *   Search result item field.
-   * @param string $name
-   *   Field name.
-   * @param string $type
-   *   Field type. It's used to determine whether the values correspond
-   *   to entity uuids or ids in which case we need to load the target entity
-   *   to retrieve its uuid.
-   * @param array $fields
-   *   List of search result item fields. It will be used to look for the end
-   *   date values.
-   * @param \Drupal\user\UserInterface $provider
-   *   Provider.
-   *
-   * @return array
-   *   List of referenced entities with their uuid and label.
-   */
-  public function prepareSearchResultFilesField(FieldInterface $field, $name, $type, array &$fields, UserInterface $provider) {
-    $data = [];
-
-    // Retrieve the media provider ids.
-    $provider_ids = $this->extractSearchResultAdditionalFieldValues($name . '_media_uid_', $fields);
-
-    // Retrieve the uri extra field.
-    $uris = $this->extractSearchResultAdditionalFieldValues($name . '_file_uri_', $fields);
-
-    // Retrieve the extra file properties.
-    $extra_fields = [
-      'filename' => $this->extractSearchResultAdditionalFieldValues($name . '_media_name_', $fields),
-      'created' => $this->extractSearchResultAdditionalFieldValues($name . '_media_created_', $fields),
-      'changed' => $this->extractSearchResultAdditionalFieldValues($name . '_media_changed_', $fields),
-      'mimetype' => $this->extractSearchResultAdditionalFieldValues($name . '_file_filemime_', $fields),
-      'size' => $this->extractSearchResultAdditionalFieldValues($name . '_file_filesize_', $fields),
-      'file_uuid' => $this->extractSearchResultAdditionalFieldValues($name . '_file_uuid_', $fields),
-    ];
-
-    // Parse the id/uuid values and add the corresponding label field if found.
-    foreach ($field->getValues() as $key => $value) {
-      $file = ['private' => TRUE];
-
-      // The file field is a `entity_reference_uuid` so the value is a uuid.
-      // @see \Drupal\docstore\ManageFields::createDocumentBaseFieldFiles().
-      $file['media_uuid'] = $value;
-
-      // Add the extra properties.
-      foreach ($extra_fields as $extra_field_name => $extra_field_values) {
-        if (isset($extra_field_values[$key])) {
-          $file[$extra_field_name] = $extra_field_values[$key];
-        }
-      }
-
-      // Format the dates.
-      if (isset($file['created'])) {
-        $file['created'] = $this->formatIso8601Date($file['created']);
-      }
-      if (isset($file['changed'])) {
-        $file['changed'] = $this->formatIso8601Date($file['changed']);
-      }
-
-      // Add the file url.
-      if (!empty($uris[$key])) {
-        $uri = $uris[$key];
-
-        // For public files, generate the drupal url.
-        if (!$this->uriIsPrivate($uri)) {
-          $file['uri'] = static::createFileUrl($uri);
-          $file['private'] = FALSE;
-        }
-        // For private files, if the provider is the owner of the media,
-        // generate the direct url.
-        // Note: no strict equality for ids as they can be strings or ints.
-        elseif (!$provider->isAnonymous() & isset($provider_ids[$key]) && $provider_ids[$key] == $provider->id() && isset($file['filename'])) {
-          $file['uri'] = $this->createDirectUrl('media', $file['media_uuid'], $file['filename'], $provider);
-        }
-      }
-
-      $data[] = $file;
-    }
-
-    return $data;
-  }
-
-  /**
-   * Prepare the data for an entity reference field.
-   *
-   * @param \Drupal\search_api\Item\FieldInterface $field
-   *   Search result item field.
-   * @param string $name
-   *   Field name.
-   * @param string $type
-   *   Field type. It's used to determine whether the values correspond
-   *   to entity uuids or ids in which case we need to load the target entity
-   *   to retrieve its uuid.
-   * @param array $fields
-   *   List of search result item fields. It will be used to look for the end
-   *   date values.
-   *
-   * @return array
-   *   List of referenced entities with their uuid and label.
-   */
-  public function prepareSearchResultEntityReferenceField(FieldInterface $field, $name, $type, array &$fields) {
-    $data = [];
-
-    // Retrieve the reference label values.
-    $label_values = $this->extractSearchResultAdditionalFieldValues($name . '_label_', $fields);
-
-    // Get the type of entity referenced by this field.
-    $target_entity_type_id = $field
-      ->getDataDefinition()
-      ->getSetting('target_type');
-
-    // Get the storage for the target entity type.
-    $storage = $this->entityTypeManager
-      ->getStorage($target_entity_type_id);
-
-    // Get the label field name for the target entity type.
-    $label_key = $storage
-      ->getEntityType()
-      ->getKey('label');
-
-    // Parse the id/uuid values and add the corresponding label field if found.
-    foreach ($field->getValues() as $key => $value) {
-      $reference = [];
-
-      if ($type === 'entity_reference_uuid') {
-        $reference['uuid'] = $value;
-      }
-      else {
-        // We need to load the entity to retrieve the uuid.
-        $target_entity = $storage->load($value);
-        // Skip if we couldn't find the corresponding entity.
-        if (empty($target_entity)) {
-          continue;
-        }
-        $reference['uuid'] = $target_entity->uuid();
-      }
-
-      if (isset($label_values[$key])) {
-        $reference[$label_key] = $label_values[$key];
-      }
-
-      $data[] = $reference;
-    }
-
-    return $data;
-  }
-
-  /**
-   * Get the values of an additional field (ex: link title).
-   *
-   * @param string $name
-   *   Name of the additional field.
-   * @param array $fields
-   *   List of a search result item fields.
-   *
-   * @return array
-   *   Extracted values.
-   */
-  public function extractSearchResultAdditionalFieldValues($name, array &$fields) {
-    $values = [];
-    if (isset($fields[$name])) {
-      $values = $fields[$name]->getValues();
-      unset($fields[$name]);
-    }
-    return $values;
-  }
-
-  /**
-   * Check if a search result field can have multitple values.
-   *
-   * @param \Drupal\search_api\Item\FieldInterface $field
-   *   Search result item field.
-   * @param string $name
-   *   Field name.
-   * @param string $type
-   *   Field type.
-   * @param string $entity_type_id
-   *   Type of the entity the field is defined on.
-   *
-   * @return bool
-   *   TRUE if the field can have multiple values.
-   */
-  public function isSearchResultFieldMultiple(FieldInterface $field, $name, $type, $entity_type_id) {
-    $multiple = FALSE;
-
-    // For geofield, as we index the sub proprety (latlon) that has a
-    // cardinality of 1 (within the field), we need to retrieve the field
-    // definition of the base field to check whether the field accepts
-    // multiple values or not.
-    if ($type === 'geofield') {
-      $field_storage_definitions = $this->entityFieldManager
-        ->getFieldStorageDefinitions($entity_type_id);
-      if (isset($field_storage_definitions[$name])) {
-        $multiple = $field_storage_definitions[$name]->isMultiple();
-      }
-    }
-    // Otherwise we retrieve the information from the field definition.
-    else {
-      // Check if the field accept multiple values.
-      $field_data_definition = $field->getDataDefinition();
-      if ($field_data_definition instanceof FieldItemDataDefinition) {
-        $multiple = $field_data_definition
-          ->getFieldDefinition()
-          ->getFieldStorageDefinition()
-          ->isMultiple();
-      }
-    }
-
-    return $multiple;
   }
 
 }

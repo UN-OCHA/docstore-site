@@ -877,6 +877,16 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {term_uuid}
 
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
 ## `GET /vocabularies/{machine_name}/terms`
 
 Get a vocabulary.
@@ -1137,6 +1147,16 @@ Create term again.
 * Content-Type: "application/json"
 * Data.message: "Term with same label already exists"
 
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
 ## PUT /vocabularies/{uuid}/terms/{term_uuid}
 
 Rename term.
@@ -1287,6 +1307,16 @@ Create term again.
 * Status: `201`
 * Content-Type: "application/json"
 * Data.message: "Term created"
+
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
 
 ## PUT /vocabularies/{uuid}/terms/{term_uuid}
 

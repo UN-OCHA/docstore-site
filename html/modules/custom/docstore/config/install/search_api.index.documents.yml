@@ -84,79 +84,18 @@ field_settings:
     dependencies:
       module:
         - node
+  document:
+    label: Document
+    property_path: document_field
+    type: solr_string_storage
+    configuration:
+      fields:
+        - 'entity:node/files'
   files:
     label: 'Files'
     datasource_id: 'entity:node'
     property_path: 'files'
     type: string
-    dependencies:
-      config:
-        - field.storage.node.files
-      module:
-        - media
-  files_file_filemime_:
-    label: 'Files (file filemime)'
-    datasource_id: 'entity:node'
-    property_path: 'files:entity:field_media_file:entity:filemime'
-    type: string
-    dependencies:
-      config:
-        - field.storage.media.field_media_file
-        - field.storage.node.files
-      module:
-        - file
-        - media
-  files_file_filesize_:
-    label: 'Files (file filesize)'
-    datasource_id: 'entity:node'
-    property_path: 'files:entity:field_media_file:entity:filesize'
-    type: integer
-    dependencies:
-      config:
-        - field.storage.media.field_media_file
-        - field.storage.node.files
-      module:
-        - file
-        - media
-  files_file_uri_:
-    label: 'Files (file uri)'
-    datasource_id: 'entity:node'
-    property_path: 'files:entity:field_media_file:entity:uri:url'
-    type: string
-    dependencies:
-      config:
-        - field.storage.media.field_media_file
-        - field.storage.node.files
-      module:
-        - file
-        - media
-  files_file_uuid_:
-    label: 'Files (file uuid)'
-    datasource_id: 'entity:node'
-    property_path: 'files:entity:field_media_file:entity:uuid'
-    type: string
-    dependencies:
-      config:
-        - field.storage.media.field_media_file
-        - field.storage.node.files
-      module:
-        - file
-        - media
-  files_media_changed_:
-    label: 'Files (media changed)'
-    datasource_id: 'entity:node'
-    property_path: 'files:entity:changed'
-    type: date
-    dependencies:
-      config:
-        - field.storage.node.files
-      module:
-        - media
-  files_media_created_:
-    label: 'Files (media created)'
-    datasource_id: 'entity:node'
-    property_path: 'files:entity:created'
-    type: date
     dependencies:
       config:
         - field.storage.node.files
@@ -266,6 +205,7 @@ datasource_settings:
 processor_settings:
   add_url: {  }
   aggregated_field: {  }
+  docstore_store_document: {  }
   html_filter:
     all_fields: false
     fields:

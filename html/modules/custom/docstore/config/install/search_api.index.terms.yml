@@ -7,7 +7,9 @@ dependencies:
     - taxonomy
     - user
     - search_api
+    - docstore
   config:
+    - field.storage.taxonomy_term.author
     - field.storage.taxonomy_term.created
     - field.storage.taxonomy_term.provider_uuid
     - search_api.server.solr
@@ -57,6 +59,14 @@ name: Terms
 description: ''
 read_only: false
 field_settings:
+  author:
+    label: Author
+    datasource_id: 'entity:taxonomy_term'
+    property_path: author
+    type: string
+    dependencies:
+      config:
+        - field.storage.taxonomy_term.author
   changed:
     label: Changed
     datasource_id: 'entity:taxonomy_term'
@@ -123,6 +133,13 @@ field_settings:
     dependencies:
       module:
         - taxonomy
+  terms:
+    label: 'Store fields of a document'
+    property_path: document_field
+    type: string
+    configuration:
+      fields:
+        - 'entity:taxonomy_term/description'
   tid:
     label: 'Term ID'
     datasource_id: 'entity:taxonomy_term'
@@ -158,6 +175,7 @@ datasource_settings:
 processor_settings:
   add_url: {  }
   aggregated_field: {  }
+  docstore_store_document: {  }
   language_with_fallback: {  }
   rendered_item: {  }
   solr_date_range: {  }
