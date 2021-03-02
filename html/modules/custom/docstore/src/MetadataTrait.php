@@ -41,6 +41,7 @@ trait MetadataTrait {
     // Fields already processed.
     $already_processed = [
       'title',
+      'label',
       'author',
       'published',
       'private',
