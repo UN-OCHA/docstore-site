@@ -18,7 +18,7 @@ trait MetadataTrait {
   /**
    * Build item data from metadata.
    *
-   * @param mixed $metadata
+   * @param mixed $params
    *   Metadata (list of associative arrays keyed for example with the field
    *   name and with the field value as value).
    * @param string $entity_type_id
@@ -35,104 +35,113 @@ trait MetadataTrait {
    *
    * @todo describe the different format of the metadata elements.
    */
-  protected function buildItemDataFromMetaData($metadata, $entity_type_id, $bundle, UserInterface $provider, $author) {
+  protected function buildItemDataFromParams($params, $entity_type_id, $bundle, UserInterface $provider, $author) {
     $item = [];
 
-    if (!is_array($metadata) || $this->arrayIsAssociative($metadata)) {
-      throw new BadRequestHttpException('Metadata has to be an array');
-    }
+    // Fields already processed.
+    $already_processed = [
+      'title',
+      'label',
+      'author',
+      'published',
+      'private',
+      'files',
+      'vocabulary',
+    ];
 
     // Get the list of available fields for the entity type.
     $field_definitions = $this->entityFieldManager->getFieldDefinitions($entity_type_id, $bundle);
 
-    foreach ($metadata as $metaitem) {
-      foreach ($metaitem as $key => $values) {
-        $term_lookup = FALSE;
-        // Handle special syntax to lookup/create terms on the fly.
-        //
-        // @todo we need to prevent the creation of fields with `_label` as
-        // suffix.
-        // @todo replace the syntax. For example `{"myfield": {"label": xxxx}}`.
-        // @todo that catches fields like `aaaa_label_bbb`.
-        if (strpos($key, '_label') !== FALSE) {
-          $key = str_replace('_label', '', $key);
-          $term_lookup = TRUE;
-        }
+    foreach ($params as $key => $values) {
+      if (in_array($key, $already_processed)) {
+        continue;
+      }
 
-        // Make sure the field exists.
-        if (!isset($field_definitions[$key])) {
-          throw new BadRequestHttpException(strtr('Field @field does not exist', [
-            '@field' => $key,
-          ]));
-        }
+      $term_lookup = FALSE;
+      // Handle special syntax to lookup/create terms on the fly.
+      //
+      // @todo we need to prevent the creation of fields with `_label` as
+      // suffix.
+      // @todo replace the syntax. For example `{"myfield": {"label": xxxx}}`.
+      // @todo that catches fields like `aaaa_label_bbb`.
+      if (strpos($key, '_label') !== FALSE) {
+        $key = str_replace('_label', '', $key);
+        $term_lookup = TRUE;
+      }
 
-        // Make sure user has access to the field.
-        if (!$this->providerCanUseField($key, $entity_type_id, $bundle, $provider, FALSE)) {
-          throw new AccessDeniedHttpException(strtr('You do not have access to field @field', [
-            '@field' => $key,
-          ]));
-        }
+      // Make sure the field exists.
+      if (!isset($field_definitions[$key])) {
+        throw new BadRequestHttpException(strtr('Field @field does not exist', [
+          '@field' => $key,
+        ]));
+      }
 
-        // Attempt to retrieve or generate the terms for the given term labels.
-        // The result is a list of term uuids.
-        if ($term_lookup) {
-          $values = $this->mapOrCreateTerms($key, $values, $entity_type_id, $bundle, $provider, $author);
-          foreach ($values as $value) {
-            $item[$key][] = [
-              'target_uuid' => $value,
-            ];
-          }
-        }
-        // Plain values.
-        elseif (!is_array($values)) {
+      // Make sure user has access to the field.
+      if (!$this->providerCanUseField($key, $entity_type_id, $bundle, $provider, FALSE)) {
+        throw new AccessDeniedHttpException(strtr('You do not have access to field @field', [
+          '@field' => $key,
+        ]));
+      }
+
+      // Attempt to retrieve or generate the terms for the given term labels.
+      // The result is a list of term uuids.
+      if ($term_lookup) {
+        $values = $this->mapOrCreateTerms($key, $values, $entity_type_id, $bundle, $provider, $author);
+        foreach ($values as $value) {
           $item[$key][] = [
-            'value' => $values,
+            'target_uuid' => $value,
           ];
         }
-        else {
-          // @todo check if necessary.
-          if (!isset($item[$key])) {
-            $item[$key] = [];
-          }
+      }
+      // Plain values.
+      elseif (!is_array($values)) {
+        $item[$key][] = [
+          'value' => $values,
+        ];
+      }
+      else {
+        // @todo check if necessary.
+        if (!isset($item[$key])) {
+          $item[$key] = [];
+        }
 
-          // Ensure the values are an array of values/actions.
-          if ($this->arrayIsAssociative($values)) {
-            $values = [$values];
-          }
+        // Ensure the values are an array of values/actions.
+        if ($this->arrayIsAssociative($values)) {
+          $values = [$values];
+        }
 
-          // Multiple values as array.
-          foreach ($values as $value) {
-            // Nested array.
-            if (is_array($value)) {
-              // Lookup target document or term.
-              if (isset($value['_action']) && $value['_action'] === 'lookup') {
-                $target_entity = $this->findTargetByProperty($value);
-                if (!empty($target_entity)) {
-                  $item[$key][] = [
-                    'target_uuid' => $target_entity->uuid(),
-                  ];
-                }
+        // Multiple values as array.
+        foreach ($values as $value) {
+          // Nested array.
+          if (is_array($value)) {
+            // Lookup target document or term.
+            if (isset($value['_action']) && $value['_action'] === 'lookup') {
+              $target_entity = $this->findTargetByProperty($value);
+              if (!empty($target_entity)) {
+                $item[$key][] = [
+                  'target_uuid' => $target_entity->uuid(),
+                ];
               }
-              // Allow on the fly creation of child documents or terms.
-              elseif (isset($value['_action']) && $value['_action'] === 'create') {
-                $child_resource = $this->createChildResource($author, $value, $provider);
-                if (!empty($child_resource['uuid'])) {
-                  $item[$key][] = [
-                    'target_uuid' => $child_resource['uuid'],
-                  ];
-                }
-              }
-              else {
-                // No action defined, pass as multi property.
-                $item[$key][] = $value;
+            }
+            // Allow on the fly creation of child documents or terms.
+            elseif (isset($value['_action']) && $value['_action'] === 'create') {
+              $child_resource = $this->createChildResource($author, $value, $provider);
+              if (!empty($child_resource['uuid'])) {
+                $item[$key][] = [
+                  'target_uuid' => $child_resource['uuid'],
+                ];
               }
             }
             else {
-              // Assume it's a uuid.
-              $item[$key][] = [
-                'target_uuid' => $value,
-              ];
+              // No action defined, pass as multi property.
+              $item[$key][] = $value;
             }
+          }
+          else {
+            // Assume it's a uuid.
+            $item[$key][] = [
+              'target_uuid' => $value,
+            ];
           }
         }
       }

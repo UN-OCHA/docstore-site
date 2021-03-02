@@ -101,22 +101,18 @@ Add a minimal document.
 {
   "title": "Minimal",
   "author": "hid_123456789",
-  "metadata": [
+  "{field_link}": {
+    "uri": "https://attiks.com",
+    "title": "Print and web design"
+  },
+  "{field_linkmulti}": [
     {
-      "{field_link}": {
-        "uri": "https://attiks.com",
-        "title": "Print and web design"
-      },
-      "{field_linkmulti}": [
-        {
-          "uri": "https://attiks.com",
-          "title": "Print and web design"
-        },
-        {
-          "uri": "https://unocha.org",
-          "title": "UNOCHA"
-        }
-      ]
+      "uri": "https://attiks.com",
+      "title": "Print and web design"
+    },
+    {
+      "uri": "https://unocha.org",
+      "title": "UNOCHA"
     }
   ]
 }
@@ -149,14 +145,10 @@ Add a minimal document.
 {
   "title": "Minimal",
   "author": "hid_123456789",
-  "metadata": [
-    {
-      "{field_link}": {
-        "uri": "https://attiks.com",
-        "title": "Print and web design"
-      }
-    }
-  ]
+  "{field_link}": {
+    "uri": "https://attiks.com",
+    "title": "Print and web design"
+  }
 }
 ```
 
@@ -188,18 +180,14 @@ Add a minimal document.
   "title": "Minimal",
   "author": "hid_123456789",
   "private": true,
-  "metadata": [
+  "{field_linkmulti}": [
     {
-      "{field_linkmulti}": [
-        {
-          "uri": "https://attiks.com",
-          "title": "Print and web design"
-        },
-        {
-          "uri": "https://unocha.org",
-          "title": "UNOCHA"
-        }
-      ]
+      "uri": "https://attiks.com",
+      "title": "Print and web design"
+    },
+    {
+      "uri": "https://unocha.org",
+      "title": "UNOCHA"
     }
   ]
 }

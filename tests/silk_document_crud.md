@@ -227,11 +227,7 @@ Add a minimal document.
 {
   "title": "Minimal",
   "author": "hid_123456789",
-  "metadata": [
-    {
-      "{field_id}": 42
-    }
-  ]
+  "{field_id}": 42
 }
 ```
 
@@ -367,12 +363,8 @@ Add a private document.
   "title": "Private",
   "author": "hid_123456789",
   "private": true,
-  "metadata": [
-    {
-      "{field_id}": 42,
-      "{field_country}_label": "Aruba"
-    }
-  ]
+  "{field_id}": 42,
+  "{field_country}_label": "Aruba"
 }
 ```
 
@@ -414,11 +406,7 @@ Add an unpublished document.
   "title": "Unpublished",
   "author": "hid_123456789",
   "published": false,
-  "metadata": [
-    {
-      "{field_id}": 42
-    }
-  ]
+  "{field_id}": 42
 }
 ```
 
@@ -461,11 +449,7 @@ Add an unpublished private document.
   "author": "hid_123456789",
   "published": false,
   "private": true,
-  "metadata": [
-    {
-      "{field_id}": 42
-    }
-  ]
+  "{field_id}": 42
 }
 ```
 
@@ -709,11 +693,7 @@ Update private document.
 ```json
 {
   "title": "Private - updated",
-  "metadata": [
-    {
-      "{field_id}": 7
-    }
-  ]
+  "{field_id}": 7
 }
 ```
 
@@ -1168,11 +1148,7 @@ Add a minimal document.
 {
   "title": "Minimal",
   "author": "hid_123456789",
-  "metadata": [
-    {
-      "{field_id}": 42
-    }
-  ]
+  "{field_id}": 42
 }
 ```
 
@@ -1202,11 +1178,7 @@ Add a minimal document.
 {
   "title": "Minimal",
   "author": "hid_123456789",
-  "metadata": [
-    {
-      "{field_needed}": 42
-    }
-  ]
+  "{field_needed}": 42
 }
 ```
 
@@ -1236,11 +1208,7 @@ Add a minimal document.
 {
   "title": "Minimal",
   "author": "hid_123456789",
-  "metadata": [
-    {
-      "{field_needed}": "This is not an integer"
-    }
-  ]
+  "{field_needed}": "This is not an integer"
 }
 ```
 

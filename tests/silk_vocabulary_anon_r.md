@@ -75,11 +75,7 @@ Create city term.
 {
   "label": "Antwerp",
   "author": "23cdf322",
-  "metadata": [
-    {
-      "{field_iso3}": "BEL"
-    }
-  ]
+  "{field_iso3}": "BEL"
 }
 ```
 

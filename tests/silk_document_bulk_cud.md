@@ -68,35 +68,19 @@ Create documents in bulk.
   "documents": [
     {
       "title": "Doc1",
-      "metadata": [
-        {
-          "{field_id}": "doc1"
-        }
-      ]
+      "{field_id}": "doc1"
     },
     {
       "title": "Doc2",
-      "metadata": [
-        {
-          "{field_id}": "doc2"
-        }
-      ]
+      "{field_id}": "doc2"
     },
     {
       "title": "Doc3",
-      "metadata": [
-        {
-          "{field_id}": "doc3"
-        }
-      ]
+      "{field_id}": "doc3"
     },
     {
       "title": "Doc4",
-      "metadata": [
-        {
-          "{field_id}": "doc4"
-        }
-      ]
+      "{field_id}": "doc4"
     }
   ]
 }
@@ -132,28 +116,16 @@ Update documents in bulk. This is a full update so the `title` is mandatory.
     {
       "uuid": "{doc_uuid1}",
       "title": "Doc1 with new label",
-      "metadata": [
-        {
-          "{field_id}": "doc1_new"
-        }
-      ]
+      "{field_id}": "doc1_new"
     },
     {
       "uuid": "{doc_uuid2}",
-      "metadata": [
-        {
-          "{field_id}": "doc2_new"
-        }
-      ]
+      "{field_id}": "doc2_new"
     },
     {
       "uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
       "title": "Non existing document",
-      "metadata": [
-        {
-          "{field_id}": "nothing"
-        }
-      ]
+      "{field_id}": "nothing"
     }
   ]
 }
@@ -208,19 +180,11 @@ Update (partially) documents in bulk.
   "documents": [
     {
       "uuid": "{doc_uuid2}",
-      "metadata": [
-        {
-          "{field_id}": "doc2_new"
-        }
-      ]
+      "{field_id}": "doc2_new"
     },
     {
       "uuid": "{doc_uuid3}",
-      "metadata": [
-        {
-          "{field_id}": "doc3_new"
-        }
-      ]
+      "{field_id}": "doc3_new"
     }
   ]
 }

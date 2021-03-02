@@ -96,11 +96,7 @@ Create city term.
 {
   "label": "Term1",
   "author": "Author1",
-  "metadata": [
-    {
-      "{field_iso3}": "BEL"
-    }
-  ]
+  "{field_iso3}": "BEL"
 }
 ```
 
@@ -145,19 +141,11 @@ Create city terms.
   "terms": [
     {
       "label": "Term2",
-      "metadata": [
-        {
-          "{field_iso3}": "BEL"
-        }
-      ]
+      "{field_iso3}": "BEL"
     },
     {
       "label": "Term3",
-      "metadata": [
-        {
-          "{field_iso3}": "BEL"
-        }
-      ]
+      "{field_iso3}": "BEL"
     }
   ]
 }

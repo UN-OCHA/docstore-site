@@ -65,11 +65,7 @@ Add a minimal document.
 {
   "title": "Doc1",
   "author": "hid_123456789",
-  "metadata": [
-    {
-      "{field_id}": 42
-    }
-  ]
+  "{field_id}": 42
 }
 ```
 
@@ -125,19 +121,11 @@ Add 2 documents.
   "documents": [
     {
       "title": "Doc2",
-      "metadata": [
-        {
-          "{field_id}": 42
-        }
-      ]
+      "{field_id}": 42
     },
     {
       "title": "Doc3",
-      "metadata": [
-        {
-          "{field_id}": 42
-        }
-      ]
+      "{field_id}": 42
     }
   ]
 }
