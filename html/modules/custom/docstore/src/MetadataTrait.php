@@ -46,6 +46,7 @@ trait MetadataTrait {
       'published',
       'private',
       'files',
+      'vocabulary',
     ];
 
     // Get the list of available fields for the entity type.
