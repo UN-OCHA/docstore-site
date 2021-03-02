@@ -81,38 +81,22 @@ Create terms in bulk.
     {
       "_action": "create",
       "label": "Term1",
-      "metadata": [
-        {
-          "{field_iso3}": "AFG"
-        }
-      ]
+      "{field_iso3}": "AFG"
     },
     {
       "_action": "create",
       "label": "Term2",
-      "metadata": [
-        {
-          "{field_iso3}": "BEL"
-        }
-      ]
+      "{field_iso3}": "BEL"
     },
     {
       "_action": "create",
       "label": "Term3",
-      "metadata": [
-        {
-          "{field_iso3}": "FRA"
-        }
-      ]
+      "{field_iso3}": "FRA"
     },
     {
       "_action": "create",
       "label": "Term4",
-      "metadata": [
-        {
-          "{field_iso3}": "OPT"
-        }
-      ]
+      "{field_iso3}": "OPT"
     }
   ]
 }
@@ -148,20 +132,12 @@ Try to create new terms with the same label.
     {
       "_action": "create",
       "label": "Term1",
-      "metadata": [
-        {
-          "{field_iso3}": "AFG"
-        }
-      ]
+      "{field_iso3}": "AFG"
     },
     {
       "_action": "create",
       "label": "Term2",
-      "metadata": [
-        {
-          "{field_iso3}": "BEL"
-        }
-      ]
+      "{field_iso3}": "BEL"
     }
   ]
 }
@@ -207,28 +183,16 @@ Update terms in bulk. This is a full update so the `label` is mandatory.
     {
       "uuid": "{term_uuid1}",
       "label": "Term1 with new label",
-      "metadata": [
-        {
-          "{field_iso3}": "FFF"
-        }
-      ]
+      "{field_iso3}": "FFF"
     },
     {
       "uuid": "{term_uuid2}",
-      "metadata": [
-        {
-          "{field_iso3}": "GGGG"
-        }
-      ]
+      "{field_iso3}": "GGGG"
     },
     {
       "uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
       "label": "Non existing term",
-      "metadata": [
-        {
-          "{field_iso3}": "nothing"
-        }
-      ]
+      "{field_iso3}": "nothing"
     }
   ]
 }
@@ -283,19 +247,11 @@ Update (partially) terms in bulk.
   "terms": [
     {
       "uuid": "{term_uuid2}",
-      "metadata": [
-        {
-          "{field_iso3}": "HHH"
-        }
-      ]
+      "{field_iso3}": "HHH"
     },
     {
       "uuid": "{term_uuid3}",
-      "metadata": [
-        {
-          "{field_iso3}": "III"
-        }
-      ]
+      "{field_iso3}": "III"
     }
   ]
 }

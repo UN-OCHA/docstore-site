@@ -168,11 +168,7 @@ Add a minimal document.
 {
   "title": "Minimal",
   "author": "hid_123456789",
-  "metadata": [
-    {
-      "field_parent_label": "Parent 0"
-    }
-  ]
+  "field_parent_label": "Parent 0"
 }
 ```
 
@@ -203,11 +199,7 @@ Create term using label.
 {
   "title": "Minimal",
   "author": "hid_123456789",
-  "metadata": [
-    {
-      "field_parent_label": "Parent 1"
-    }
-  ]
+  "field_parent_label": "Parent 1"
 }
 ```
 
@@ -237,8 +229,7 @@ Create term using endpoint.
 ```json
 {
   "label": "Parent 2",
-  "author": "23cdf322",
-  "metadata": []
+  "author": "23cdf322"
 }
 ```
 
@@ -266,9 +257,7 @@ Create term using endpoint with child.
 {
   "label": "Parent 3",
   "author": "23cdf322",
-  "metadata": [
-    {"field_childs_label": "Child 1"}
-  ]
+  "field_childs_label": "Child 1"
 }
 ```
 
@@ -296,19 +285,15 @@ Create term using endpoint with child.
 {
   "label": "Parent 4",
   "author": "23cdf322",
-  "metadata": [
-    {
-      "field_childs":   {
-        "_action": "create",
-        "_reference": "term",
-        "_target": "voc_child",
-        "_data": {
-          "author": "Test",
-          "label": "Child 2"
-        }
-      }
+  "field_childs":   {
+    "_action": "create",
+    "_reference": "term",
+    "_target": "voc_child",
+    "_data": {
+      "author": "Test",
+      "label": "Child 2"
     }
-  ]
+  }
 }
 ```
 
@@ -336,32 +321,24 @@ Add a minimal document.
 {
   "title": "Minimal",
   "author": "hid_123456789",
-  "metadata": [
-    {
-      "field_parent": {
+  "field_parent": {
+    "_action": "create",
+    "_reference": "term",
+    "_target": "voc_parent",
+    "_data": {
+      "author": "Test",
+      "label": "Parent 5",
+      "field_childs":   {
         "_action": "create",
         "_reference": "term",
-        "_target": "voc_parent",
+        "_target": "voc_child",
         "_data": {
           "author": "Test",
-          "label": "Parent 5",
-          "metadata": [
-            {
-              "field_childs":   {
-                "_action": "create",
-                "_reference": "term",
-                "_target": "voc_child",
-                "_data": {
-                  "author": "Test",
-                  "label": "Child 3"
-                }
-              }
-            }
-          ]
+          "label": "Child 3"
         }
       }
     }
-  ]
+  }
 }
 ```
 

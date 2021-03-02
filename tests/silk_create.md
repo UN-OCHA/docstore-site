@@ -499,11 +499,7 @@ Example output.
 {
   "label": "WFP",
   "author": "23cdf322",
-  "metadata": [
-    {
-      "{field_iso3}": "BEL"
-    }
-  ],
+  "{field_iso3}": "BEL"
   "vocabulary": "{organization}"
 }
 ```
@@ -560,11 +556,7 @@ Example output.
 {
   "label": "WFP",
   "description": "Term updated",
-  "metadata": [
-    {
-      "{field_iso3}": "NED"
-    }
-  ]
+  "{field_iso3}": "NED"
 }
 ```
 
@@ -720,19 +712,11 @@ Add a document without a file.
 {
   "title": "Doc with term, no files",
   "author": "hid_123456789",
-  "metadata": [
-    {
-      "{field_id}": 42
-    },
-    {
-      "{field_city}": "{city_borgerhout}"
-    },
-    {
-      "{field_organization}": [
-        "{organization_wfp}",
-        "{organization_unocha}"
-      ]
-    }
+  "{field_id}": 42,
+  "{field_city}": "{city_borgerhout}",
+  "{field_organization}": [
+    "{organization_wfp}",
+    "{organization_unocha}"
   ]
 }
 ```
@@ -781,19 +765,11 @@ Add a document using term labels.
 {
   "title": "Doc with term labels, no files",
   "author": "hid_123456789",
-  "metadata": [
-    {
-      "{field_id}": 42
-    },
-    {
-      "{field_city}_label": "Paris"
-    },
-    {
-      "{field_organization}_label": [
-        "WFP",
-        "UNHCR"
-      ]
-    }
+  "{field_id}": 42,
+  "{field_city}_label": "Paris",
+  "{field_organization}_label": [
+    "WFP",
+    "UNHCR"
   ]
 }
 ```
@@ -874,12 +850,8 @@ Add a document with a file.
   "files": [
     "{media1}"
   ],
-  "metadata": [
-    {
-      "{field_organization}": [
-        "{organization_unocha}"
-      ]
-    }
+  "{field_organization}": [
+    "{organization_unocha}"
   ]
 }
 ```

@@ -141,17 +141,9 @@ Create term.
 {
   "label": "Term 1",
   "author": "23cdf322",
-  "metadata": [
-    {
-      "{field_public}": "I'm visible"
-    },
-    {
-      "{field_private}": "I'm not visible"
-    },
-    {
-      "{field_private2}": "Private from other provider"
-    }
-  ]
+  "{field_public}": "I'm visible",
+  "{field_private}": "I'm not visible",
+  "{field_private2}": "Private from other provider"
 }
 ```
 
@@ -181,14 +173,8 @@ Create term.
 {
   "label": "Term 1",
   "author": "23cdf322",
-  "metadata": [
-    {
-      "{field_public}": "I'm visible"
-    },
-    {
-      "{field_private}": "I'm not visible"
-    }
-  ]
+  "{field_public}": "I'm visible",
+  "{field_private}": "I'm not visible"
 }
 ```
 
@@ -219,14 +205,8 @@ Create term.
 {
   "label": "Term 2",
   "author": "23cdf322",
-  "metadata": [
-    {
-      "{field_public}": "I'm visible"
-    },
-    {
-      "{field_private}": "I'm not visible"
-    }
-  ]
+  "{field_public}": "I'm visible",
+  "{field_private}": "I'm not visible"
 }
 ```
 
@@ -256,14 +236,8 @@ Create term.
 {
   "label": "Term 2",
   "author": "23cdf322",
-  "metadata": [
-    {
-      "{field_public}": "I can be used"
-    },
-    {
-      "{field_private2}": "Private from other provider"
-    }
-  ]
+  "{field_public}": "I can be used",
+  "{field_private2}": "Private from other provider"
 }
 ```
 

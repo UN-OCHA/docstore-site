@@ -173,11 +173,7 @@ Add a minimal assessment.
 {
   "title": "Minimal",
   "author": "hid_123456789",
-  "metadata": [
-    {
-      "{field_id}": 42
-    }
-  ]
+  "{field_id}": 42
 }
 ```
 
@@ -313,11 +309,7 @@ Add a private assessment.
   "title": "Private",
   "author": "hid_123456789",
   "private": true,
-  "metadata": [
-    {
-      "{field_id}": 42
-    }
-  ]
+  "{field_id}": 42
 }
 ```
 
@@ -359,11 +351,7 @@ Add an unpublished assessment.
   "title": "Unpublished",
   "author": "hid_123456789",
   "published": false,
-  "metadata": [
-    {
-      "{field_id}": 42
-    }
-  ]
+  "{field_id}": 42
 }
 ```
 
@@ -406,11 +394,7 @@ Add an unpublished private assessment.
   "author": "hid_123456789",
   "published": false,
   "private": true,
-  "metadata": [
-    {
-      "{field_id}": 42
-    }
-  ]
+  "{field_id}": 42
 }
 ```
 
@@ -653,11 +637,7 @@ Update private assessment.
 ```json
 {
   "title": "Private - updated",
-  "metadata": [
-    {
-      "{field_id}": 7
-    }
-  ]
+  "{field_id}": 7
 }
 ```
 

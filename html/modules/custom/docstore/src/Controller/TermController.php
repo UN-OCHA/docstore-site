@@ -366,10 +366,8 @@ class TermController extends ControllerBase {
       'description' => $params['description'] ?? '',
     ];
 
-    // Check for meta tags.
-    if (!empty($params['metadata'])) {
-      $item = array_merge($item, $this->buildItemDataFromMetaData($params['metadata'], 'taxonomy_term', $vocabulary->id(), $provider, $params['author']));
-    }
+    // Add all other fields.
+    $item = array_merge($item, $this->buildItemDataFromParams($params, 'taxonomy_term', $vocabulary->id(), $provider, $params['author']));
 
     // Create term.
     $term = Term::create($item);

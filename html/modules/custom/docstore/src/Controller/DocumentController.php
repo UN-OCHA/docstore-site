@@ -534,10 +534,8 @@ class DocumentController extends ControllerBase {
       }
     }
 
-    // Check for meta tags.
-    if (isset($params['metadata']) && $params['metadata']) {
-      $item = array_merge($item, $this->buildItemDataFromMetaData($params['metadata'], 'node', $node_type->id(), $provider, $params['author']));
-    }
+    // Add all other fields.
+    $item = array_merge($item, $this->buildItemDataFromParams($params, 'node', $node_type->id(), $provider, $params['author']));
 
     /** @var \Drupal\node\Entity\Node $document */
     $document = Node::create($item);

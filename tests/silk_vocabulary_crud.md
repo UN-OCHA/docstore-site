@@ -764,52 +764,6 @@ Example output.
 
 ## POST /vocabularies/{machine_name}/terms
 
-Create term with wrong metadata.
-
-* Content-Type: "application/json"
-* Accept: "application/json"
-* API-KEY: abcd
-
-```json
-{
-  "label": "Antwerp",
-  "author": "23cdf322",
-  "metadata": {
-    "field": "not like this"
-  }
-}
-```
-
-===
-
-* Status: `400`
-* Content-Type: "application/json"
-* Data.message: "Metadata has to be an array"
-
-## POST /vocabularies/{machine_name}/terms
-
-Create term with wrong metadata.
-
-* Content-Type: "application/json"
-* Accept: "application/json"
-* API-KEY: abcd
-
-```json
-{
-  "label": "Antwerp",
-  "author": "23cdf322",
-  "metadata": "not like this either"
-}
-```
-
-===
-
-* Status: `400`
-* Content-Type: "application/json"
-* Data.message: "Metadata has to be an array"
-
-## POST /vocabularies/{machine_name}/terms
-
 Create term with extra fields.
 
 * Content-Type: "application/json"
@@ -820,11 +774,7 @@ Create term with extra fields.
 {
   "label": "Antwerp",
   "author": "23cdf322",
-  "metadata": [
-    {
-      "field": "3242342"
-    }
-  ]
+  "field": "3242342"
 }
 ```
 
@@ -854,11 +804,7 @@ Create city term.
 {
   "label": "Antwerp",
   "author": "23cdf322",
-  "metadata": [
-    {
-      "{field_iso3}": "BEL"
-    }
-  ]
+  "{field_iso3}": "BEL"
 }
 ```
 

@@ -101,25 +101,21 @@ Add a minimal document.
 {
   "title": "Minimal",
   "author": "hid_123456789",
-  "metadata": [
+  "{field_geo}": {
+    "lat": 4.6,
+    "lon": 51,
+    "value": "POINT (4.6 51)"
+  },
+  "{field_geomulti}": [
     {
-      "{field_geo}": {
-        "lat": 4.6,
-        "lon": 51,
-        "value": "POINT (4.6 51)"
-      },
-      "{field_geomulti}": [
-        {
-          "lat": 4.6,
-          "lon": 51,
-          "value": "POINT (4.6 51)"
-        },
-        {
-          "lat": 7,
-          "lon": 38,
-          "value": "POINT (7 38)"
-        }
-      ]
+      "lat": 4.6,
+      "lon": 51,
+      "value": "POINT (4.6 51)"
+    },
+    {
+      "lat": 7,
+      "lon": 38,
+      "value": "POINT (7 38)"
     }
   ]
 }
@@ -152,15 +148,11 @@ Add a minimal document.
 {
   "title": "Minimal",
   "author": "hid_123456789",
-  "metadata": [
-    {
-      "{field_geo}": {
-        "lat": 4.6,
-        "lon": 51,
-        "value": "POINT (4.6 51)"
-      }
-    }
-  ]
+  "{field_geo}": {
+    "lat": 4.6,
+    "lon": 51,
+    "value": "POINT (4.6 51)"
+  }
 }
 ```
 
@@ -192,20 +184,16 @@ Add a minimal document.
   "title": "Minimal",
   "author": "hid_123456789",
   "private": true,
-  "metadata": [
+  "{field_geomulti}": [
     {
-      "{field_geomulti}": [
-        {
-          "lat": 4.6,
-          "lon": 51,
-          "value": "POINT (4.6 51)"
-        },
-        {
-          "lat": 7,
-          "lon": 38,
-          "value": "POINT (7 38)"
-        }
-      ]
+      "lat": 4.6,
+      "lon": 51,
+      "value": "POINT (4.6 51)"
+    },
+    {
+      "lat": 7,
+      "lon": 38,
+      "value": "POINT (7 38)"
     }
   ]
 }
