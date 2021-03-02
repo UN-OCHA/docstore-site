@@ -499,7 +499,7 @@ Example output.
 {
   "label": "WFP",
   "author": "23cdf322",
-  "{field_iso3}": "BEL"
+  "{field_iso3}": "BEL",
   "vocabulary": "{organization}"
 }
 ```
