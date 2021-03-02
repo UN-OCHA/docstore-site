@@ -79,22 +79,18 @@ Create terms in bulk.
   "author": "Author",
   "terms": [
     {
-      "_action": "create",
       "label": "Term1",
       "{field_iso3}": "AFG"
     },
     {
-      "_action": "create",
       "label": "Term2",
       "{field_iso3}": "BEL"
     },
     {
-      "_action": "create",
       "label": "Term3",
       "{field_iso3}": "FRA"
     },
     {
-      "_action": "create",
       "label": "Term4",
       "{field_iso3}": "OPT"
     }
@@ -130,12 +126,10 @@ Try to create new terms with the same label.
   "author": "Author",
   "terms": [
     {
-      "_action": "create",
       "label": "Term1",
       "{field_iso3}": "AFG"
     },
     {
-      "_action": "create",
       "label": "Term2",
       "{field_iso3}": "BEL"
     }
