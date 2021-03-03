@@ -233,6 +233,23 @@ trait SearchableResourceTrait {
         $data['revisions'] = $this->getResourceEntityRevisionList($entity_type_id, $id);
       }
     }
+    else {
+      // Multiple results.
+      $output = [
+        '_count' => $results->getResultCount(),
+      ];
+
+      // Add extra metadata.
+      if ($extra = $results->getExtraData('search_api_solr_response')) {
+        $output['_start'] = $extra['response']['start'];
+        $output['_numFoundExact'] = $extra['response']['numFoundExact'];
+      }
+
+      // Append data.
+      $output['results'] = $data;
+
+      $data = $output;
+    }
 
     return $this->createCacheableJsonResponse($cache, $data, 200);
   }
