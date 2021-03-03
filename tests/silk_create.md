@@ -1208,7 +1208,9 @@ Test offset.
 ===
 
 ```json
-[]
+{
+  "results": []
+}
 ```
 
 * Status: `200`
@@ -1224,7 +1226,9 @@ Test offset as anonymous.
 ===
 
 ```json
-[]
+{
+  "results": []
+}
 ```
 
 * Status: `200`
