@@ -276,8 +276,8 @@ Get terms. They are sorted by default by creation date descending.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].test_public: "I can be used"
-* Data[1].test_public: "I'm visible"
+* Data.results[0].test_public: "I can be used"
+* Data.results[1].test_public: "I'm visible"
 
 ## `GET /vocabularies/{machine_name}/terms`
 
@@ -291,10 +291,10 @@ visible at it's private for another provider.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].test_public: "I can be used"
-* Data[0].test_private_2: null
-* Data[1].test_public: "I'm visible"
-* Data[1].test_private: "I'm not visible"
+* Data.results[0].test_public: "I can be used"
+* Data.results[0].test_private_2: null
+* Data.results[1].test_public: "I'm visible"
+* Data.results[1].test_private: "I'm not visible"
 
 ## `GET /vocabularies/{machine_name}/terms`
 
@@ -307,9 +307,9 @@ Get terms as other provider.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].test_public: "I can be used"
-* Data[0].test_private_2: "Private from other provider"
-* Data[1].test_public: "I'm visible"
+* Data.results[0].test_public: "I can be used"
+* Data.results[0].test_private_2: "Private from other provider"
+* Data.results[1].test_public: "I'm visible"
 
 ## PATCH /vocabularies/{machine_name}
 
@@ -361,9 +361,9 @@ Get terms as owner.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].test_public: "I can be used"
-* Data[1].test_public: "I'm visible"
-* Data[1].test_private: "I'm not visible"
+* Data.results[0].test_public: "I can be used"
+* Data.results[1].test_public: "I'm visible"
+* Data.results[1].test_private: "I'm not visible"
 
 ## `GET /vocabularies/{machine_name}/terms`
 

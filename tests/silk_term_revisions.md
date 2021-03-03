@@ -62,7 +62,7 @@ Get term.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {term1}
+* Data.results[0].uuid: {term1}
 
 ## GET /vocabularies/testrev/terms/{term1}
 

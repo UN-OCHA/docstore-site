@@ -267,7 +267,7 @@ Test filters.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc1}
+* Data.results[0].uuid: {doc1}
 
 ## GET /documents/test-document-crud
 
@@ -281,7 +281,7 @@ Test filters.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc1}
+* Data.results[0].uuid: {doc1}
 
 ## GET /documents/test-document-crud
 
@@ -295,7 +295,7 @@ Test filters.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc1}
+* Data.results[0].uuid: {doc1}
 
 ## GET /documents/test-document-crud
 
@@ -328,7 +328,7 @@ Test filters.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc1}
+* Data.results[0].uuid: {doc1}
 
 ## GET /documents/test-document-crud
 
@@ -734,7 +734,7 @@ Test filters.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc2}
+* Data.results[0].uuid: {doc2}
 
 ## GET /documents/test-document-crud/{doc2}
 

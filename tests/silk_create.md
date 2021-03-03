@@ -817,12 +817,12 @@ Example output.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc2}
-* Data[0].title: "Doc with term labels, no files"
-* Data[0].silk_my_id: 42 // Hard-coded field name!
-* Data[1].uuid: {doc1}
-* Data[1].title: "Doc with term, no files"
-* Data[1].silk_my_id: 42 // Hard-coded field name!
+* Data.results[0].uuid: {doc2}
+* Data.results[0].title: "Doc with term labels, no files"
+* Data.results[0].silk_my_id: 42 // Hard-coded field name!
+* Data.results[1].uuid: {doc1}
+* Data.results[1].title: "Doc with term, no files"
+* Data.results[1].silk_my_id: 42 // Hard-coded field name!
 
 ## GET /media
 
@@ -833,7 +833,7 @@ Example output.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {media1}
+* Data.results[0].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {media1}
 
 ## POST /documents/documents
 
@@ -1154,7 +1154,7 @@ Test filters.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[1].uuid: {doc1}
+* Data.results[1].uuid: {doc1}
 
 ## GET /documents/documents
 
@@ -1168,7 +1168,7 @@ Test sort.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc5}
+* Data.results[0].uuid: {doc5}
 
 ## GET /documents/documents
 
@@ -1181,7 +1181,7 @@ Test sort as anonymous.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc3}
+* Data.results[0].uuid: {doc3}
 
 ## GET /documents/documents
 
@@ -1195,7 +1195,7 @@ Test limit.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc5}
+* Data.results[0].uuid: {doc5}
 
 ## GET /documents/documents
 
@@ -1256,4 +1256,4 @@ Test full text search.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc2}
+* Data.results[0].uuid: {doc2}
