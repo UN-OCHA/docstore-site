@@ -308,7 +308,10 @@ Test filters.
 ===
 
 ```json
-[]
+{
+  "_count": 0,
+  "results": []
+}
 ```
 
 * Status: `200`
