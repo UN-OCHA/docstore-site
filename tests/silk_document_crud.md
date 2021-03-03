@@ -47,10 +47,6 @@ Test empty post.
 * Accept: "application/json"
 * API-KEY: abcd
 
-```json
-[]
-```
-
 ===
 
 * Status: `400`
@@ -347,7 +343,10 @@ Test filters.
 ===
 
 ```json
-[]
+{
+  "_count": 0,
+  "results": []
+}
 ```
 
 * Status: `200`
