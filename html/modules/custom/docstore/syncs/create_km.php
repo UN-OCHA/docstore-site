@@ -163,7 +163,6 @@ function syncKM() {
   $documents = [];
   while ($row = fgetcsv($handle, 0, ',', '"')) {
     $document_params = [
-      'metadata' => [],
       'files' => [],
     ];
 
@@ -186,7 +185,7 @@ function syncKM() {
       }
       else {
         if ($header_lowercase[$i] === 'description') {
-          $document_params['metadata'][] = [$header_lowercase[$i] => $row[$i]];
+          $document_params[$header_lowercase[$i]] = $row[$i];
         }
         else {
           $row_values = explode(',', $row[$i]);
@@ -195,7 +194,7 @@ function syncKM() {
           if ($header_lowercase[$i] === 'original_publication_date') {
             continue;
           }
-          $document_params['metadata'][] = [$header_lowercase[$i] => $row_values];
+          $document_params[$header_lowercase[$i]] = $row_values;
         }
       }
     }
