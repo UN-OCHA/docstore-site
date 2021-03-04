@@ -281,7 +281,7 @@ class DocumentController extends ControllerBase {
     $revision = $this->loadResourceEntityRevision($id, $vid, 'node', $node_type, $provider);
 
     // Prepare the response data.
-    $data = $this->prepareEntityResourceData($revision, $provider);
+    $data = $this->prepareEntityResourceDataForResponse($revision, $provider);
 
     // Add cache contexts and tags.
     $cache = $this->createResponseCache()
@@ -560,7 +560,7 @@ class DocumentController extends ControllerBase {
 
     return [
       'message' => strtr('@type created', ['@type' => $node_type->label()]),
-    ] + $this->prepareEntityResourceData($document, $provider, $full_output);
+    ] + $this->prepareEntityResourceDataForResponse($document, $provider, $full_output);
   }
 
   /**

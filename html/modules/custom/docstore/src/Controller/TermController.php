@@ -200,7 +200,7 @@ class TermController extends ControllerBase {
     $revision = $this->loadResourceEntityRevision($term_id, $revision_id, 'taxonomy_term', $vocabulary, $provider);
 
     // Prepare the response data.
-    $data = $this->prepareEntityResourceData($revision, $provider);
+    $data = $this->prepareEntityResourceDataForResponse($revision, $provider);
 
     // Add cache contexts and tags.
     $cache = $this->createResponseCache()
@@ -392,7 +392,7 @@ class TermController extends ControllerBase {
 
     return [
       'message' => 'Term created',
-    ] + $this->prepareEntityResourceData($term, $provider, $full_output);
+    ] + $this->prepareEntityResourceDataForResponse($term, $provider, $full_output);
   }
 
   /**

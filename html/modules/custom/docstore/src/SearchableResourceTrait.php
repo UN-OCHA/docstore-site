@@ -340,113 +340,36 @@ trait SearchableResourceTrait {
     foreach ($results as $item) {
       // Get the entity type of the item.
       $entity_type_id = $item->getDataSource()->getEntityTypeId();
-
-      // Skip if we cannot retrieve the entity type for the item as we cannot
-      // process it.
       if (empty($entity_type_id)) {
         continue;
       }
 
-      // Get the entity keys for the entity type.
-      $entity_keys = $this->entityTypeManager
-        ->getStorage($entity_type_id)
-        ->getEntityType()
-        ->getKeys();
-
       // Pass FALSE to only use the data returned by Solr, for performances.
-      /** @var \Drupal\search_api\Item\FieldInterface[] $fields */
-      $fields = $item->getFields(FALSE);
-
-      // Skip if we cannot determine the bundle of the item as we cannot
-      // process it.
-      if (!isset($entity_keys['bundle'], $fields[$entity_keys['bundle']])) {
-        continue;
-      }
-      $bundles = $fields[$entity_keys['bundle']]->getValues();
-      if (empty($bundles)) {
-        continue;
-      }
-      $bundle = reset($bundles);
-      if (empty($bundle)) {
+      /** @var \Drupal\search_api\Item\FieldInterface $storage_field */
+      $storage_field = $item->getField('_stored_entity_fields', FALSE);
+      if (empty($storage_field)) {
         continue;
       }
 
-      // Special handling of the published field (used for filtering) which may
-      // have a different name.
-      if (isset($fields['published'], $entity_keys['published'])) {
-        $fields[$entity_keys['published']] = $fields['published'];
-        unset($fields['published']);
-      }
-
-      // Process the fields for the result item.
-      $item_data = $this->prepareResultItemData($entity_type_id, $bundle, $provider, $fields);
-      if (!empty($item_data)) {
-        $data[] = $item_data;
-      }
-    }
-
-    return $data;
-  }
-
-  /**
-   * Prepare the data for a search result item for the response.
-   *
-   * This is supposed to return the same data as when loading an entity
-   * from the database and preparing its data for output but using the data
-   * returned by Solr.
-   *
-   * @param string $entity_type_id
-   *   Entity type id of the item (ex: node, taxonomy_term).
-   * @param string $bundle
-   *   Entity bundle of the item.
-   * @param \Drupal\user\UserInterface $provider
-   *   Provider.
-   * @param \Drupal\search_api\Item\FieldInterface[] $fields
-   *   Result item fields.
-   *
-   * @return array
-   *   List of processed field values keyed by field name.
-   *
-   * @see \Drupal\docstore\ResourceTrait::prepareEntityResourceData()
-   */
-  public function prepareResultItemData($entity_type_id, $bundle, UserInterface $provider, array $fields) {
-    $data = [];
-
-    // Get the list of readable fields for this bundle.
-    $readable_fields = $this->getReadableFields($entity_type_id, $bundle, $provider);
-
-    // Use stored data.
-    $stored_data = [];
-    if ($entity_type_id === 'node') {
-      $stored_data = unserialize($fields['document']->getValues()[0]);
-    }
-    elseif ($entity_type_id === 'taxonomy_term') {
-      $stored_data = unserialize($fields['terms']->getValues()[0]);
-    }
-    else {
-      throw new BadRequestHttpException('Unknown entity');
-    }
-
-    foreach ($stored_data as $name => $field) {
-      if (!isset($readable_fields[$name])) {
+      // Retrieve the stored data. It should be an array with the first item
+      // being the serialized preprocessed entity data.
+      $values = $storage_field->getValues();
+      if (empty($values)) {
         continue;
       }
-      $data[$readable_fields[$name]] = $field;
-    }
 
-    // Remove private files.
-    if (isset($data['files']) && is_array($data['files'])) {
-      foreach ($data['files'] as &$file) {
-        if ($file['private']) {
-          if ($provider->uuid() !== $file['provider_uuid']) {
-            unset($file['uri']);
-          }
-        }
+      // Unserialize the stored data.
+      $stored_data = unserialize(reset($values));
+
+      // Skip if we cannot retrieve the resource's bundle.
+      // @see \Drupal\docstore\ResourceTrait::massageResourceDataForEntityType()
+      if (!isset($stored_data['bundle'])) {
+        continue;
       }
-    }
 
-    // Update the data based on the entity type.
-    $this->massageResourceDataForEntityType($data, $entity_type_id, $bundle);
+      // Prepare the data for the response.
+      $data[] = $this->massageResourceDataForResponse($stored_data, $entity_type_id, $stored_data['bundle'], $provider);
+    }
 
     return $data;
   }
