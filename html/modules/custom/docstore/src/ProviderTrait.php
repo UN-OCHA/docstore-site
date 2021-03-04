@@ -57,46 +57,6 @@ trait ProviderTrait {
   }
 
   /**
-   * Check if provider can read content of the given resource type.
-   *
-   * @param \Drupal\Core\Config\Entity\ConfigEntityBundleBase $resource_type
-   *   Docstore resource type (node type or vocabulary).
-   * @param \Drupal\user\UserInterface|null $provider
-   *   Provider.
-   *
-   * @return bool
-   *   TRUE if the provider is allowed to create content for the resource_type.
-   *
-   * @throws \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException
-   *   403 Access Denied if no valid provider is found or if the provider
-   *   doesn't have read access to the resource.
-   */
-  protected function providerCanRead(ConfigEntityBundleBase $resource_type, ?UserInterface $provider = NULL) {
-    // Special case for the file media type which is always accessible as a
-    // resource type. Media and file entities may on the hand be private.
-    if ($resource_type->id() === 'file') {
-      return TRUE;
-    }
-
-    // Shared resources are always readable.
-    if ($resource_type->getThirdPartySetting('docstore', 'shared')) {
-      return TRUE;
-    }
-
-    // Otherwise a provider is required.
-    $provider = $provider ?: $this->requireProvider();
-
-    // Check if the current provider is the provider of the resource type.
-    if ($resource_type->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
-      return TRUE;
-    }
-
-    throw new AccessDeniedHttpException(strtr('You do not have access to read @label resources', [
-      '@label' => $resource_type->label(),
-    ]));
-  }
-
-  /**
    * Check if the provider is allowed to create content for the resource type.
    *
    * @param \Drupal\Core\Config\Entity\ConfigEntityBundleBase $resource_type

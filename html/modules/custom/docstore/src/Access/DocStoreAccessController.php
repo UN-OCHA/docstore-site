@@ -44,6 +44,7 @@ class DocStoreAccessController implements AccessInterface {
 
     // If no API key is used, no info is available.
     if (!isset($provider->docstore_write)) {
+      // @phpstan-ignore-next-line
       $provider->docstore_write = FALSE;
       // Any non read operation isn't allowed.
       if ($crud !== 'R') {

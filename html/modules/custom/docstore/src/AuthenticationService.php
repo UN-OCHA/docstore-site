@@ -95,7 +95,9 @@ class AuthenticationService {
     if ($provider) {
       // Extend anonymous user object.
       $user = $this->entityTypeManager->getStorage('user')->load(reset($provider));
+      // @phpstan-ignore-next-line
       $user->docstore_provider = reset($provider);
+      // @phpstan-ignore-next-line
       $user->docstore_write = TRUE;
       return $user;
     }
@@ -109,7 +111,9 @@ class AuthenticationService {
     if ($provider) {
       // Extend anonymous user object.
       $user = $this->entityTypeManager->getStorage('user')->load(reset($provider));
+      // @phpstan-ignore-next-line
       $user->docstore_provider = reset($provider);
+      // @phpstan-ignore-next-line
       $user->docstore_write = FALSE;
       return $user;
     }

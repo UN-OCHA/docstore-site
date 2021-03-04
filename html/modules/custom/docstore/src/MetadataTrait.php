@@ -615,26 +615,41 @@ trait MetadataTrait {
   /**
    * Get the list of readable fields of the entity type, bundle and provider.
    *
+   * The list of fields is statically cached as this method may be called
+   * several times during the processing of an entity.
+   *
    * @param string $entity_type_id
    *   Entity type (term, taxonomy_term or node).
    * @param string $bundle
    *   Entity bundle (vocabulary or node type).
-   * @param \Drupal\user\UserInterface $provider
-   *   Provider.
+   * @param \Drupal\user\UserInterface|null $provider
+   *   Provider. If defined, this will return only the fields accessible to the
+   *   the provider, excluding private fields it doesn't own.
    *
    * @return array
-   *   Lisf of readable fields keyed by actual fields and with normalized
-   *   field names as values. The normalized field name should be the one to
-   *   use when output an entity data in a response to improve the consistency
-   *   between the different endpoints.
+   *   Lisf of readable fields keyed by actual fields and with the field info
+   *   as values. The field info includes the normalized field name and provider
+   *   uuid for private fields. The normalized field name should be the one to
+   *   use when outputing an entity data in a response to ensure
+   *   consistency between the different endpoints.
+   *
+   * @todo use \Drupal::state() and add an event subscriber on
+   * FieldStorageDefinitionEvents to regenerate the cache when a field is
+   * created, modified or deleted.
    */
-  public function getReadableFields($entity_type_id, $bundle, UserInterface $provider) {
+  public function getReadableFields($entity_type_id, $bundle, ?UserInterface $provider = NULL) {
     static $cache = [];
 
-    // Load from the cache if available as this function may be called several
-    // times during the processing of an entity.
-    if (isset($cache[$entity_type_id][$bundle][$provider->id()])) {
-      return $cache[$entity_type_id][$bundle][$provider->id()];
+    // If no provider was given, we store the unfiltered fields (with all the
+    // private fields) with the special "unfiltered" key. Otherwise with store
+    // the filtered fields (with only the private fields accessible to the
+    // provider) with the provider id as key.
+    // The anonymous user has a id of 0, so that works for it as well.
+    $provider_id = isset($provider) ? $provider->id() : 'unfiltered';
+
+    // Load the fields accessible to the provider from the cache.
+    if (isset($cache[$entity_type_id][$bundle][$provider_id])) {
+      return $cache[$entity_type_id][$bundle][$provider_id];
     }
 
     // Lists of fields that can be accessed or not.
@@ -676,11 +691,13 @@ trait MetadataTrait {
     $whitelist += $entity_type->getRevisionMetadataKeys();
 
     // Get the readable fields.
-    $fields = $this->getAccessibleFields($entity_type_id, $bundle, $provider, $whitelist, $blacklist, $keys);
+    $fields = $this->getAccessibleFields($entity_type_id, $bundle, $whitelist, $blacklist, $keys);
+
+    // Filter the fields for the provider.
+    $fields = $this->filterPrivateFields($fields, $provider);
 
     // Store the list in the static cache.
-    // @todo use \Drupal::state() instead?
-    $cache[$entity_type_id][$bundle][$provider->id()] = $fields;
+    $cache[$entity_type_id][$bundle][$provider_id] = $fields;
 
     return $fields;
   }
@@ -688,26 +705,41 @@ trait MetadataTrait {
   /**
    * Get the list of writable fields of the entity type, bundle and provider.
    *
+   * The list of fields is statically cached as this method may be called
+   * several times during the processing of an entity.
+   *
    * @param string $entity_type_id
    *   Entity type (term, taxonomy_term or node).
    * @param string $bundle
    *   Entity bundle (vocabulary or node type).
-   * @param \Drupal\user\UserInterface $provider
-   *   Provider.
+   * @param \Drupal\user\UserInterface|null $provider
+   *   Provider. If defined, this will return only the fields accessible to the
+   *   the provider, excluding private fields it doesn't own.
    *
    * @return array
-   *   Lisf of writable fields keyed by actual fields and with normalized
-   *   field names as values. The normalized field name should be the one to
-   *   use when output an entity data in a response to improve the consistency
-   *   between the different endpoints.
+   *   Lisf of writable fields keyed by actual fields and with the field info
+   *   as values. The field info includes the normalized field name and provider
+   *   uuid for private fields. The normalized field name should be the one to
+   *   use when outputing an entity data in a response to ensure
+   *   consistency between the different endpoints.
+   *
+   * @todo use \Drupal::state() and add an event subscriber on
+   * FieldStorageDefinitionEvents to regenerate the cache when a field is
+   * created, modified or deleted.
    */
-  public function getWritableFields($entity_type_id, $bundle, UserInterface $provider) {
+  public function getWritableFields($entity_type_id, $bundle, ?UserInterface $provider = NULL) {
     static $cache = [];
 
-    // Load from the cache if available as this function may be called several
-    // times during the processing of an entity.
-    if (isset($cache[$entity_type_id][$bundle][$provider->id()])) {
-      return $cache[$entity_type_id][$bundle][$provider->id()];
+    // If no provider was given, we store the unfiltered fields (with all the
+    // private fields) with the special "unfiltered" key. Otherwise with store
+    // the filtered fields (with only the private fields accessible to the
+    // provider) with the provider id as key.
+    // The anonymous user has a id of 0, so that works for it as well.
+    $provider_id = isset($provider) ? $provider->id() : 'unfiltered';
+
+    // Load the fields accessible to the provider from the cache.
+    if (isset($cache[$entity_type_id][$bundle][$provider_id])) {
+      return $cache[$entity_type_id][$bundle][$provider_id];
     }
 
     // Lists of fields that can be accessed or not.
@@ -740,11 +772,13 @@ trait MetadataTrait {
     }
 
     // Get the writable fields.
-    $fields = $this->getAccessibleFields($entity_type_id, $bundle, $provider, $whitelist, $blacklist, $keys);
+    $fields = $this->getAccessibleFields($entity_type_id, $bundle, $whitelist, $blacklist, $keys);
+
+    // Filter the fields for the provider.
+    $fields = $this->filterPrivateFields($fields, $provider);
 
     // Store the list in the static cache.
-    // @todo use \Drupal::state() instead?
-    $cache[$entity_type_id][$bundle][$provider->id()] = $fields;
+    $cache[$entity_type_id][$bundle][$provider_id] = $fields;
 
     return $fields;
   }
@@ -756,8 +790,6 @@ trait MetadataTrait {
    *   Entity type (ex: taxonomy_term, node).
    * @param string $bundle
    *   Entity bundle (vocabulary or node type).
-   * @param \Drupal\user\UserInterface $provider
-   *   Provider.
    * @param array $whitelist
    *   List of fields that are always accessible.
    * @param array $blacklist
@@ -766,14 +798,16 @@ trait MetadataTrait {
    *   List of entity keys that should be accessible.
    *
    * @return array
-   *   Lisf of accessible fields keyed by actual fields and with normalized
-   *   field names as values. The normalized field name should be the one to
-   *   use when output an entity data in a response to improve the consistency
-   *   between the different endpoints.
+   *   Lisf of accessible fields keyed by actual fields and with the field info
+   *   as values. The field info includes the normalized field name and provider
+   *   uuid for private fields. The normalized field name should be the one to
+   *   use when outputing an entity data in a response to ensure
+   *   consistency between the different endpoints.
    */
-  public function getAccessibleFields($entity_type_id, $bundle, UserInterface $provider, array $whitelist = [], array $blacklist = [], array $keys = []) {
+  public function getAccessibleFields($entity_type_id, $bundle, array $whitelist = [], array $blacklist = [], array $keys = []) {
     // Get the field definitions that include base and custom fields.
-    $field_definitions = $this->entityFieldManager->getFieldDefinitions($entity_type_id, $bundle);
+    $field_definitions = $this->entityFieldManager
+      ->getFieldDefinitions($entity_type_id, $bundle);
 
     // Get the entity keys.
     $entity_keys = $this->entityTypeManager
@@ -805,7 +839,9 @@ trait MetadataTrait {
 
       // Add whitelisted fields to field without more checking.
       if (isset($whitelist[$field])) {
-        $accessible[$field] = $whitelist[$field];
+        $accessible[$field] = [
+          'normalized_name' => $whitelist[$field],
+        ];
         continue;
       }
 
@@ -823,17 +859,48 @@ trait MetadataTrait {
         continue;
       }
 
-      // If the field is not private, any body can access it.
-      if (!$field_config->getThirdPartySetting('docstore', 'private', FALSE)) {
-        $accessible[$field] = $field;
+      // If the field is private we store its owner's uuid so that we can filter
+      // it out depending on the provider that performed the request.
+      if ($field_config->getThirdPartySetting('docstore', 'private', FALSE)) {
+        $accessible[$field] = [
+          'normalized_name' => $field,
+          'provider_uuid' => $field_config->getThirdPartySetting('docstore', 'provider_uuid'),
+        ];
       }
-      // Otheriwse check if the given provider is the provider of the field.
-      elseif (!$provider->isAnonymous() && $field_config->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
-        $accessible[$field] = $field;
+      else {
+        $accessible[$field] = [
+          'normalized_name' => $field,
+        ];
       }
     }
 
     return $accessible;
+  }
+
+  /**
+   * Remove private fields not accessible to the provider.
+   *
+   * @param array $fields
+   *   List of readable or writable fields.
+   * @param \Drupal\user\UserInterface|null $provider
+   *   Provider. If not defined, return the unfiltered list of fields otherwise
+   *   filter out private fields that are not owned by the provider.
+   *
+   * @return array
+   *   Map of the fields accessible to the provider with the field names as
+   *   keys and field info as values with the normalized field name and
+   *   provider uuid.
+   */
+  public function filterPrivateFields(array $fields, ?UserInterface $provider = NULL) {
+    if (isset($provider)) {
+      $provider_uuid = $provider->isAnonymous() ? NULL : $provider->uuid();
+      foreach ($fields as $name => $field) {
+        if (isset($field['provider_uuid']) && $field['provider_uuid'] !== $provider_uuid) {
+          unset($fields[$name]);
+        }
+      }
+    }
+    return $fields;
   }
 
   /**
