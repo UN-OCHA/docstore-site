@@ -212,7 +212,12 @@ trait SearchableResourceTrait {
           }
         }
       }
-      $data = array_values($files);
+
+      $data = [
+        '_count' => count($files),
+        '_number_of_documents' => $results->getResultCount(),
+        'results' => array_values($files),
+      ];
     }
     // Throw a 404 Not Found if no resource was found for the given id.
     // Cache it to avoid doing another query until something changes for
