@@ -3,6 +3,7 @@
 namespace Drupal\docstore;
 
 use Drupal\Component\Uuid\Uuid;
+use Drupal\Core\Config\Entity\ConfigEntityBundleBase;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\EntityReferenceFieldItemList;
 use Drupal\Core\Field\FieldItemList;
@@ -20,7 +21,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 trait ResourceTrait {
 
   use MetadataTrait;
-  use ProviderTrait;
   use UtilityTrait;
 
   /**
@@ -67,18 +67,11 @@ trait ResourceTrait {
     if (!isset($resources[$provider->id()])) {
       // Retrieve the bundle entities for the given entity type.
       $entities = $this->entityTypeManager->getStorage($bundle_type_id)->loadMultiple();
+
+      // Check if the provider can access those bundles.
       foreach ($entities as $entity) {
-        // We catch the exception returned by providerCanRead() here because
-        // we want to build a list of resources accessible to the provider so
-        // not being allowed is ok in the context of this function. We'll simply
-        // not store the resource as being accessible to the provider.
-        try {
-          if ($this->providerCanRead($entity, $provider)) {
-            $accessible_resources[$entity->id()] = $entity->id();
-          }
-        }
-        catch (AccessDeniedHttpException $exception) {
-          // Skip.
+        if ($this->providerCanAccessResourceType($entity, $provider)) {
+          $accessible_resources[$entity->id()] = $entity->id();
         }
       }
 
@@ -108,6 +101,37 @@ trait ResourceTrait {
     }
 
     return $accessible_resources;
+  }
+
+  /**
+   * Check if the provider can access resources of the given type.
+   *
+   * @param \Drupal\Core\Config\Entity\ConfigEntityBundleBase $resource_type
+   *   Docstore resource type (media type, node type or vocabulary).
+   * @param \Drupal\user\UserInterface $provider
+   *   Provider.
+   *
+   * @return bool
+   *   TRUE if the provider is allowed to access the given resource type.
+   */
+  protected function providerCanAccessResourceType(ConfigEntityBundleBase $resource_type, UserInterface $provider) {
+    // Special case for the file media type which is always accessible as a
+    // resource type. Media and file entities may on the other hand be private.
+    if ($resource_type->id() === 'file') {
+      return TRUE;
+    }
+
+    // Shared resources are always accessible.
+    if ($resource_type->getThirdPartySetting('docstore', 'shared')) {
+      return TRUE;
+    }
+
+    // Check if the current provider is the provider of the resource type.
+    if ($resource_type->getThirdPartySetting('docstore', 'provider_uuid') === $provider->uuid()) {
+      return TRUE;
+    }
+
+    return FALSE;
   }
 
   /**
@@ -176,41 +200,72 @@ trait ResourceTrait {
   }
 
   /**
-   * Prepare the data to retun in the response from a resource entity.
+   * Prepare the entity resource data to return in the response.
    *
    * @param \Drupal\Core\Entity\FieldableEntityInterface $entity
    *   Resource entity (ex: node, term).
    * @param \Drupal\user\UserInterface $provider
-   *   Provider.
+   *   Provider. If defined, the data will only contains fields accessible
+   *   to the provider.
    * @param bool $full_output
-   *   Whether to return the full document's data or only the uuid.
+   *   If FALSE, only return the entity's uuid.
    *
    * @return array
-   *   Resource's data.
-   *
-   * @todo handle list of files for the resource item.
-   *
-   * @todo consolidate that between entity types. Hide unnecessary fields and
-   * also make sure it's compatible with what is returned from Solr.
+   *   Resource's data ready for output in the response.
    */
-  public function prepareEntityResourceData(FieldableEntityInterface $entity, UserInterface $provider, $full_output = TRUE) {
-    $data = [];
-
+  public function prepareEntityResourceDataForResponse(FieldableEntityInterface $entity, UserInterface $provider, $full_output = TRUE) {
     // Return the uuid only if instructed so.
     if (!$full_output) {
       return ['uuid' => $entity->uuid()];
     }
 
+    $data = $this->prepareEntityResourceData($entity, $provider);
+
+    // Remove any field or file uri inaccessible by the provider.
+    return $this->massageResourceDataForResponse($data, $entity->getEntityTypeId(), $entity->bundle(), $provider);
+  }
+
+  /**
+   * Prepare the data to retun in the response from a resource entity.
+   *
+   * @param \Drupal\Core\Entity\FieldableEntityInterface $entity
+   *   Resource entity (ex: node, term).
+   *
+   * @return string
+   *   Serialized resource's data.
+   */
+  public function prepareEntityResourceDataForStorage(FieldableEntityInterface $entity) {
+    $data = $this->prepareEntityResourceData($entity, NULL);
+    return serialize($data);
+  }
+
+  /**
+   * Prepare the data to store in solr or return in the resposnse.
+   *
+   * @param \Drupal\Core\Entity\FieldableEntityInterface $entity
+   *   Resource entity (ex: node, term).
+   * @param \Drupal\user\UserInterface|null $provider
+   *   Provider. If defined, the data will only contains fields accessible
+   *   to the provider.
+   *
+   * @return array
+   *   Resource's data.
+   */
+  public function prepareEntityResourceData(FieldableEntityInterface $entity, ?UserInterface $provider = NULL) {
+    $data = [];
+
     // Entity information.
     $entity_type_id = $entity->getEntityTypeId();
     $bundle = $entity->bundle();
 
-    // Get the list of readable fields, we'll only return those.
+    // Get the list of readable fields, we'll only process those.
+    //
+    // If the provider is defined, private fields inaccessible to the provider
+    // will already have been removed, preventing unnecessary processing below.
     $readable_fields = $this->getReadableFields($entity_type_id, $bundle, $provider);
 
     // Process the entity fields.
     $fields = $entity->getFields(TRUE);
-
     foreach ($fields as $field) {
       $field_name = $field->getName();
 
@@ -218,9 +273,6 @@ trait ResourceTrait {
       if (!isset($readable_fields[$field_name])) {
         continue;
       }
-
-      // Get the output field name.
-      $output_field_name = $readable_fields[$field_name];
 
       // Get the field's data and skip if empty.
       $field_item_list = $entity->get($field_name)->filterEmptyItems();
@@ -232,11 +284,22 @@ trait ResourceTrait {
       $field_item_definition = $field_item_list->getFieldDefinition();
       $field_type = $field_item_definition->getType();
 
+      // Get the normalized field name.
+      $normalized_field_name = $readable_fields[$field_name]['normalized_name'];
+
       // Process field values.
       // @todo handle geofield.
       switch ($field_type) {
         case 'boolean':
           $values = $this->prepareEntityBooleanField($field_item_list);
+          break;
+
+        case 'integer':
+          $values = $this->prepareEntityIntegerField($field_item_list);
+          break;
+
+        case 'float':
+          $values = $this->prepareEntityFloatField($field_item_list);
           break;
 
         case 'timestamp':
@@ -263,7 +326,7 @@ trait ResourceTrait {
         case 'node_reference':
         case 'term_reference':
           if ($field_name === 'files') {
-            $values = $this->prepareEntityFilesField($field_item_list, $provider);
+            $values = $this->prepareEntityFilesField($field_item_list);
           }
           else {
             $values = $this->prepareEntityEntityReferenceField($field_item_list);
@@ -291,17 +354,16 @@ trait ResourceTrait {
 
       // Convert field value based on cardinality.
       if (!$field_item_definition->getFieldStorageDefinition()->isMultiple()) {
-        $data[$output_field_name] = reset($values);
+        $data[$normalized_field_name] = reset($values);
       }
       else {
-        $data[$output_field_name] = array_values($values);
+        $data[$normalized_field_name] = array_values($values);
       }
     }
 
     // Update the data based on the entity type.
     $this->massageResourceDataForEntityType($data, $entity_type_id, $bundle);
 
-    // @todo normalize revision fields and add revision_provider_uuid.
     return $data;
   }
 
@@ -318,6 +380,40 @@ trait ResourceTrait {
     $data = [];
     foreach ($list as $item) {
       $data[] = !empty($item->get('value')->getValue());
+    }
+    return $data;
+  }
+
+  /**
+   * Prepare the data for an integer field.
+   *
+   * @param \Drupal\Core\Field\FieldItemList $list
+   *   Field item list.
+   *
+   * @return array
+   *   List of values all converted to integers.
+   */
+  public function prepareEntityIntegerField(FieldItemList $list) {
+    $data = [];
+    foreach ($list as $item) {
+      $data[] = (int) $item->get('value')->getValue();
+    }
+    return $data;
+  }
+
+  /**
+   * Prepare the data for a float field.
+   *
+   * @param \Drupal\Core\Field\FieldItemList $list
+   *   Field item list.
+   *
+   * @return array
+   *   List of values all converted to floats.
+   */
+  public function prepareEntityFloatField(FieldItemList $list) {
+    $data = [];
+    foreach ($list as $item) {
+      $data[] = (float) $item->get('value')->getValue();
     }
     return $data;
   }
@@ -386,8 +482,8 @@ trait ResourceTrait {
     $data = [];
     foreach ($list as $item) {
       $data[] = [
-        'lat' => $item->get('lat')->getValue(),
-        'lon' => $item->get('lon')->getValue(),
+        'lat' => (float) $item->get('lat')->getValue(),
+        'lon' => (float) $item->get('lon')->getValue(),
       ];
     }
     return $data;
@@ -414,39 +510,6 @@ trait ResourceTrait {
   }
 
   /**
-   * Prepare the data for the files field.
-   *
-   * @param \Drupal\Core\Field\EntityReferenceFieldItemList $list
-   *   Field item list.
-   * @param \Drupal\user\UserInterface $provider
-   *   Provider.
-   *
-   * @return array
-   *   List of referenced entities with their uuid and label.
-   */
-  public function prepareEntityFilesField(EntityReferenceFieldItemList $list, UserInterface $provider) {
-    $data = [];
-
-    /** @var \Drupal\media\Entity\Media $media */
-    foreach ($list->referencedEntities() as $media) {
-      $file_id = $media->getSource()->getSourceFieldValue($media);
-      if (empty($file_id)) {
-        continue;
-      }
-
-      /** @var \Drupal\file\Entity\File $file */
-      $file = $this->entityTypeManager->getStorage('file')->load($file_id);
-      if (empty($file)) {
-        continue;
-      }
-
-      $data[] = $this->prepareMediaEntityData($media, $file, $provider);
-    }
-
-    return $data;
-  }
-
-  /**
    * Prepare the data for an entity reference field.
    *
    * @param \Drupal\Core\Field\EntityReferenceFieldItemList $list
@@ -454,6 +517,10 @@ trait ResourceTrait {
    *
    * @return array
    *   List of referenced entities with their uuid and label.
+   *
+   * @todo retrieve the private state of the referenced entities and store
+   * the provider_uuid so we can exclude them if necessary before sending the
+   * response data.
    */
   public function prepareEntityEntityReferenceField(EntityReferenceFieldItemList $list) {
     $data = [];
@@ -464,15 +531,68 @@ trait ResourceTrait {
       ];
 
       // Get the label key for the entity type.
-      $label_key = $this->entityTypeManager
-        ->getStorage($entity->getEntityTypeId())
-        ->getEntityType()
-        ->getKey('label');
+      //
+      // This ensures consistency with the resource labels:
+      // - Node: title
+      // - Term: label (this is the problematic one, using label instead name)
+      // - Media: name.
+      //
+      // @see massageResourceDataForEntityType().
+      //
+      // @todo It would much easier if we were to use "name" for terms which is
+      // the field name for the term label rather than "label" or if we were to
+      // use "label" for all the entity types.
+      if ($entity->getEntityTypeId() === 'taxonony_term') {
+        $label_key = 'label';
+      }
+      else {
+        $label_key = $this->entityTypeManager
+          ->getStorage($entity->getEntityTypeId())
+          ->getEntityType()
+          ->getKey('label');
+      }
 
       // Add the referenced entity label if defined.
       if (!empty($label_key)) {
         $item[$label_key] = $entity->label();
       }
+
+      $data[] = $item;
+    }
+
+    return $data;
+  }
+
+  /**
+   * Prepare the data for the files field.
+   *
+   * @param \Drupal\Core\Field\EntityReferenceFieldItemList $list
+   *   Field item list.
+   *
+   * @return array
+   *   List of referenced entities with their uuid and label.
+   */
+  public function prepareEntityFilesField(EntityReferenceFieldItemList $list) {
+    $data = [];
+
+    /** @var \Drupal\media\Entity\Media $media */
+    foreach ($list->referencedEntities() as $media) {
+      /** @var \Drupal\file\Entity\File $file */
+      // @phpstan-ignore-next-line
+      $file = $media->field_media_file->entity;
+      if (empty($file)) {
+        continue;
+      }
+
+      // Get the media entity data, passing the media owner as provider in
+      // order to generate the private uri.
+      $item = $this->prepareMediaEntityData($media, $file, $media->getOwner());
+
+      // Update the media uuid field name.
+      // @todo review this after consolidation/simplification of the media/file
+      // endpoints.
+      $item['media_uuid'] = $item['uuid'];
+      unset($item['uuid']);
 
       $data[] = $item;
     }
@@ -513,10 +633,15 @@ trait ResourceTrait {
     ];
 
     if (!empty($data['private'])) {
+      // @todo for consistency with all the other resources (nodes, terms)
+      // maybe we should always add the provider uuid regardless of the private
+      // state. At least when this method is called from the MediaController.
+      $data['provider_uuid'] = $media->getOwner()->uuid();
       // For private files, we only add the uri if the provider is the owner
       // and we generate a direct URL rather than using the drupal internal
       // url.
-      if ($this->providerIsOwner($media, $provider, 'owner_id', FALSE)) {
+      // Note: no strict equality for ids as they can be strings or ints.
+      if ($media->getOwnerId() == $provider->id()) {
         $data['uri'] = $this->getMediaDirectUrl($media, $provider);
       }
     }
@@ -577,7 +702,8 @@ trait ResourceTrait {
         // For private files, we only add the uri if the provider is the owner
         // and we generate a direct URL rather than using the drupal internal
         // url.
-        if ($this->providerIsOwner($file, $provider, 'owner_id', FALSE)) {
+        // Note: no strict equality for ids as they can be strings or ints.
+        if ($file->getOwnerId() == $provider->id()) {
           $data['uri'] = $this->getFileDirectUrl($file, $provider);
         }
       }
@@ -589,6 +715,54 @@ trait ResourceTrait {
         $data['uri'] = static::getFileUrl($file);
       }
     }
+
+    return $data;
+  }
+
+  /**
+   * Prepare the resource's data for the response.
+   *
+   * This filters out private fields and hide the uri of private files that
+   * are not owner by the provider.
+   *
+   * @param array $data
+   *   Resource's data.
+   * @param string $entity_type_id
+   *   Entity type id of the resource.
+   * @param string $bundle
+   *   Entity bundle of the resource.
+   * @param \Drupal\user\UserInterface $provider
+   *   Provider.
+   *
+   * @return array
+   *   Resource's data without the private fields and private file uris
+   *   inaccessible to the provider.
+   */
+  public function massageResourceDataForResponse(array $data, $entity_type_id, $bundle, UserInterface $provider) {
+    // Get the unfiltered list of readable fields.
+    $readable_fields = $this->getReadableFields($entity_type_id, $bundle);
+
+    // Remove inaccessible private fields.
+    foreach ($data as $name => $value) {
+      if (isset($readable_fields[$name]['provider_uuid']) && $readable_fields[$name]['provider_uuid'] !== $provider->uuid()) {
+        unset($data[$name]);
+      }
+    }
+
+    // Update private files.
+    $provider_uuid = $provider->isAnonymous() ? NULL : $provider->uuid();
+    if (!empty($data['files'])) {
+      foreach ($data['files'] as &$file) {
+        // Remove the uri if the provider is not the owner.
+        if (!empty($file['private']) && (!isset($file['provider_uuid']) || $file['provider_uuid'] !== $provider_uuid)) {
+          unset($file['uri']);
+        }
+        unset($file['provider_uuid']);
+      }
+    }
+
+    // Remove any bundle added in massageResourceDataForEntityType().
+    unset($data['bundle']);
 
     return $data;
   }
@@ -608,6 +782,12 @@ trait ResourceTrait {
       return;
     }
 
+    // @todo It would much easier if we were to use "name" for terms which is
+    // the field name for the term label rather than "label" or if we were to
+    // use "label" for all the entity types. Then we could avoid having to
+    // check the entity type to decide which property to use for the entity
+    // label and could simply handle the mapping via the
+    // MetadataTrait::getReadableFields() and the like.
     switch ($entity_type_id) {
       case 'taxonomy_term':
         $data['vocabulary'] = $bundle;
@@ -634,8 +814,11 @@ trait ResourceTrait {
         }
         break;
     }
-    // Remove the bundle field as it's been transformed above.
-    unset($data['bundle']);
+
+    // Store the bundle to ease extra processing. This will be removed before
+    // returning the data for the response.
+    // @see massageResourceDataForResponse()
+    $data['bundle'] = $bundle;
 
     // Ensure the provider uuid is consistent.
     $this->massageUserUuidField($data, 'provider_uuid', 'owner');

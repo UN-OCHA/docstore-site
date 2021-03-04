@@ -139,12 +139,15 @@ class WebhookController extends ControllerBase {
     /** @var \Drupal\user\UserInterface $provider */
     $provider = $this->requireProvider();
 
+    // @phpstan-ignore-next-line
+    $prefix = $provider->get('prefix')->value;
+
     // Construct Id.
     $id = $params['label'];
     $id = strtolower($id);
     $id = preg_replace('/[^a-z0-9_]+/', '_', $id);
     $id = preg_replace('/_+/', '_', $id);
-    $id = $provider->get('prefix')->value . $id;
+    $id = $prefix . $id;
     $id = trim(substr($id, 0, 127), '_');
 
     // Create webhook config.

@@ -13,9 +13,7 @@ use Drupal\docstore\ManageFields;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\node\Entity\NodeType;
 use Drupal\search_api\Entity\Index;
-use Drupal\search_api\IndexInterface;
 use Drupal\search_api\Query\QueryInterface as SearchApiQueryInterface;
-use Drupal\search_api\Query\ResultSetInterface;
 use Drupal\search_api_solr\SolrBackendInterface;
 use Drupal\user\Entity\User;
 use Drupal\webhooks\Webhook;
@@ -23,7 +21,6 @@ use Symfony\Component\VarDumper\Cloner\VarCloner;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
 use Symfony\Component\Yaml\Yaml;
 use Solarium\Core\Query\QueryInterface as SolariumQueryInterface;
-use Solarium\QueryType\Select\Result\Result as SolariumResult;
 
 /**
  * Implements hook_file_download().
@@ -79,130 +76,6 @@ function docstore_search_api_solr_converted_query_alter(SolariumQueryInterface $
         }
       }
     }
-  }
-}
-
-/**
- * Implements hook_search_api_solr_documents_alter().
- *
- * Concatenate multi-properties fields.
- *
- * @todo get the list of fields from the index, retrieve their type and
- * if they are entity reference fields or links, concatenate their indexed
- * properties.
- * @todo use processor instead or define a search api data type.
- */
-function docstore_search_api_solr_documents_alter(&$documents, IndexInterface $index, $items) {
-  foreach ($documents as &$document) {
-    $document->setKey('key', $document->id);
-    // Concatenate the file info so that the order is preserved. The first
-    // concatenated value is the delta of the field value. This will allow
-    // us to reorder the date when parsing the solr response.
-    //
-    // @todo there seems to be some `*s_*` versions of the below fields,
-    // remove them?
-    if (isset($document->sm_files)) {
-      $files = [];
-      // When there is only one item, search api (solr?) flatten that to
-      // a scalar instead of keeping it as an array.
-      if (!is_array($document->sm_files)) {
-        $files[] = [
-          0,
-          $document->sm_files,
-          $document->sm_files_file_filemime_,
-          $document->itm_files_file_filesize_,
-          $document->sm_files_file_uri_,
-          $document->sm_files_file_uuid_,
-          $document->dm_files_media_changed_,
-          $document->dm_files_media_created_,
-          $document->sm_files_media_name_,
-          $document->itm_files_media_uid_,
-        ];
-      }
-      else {
-        foreach ($document->sm_files as $file_delta => $media_uuid) {
-          $files[] = [
-            $file_delta,
-            $media_uuid,
-            $document->sm_files_file_filemime_[$file_delta],
-            $document->itm_files_file_filesize_[$file_delta],
-            $document->sm_files_file_uri_[$file_delta],
-            $document->sm_files_file_uuid_[$file_delta],
-            $document->dm_files_media_changed_[$file_delta],
-            $document->dm_files_media_created_[$file_delta],
-            $document->sm_files_media_name_[$file_delta],
-            $document->itm_files_media_uid_[$file_delta],
-          ];
-        }
-      }
-      $document->addField('zs_files', serialize($files));
-    }
-  }
-}
-
-/**
- * Implements search_api_solr_search_results_alter().
- *
- * This update the file fields with the data in the correct order as Solr
- * doesn't seem to preserve the order of multi-values fields.
- *
- * @todo handle entity reference fields and link fields with the same logic.
- */
-function docstore_search_api_solr_search_results_alter(ResultSetInterface $result_set, SearchApiQueryInterface $query, SolariumResult $result) {
-  $fields = [
-    'files',
-    'files_file_filemime_',
-    'files_file_filesize_',
-    'files_file_uri_',
-    'files_file_uuid_',
-    'files_media_changed_',
-    'files_media_created_',
-    'files_media_name_',
-    'files_media_uid_',
-  ];
-
-  // Get the iteraror for the result set, we will iterator through it at the
-  // same time as we iterate through the solr results which, normally, have the
-  // same number of items as the result set was already pupulated with the
-  // solr data.
-  $iterator = $result_set->getIterator();
-  foreach ($result as $document) {
-    $item = $iterator->current();
-
-    if (isset($document->z_files)) {
-      $concatenated_files = $document->z_files;
-      if (!is_array($concatenated_files)) {
-        $concatenated_files = [$concatenated_files];
-      }
-
-      // Extract the file data for each file and store that in array mapping
-      // each field with its list of values in delta order.
-      $values = [];
-      foreach ($concatenated_files as $concatenated_file) {
-        $file_data = unserialize($concatenated_file);
-        $delta = (int) array_shift($file_data);
-        foreach ($file_data as $index => $value) {
-          $values[$fields[$index]][$delta] = $value;
-        }
-      }
-
-      // Update the result item file fields.
-      foreach ($fields as $name) {
-        $field = $item->getField($name, FALSE);
-        // Reset the values.
-        $field->setValues([]);
-        // Ensure the values respect the delta order.
-        ksort($values[$name]);
-        // Add the values one by one, so that they are processed by the
-        // data type plugin associated with the field, for example to convert
-        // to int.
-        foreach ($values[$name] as $value) {
-          $field->addValue($value);
-        }
-      }
-    }
-
-    $iterator->next();
   }
 }
 

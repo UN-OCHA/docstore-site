@@ -102,10 +102,13 @@ class ManageFields {
    * Generate a unique machine name.
    */
   protected function generateUniqueMachineName($label, $entity_type, $allow_reuse = TRUE) {
+    // @phpstan-ignore-next-line
+    $prefix = $this->provider->get('prefix')->value;
+
     $label = strtolower($label);
     $label = preg_replace('/[^a-z0-9_]+/', '_', $label);
     $label = preg_replace('/_+/', '_', $label);
-    $label = $this->provider->get('prefix')->value . $label;
+    $label = $prefix . $label;
 
     $label = trim(substr($label, 0, 31), '_');
     $counter = 0;

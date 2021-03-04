@@ -76,8 +76,11 @@ class ProviderController extends ControllerBase {
 
     $data = [
       'uuid' => $provider->uuid(),
+      // @phpstan-ignore-next-line
       'dropfolder' => $provider->get('dropfolder')->value ?? '',
+      // @phpstan-ignore-next-line
       'prefix' => $provider->get('prefix')->value ?? '',
+      // @phpstan-ignore-next-line
       'shared_secret' => $provider->get('shared_secret')->value ?? '',
     ];
 

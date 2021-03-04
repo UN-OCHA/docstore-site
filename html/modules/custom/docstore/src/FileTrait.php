@@ -206,6 +206,7 @@ trait FileTrait {
     }
 
     // Have the media point at the correct file.
+    // @phpstan-ignore-next-line
     $media->field_media_file->target_id = $file->id();
 
     // Create a new revision.

@@ -60,6 +60,10 @@ name: Documents
 description: ''
 read_only: false
 field_settings:
+  _stored_entity_fields:
+    label: 'Stored entity fields'
+    property_path: _stored_entity_fields
+    type: solr_string_storage
   author:
     label: 'Author (HID)'
     datasource_id: 'entity:node'
@@ -84,13 +88,6 @@ field_settings:
     dependencies:
       module:
         - node
-  document:
-    label: Document
-    property_path: document_field
-    type: solr_string_storage
-    configuration:
-      fields:
-        - 'entity:node/files'
   files:
     label: 'Files'
     datasource_id: 'entity:node'
@@ -205,7 +202,7 @@ datasource_settings:
 processor_settings:
   add_url: {  }
   aggregated_field: {  }
-  docstore_store_document: {  }
+  docstore_store_entity_fields: {  }
   html_filter:
     all_fields: false
     fields:
