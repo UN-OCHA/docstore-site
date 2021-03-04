@@ -213,13 +213,7 @@ class ParseQueryParameters {
         $conditions->addConditionGroup($subgroup);
       }
       else {
-        // Handle multiple values for IN.
-        if ($filter['condition']['operator'] === 'IN' || $filter['condition']['operator'] === 'NOT IN') {
-          $conditions->addCondition($filter['condition']['path'], explode(',', $filter['condition']['value']), $filter['condition']['operator']);
-        }
-        else {
-          $conditions->addCondition($filter['condition']['path'], $filter['condition']['value'], $filter['condition']['operator']);
-        }
+        $conditions->addCondition($filter['condition']['path'], $filter['condition']['value'], $filter['condition']['operator']);
       }
     }
 
