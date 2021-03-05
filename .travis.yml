@@ -19,8 +19,8 @@ before_script:
 
 script:
   # Get docker information.
-  - docker -v
-  - docker-composer -v
+  - docker version
+  - docker-compose version
 
   # PHP linting
   - test ! -d ./html/modules/custom || find -L ./html/modules/custom -iregex '.*\.\(php\|module\|inc\|install\)$' -print0 | xargs -0 -n 1 -P 4 php -l
