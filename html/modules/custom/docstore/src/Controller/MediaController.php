@@ -408,6 +408,12 @@ class MediaController extends ControllerBase {
       throw new BadRequestHttpException('File name is required');
     }
 
+    // Disallow file name without an extension.
+    $extension = pathinfo($params['filename'], PATHINFO_EXTENSION);
+    if (empty($extension)) {
+      throw new BadRequestHttpException('A valid file extension is required');
+    }
+
     if (!isset($params['mimetype'])) {
       $params['mimetype'] = 'undefined';
     }
@@ -527,10 +533,22 @@ class MediaController extends ControllerBase {
     // A file can only be updated by its owner.
     $this->providerIsOwner($file, $provider);
 
-    // Filename is required.
-    if (isset($params['filename']) && $params['filename'] !== $file->getFilename()) {
-      $file->setFilename($params['filename']);
-      $file->save();
+    // Update the file name.
+    if (!empty($params['filename'])) {
+      $new_filename = $params['filename'];
+      $old_filename = $file->getFilename();
+      // Only change the filename if it's different.
+      if ($new_filename !== $old_filename) {
+        $new_extension = pathinfo($new_filename, PATHINFO_EXTENSION);
+        $old_extension = pathinfo($old_filename, PATHINFO_EXTENSION);
+        // Disallow changing the extension.
+        if ($new_extension !== $old_extension) {
+          throw new BadRequestHttpException('The file extension cannot be changed');
+        }
+        // Set the new filename.
+        $file->setFilename($new_filename);
+        $file->save();
+      }
     }
 
     // See if we need to move the file.

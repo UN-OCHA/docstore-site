@@ -20,6 +20,45 @@ trait FileTrait {
   use ProviderTrait;
 
   /**
+   * Generate a uuid.
+   *
+   * @return string
+   *   Uuid.
+   */
+  public static function generateUuid() {
+    return \Drupal::service('uuid')->generate();
+  }
+
+  /**
+   * Generate a file uri based on its uuid and filename.
+   *
+   * @param string $uuid
+   *   File uuid.
+   * @param string $filename
+   *   File name.
+   * @param bool $private
+   *   Whether the file is private or not.
+   *
+   * @return string
+   *   File uri.
+   */
+  public function generateFileUri($uuid, $filename, $private) {
+    $extension = pathinfo($filename, PATHINFO_EXTENSION);
+
+    // Create URI.
+    $destination = $this->config('system.file')->get('default_scheme') . '://';
+    if ($private) {
+      $destination = 'private://';
+    }
+    $destination .= 'files/';
+    $destination .= substr($uuid, 0, 2);
+    $destination .= '/' . substr($uuid, 2, 2);
+    $destination .= '/' . $uuid . '.' . $extension;
+
+    return $destination;
+  }
+
+  /**
    * Create a file entity with the given filename, mimetype and private state.
    *
    * @param string $filename
@@ -35,25 +74,17 @@ trait FileTrait {
    *   Media referencing the file.
    */
   public function createFileEntity($filename, $mimetype, $private, UserInterface $provider) {
-    $hash = md5($filename);
+    $uuid = static::generateUuid();
 
     // Create URI.
-    $destination = $this->config('system.file')->get('default_scheme') . '://';
-    if ($private) {
-      $destination = 'private://';
-    }
-
-    $destination .= 'files/';
-    $destination .= substr($hash, 0, 3);
-    $destination .= '/' . substr($hash, 3, 3);
-    $destination .= '/' . $filename;
+    $uri = $this->generateFileUri($uuid, $filename, $private);
 
     // Store files in sub directories.
-    $file = File::create();
+    $file = File::create(['uuid' => $uuid]);
     $file->setOwnerId($provider->id());
     $file->setMimeType($mimetype);
     $file->setFileName($filename);
-    $file->setFileUri($destination);
+    $file->setFileUri($uri);
     $file->setTemporary();
 
     return $file;
@@ -132,56 +163,31 @@ trait FileTrait {
     $new_revision = FALSE;
     $log_message = 'File content updated';
 
-    // Create the directory for the file.
-    $directory = pathinfo($file_uri, PATHINFO_DIRNAME);
-    if (!$this->fileSystem->prepareDirectory($directory, $this->fileSystem::CREATE_DIRECTORY)) {
-      throw new HttpException(500, 'Unable to create directory');
-    }
-
     // Load the media for the file.
     /** @var \Drupal\media\Entity\Media $media */
     $media = $this->loadFileMedia($file);
 
     // If the file is temporary, we assume it never had content and we save
-    // the content without overwriting any other files with the same name.
+    // the new content at the file uri.
     if ($file->isTemporary()) {
-      // Save the content, potentially creating a new uri.
-      $new_file_uri = $this->writeFileContent($content, $file_uri, FALSE);
-
-      // Update the file uri as it may have changed.
-      $file->setFileUri($new_file_uri);
+      // Save the content. The Uri being based on the uuid of the file, there
+      // should not be any collision.
+      $this->writeFileContent($content, $file_uri);
     }
     // Otherwise if not ask to create a revision or the file doesn't exists,
     // we overwrite/create the file on disk.
     elseif (empty($create_revision) || !file_exists($file_uri)) {
       // Replace the file content.
-      $this->writeFileContent($content, $file_uri, TRUE);
+      $this->writeFileContent($content, $file_uri);
     }
-    // In case of a new revision, create a new file that will point at the old
-    // uri updated with the new content and have the old file point at a new
-    // uri with the old content.
-    // This ensures links to the existing file uri will have the new content.
+    // In case of a new revision, create a new file with the new content. The
+    // media will point at it.
     else {
-      // Copy the existing file.
-      /** @var \Drupal\file\Entity\File $file */
-      $new_file = file_copy($file, $file_uri);
-      if (empty($new_file)) {
-        throw new HttpException(500, 'Unable to write file');
-      }
+      // Create a new file.
+      $file = $this->createFileEntity($file->getFilename(), $file->getMimeType(), $this->fileIsPrivate($file), $provider);
 
-      // Make the old file point at the new uri with the old content and save.
-      $file->setFileUri($new_file->getFileUri());
-      $file->save();
-
-      // Replace the content of the old file uri with the new content.
-      $this->writeFileContent($content, $file_uri, TRUE);
-
-      // Make the new file point at the old uri with the new content.
-      $new_file->setFileUri($file_uri);
-
-      // Swap the files so the rest of the processing applies to the new file
-      // and the calling function gets the new file as well.
-      $file = $new_file;
+      // Save the new content to the new uri.
+      $this->writeFileContent($content, $file->getFileUri());
 
       // Indicate we want to create a new revision.
       $new_revision = TRUE;
@@ -242,7 +248,13 @@ trait FileTrait {
    *   replace was TRUE otherwise, it may be different with a number appended
    *   to the filemame if there was already an existing file with the same name.
    */
-  public function writeFileContent($content, $uri, $replace = FALSE) {
+  public function writeFileContent($content, $uri, $replace = TRUE) {
+    // Create the directory for the file.
+    $directory = pathinfo($uri, PATHINFO_DIRNAME);
+    if (!$this->fileSystem->prepareDirectory($directory, $this->fileSystem::CREATE_DIRECTORY)) {
+      throw new HttpException(500, 'Unable to create directory');
+    }
+
     $behavior = $replace ? $this->fileSystem::EXISTS_REPLACE : $this->fileSystem::EXISTS_RENAME;
 
     try {

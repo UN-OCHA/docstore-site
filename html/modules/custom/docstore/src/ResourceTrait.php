@@ -637,19 +637,13 @@ trait ResourceTrait {
       // maybe we should always add the provider uuid regardless of the private
       // state. At least when this method is called from the MediaController.
       $data['provider_uuid'] = $media->getOwner()->uuid();
-      // For private files, we only add the uri if the provider is the owner
-      // and we generate a direct URL rather than using the drupal internal
-      // url.
+      // For private files, only add the uri if the provider is the owner.
       // Note: no strict equality for ids as they can be strings or ints.
       if ($media->getOwnerId() == $provider->id()) {
-        $data['uri'] = $this->getMediaDirectUrl($media, $provider);
+        $data['uri'] = static::getFileUrl($file);
       }
     }
     else {
-      // @todo wouldn't be better to generate a URL like the direct url for
-      // private files rather than returning the drupal url. This would also
-      // remove the URL swapping done when updating a file's content.
-      // @see \Drupal\docstore\FileTrait::saveFileToDisk()
       $data['uri'] = static::getFileUrl($file);
     }
 
@@ -699,19 +693,13 @@ trait ResourceTrait {
     // saving their content to disk.
     if (!$file->isTemporary()) {
       if (!empty($data['private'])) {
-        // For private files, we only add the uri if the provider is the owner
-        // and we generate a direct URL rather than using the drupal internal
-        // url.
+        // For private files, only add the uri if the provider is the owner.
         // Note: no strict equality for ids as they can be strings or ints.
         if ($file->getOwnerId() == $provider->id()) {
-          $data['uri'] = $this->getFileDirectUrl($file, $provider);
+          $data['uri'] = static::getFileUrl($file);
         }
       }
       else {
-        // @todo wouldn't be better to generate a URL like the direct url for
-        // private files rather than returning the drupal url. This would also
-        // remove the URL swapping done when updating a file's content.
-        // @see \Drupal\docstore\FileTrait::saveFileToDisk()
         $data['uri'] = static::getFileUrl($file);
       }
     }

@@ -65,6 +65,20 @@ have any content so this is the first revision with the same uuid.
 * Data.message: "File content created"
 * Data.uuid: {file_public_uuid}
 
+## GET /files/{file_public_uuid}
+
+Get the public file `file_public` uri.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: {file_public_uuid}
+* Data.uri: /.+/ // File uri {file_public_uri}
+
 ## GET /files/{file_public_uuid}/content
 
 Get the content of the  public file `file_public`.
@@ -87,8 +101,8 @@ Public txt
 Update the file content of the public file `file_public` resource.
 
 **Note:** the returned uuid is different because a new revision (new file) was
-created. The new file has the new content but the original URI. The old file
-has a new URI with the old content.
+created. The new file has the new content an a new uri. The old file
+is unchanged.
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -103,8 +117,7 @@ has a new URI with the old content.
 
 ## GET /files/{file_public_uuid}
 
-Check that the uri of the old file resource has been modified (a number has
-been appended).
+Check that the uri of the old file resource has not been modified.
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -114,7 +127,7 @@ been appended).
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {file_public_uuid}
-* Data.uri: /.+public[0-9_]+\.txt$/
+* Data.uri: {file_public_uri}
 
 ## GET /files/{file_public_uuid}/content
 

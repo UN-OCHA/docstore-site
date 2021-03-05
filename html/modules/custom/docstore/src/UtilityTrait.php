@@ -406,7 +406,19 @@ trait UtilityTrait {
    *   File URL.
    */
   public static function getFileUrl(File $file, $relative = FALSE) {
-    return static::createFileUrl($file->getFileUri());
+    $uri = '/files/' . $file->uuid() . '/' . $file->getFilename();
+
+    // This will generate an absolute URL. We wrap the URL generation into
+    // its own renderer to avoid "early rendering" exceptions due to cache
+    // metadata not being captured. The createFileUrl() method below has a bit
+    // more explanation.
+    //
+    // @see \Drupal\docstore\FileTrait::createFileUrl()
+    // @see https://www.drupal.org/node/2513810
+    // @see https://www.drupal.org/node/2638686
+    return \Drupal::service('renderer')->executeInRenderContext(new RenderContext(), function () use ($uri, $relative) {
+      return Url::fromUserInput($uri, ['absolute' => !$relative])->toString(FALSE);
+    });
   }
 
   /**
