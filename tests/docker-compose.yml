@@ -33,6 +33,10 @@ services:
     container_name: docstore-travis-site
     volumes:
       - "./settings:/srv/www/shared/settings:ro"
+      # Mount the folders needed for the tests.
+      - "../drop_folder:/srv/www/drop_folder:ro"
+      - "../tests:/srv/www/tests:ro"
+      - "../phpcs.xml:/srv/www/phpcs.xml:ro"
     environment:
       - TERM=xterm
       - ENVIRONMENT=dev
