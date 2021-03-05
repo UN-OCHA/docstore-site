@@ -41,7 +41,7 @@ services:
       - "docstore-site-public:/srv/www/html/sites/default/files:rw"
       - "docstore-site-private:/srv/www/html/sites/default/private:rw"
       # Mount the folders needed for the tests.
-      - "../drop_folder:/srv/www/drop_folder:ro"
+      - "../drop_folders:/srv/www/drop_folders:ro"
       - "../tests:/srv/www/tests:ro"
       - "../phpcs.xml:/srv/www/phpcs.xml:ro"
     environment:
