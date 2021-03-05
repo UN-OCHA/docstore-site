@@ -25,9 +25,7 @@ services:
       - MYSQL_USER=docstore
       - MYSQL_PASS=docstore
     networks:
-      default:
-        aliases:
-          - mysql.docstore
+      - default
 
   drupal:
     image: unocha/docstore-site:local
@@ -44,7 +42,7 @@ services:
       - DRUPAL_DB_DATABASE=docstore
       - DRUPAL_DB_USERNAME=docstore
       - DRUPAL_DB_PASSWORD=docstore
-      - DRUPAL_DB_HOST=localhost
+      - DRUPAL_DB_HOST=mysql
       - DRUPAL_DB_DRIVER=mysql
     networks:
       - default
