@@ -40,6 +40,9 @@ script:
   # Install the site with the existing config.
   - docker exec -it docstore-travis-site drush -y si --existing-config
 
+  # Ensure the file directories are writable.
+  - docker exec -it docstore-travis-site chmod -R 777 /srv/www/html/sites/default/files /srv/www/html/sites/default/private
+
   # Check coding standards.
   - docker exec -it -u appuser -w /srv/www docstore-travis-site ./vendor/bin/phpcs -p --report=full --standard=phpcs.xml ./html/modules/custom
 

@@ -3,6 +3,10 @@ version: "2.2"
 networks:
   default:
 
+volumes:
+  docstore-site-public:
+  docstore-site-private:
+
 services:
   solr:
     image: unocha/alpine-solr:8.1.1-201907-02
@@ -33,6 +37,9 @@ services:
     container_name: docstore-travis-site
     volumes:
       - "./settings:/srv/www/shared/settings:ro"
+      # Mount volumes for the private and public files.
+      - "docstore-site-public:/srv/www/html/sites/default/files:rw"
+      - "docstore-site-private:/srv/www/html/sites/default/private:rw"
       # Mount the folders needed for the tests.
       - "../drop_folder:/srv/www/drop_folder:ro"
       - "../tests:/srv/www/tests:ro"
