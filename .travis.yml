@@ -28,7 +28,7 @@ script:
   - sleep 10
 
   # Install the site with the existing config.
-  - docker exec -it docstore-travis-test drush -y si --existing-config
+  - docker exec -it docstore-travis-site drush -y si --existing-config
 
   # Check coding standards.
   - docker exec -it -u appuser -w /srv/www docstore-travis-site ./vendor/bin/phpcs -p --report=full --standard=phpcs.xml ./html/modules/custom
