@@ -1,82 +1,40 @@
 dist: trusty
 language: php
-cache:
-  - $HOME/.composer/cache
-  - solr_downloads
 
 php:
   - 7.3
 
-mysql:
-  database: drupal
-  username: root
-  encoding: utf8
-
-env:
-  global:
-     - DRUPAL_REPO='git://drupalcode.org/project/drupal.git'
-     - DRUPAL_VERSION='8.x'
-     - DRUSH_VERSION='8.*'
-     - PHPCS_VERSION='2.9.*@dev'
-     - CODER_VERSION='dev-8.x-2.x'
-     - DB=sqlite
-     - SOLR_VERSION=7.5.0
+services:
+  - docker
 
 before_script:
-  # Composer.
-  - sed -i '1i export PATH="$HOME/.composer/vendor/bin:$PATH"' $HOME/.bashrc
-  - source $HOME/.bashrc
-  - composer self-update --1
-
   # Ensure the PHP environment is ready.
   - phpenv rehash
-
-  # Code sniff
-  - cd $TRAVIS_BUILD_DIR
-  - composer install
-
-  # Solr
-  - ls solr_downloads/
-  - wget -nc --continue -v --tries=3 --directory-prefix=solr_downloads "http://archive.apache.org/dist/lucene/solr/${SOLR_VERSION}/solr-${SOLR_VERSION}.tgz"
-  - tar -xzf solr_downloads/solr-${SOLR_VERSION}.tgz
 
 script:
   # PHP linting
   - test ! -d ./html/modules/custom || find -L ./html/modules/custom -iregex '.*\.\(php\|module\|inc\|install\)$' -print0 | xargs -0 -n 1 -P 4 php -l
 
-  # PHP CS
-  - ./vendor/bin/phpcs --config-set installed_paths vendor/drupal/coder/coder_sniffer
-  - test ! -d ./html/modules/custom || ./vendor/bin/phpcs -p --report=full ./html/modules/custom
+  # Build local image.
+  - make
 
-  # Solr
-  - export SOLR_INDEX_WAIT=4
-  - $TRAVIS_BUILD_DIR/solr-${SOLR_VERSION}/bin/solr start -e techproducts || travis_terminate 1;
-  - $TRAVIS_BUILD_DIR/solr-${SOLR_VERSION}/bin/solr create -c d8 -d $TRAVIS_BUILD_DIR/tests/solr/ || travis_terminate 1;
+  # Create the site, solr and mysql containers.
+  - docker-compose -f tests/docker-compose.yml up -d
 
-  # Drupal install
-  - mysql -e "CREATE DATABASE drupal;"
-  - mysql -e "GRANT ALL ON drupal.* to drupal@127.0.0.1 IDENTIFIED BY 'drupal';"
+  # Dump some information about the created containers.
+  - docker ps -a
 
-  - cd ${TRAVIS_BUILD_DIR}
-  - mkdir -p ./html/sites/default
-  - mkdir -p ./private_files
-  - cp ./tests/default.se* ./html/sites/default/
-  - cp ./tests/default.settings.php ./html/sites/default/settings.php
-  - cp ./tests/settings.local.php ./html/sites/default/
-  - cp ./tests/config/* ./config/
+  # Wait a bit for solr and mysql to be ready.
+  - sleep 10
 
-  - cd ${TRAVIS_BUILD_DIR}/html
-  - ../vendor/bin/drush -y si --db-url=mysql://drupal:drupal@127.0.0.1/drupal minimal
-  - ../vendor/bin/drush -y cset system.site uuid $(grep uuid ${TRAVIS_BUILD_DIR}/config/system.site.yml | awk '{print $2}')
-  - ../vendor/bin/drush -y cim --source=${TRAVIS_BUILD_DIR}/config
-  - ../vendor/bin/drush rs 127.0.0.1:8080 >/dev/null 2>&1 &
-  - ../vendor/bin/drush -y en dblog
-  - ../vendor/bin/drush cr
-  - sleep 5
+  # Install the site with the existing config.
+  - docker exec -it docstore-travis-test drush -y si --existing-config
 
-  # Test
-  - cd ${TRAVIS_BUILD_DIR}/tests
-  - DRUSH="../vendor/bin/drush" HOST="http://127.0.0.1:8080" ./run.sh
+  # Check coding standards.
+  - docker exec -it -u appuser -w /srv/www docstore-travis-site ./vendor/bin/phpcs -p --report=full --standard=phpcs.xml ./html/modules/custom
+
+  # Run API tests.
+  - docker exec -it -u appuser -w /srv/www/tests -e HOST="http://docstore-travis-site" -e DRUSH="drush -v"  docstore-travis-site sh ./run.sh
 
 after_success:
   - echo "The tests completed without errors."
