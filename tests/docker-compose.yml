@@ -3,17 +3,12 @@ version: "2.2"
 networks:
   default:
 
-#volumes:
-#  docstore-travis-solr-data:
-
 services:
   solr:
     image: unocha/alpine-solr:8.1.1-201907-02
     hostname: docstore-travis-solr
     container_name: docstore-travis-solr
     volumes:
-    #  - "./solr_jetty/jetty.xml:/srv/solr/server/etc/jetty.xml:ro"
-    #  - "docstore-travis-solr-data:/srv/data"
       - "./solr:/srv/confs:ro"
     environment:
       - SOLR_CORE=search_api_solr_8.x-3.0
@@ -39,30 +34,10 @@ services:
     hostname: docstore-travis-site
     container_name: docstore-travis-site
     volumes:
-      # This mounts the site codebase repository.
-      - "../config:/srv/www/config:ro"
-      - "../drop_folder:/srv/www/drop_folder:ro"
-      - "../html/modules/custom:/srv/www/html/modules/custom:ro"
-      - "../tests:/srv/www/tests:ro"
-      - "../vendor:/srv/www/vendor:ro"
-      - "../composer.json:/srv/www/composer.json:ro"
-      - "../composer.lock:/srv/www/composer.lock:ro"
-      - "../composer.patches.json:/srv/www/composer.patches.json:ro"
-      - "../phpcs.xml:/srv/www/phpcs.xml:ro"
-      #- "../shared/files:/srv/www/html/sites/default/files:rw"
-      #- "../shared/private:/srv/www/html/sites/default/private:rw"
-      - "../docker/etc/nginx/map_block_http_methods.conf:/etc/nginx/map_block_http_methods.conf:ro"
-      - "../docker/etc/nginx/apps/drupal/drupal.conf:/etc/nginx/apps/drupal/drupal.conf:ro"
-      - "../docker/etc/nginx/apps/drupal/fastcgi_drupal.conf:/etc/nginx/apps/drupal/fastcgi_drupal.conf:ro"
       - "./settings:/srv/www/shared/settings:ro"
     environment:
       - TERM=xterm
       - ENVIRONMENT=dev
-      #- LISTEN_PORT=80
-      #- VIRTUAL_HOST=docstore-travis.test
-      #- VIRTUAL_PORT=80
-      #- VIRTUAL_NETWORK=nginx-proxy
-      #- HTTPS_METHOD=noredirect
       - NGINX_SERVERNAME=docstore-travis-site,localhost,127.0.0.1
       - NGINX_OVERRIDE_PROTOCOL=HTTP,docstore-travis-site,localhost,127.0.0.1
       - DRUSH_OPTIONS_URI=http://docstore-travis-site
