@@ -7,6 +7,9 @@ cache:
 php:
   - 7.4
 
+addons:
+  mariadb: 10.2
+
 env:
   global:
      - DRUPAL_REPO='git://drupalcode.org/project/drupal.git'
@@ -31,11 +34,6 @@ before_script:
   - cd $TRAVIS_BUILD_DIR
   - composer install
 
-  # Solr
-  - ls solr_downloads/
-  - wget -nc --continue -v --tries=3 --directory-prefix=solr_downloads "http://archive.apache.org/dist/lucene/solr/${SOLR_VERSION}/solr-${SOLR_VERSION}.tgz"
-  - tar -xzf solr_downloads/solr-${SOLR_VERSION}.tgz
-
 script:
   # PHP linting
   - test ! -d ./html/modules/custom || find -L ./html/modules/custom -iregex '.*\.\(php\|module\|inc\|install\)$' -print0 | xargs -0 -n 1 -P 4 php -l
@@ -45,9 +43,16 @@ script:
   - test ! -d ./html/modules/custom || ./vendor/bin/phpcs -p --report=full ./html/modules/custom
 
   # Solr
+  - ls solr_downloads/
+  - wget -nc --continue -v --tries=3 --directory-prefix=solr_downloads "http://archive.apache.org/dist/lucene/solr/${SOLR_VERSION}/solr-${SOLR_VERSION}.tgz"
+  - tar -xzf solr_downloads/solr-${SOLR_VERSION}.tgz
   - export SOLR_INDEX_WAIT=4
   - $TRAVIS_BUILD_DIR/solr-${SOLR_VERSION}/bin/solr start -e techproducts || travis_terminate 1;
   - $TRAVIS_BUILD_DIR/solr-${SOLR_VERSION}/bin/solr create -c d8 -d $TRAVIS_BUILD_DIR/tests/solr/ || travis_terminate 1;
+
+  # MySQL database for Drupal.
+  - mysql -e "CREATE DATABASE drupal;"
+  - mysql -e "GRANT ALL ON drupal.* to drupal@127.0.0.1 IDENTIFIED BY 'drupal';"
 
   - cd ${TRAVIS_BUILD_DIR}
   - mkdir -p ./html/sites/default
@@ -58,7 +63,7 @@ script:
   - cp ./tests/config/* ./config/
 
   - cd ${TRAVIS_BUILD_DIR}/html
-  - ../vendor/bin/drush -y si --db-url=sqlite://sites/default/.drupal.sqlite minimal
+  - ../vendor/bin/drush -y si --db-url=mysql://drupal:drupal@127.0.0.1:3306/drupal minimal
   - ../vendor/bin/drush -y cset system.site uuid $(grep uuid ${TRAVIS_BUILD_DIR}/config/system.site.yml | awk '{print $2}')
   - ../vendor/bin/drush -y cim --source=${TRAVIS_BUILD_DIR}/config
   - ../vendor/bin/drush rs 127.0.0.1:8080 >/dev/null 2>&1 &
