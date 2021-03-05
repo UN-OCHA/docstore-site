@@ -7,11 +7,6 @@ cache:
 php:
   - 7.4
 
-mysql:
-  database: drupal
-  username: root
-  encoding: utf8
-
 env:
   global:
      - DRUPAL_REPO='git://drupalcode.org/project/drupal.git'
@@ -21,6 +16,7 @@ env:
      - CODER_VERSION='dev-8.x-2.x'
      - DB=sqlite
      - SOLR_VERSION=8.8.0
+     - SOLR_ULIMIT_CHECKS=false
 
 before_script:
   # Composer.
@@ -53,10 +49,6 @@ script:
   - $TRAVIS_BUILD_DIR/solr-${SOLR_VERSION}/bin/solr start -e techproducts || travis_terminate 1;
   - $TRAVIS_BUILD_DIR/solr-${SOLR_VERSION}/bin/solr create -c d8 -d $TRAVIS_BUILD_DIR/tests/solr/ || travis_terminate 1;
 
-  # Drupal install
-  - mysql -e "CREATE DATABASE drupal;"
-  - mysql -e "GRANT ALL ON drupal.* to drupal@127.0.0.1 IDENTIFIED BY 'drupal';"
-
   - cd ${TRAVIS_BUILD_DIR}
   - mkdir -p ./html/sites/default
   - mkdir -p ./private_files
@@ -66,7 +58,7 @@ script:
   - cp ./tests/config/* ./config/
 
   - cd ${TRAVIS_BUILD_DIR}/html
-  - ../vendor/bin/drush -y si --db-url=mysql://drupal:drupal@127.0.0.1/drupal minimal
+  - ../vendor/bin/drush -y si --db-url=sqlite://sites/default/.drupal.sqlite minimal
   - ../vendor/bin/drush -y cset system.site uuid $(grep uuid ${TRAVIS_BUILD_DIR}/config/system.site.yml | awk '{print $2}')
   - ../vendor/bin/drush -y cim --source=${TRAVIS_BUILD_DIR}/config
   - ../vendor/bin/drush rs 127.0.0.1:8080 >/dev/null 2>&1 &
