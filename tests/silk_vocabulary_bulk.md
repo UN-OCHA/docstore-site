@@ -125,7 +125,7 @@ Get terms.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].label: "Term1"
+* Data.results[0].label: "Term1"
 
 ## POST /vocabularies/{machine_name}/terms/bulk
 

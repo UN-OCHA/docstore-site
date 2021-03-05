@@ -424,21 +424,21 @@ Get documents as anonymous.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc_public_uuid_3}
-* Data[0].files[0].media_uuid: {file_public_uuid_4}
-* Data[0].files[0].uri: /.+sites\/default\/.+/
-* Data[0].files[1].media_uuid: {file_public_uuid_5}
-* Data[0].files[1].uri: /.+sites\/default\/.+/
-* Data[0].files[2].media_uuid: {file_public_uuid_6}
-* Data[0].files[2].uri: /.+sites\/default\/.+/
-* Data[1].uuid: {doc_public_uuid_2}
-* Data[1].files[0].media_uuid: {file_private_uuid_2}
-* Data[1].files[0].uri: null
-* Data[2].uuid: {doc_public_uuid_1}
-* Data[2].files[0].media_uuid: {file_private_uuid_1}
-* Data[2].files[0].uri: null
-* Data[2].files[1].media_uuid: {file_public_uuid_1}
-* Data[2].files[1].uri: /.+sites\/default\/.+/
+* Data.results[0].uuid: {doc_public_uuid_3}
+* Data.results[0].files[0].media_uuid: {file_public_uuid_4}
+* Data.results[0].files[0].uri: /.+sites\/default\/.+/
+* Data.results[0].files[1].media_uuid: {file_public_uuid_5}
+* Data.results[0].files[1].uri: /.+sites\/default\/.+/
+* Data.results[0].files[2].media_uuid: {file_public_uuid_6}
+* Data.results[0].files[2].uri: /.+sites\/default\/.+/
+* Data.results[1].uuid: {doc_public_uuid_2}
+* Data.results[1].files[0].media_uuid: {file_private_uuid_2}
+* Data.results[1].files[0].uri: null
+* Data.results[2].uuid: {doc_public_uuid_1}
+* Data.results[2].files[0].media_uuid: {file_private_uuid_1}
+* Data.results[2].files[0].uri: null
+* Data.results[2].files[1].media_uuid: {file_public_uuid_1}
+* Data.results[2].files[1].uri: /.+sites\/default\/.+/
 
 ## GET /documents/{doc_type}
 
@@ -452,21 +452,21 @@ Get documents as another provider.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc_public_uuid_3}
-* Data[0].files[0].media_uuid: {file_public_uuid_4}
-* Data[0].files[0].uri: /.+sites\/default\/.+/
-* Data[0].files[1].media_uuid: {file_public_uuid_5}
-* Data[0].files[1].uri: /.+sites\/default\/.+/
-* Data[0].files[2].media_uuid: {file_public_uuid_6}
-* Data[0].files[2].uri: /.+sites\/default\/.+/
-* Data[1].uuid: {doc_public_uuid_2}
-* Data[1].files[0].media_uuid: {file_private_uuid_2}
-* Data[1].files[0].uri: null
-* Data[2].uuid: {doc_public_uuid_1}
-* Data[2].files[0].media_uuid: {file_private_uuid_1}
-* Data[2].files[0].uri: null
-* Data[2].files[1].media_uuid: {file_public_uuid_1}
-* Data[2].files[1].uri: /.+sites\/default\/.+/
+* Data.results[0].uuid: {doc_public_uuid_3}
+* Data.results[0].files[0].media_uuid: {file_public_uuid_4}
+* Data.results[0].files[0].uri: /.+sites\/default\/.+/
+* Data.results[0].files[1].media_uuid: {file_public_uuid_5}
+* Data.results[0].files[1].uri: /.+sites\/default\/.+/
+* Data.results[0].files[2].media_uuid: {file_public_uuid_6}
+* Data.results[0].files[2].uri: /.+sites\/default\/.+/
+* Data.results[1].uuid: {doc_public_uuid_2}
+* Data.results[1].files[0].media_uuid: {file_private_uuid_2}
+* Data.results[1].files[0].uri: null
+* Data.results[2].uuid: {doc_public_uuid_1}
+* Data.results[2].files[0].media_uuid: {file_private_uuid_1}
+* Data.results[2].files[0].uri: null
+* Data.results[2].files[1].media_uuid: {file_public_uuid_1}
+* Data.results[2].files[1].uri: /.+sites\/default\/.+/
 
 ## GET /documents/{doc_type}
 
@@ -480,29 +480,29 @@ Get documents as owner.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc_private_uuid_2}
-* Data[0].files[0].media_uuid: {file_public_uuid_3}
-* Data[0].files[0].uri: /.+sites\/default\/.+/
-* Data[1].uuid: {doc_private_uuid_1}
-* Data[1].files[0].media_uuid: {file_public_uuid_2}
-* Data[1].files[0].uri: /.+sites\/default\/.+/
-* Data[1].files[1].media_uuid: {file_private_uuid_3}
-* Data[1].files[1].uri: /.+\/media\/.+/
-* Data[2].uuid: {doc_public_uuid_3}
-* Data[2].files[0].media_uuid: {file_public_uuid_4}
-* Data[2].files[0].uri: /.+sites\/default\/.+/
-* Data[2].files[1].media_uuid: {file_public_uuid_5}
-* Data[2].files[1].uri: /.+sites\/default\/.+/
-* Data[2].files[2].media_uuid: {file_public_uuid_6}
-* Data[2].files[2].uri: /.+sites\/default\/.+/
-* Data[3].uuid: {doc_public_uuid_2}
-* Data[3].files[0].media_uuid: {file_private_uuid_2}
-* Data[3].files[0].uri: /.+\/media\/.+/
-* Data[4].uuid: {doc_public_uuid_1}
-* Data[4].files[0].media_uuid: {file_private_uuid_1}
-* Data[4].files[0].uri: /.+\/media\/.+/
-* Data[4].files[1].media_uuid: {file_public_uuid_1}
-* Data[4].files[1].uri: /.+sites\/default\/.+/
+* Data.results[0].uuid: {doc_private_uuid_2}
+* Data.results[0].files[0].media_uuid: {file_public_uuid_3}
+* Data.results[0].files[0].uri: /.+sites\/default\/.+/
+* Data.results[1].uuid: {doc_private_uuid_1}
+* Data.results[1].files[0].media_uuid: {file_public_uuid_2}
+* Data.results[1].files[0].uri: /.+sites\/default\/.+/
+* Data.results[1].files[1].media_uuid: {file_private_uuid_3}
+* Data.results[1].files[1].uri: /.+\/media\/.+/
+* Data.results[2].uuid: {doc_public_uuid_3}
+* Data.results[2].files[0].media_uuid: {file_public_uuid_4}
+* Data.results[2].files[0].uri: /.+sites\/default\/.+/
+* Data.results[2].files[1].media_uuid: {file_public_uuid_5}
+* Data.results[2].files[1].uri: /.+sites\/default\/.+/
+* Data.results[2].files[2].media_uuid: {file_public_uuid_6}
+* Data.results[2].files[2].uri: /.+sites\/default\/.+/
+* Data.results[3].uuid: {doc_public_uuid_2}
+* Data.results[3].files[0].media_uuid: {file_private_uuid_2}
+* Data.results[3].files[0].uri: /.+\/media\/.+/
+* Data.results[4].uuid: {doc_public_uuid_1}
+* Data.results[4].files[0].media_uuid: {file_private_uuid_1}
+* Data.results[4].files[0].uri: /.+\/media\/.+/
+* Data.results[4].files[1].media_uuid: {file_public_uuid_1}
+* Data.results[4].files[1].uri: /.+sites\/default\/.+/
 
 ## GET /documents/{doc_type}/files
 
@@ -515,18 +515,18 @@ Get document files as anonymous.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].media_uuid: {file_public_uuid_4}
-* Data[0].uri: /.+sites\/default\/.+/
-* Data[1].media_uuid: {file_public_uuid_5}
-* Data[1].uri: /.+sites\/default\/.+/
-* Data[2].media_uuid: {file_public_uuid_6}
-* Data[2].uri: /.+sites\/default\/.+/
-* Data[3].media_uuid: {file_private_uuid_2}
-* Data[3].uri: null
-* Data[4].media_uuid: {file_private_uuid_1}
-* Data[4].uri: null
-* Data[5].media_uuid: {file_public_uuid_1}
-* Data[5].uri: /.+sites\/default\/.+/
+* Data.results[0].media_uuid: {file_public_uuid_4}
+* Data.results[0].uri: /.+sites\/default\/.+/
+* Data.results[1].media_uuid: {file_public_uuid_5}
+* Data.results[1].uri: /.+sites\/default\/.+/
+* Data.results[2].media_uuid: {file_public_uuid_6}
+* Data.results[2].uri: /.+sites\/default\/.+/
+* Data.results[3].media_uuid: {file_private_uuid_2}
+* Data.results[3].uri: null
+* Data.results[4].media_uuid: {file_private_uuid_1}
+* Data.results[4].uri: null
+* Data.results[5].media_uuid: {file_public_uuid_1}
+* Data.results[5].uri: /.+sites\/default\/.+/
 
 ## GET /documents/{doc_type}/files
 
@@ -540,18 +540,18 @@ Get document files as different provider.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].media_uuid: {file_public_uuid_4}
-* Data[0].uri: /.+sites\/default\/.+/
-* Data[1].media_uuid: {file_public_uuid_5}
-* Data[1].uri: /.+sites\/default\/.+/
-* Data[2].media_uuid: {file_public_uuid_6}
-* Data[2].uri: /.+sites\/default\/.+/
-* Data[3].media_uuid: {file_private_uuid_2}
-* Data[3].uri: null
-* Data[4].media_uuid: {file_private_uuid_1}
-* Data[4].uri: null
-* Data[5].media_uuid: {file_public_uuid_1}
-* Data[5].uri: /.+sites\/default\/.+/
+* Data.results[0].media_uuid: {file_public_uuid_4}
+* Data.results[0].uri: /.+sites\/default\/.+/
+* Data.results[1].media_uuid: {file_public_uuid_5}
+* Data.results[1].uri: /.+sites\/default\/.+/
+* Data.results[2].media_uuid: {file_public_uuid_6}
+* Data.results[2].uri: /.+sites\/default\/.+/
+* Data.results[3].media_uuid: {file_private_uuid_2}
+* Data.results[3].uri: null
+* Data.results[4].media_uuid: {file_private_uuid_1}
+* Data.results[4].uri: null
+* Data.results[5].media_uuid: {file_public_uuid_1}
+* Data.results[5].uri: /.+sites\/default\/.+/
 
 ## GET /documents/{doc_type}/files
 
@@ -565,24 +565,24 @@ Get document files as owner.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].media_uuid: {file_public_uuid_3}
-* Data[0].uri: /.+sites\/default\/.+/
-* Data[1].media_uuid: {file_public_uuid_2}
-* Data[1].uri: /.+sites\/default\/.+/
-* Data[2].media_uuid: {file_private_uuid_3}
-* Data[2].uri: /.+\/media\/.+/
-* Data[3].media_uuid: {file_public_uuid_4}
-* Data[3].uri: /.+sites\/default\/.+/
-* Data[4].media_uuid: {file_public_uuid_5}
-* Data[4].uri: /.+sites\/default\/.+/
-* Data[5].media_uuid: {file_public_uuid_6}
-* Data[5].uri: /.+sites\/default\/.+/
-* Data[6].media_uuid: {file_private_uuid_2}
-* Data[6].uri: /.+\/media\/.+/
-* Data[7].media_uuid: {file_private_uuid_1}
-* Data[7].uri: /.+\/media\/.+/
-* Data[8].media_uuid: {file_public_uuid_1}
-* Data[8].uri: /.+sites\/default\/.+/
+* Data.results[0].media_uuid: {file_public_uuid_3}
+* Data.results[0].uri: /.+sites\/default\/.+/
+* Data.results[1].media_uuid: {file_public_uuid_2}
+* Data.results[1].uri: /.+sites\/default\/.+/
+* Data.results[2].media_uuid: {file_private_uuid_3}
+* Data.results[2].uri: /.+\/media\/.+/
+* Data.results[3].media_uuid: {file_public_uuid_4}
+* Data.results[3].uri: /.+sites\/default\/.+/
+* Data.results[4].media_uuid: {file_public_uuid_5}
+* Data.results[4].uri: /.+sites\/default\/.+/
+* Data.results[5].media_uuid: {file_public_uuid_6}
+* Data.results[5].uri: /.+sites\/default\/.+/
+* Data.results[6].media_uuid: {file_private_uuid_2}
+* Data.results[6].uri: /.+\/media\/.+/
+* Data.results[7].media_uuid: {file_private_uuid_1}
+* Data.results[7].uri: /.+\/media\/.+/
+* Data.results[8].media_uuid: {file_public_uuid_1}
+* Data.results[8].uri: /.+sites\/default\/.+/
 
 ## GET /documents/{doc_type}/{doc_public_uuid_1}
 
@@ -699,10 +699,10 @@ Get a public document's files as anonymous.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].media_uuid: {file_private_uuid_1}
-* Data[0].uri: null
-* Data[1].media_uuid: {file_public_uuid_1}
-* Data[1].uri: /.+sites\/default\/.+/
+* Data.results[0].media_uuid: {file_private_uuid_1}
+* Data.results[0].uri: null
+* Data.results[1].media_uuid: {file_public_uuid_1}
+* Data.results[1].uri: /.+sites\/default\/.+/
 
 ## GET /documents/{doc_type}/{doc_public_uuid_1}/files
 
@@ -716,10 +716,10 @@ Get a public document's files as a different provider.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].media_uuid: {file_private_uuid_1}
-* Data[0].uri: null
-* Data[1].media_uuid: {file_public_uuid_1}
-* Data[1].uri: /.+sites\/default\/.+/
+* Data.results[0].media_uuid: {file_private_uuid_1}
+* Data.results[0].uri: null
+* Data.results[1].media_uuid: {file_public_uuid_1}
+* Data.results[1].uri: /.+sites\/default\/.+/
 
 ## GET /documents/{doc_type}/{doc_public_uuid_1}/files
 
@@ -733,7 +733,7 @@ Get a public document's files as owner.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].media_uuid: {file_private_uuid_1}
-* Data[0].uri: /.+\/media\/.+/
-* Data[1].media_uuid: {file_public_uuid_1}
-* Data[1].uri: /.+sites\/default\/.+/
+* Data.results[0].media_uuid: {file_private_uuid_1}
+* Data.results[0].uri: /.+\/media\/.+/
+* Data.results[1].media_uuid: {file_public_uuid_1}
+* Data.results[1].uri: /.+sites\/default\/.+/

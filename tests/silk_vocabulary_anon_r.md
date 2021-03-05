@@ -137,7 +137,7 @@ Get a vocabulary.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].label: "Antwerp"
+* Data.results[0].label: "Antwerp"
 
 ## GET /vocabularies/{machine_name}/fields/{field_iso3}
 

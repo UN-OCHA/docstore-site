@@ -212,7 +212,12 @@ trait SearchableResourceTrait {
           }
         }
       }
-      $data = array_values($files);
+
+      $data = [
+        '_count' => count($files),
+        '_number_of_documents' => $results->getResultCount(),
+        'results' => array_values($files),
+      ];
     }
     // Throw a 404 Not Found if no resource was found for the given id.
     // Cache it to avoid doing another query until something changes for
@@ -232,6 +237,23 @@ trait SearchableResourceTrait {
       if ($with_revisions) {
         $data['revisions'] = $this->getResourceEntityRevisionList($entity_type_id, $id);
       }
+    }
+    else {
+      // Multiple results.
+      $output = [
+        '_count' => $results->getResultCount(),
+      ];
+
+      // Add extra metadata.
+      if ($extra = $results->getExtraData('search_api_solr_response')) {
+        $output['_start'] = $extra['response']['start'];
+        $output['_numFoundExact'] = $extra['response']['numFoundExact'];
+      }
+
+      // Append data.
+      $output['results'] = $data;
+
+      $data = $output;
     }
 
     return $this->createCacheableJsonResponse($cache, $data, 200);

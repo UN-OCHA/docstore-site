@@ -73,7 +73,7 @@ Get document.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc1}
+* Data.results[0].uuid: {doc1}
 
 ## GET /documents/test-revisions/{doc1}
 

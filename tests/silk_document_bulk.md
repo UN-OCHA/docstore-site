@@ -105,7 +105,7 @@ Test filters.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: {doc1}
+* Data.results[0].uuid: {doc1}
 
 ## POST /documents/test-document-bulk/bulk
 

@@ -25,9 +25,9 @@ Example output.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Doc uuid {docuuid}
-* Data[0].title: /./
-* Data[0].created: /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/
+* Data.results[0].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Doc uuid {docuuid}
+* Data.results[0].title: /./
+* Data.results[0].created: /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/
 
 ## `GET /documents/{docuuid}`
 
