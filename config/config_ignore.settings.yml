@@ -8,7 +8,7 @@ ignored_config_entities:
   - ~field.storage.node.files
   - ~field.storage.node.private
   - 'field.field.node.*'
-  - search_api.index.documents
+  - 'search_api.index.*'
   - 'core.entity_view_display.taxonomy_term.*'
   - 'core.entity_form_display.taxonomy_term.*'
   - 'core.entity_form_display.node.*'
