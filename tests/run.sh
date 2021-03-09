@@ -60,7 +60,7 @@ $DRUSH docstore:test-reset
 $DRUSH docstore:test-create-node-type document documents
 
 # Prepare for file related tests.
-export FILE_PRIVATE=$(base64 ./files/private.pdf)
+export FILE_PRIVATE=$(base64 ./files/private.pdf | tr -d '\n')
 
 # Run file tests.
 $SILK -test.v -silk.url $API silk_files.md || exit 1;
