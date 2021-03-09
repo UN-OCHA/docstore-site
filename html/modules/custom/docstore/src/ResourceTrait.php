@@ -329,7 +329,7 @@ trait ResourceTrait {
             $values = $this->prepareEntityFilesField($field_item_list);
           }
           else {
-            $values = $this->prepareEntityEntityReferenceField($field_item_list);
+            $values = $this->prepareEntityEntityReferenceField($field_item_list, $provider);
           }
           break;
 
@@ -514,6 +514,9 @@ trait ResourceTrait {
    *
    * @param \Drupal\Core\Field\EntityReferenceFieldItemList $list
    *   Field item list.
+   * @param \Drupal\user\UserInterface|null $provider
+   *   Provider. If defined, the data will only contains fields accessible
+   *   to the provider.
    *
    * @return array
    *   List of referenced entities with their uuid and label.
@@ -522,7 +525,7 @@ trait ResourceTrait {
    * the provider_uuid so we can exclude them if necessary before sending the
    * response data.
    */
-  public function prepareEntityEntityReferenceField(EntityReferenceFieldItemList $list) {
+  public function prepareEntityEntityReferenceField(EntityReferenceFieldItemList $list, ?UserInterface $provider = NULL) {
     $data = [];
 
     foreach ($list->referencedEntities() as $entity) {
@@ -555,6 +558,12 @@ trait ResourceTrait {
       // Add the referenced entity label if defined.
       if (!empty($label_key)) {
         $item[$label_key] = $entity->label();
+      }
+
+      // Add fields of referenced item.
+      if ($entity->getEntityTypeId() === 'node') {
+        $extra_data = $this->prepareEntityResourceData($entity, $provider);
+        $item = array_merge($item, $extra_data);
       }
 
       $data[] = $item;
