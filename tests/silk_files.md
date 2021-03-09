@@ -65,6 +65,21 @@ have any content so this is the first revision with the same uuid.
 * Data.message: "File content created"
 * Data.uuid: {file_public_uuid}
 
+## GET /files/{file_public_uuid}
+
+Get the public file `file_public` uri.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: {file_public_uuid}
+* Data.uri: /.+/ // File uri {file_public_uri}
+* Data.revision_id: /.+/ // Revision id {file_public_revision_1}
+
 ## GET /files/{file_public_uuid}/content
 
 Get the content of the  public file `file_public`.
@@ -82,13 +97,11 @@ Public txt
 * Status: `200`
 * Content-Type: "text/plain;charset=UTF-8"
 
-## PUT /files/{file_public_uuid}/content
+## POST /files/{file_public_uuid}/content
 
 Update the file content of the public file `file_public` resource.
 
-**Note:** the returned uuid is different because a new revision (new file) was
-created. The new file has the new content but the original URI. The old file
-has a new URI with the old content.
+**Note:** this creates a new revision with the new content.
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -99,12 +112,12 @@ has a new URI with the old content.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.message: "File content created"
-* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // UUID {file_public_uuid2}
+* Data.uuid: {file_public_uuid}
+* Data.revision_id: /.+/ // New revision id {file_public_revision_2}
 
 ## GET /files/{file_public_uuid}
 
-Check that the uri of the old file resource has been modified (a number has
-been appended).
+Check that the uri of the resource has not been modified.
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -114,14 +127,32 @@ been appended).
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {file_public_uuid}
-* Data.uri: /.+public[0-9_]+\.txt$/
+* Data.uri: {file_public_uri}
+* Data.revision_id: {file_public_revision_2}
 
 ## GET /files/{file_public_uuid}/content
 
-Check that the content of the old file is still the same.
+Check that the content of the resource is the latest one.
 
 * Accept: "text/plain"
 * API-KEY: abcd
+
+===
+
+```txt
+Public txt - Updated
+
+```
+
+* Status: `200`
+* Content-Type: "text/plain;charset=UTF-8"
+
+## GET /files/{file_public_uuid}/revisions/{file_public_revision_1}/content
+
+Check that the first revision still has the old content.
+
+* Accept: "text/plain"
+* API-KEY: dcba
 
 ===
 
@@ -133,12 +164,12 @@ Public txt
 * Status: `200`
 * Content-Type: "text/plain;charset=UTF-8"
 
-## GET /files/{file_public_uuid2}/content
+## GET /files/{file_public_uuid}/revisions/{file_public_revision_2}/content
 
-Check that the new file has the new content.
+Check that the new revision has the new content.
 
 * Accept: "text/plain"
-* API-KEY: abcd
+* API-KEY: dcba
 
 ===
 
@@ -164,7 +195,6 @@ Get files.
 * Content-Type: "application/json"
 * Data[0].uuid: {file_private_uuid}
 * Data[1].uuid: {file_public_uuid}
-* Data[2].uuid: {file_public_uuid2}
 
 ## GET /files/{file_private_uuid}
 
@@ -231,26 +261,9 @@ Get public file `file_public` as anonymous.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /media
+## GET /files
 
-Get media.
-
-* Content-Type: "application/json"
-* Accept: "application/json"
-* API-KEY: abcd
-
-===
-
-* Status: `200`
-* Content-Type: "application/json"
-* Data[0].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Private {media_private_uuid}
-* Data[1].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Public {media_public_uuid}
-* Data[0].file_uuid: {file_private_uuid}
-* Data[1].file_uuid: {file_public_uuid2}
-
-## GET /media/{media_private_uuid}
-
-Get private media of `file_private` as owner.
+Get file.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -260,10 +273,25 @@ Get private media of `file_private` as owner.
 
 * Status: `200`
 * Content-Type: "application/json"
+* Data[0].uuid: {file_private_uuid}
+* Data[1].uuid: {file_public_uuid}
 
-## GET /media/{media_private_uuid}
+## GET /files/{file_private_uuid}
 
-Get private media of `file_private` as anonymous.
+Get private file of `file_private` as owner.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /files/{file_private_uuid}
+
+Get private file of `file_private` as anonymous.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -274,9 +302,9 @@ Get private media of `file_private` as anonymous.
 * Content-Type: "application/json"
 * Data.message: "File is not owned by you"
 
-## GET /media/{media_private_uuid}
+## GET /files/{file_private_uuid}
 
-Get private media of `file_private` as a different provider.
+Get private file of `file_private` as a different provider.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -288,9 +316,9 @@ Get private media of `file_private` as a different provider.
 * Content-Type: "application/json"
 * Data.message: "File is not owned by you"
 
-## GET /media/{media_public_uuid}
+## GET /files/{file_public_uuid}
 
-Get public media of `file_public` as owner.
+Get public file of `file_public` as owner.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -303,22 +331,9 @@ Get public media of `file_public` as owner.
 * Data.revisions[0].id: /^[0-9]*$/ // Public {current_revision_id}
 * Data.revisions[1].id: /^[0-9]*$/ // Public {previous_revision_id}
 
-## GET /media/{media_public_uuid}/revisions/{current_revision_id}
+## GET /files/{file_public_uuid}/revisions/{current_revision_id}
 
-Get current revision of public media of `file_public` as owner.
-
-* Content-Type: "application/json"
-* Accept: "application/json"
-* API-KEY: abcd
-
-===
-
-* Status: `200`
-* Content-Type: "application/json"
-
-## GET /media/{media_public_uuid}/revisions/{previous_revision_id}
-
-Get previous revision of public media of `file_public` as owner.
+Get current revision of public file of `file_public` as owner.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -329,9 +344,22 @@ Get previous revision of public media of `file_public` as owner.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /media/{media_public_uuid}
+## GET /files/{file_public_uuid}/revisions/{previous_revision_id}
 
-Get public media of `file_public` as anonymous.
+Get previous revision of public file of `file_public` as owner.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
+## GET /files/{file_public_uuid}
+
+Get public file of `file_public` as anonymous.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -341,9 +369,9 @@ Get public media of `file_public` as anonymous.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /media/{media_private_uuid}/content
+## GET /files/{file_private_uuid}/content
 
-Get private media content of `file_private` as owner.
+Get private file content of `file_private` as owner.
 
 * Content-Type: "application/json"
 * Accept: "text/plain"
@@ -354,9 +382,9 @@ Get private media content of `file_private` as owner.
 * Status: `200`
 * Content-Type: "application/pdf"
 
-## GET /media/{media_private_uuid}/content
+## GET /files/{file_private_uuid}/content
 
-Get private media content of `file_private` as anonymous.
+Get private file content of `file_private` as anonymous.
 
 * Content-Type: "application/json"
 
@@ -366,9 +394,9 @@ Get private media content of `file_private` as anonymous.
 * Content-Type: "application/json"
 * Data.message: "File is not owned by you"
 
-## GET /media/{media_private_uuid}/content
+## GET /files/{file_private_uuid}/content
 
-Get private media content of `file_private` as a different provider.
+Get private file content of `file_private` as a different provider.
 
 * Content-Type: "application/json"
 * API-KEY: dcba
@@ -379,9 +407,9 @@ Get private media content of `file_private` as a different provider.
 * Content-Type: "application/json"
 * Data.message: "File is not owned by you"
 
-## GET /media/{media_public_uuid}/content
+## GET /files/{file_public_uuid}/content
 
-Get public media content of `file_public` as owner.
+Get public file content of `file_public` as owner.
 
 * Content-Type: "application/json"
 * API-KEY: abcd
@@ -396,9 +424,9 @@ Public txt - Updated
 * Status: `200`
 * Content-Type: "text/plain;charset=UTF-8"
 
-## GET /media/{media_public_uuid}/content
+## GET /files/{file_public_uuid}/content
 
-Get public media content of `file_public` as anonymous.
+Get public file content of `file_public` as anonymous.
 
 * Content-Type: "application/json"
 
@@ -412,9 +440,9 @@ Public txt - Updated
 * Status: `200`
 * Content-Type: "text/plain;charset=UTF-8"
 
-## GET /media/{media_public_uuid}/revisions/{current_revision_id}/content
+## GET /files/{file_public_uuid}/revisions/{current_revision_id}/content
 
-Get media current revision's content of `file_public` as owner.
+Get file current revision's content of `file_public` as owner.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -430,9 +458,9 @@ Public txt - Updated
 * Status: `200`
 * Content-Type: "text/plain;charset=UTF-8"
 
-## GET /media/{media_public_uuid}/revisions/{previous_revision_id}/content
+## GET /files/{file_public_uuid}/revisions/{previous_revision_id}/content
 
-Get media previous revision's content of `file_public` as owner.
+Get file previous revision's content of `file_public` as owner.
 
 * Content-Type: "application/json"
 * Accept: "application/json"

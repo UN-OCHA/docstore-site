@@ -586,15 +586,7 @@ trait ResourceTrait {
 
       // Get the media entity data, passing the media owner as provider in
       // order to generate the private uri.
-      $item = $this->prepareMediaEntityData($media, $file, $media->getOwner());
-
-      // Update the media uuid field name.
-      // @todo review this after consolidation/simplification of the media/file
-      // endpoints.
-      $item['media_uuid'] = $item['uuid'];
-      unset($item['uuid']);
-
-      $data[] = $item;
+      $data[] = $this->prepareMediaEntityData($media, $file, $media->getOwner());
     }
 
     return $data;
@@ -614,106 +606,37 @@ trait ResourceTrait {
    *
    * @return array
    *   Dara for the JSON response.
-   *
-   * @todo consolidate with prepareFileEntityData().
-   * @todo add the media's provider uuid?
    */
   public function prepareMediaEntityData(Media $media, File $file, UserInterface $provider, ?array $revisions = NULL) {
     $data = [
-      // @todo consolidate that with the prepareFileEntityData()'s media_uuid so
-      // it's consistent between the endpoints.
       'uuid' => $media->uuid(),
+      // @todo For backward compatibility, remove.
+      'media_uuid' => $media->uuid(),
+      'revision_id' => $media->getRevisionId(),
       'filename' => $media->getName(),
       'created' => $this->formatIso8601Date($media->getCreatedTime()),
       'changed' => $this->formatIso8601Date($media->getChangedTime()),
       'mimetype' => $file->getMimeType(),
-      'file_uuid' => $file->uuid(),
       'size' => $file->getSize(),
-      'private' => $this->fileIsPrivate($file),
+      'private' => $this->mediaIsPrivate($media),
     ];
 
-    if (!empty($data['private'])) {
-      // @todo for consistency with all the other resources (nodes, terms)
-      // maybe we should always add the provider uuid regardless of the private
-      // state. At least when this method is called from the MediaController.
-      $data['provider_uuid'] = $media->getOwner()->uuid();
-      // For private files, we only add the uri if the provider is the owner
-      // and we generate a direct URL rather than using the drupal internal
-      // url.
-      // Note: no strict equality for ids as they can be strings or ints.
-      if ($media->getOwnerId() == $provider->id()) {
-        $data['uri'] = $this->getMediaDirectUrl($media, $provider);
-      }
+    // Add the uri if the file is public or the provider is the owner.
+    // @todo there is probably no harm in always showing the file uri as it
+    // can easily be created from the data above: files/uuid/filename.
+    if (!$file->isTemporary()) {
+      $data['uri'] = static::getMediaUrl($media);
     }
-    else {
-      // @todo wouldn't be better to generate a URL like the direct url for
-      // private files rather than returning the drupal url. This would also
-      // remove the URL swapping done when updating a file's content.
-      // @see \Drupal\docstore\FileTrait::saveFileToDisk()
-      $data['uri'] = static::getFileUrl($file);
+
+    // If the file is private add the owner uuid information so that we can
+    // filter out the file if the provider is not the owner.
+    if (!empty($data['private'])) {
+      $data['provider_uuid'] = $media->getOwner()->uuid();
     }
 
     // Add the media revisions if any.
     if (isset($revisions)) {
       $data['revisions'] = $revisions;
-    }
-
-    return $data;
-  }
-
-  /**
-   * Build the file data for the json response.
-   *
-   * @param \Drupal\file\Entity\File $file
-   *   File.
-   * @param \Drupal\media\Entity\Media|null $media
-   *   Media. It may be null if ther file is temporary (no content yet).
-   * @param \Drupal\user\UserInterface $provider
-   *   Provider.
-   *
-   * @return array
-   *   Dara for the JSON response.
-   *
-   * @todo consolidate with prepareMediaEntityData().
-   * @todo add a flag to indicate the file is temporary?
-   * @todo add the file's provider uuid?
-   */
-  public function prepareFileEntityData(File $file, ?Media $media, UserInterface $provider) {
-    $data = [
-      // @todo consolidate that with the prepareMediaEntityData()'s file_uuid so
-      // it's consistent between the endpoints.
-      'uuid' => $file->uuid(),
-      'filename' => $file->getFilename(),
-      'created' => $this->formatIso8601Date($file->getCreatedTime()),
-      'changed' => $this->formatIso8601Date($file->getChangedTime()),
-      'mimetype' => $file->getMimeType(),
-      'size' => $file->getSize(),
-      'private' => $this->fileIsPrivate($file),
-    ];
-
-    if (!empty($media)) {
-      $data['media_uuid'] = $media->uuid();
-    }
-
-    // Temporary files don't yet have a real uri as it's generated when
-    // saving their content to disk.
-    if (!$file->isTemporary()) {
-      if (!empty($data['private'])) {
-        // For private files, we only add the uri if the provider is the owner
-        // and we generate a direct URL rather than using the drupal internal
-        // url.
-        // Note: no strict equality for ids as they can be strings or ints.
-        if ($file->getOwnerId() == $provider->id()) {
-          $data['uri'] = $this->getFileDirectUrl($file, $provider);
-        }
-      }
-      else {
-        // @todo wouldn't be better to generate a URL like the direct url for
-        // private files rather than returning the drupal url. This would also
-        // remove the URL swapping done when updating a file's content.
-        // @see \Drupal\docstore\FileTrait::saveFileToDisk()
-        $data['uri'] = static::getFileUrl($file);
-      }
     }
 
     return $data;

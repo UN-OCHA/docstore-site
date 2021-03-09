@@ -18,6 +18,7 @@ use Drupal\Core\State\State;
 use Drupal\docstore\ManageFields;
 use Drupal\docstore\FileTrait;
 use Drupal\docstore\ResourceTrait;
+use Drupal\docstore\RevisionableResourceTrait;
 use Drupal\file\FileUsage\FileUsageInterface;
 use Drupal\search_api_solr\SolrBackendInterface;
 use Drupal\user\Entity\User;
@@ -39,6 +40,7 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
   // Docstore traits.
   use FileTrait;
   use ResourceTrait;
+  use RevisionableResourceTrait;
 
   /**
    * The current user service.
@@ -358,7 +360,7 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
   public function createTestFile($provider_uuid, $filename, $content, $private = FALSE) {
     $provider = $this->loadProvider($provider_uuid);
     $file = $this->createFileEntity($filename, 'undefined', !empty($private), $provider);
-    $media = $this->saveFileToDisk($file, $content, $provider, FALSE);
+    $media = $this->saveFileToDisk($file, $content, $provider);
     $this->output()->write($media->uuid());
     return TRUE;
   }

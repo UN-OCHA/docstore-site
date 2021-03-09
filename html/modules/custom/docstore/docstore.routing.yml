@@ -594,73 +594,11 @@ docstore_delete_term:
     docstore_crud: 'D'
     docstore_access_level: 'B'
 
-# Media
-docstore_get_all_media:
-  path: '/api/v1/media'
-  defaults:
-    _controller: 'docstore.media_controller:getAllMedia'
-    _title: 'Get all media'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'B'
-docstore_get_media:
-  path: '/api/v1/media/{id}'
-  defaults:
-    _controller: 'docstore.media_controller:getMedia'
-    _title: 'Get media'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'B'
-docstore_get_media_revisions:
-  path: '/api/v1/media/{id}/revisions/{vid}'
-  defaults:
-    _controller: 'docstore.media_controller:getMediaRevision'
-    _title: 'Get media revision'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'B'
-docstore_get_media_content:
-  path: '/api/v1/media/{id}/content'
-  defaults:
-    _controller: 'docstore.media_controller:getMediaContent'
-    _title: 'Get media content'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'B'
-docstore_get_media_revisions_content:
-  path: '/api/v1/media/{id}/revisions/{vid}/content'
-  defaults:
-    _controller: 'docstore.media_controller:getMediaRevisionContent'
-    _title: 'Get media revision content'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'B'
-
 # Files
 docstore_get_files:
   path: '/api/v1/files'
   defaults:
-    _controller: 'docstore.media_controller:getFiles'
+    _controller: 'docstore.file_controller:getFiles'
     _title: 'Get files'
   methods: [GET]
   requirements:
@@ -672,7 +610,7 @@ docstore_get_files:
 docstore_create_file:
   path: '/api/v1/files'
   defaults:
-    _controller: 'docstore.media_controller:createFile'
+    _controller: 'docstore.file_controller:createFile'
     _title: 'Create file'
   methods: [POST]
   requirements:
@@ -682,9 +620,9 @@ docstore_create_file:
     docstore_crud: 'C'
     docstore_access_level: 'A'
 docstore_get_file:
-  path: '/api/v1/files/{id}'
+  path: '/api/v1/files/{uuid}'
   defaults:
-    _controller: 'docstore.media_controller:getFile'
+    _controller: 'docstore.file_controller:getFile'
     _title: 'Get file'
   methods: [GET]
   requirements:
@@ -693,22 +631,10 @@ docstore_get_file:
     _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'B'
-docstore_get_file_usage:
-  path: '/api/v1/files/{id}/usage'
-  defaults:
-    _controller: 'docstore.media_controller:getFileUsage'
-    _title: 'Get file usage'
-  methods: [GET]
-  requirements:
-    _docstore_access_check: 'TRUE'
-  options:
-    _auth: ['docstore_auth']
-    docstore_crud: 'R'
-    docstore_access_level: 'B'
 docstore_update_file:
-  path: '/api/v1/files/{id}'
+  path: '/api/v1/files/{uuid}'
   defaults:
-    _controller: 'docstore.media_controller:updateFile'
+    _controller: 'docstore.file_controller:updateFile'
     _title: 'Update file'
   methods: [PUT, PATCH]
   requirements:
@@ -718,9 +644,9 @@ docstore_update_file:
     docstore_crud: 'U'
     docstore_access_level: 'A'
 docstore_delete_file:
-  path: '/api/v1/files/{id}'
+  path: '/api/v1/files/{uuid}'
   defaults:
-    _controller: 'docstore.media_controller:DeleteFile'
+    _controller: 'docstore.file_controller:DeleteFile'
     _title: 'Delete file'
   methods: [DELETE]
   requirements:
@@ -728,11 +654,35 @@ docstore_delete_file:
   options:
     _auth: ['docstore_auth']
     docstore_crud: 'D'
-    docstore_access_level: 'B'
-docstore_get_file_content:
-  path: '/api/v1/files/{id}/content'
+    docstore_access_level: 'A'
+docstore_get_file_usage:
+  path: '/api/v1/files/{uuid}/usage'
   defaults:
-    _controller: 'docstore.media_controller:getFileContent'
+    _controller: 'docstore.file_controller:getFileUsage'
+    _title: 'Get file usage'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_select_file:
+  path: '/api/v1/files/{uuid}/select'
+  defaults:
+    _controller: 'docstore.file_controller:selectFile'
+    _title: 'Select the file as the active one for the provider'
+  methods: [PUT]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'U'
+    docstore_access_level: 'A'
+docstore_get_file_content:
+  path: '/api/v1/files/{uuid}/content'
+  defaults:
+    _controller: 'docstore.file_controller:getFileContent'
     _title: 'Get file content'
   methods: [GET]
   requirements:
@@ -742,45 +692,70 @@ docstore_get_file_content:
     docstore_crud: 'R'
     docstore_access_level: 'B'
 docstore_create_file_content:
-  path: '/api/v1/files/{id}/content'
+  path: '/api/v1/files/{uuid}/content'
   defaults:
-    _controller: 'docstore.media_controller:createFileContent'
+    _controller: 'docstore.file_controller:createFileContent'
     _title: 'Create file content'
-  methods: [POST]
+  # @todo PUT allowed for backward compatibility, remove.
+  methods: [POST, PUT]
   requirements:
     _docstore_access_check: 'TRUE'
   options:
     _auth: ['docstore_auth']
     docstore_crud: 'C'
-    docstore_access_level: 'B'
-docstore_update_file_content:
-  path: '/api/v1/files/{id}/content'
+    docstore_access_level: 'A'
+docstore_get_file_revisions:
+  path: '/api/v1/files/{uuid}/revisions'
   defaults:
-    _controller: 'docstore.media_controller:updateFileContent'
-    _title: 'Update file content'
-  methods: [PUT]
+    _controller: 'docstore.file_controller:getFileRevisions'
+    _title: 'Get file revisions'
+  methods: [GET]
   requirements:
     _docstore_access_check: 'TRUE'
   options:
     _auth: ['docstore_auth']
-    docstore_crud: 'U'
+    docstore_crud: 'R'
     docstore_access_level: 'B'
-
-# Download private media
-docstore_download_private_media:
-  path: '/media/{media_uuid}/{provider_uuid}/{hash}/{filename}'
+docstore_get_file_revision:
+  path: '/api/v1/files/{uuid}/revisions/{revision_id}'
   defaults:
-    _controller: 'docstore.download_controller:downloadMedia'
-    _title: 'Download a file attached to media'
+    _controller: 'docstore.file_controller:getFileRevision'
+    _title: 'Get file revision'
   methods: [GET]
   requirements:
-    _access: 'TRUE'
+    _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_delete_file_revision:
+  path: '/api/v1/files/{uuid}/revisions/{revision_id}'
+  defaults:
+    _controller: 'docstore.file_controller:deleteFileRevision'
+    _title: 'Delete file revision'
+  methods: [DELETE]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'D'
+    docstore_access_level: 'A'
+docstore_get_file_revision_content:
+  path: '/api/v1/files/{uuid}/revisions/{revision_id}/content'
+  defaults:
+    _controller: 'docstore.file_controller:getFileRevisionContent'
+    _title: 'Get file revision content'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
 
-# Download private file
-docstore_download_private_file:
-  path: '/files/{file_uuid}/{provider_uuid}/{hash}/{filename}'
+# Download a file
+docstore_download_file:
+  path: '/files/{uuid}/{filename}'
   defaults:
     _controller: 'docstore.download_controller:downloadFile'
     _title: 'Download a file'

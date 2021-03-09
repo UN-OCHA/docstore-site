@@ -1,0 +1,61 @@
+uuid: 3a718abf-fea7-448d-a6b3-a8ddca5266b4
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.media.file.field_media_file
+    - field.field.media.file.selected_file_versions
+    - media.type.file
+  module:
+    - docstore
+id: media.file.default
+targetEntityType: media
+bundle: file
+mode: default
+content:
+  created:
+    type: datetime_timestamp
+    weight: 10
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  langcode:
+    type: language_select
+    weight: 2
+    region: content
+    settings:
+      include_locked: true
+    third_party_settings: {  }
+  name:
+    type: string_textfield
+    weight: -5
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  selected_file_versions:
+    weight: 101
+    settings: {  }
+    third_party_settings: {  }
+    type: selected_file_version
+    region: content
+  status:
+    type: boolean_checkbox
+    settings:
+      display_label: true
+    weight: 100
+    region: content
+    third_party_settings: {  }
+  uid:
+    type: entity_reference_autocomplete
+    weight: 5
+    settings:
+      match_operator: CONTAINS
+      size: 60
+      placeholder: ''
+      match_limit: 10
+    region: content
+    third_party_settings: {  }
+hidden:
+  field_media_file: true

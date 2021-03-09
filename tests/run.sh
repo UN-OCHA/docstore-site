@@ -69,14 +69,13 @@ $SILK -test.v -silk.url $API silk_files.md || exit 1;
 $SILK -test.v -silk.url $API silk_create.md || exit 1;
 $SILK -test.v -silk.url $API silk_exceptions.md || exit 1;
 
-# Prepare for direct download tests.
-export ME_UUID="$(curl -s -H "API-KEY: abcd" $API/me | get_uuid)"
-export MEDIA_UUID=$($DRUSH --pipe docstore:test-create-file "$ME_UUID" "direct.txt" "Direct txt" 1)
-export MEDIA_HASH=$($DRUSH --pipe docstore:test-create-file-url-hash "$ME_UUID" "$MEDIA_UUID")
-export FILE_UUID=$(curl -s -H "API-KEY: abcd" "$API/media/$MEDIA_UUID" | get_file_uuid)
-export FILE_HASH=$($DRUSH docstore:test-create-file-url-hash "$ME_UUID" "$FILE_UUID")
+# Reset docstore for testing.
+$DRUSH docstore:test-reset
+
+export PROVIDER_UUID1="$(curl -s -H "API-KEY: abcd" $API/me | get_uuid)"
+export PROVIDER_UUID2="$(curl -s -H "API-KEY: dcba" $API/me | get_uuid)"
+export PROVIDER_TOKEN1=$(php -r "print md5('abcd' . '$PROVIDER_UUID1');")
+export PROVIDER_TOKEN2=$(php -r "print md5('dbca' . '$PROVIDER_UUID2');")
 
 # Run direct download tests.
-# @todo add test for the media hash after ensuring the /media/ endpoint it
-# properly handled by nginx.
 $SILK -test.v -silk.url $HOST silk_files_direct.md || exit 1;
