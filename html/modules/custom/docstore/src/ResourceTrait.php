@@ -219,7 +219,7 @@ trait ResourceTrait {
       return ['uuid' => $entity->uuid()];
     }
 
-    $data = $this->prepareEntityResourceData($entity, $provider);
+    $data = $this->prepareEntityResourceData($entity, $provider, FALSE);
 
     // Remove any field or file uri inaccessible by the provider.
     return $this->massageResourceDataForResponse($data, $entity->getEntityTypeId(), $entity->bundle(), $provider);
@@ -235,7 +235,7 @@ trait ResourceTrait {
    *   Serialized resource's data.
    */
   public function prepareEntityResourceDataForStorage(FieldableEntityInterface $entity) {
-    $data = $this->prepareEntityResourceData($entity, NULL);
+    $data = $this->prepareEntityResourceData($entity, NULL, TRUE);
     return serialize($data);
   }
 
@@ -247,11 +247,13 @@ trait ResourceTrait {
    * @param \Drupal\user\UserInterface|null $provider
    *   Provider. If defined, the data will only contains fields accessible
    *   to the provider.
+   * @param bool $expand_references
+   *   Expand referenced nodes.
    *
    * @return array
    *   Resource's data.
    */
-  public function prepareEntityResourceData(FieldableEntityInterface $entity, ?UserInterface $provider = NULL) {
+  public function prepareEntityResourceData(FieldableEntityInterface $entity, ?UserInterface $provider = NULL, $expand_references = TRUE) {
     $data = [];
 
     // Entity information.
@@ -329,7 +331,7 @@ trait ResourceTrait {
             $values = $this->prepareEntityFilesField($field_item_list);
           }
           else {
-            $values = $this->prepareEntityEntityReferenceField($field_item_list);
+            $values = $this->prepareEntityEntityReferenceField($field_item_list, $provider, $expand_references);
           }
           break;
 
@@ -514,6 +516,11 @@ trait ResourceTrait {
    *
    * @param \Drupal\Core\Field\EntityReferenceFieldItemList $list
    *   Field item list.
+   * @param \Drupal\user\UserInterface|null $provider
+   *   Provider. If defined, the data will only contains fields accessible
+   *   to the provider.
+   * @param bool $expand_references
+   *   Expand referenced nodes.
    *
    * @return array
    *   List of referenced entities with their uuid and label.
@@ -522,7 +529,7 @@ trait ResourceTrait {
    * the provider_uuid so we can exclude them if necessary before sending the
    * response data.
    */
-  public function prepareEntityEntityReferenceField(EntityReferenceFieldItemList $list) {
+  public function prepareEntityEntityReferenceField(EntityReferenceFieldItemList $list, ?UserInterface $provider = NULL, $expand_references = TRUE) {
     $data = [];
 
     foreach ($list->referencedEntities() as $entity) {
@@ -555,6 +562,12 @@ trait ResourceTrait {
       // Add the referenced entity label if defined.
       if (!empty($label_key)) {
         $item[$label_key] = $entity->label();
+      }
+
+      // Add fields of referenced item.
+      if ($entity->getEntityTypeId() === 'node' && $expand_references) {
+        $extra_data = $this->prepareEntityResourceData($entity, $provider, FALSE);
+        $item = array_merge($item, $extra_data);
       }
 
       $data[] = $item;

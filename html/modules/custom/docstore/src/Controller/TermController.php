@@ -2,6 +2,7 @@
 
 namespace Drupal\docstore\Controller;
 
+use Drupal\Component\Uuid\Uuid;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
@@ -365,6 +366,34 @@ class TermController extends ControllerBase {
       'parent' => [],
       'description' => $params['description'] ?? '',
     ];
+
+    // Add support for hierarchical vocabularies.
+    if (isset($params['parent'])) {
+      if (is_array($params['parent'])) {
+        // Allow lookup by label.
+        $target_entity = $this->findTargetByProperty($params['parent']);
+        if (!empty($target_entity)) {
+          $item['parent'] = [
+            'target_id' => $target_entity->id(),
+          ];
+        }
+      }
+      else {
+        if (Uuid::isValid($params['parent'])) {
+          $parent = $this->loadTerm($params['parent']);
+          $item['parent'] = [
+            'target_id' => $$parent->id(),
+          ];
+        }
+        else {
+          // Assume it's a regular id.
+          $parent = $this->loadTerm($params['parent']);
+          $item['parent'] = [
+            'target_id' => $$parent->id(),
+          ];
+        }
+      }
+    }
 
     // Add all other fields.
     $item = array_merge($item, $this->buildItemDataFromParams($params, 'taxonomy_term', $vocabulary->id(), $provider, $params['author']));
