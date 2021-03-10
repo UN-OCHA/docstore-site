@@ -116,6 +116,16 @@ function syncLocations($url = '', $admin_level = 0) {
       ];
     }
 
+    // Add parent if needed
+    if (isset($row->parent) && !empty($row->parent)) {
+      $location['parent'] = [
+        '_reference' => 'term',
+        '_target' => 'locations',
+        '_field' => 'id',
+        '_value' => $row->parent[0]->id,
+     ];
+    }
+
     $location['author'] = 'HRINFO';
     $locations[] = $location;
   }
@@ -137,3 +147,5 @@ function syncLocations($url = '', $admin_level = 0) {
 createVocabularies();
 createLocationFields();
 syncLocations();
+syncLocations('', 1);
+syncLocations('', 2);
