@@ -20,6 +20,32 @@ trait RevisionableResourceTrait {
   use ResourceTrait;
 
   /**
+   * Load the revisions for the entity.
+   *
+   * @param \Drupal\Core\Entity\EditorialContentEntityBase $entity
+   *   Entity (ex: term, node).
+   *
+   * @return array
+   *   List of revisions of the entity.
+   */
+  public function loadResourceRevisions(EditorialContentEntityBase $entity) {
+    /** @var \Drupal\Core\Entity\ContentEntityStorageBase $storage */
+    $storage = $this->entityTypeManager
+      ->getStorage($entity->getEntityTypeId());
+
+    $ids = $storage->getQuery()
+      ->condition($storage->getEntityType()->getKey('id'), $entity->id())
+      ->allRevisions()
+      ->accessCheck(FALSE)
+      ->execute();
+
+    if (!empty($ids)) {
+      return $storage->loadMultipleRevisions(array_keys($ids));
+    }
+    return [];
+  }
+
+  /**
    * Load 1 revision of the given resource from the database.
    *
    * @param string $id
@@ -225,6 +251,11 @@ trait RevisionableResourceTrait {
             $revision[$normalized_field] = $value;
           }
         }
+        // Indicate the revision is the latest.
+        if (empty($revisions)) {
+          $revision['latest'] = TRUE;
+        }
+
         $revisions[] = $revision;
       }
     }

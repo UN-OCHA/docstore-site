@@ -1,73 +1,10 @@
-# Files
+# Direct file access.
 
-## GET /files/{FILE_UUID}/{ME_UUID}/{FILE_HASH}/direct.txt
+## POST /api/v1/files
 
-Get private file with real file name.
+Create a public file `file_public_1` with content.
 
-* Content-Type: "application/json"
-* Accept: "text/plain"
-
-===
-
-```txt
-Direct txt
-```
-
-* Status: `200`
-* Content-Type: "text/plain;charset=UTF-8"
-
-## GET /files/{FILE_UUID}/{ME_UUID}/{FILE_HASH}/not_really_used.txt
-
-Get private file with a different filename.
-
-* Content-Type: "application/json"
-* Accept: "text/plain"
-
-===
-
-```txt
-Direct txt
-```
-
-* Status: `200`
-* Content-Type: "text/plain;charset=UTF-8"
-
-## GET /files/file-uuid/{ME_UUID}/{FILE_HASH}/direct.txt
-
-Get private file, wrong file uuid.
-
-* Content-Type: "application/json"
-* Accept: "text/plain"
-
-===
-
-* Status: `404`
-
-## GET /files/{FILE_UUID}/provider-uuid/{FILE_HASH}/direct.txt
-
-Get private file, wrong provider uuid.
-
-* Content-Type: "application/json"
-* Accept: "text/plain"
-
-===
-
-* Status: `404`
-
-## GET /files/{FILE_UUID}/{ME_UUID}/hash/direct.txt
-
-Get private file, wrong hash.
-
-* Content-Type: "application/json"
-* Accept: "text/plain"
-
-===
-
-* Status: `400`
-
-## PATCH /api/v1/me
-
-Update shared secret.
+Note: the data is "Public file 1" encoded in base64.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
@@ -75,23 +12,197 @@ Update shared secret.
 
 ```json
 {
-  "shared_secret": "AnotherVeryVerySecret"
+  "private": false,
+  "filename":"doc-file-public-1.txt",
+  "mimetype":"text/plain",
+  "data": "UHVibGljIGZpbGUgMQo="
 }
 ```
 
 ===
 
-* Status: `200`
+* Status: `201`
 * Content-Type: "application/json"
-* Data.message: "Provider updated"
+* Data.message: "File created"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // UUID {file_public_uuid_1}
 
-## GET /files/{FILE_UUID}/{ME_UUID}/{FILE_HASH}/direct.txt
+## POST /api/v1/files
 
-Check that links become invalid after changing the secret.
+Create a private file `file_private_1` with content.
+
+Note: the data is "Private file 1" encoded in base64.
 
 * Content-Type: "application/json"
-* Accept: "text/plain"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "private": true,
+  "filename":"doc-file-private-1.txt",
+  "mimetype":"text/plain",
+  "data": "UHJpdmF0ZSBmaWxlIDEK"
+}
+```
 
 ===
 
-* Status: `400`
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "File created"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // UUID {file_private_uuid_1}
+
+## GET /files/not-a-uuid/pouet.txt
+
+Get a file with a wrong uuid.
+
+===
+
+* Status: `404`
+
+## GET /files/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/pouet.txt
+
+Get a non-existing file.
+
+===
+
+* Status: `404`
+
+## GET /files/{file_public_uuid_1}/pouet.txt
+
+Get the content of the public file `file_public_1` as anonymous
+
+===
+
+```
+Public file 1
+
+```
+
+* Status: `200`
+
+## GET /files/{file_public_uuid_1}/pouet.txt
+
+Get the content of the public file `file_public_1` as a different provider
+
+* X-Docstore-Provider-Uuid: {PROVIDER_UUID2}
+
+===
+
+```
+Public file 1
+
+```
+
+* Status: `200`
+
+## GET /files/{file_public_uuid_1}/pouet.txt
+
+Get the content of the public file `file_public_1` as the owner
+
+* X-Docstore-Provider-Uuid: {PROVIDER_UUID1}
+
+===
+
+```
+Public file 1
+
+```
+
+* Status: `200`
+
+## GET /files/{file_public_uuid_1}/pouet.pdf
+
+Get the content of the public file `file_public_1` as anonymous with the wrong
+extension.
+
+===
+
+* Status: `404`
+
+## GET /files/{file_public_uuid_1}/pouet.pdf
+
+Get the content of the public file `file_public_1` as a different provider with
+the wrong extension.
+
+===
+
+* Status: `404`
+
+## GET /files/{file_public_uuid_1}/pouet.pdf
+
+Get the content of the public file `file_public_1` as the owner with the wrong
+extension.
+
+===
+
+* Status: `404`
+
+
+## GET /files/{file_private_uuid_1}/pouet.txt
+
+Get the content of the public file `file_public_1` as anonymous.
+
+===
+
+* Status: `404`
+
+## GET /files/{file_private_uuid_1}/pouet.txt
+
+Get the content of the public file `file_public_1` as a different provider.
+
+* X-Docstore-Provider-Uuid: {PROVIDER_UUID2}
+* X-Docstore-Provider-Token: {PROVIDER_TOKEN2}
+
+===
+
+* Status: `404`
+
+## GET /files/{file_private_uuid_1}/pouet.txt
+
+Get the content of the private file `file_private_1` as the owner.
+
+* X-Docstore-Provider-Uuid: {PROVIDER_UUID1}
+* X-Docstore-Provider-Token: {PROVIDER_TOKEN1}
+
+===
+
+```
+Private file 1
+
+```
+
+* Status: `200`
+
+## GET /files/{file_private_uuid_1}/pouet.pdf
+
+Get the content of the private file `file_private_1` as anonymous with the wrong
+extension.
+
+===
+
+* Status: `404`
+
+## GET /files/{file_private_uuid_1}/pouet.pdf
+
+Get the content of the private file `file_private_1` as a different provider with
+the wrong extension.
+
+* X-Docstore-Provider-Uuid: {PROVIDER_UUID2}
+* X-Docstore-Provider-Token: {PROVIDER_TOKEN2}
+
+===
+
+* Status: `404`
+
+## GET /files/{file_private_uuid_1}/pouet.pdf
+
+Get the content of the private file `file_private_1` as the owner with the wrong
+extension.
+
+* X-Docstore-Provider-Uuid: {PROVIDER_UUID1}
+* X-Docstore-Provider-Token: {PROVIDER_TOKEN1}
+
+===
+
+* Status: `404`

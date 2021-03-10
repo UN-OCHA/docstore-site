@@ -4,9 +4,10 @@ status: true
 dependencies:
   config:
     - field.field.media.file.field_media_file
-    - field.field.media.file.field_media_file_revisions
+    - field.field.media.file.selected_file_versions
     - media.type.file
   module:
+    - docstore
     - file
 id: media.file.default
 targetEntityType: media
@@ -20,13 +21,12 @@ content:
     third_party_settings: {  }
     type: file_url_plain
     region: content
-  field_media_file_revisions:
+  selected_file_versions:
     weight: 1
     label: above
-    settings:
-      use_description_as_link_text: true
+    settings: {  }
     third_party_settings: {  }
-    type: file_default
+    type: selected_file_version
     region: content
 hidden:
   created: true

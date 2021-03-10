@@ -14,3 +14,54 @@ docstore.settings:
       sequence:
         type: string
         label: 'Detection method'
+
+# Storage scheme.
+field.storage_settings.selected_file_version:
+  type: mapping
+  label: Selected file version field storage settings
+  mapping:
+    storage:
+      type: mapping
+      label: Selected file version field storage settings
+      mapping:
+        provider_uuid:
+          type: string
+        target:
+          type: string
+
+# Instance schema.
+field.field_settings.selected_file_version:
+  type: mapping
+  label: Selected file version field settings
+  mapping:
+    provider_uuid:
+      type: string
+    target:
+      type: string
+
+# Widget schema.
+field.widget.settings.selected_file_version:
+  type: mapping
+  label: Selected file version widget settings
+  mapping:
+    # No settings.
+
+# Formatter schema.
+field.formatter.settings.selected_file_version:
+  type: mapping
+  label: Selected file version formatter settings
+  mapping:
+    # No settings.
+
+
+# Default value schema.
+field.value.selected_file_version:
+  type: mapping
+  label: Selected file version default value
+  mapping:
+    provider_uuid:
+      type: string
+      label: Provider uuid
+    target:
+      type: string
+      label: Target (file uuid or empty string)

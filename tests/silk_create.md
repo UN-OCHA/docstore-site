@@ -824,7 +824,7 @@ Example output.
 * Data.results[1].title: "Doc with term, no files"
 * Data.results[1].silk_my_id: 42 // Hard-coded field name!
 
-## GET /media
+## GET /files
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -833,7 +833,7 @@ Example output.
 
 * Status: `200`
 * Content-Type: "application/json"
-* Data[0].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {media1}
+* Data[0].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {file1}
 
 ## POST /documents/documents
 
@@ -848,7 +848,7 @@ Add a document with a file.
   "title": "Doc term and file",
   "author": "hid_123456789",
   "files": [
-    "{media1}"
+    "{file1}"
   ],
   "{field_organization}": [
     "{organization_unocha}"
@@ -903,7 +903,7 @@ Get document as owner.
 * Content-Type: "application/json"
 * Data.uuid: {doc3}
 * Data.title: "Doc term and file"
-* Data.files[0].media_uuid: "{media1}"
+* Data.files[0].uuid: "{file1}"
 * Data.files[0].private: true
 * Data.files[0].uri: /.+/
 
@@ -919,7 +919,7 @@ Get document as anonymous
 * Content-Type: "application/json"
 * Data.uuid: {doc3}
 * Data.title: "Doc term and file"
-* Data.files[0].media_uuid: "{media1}"
+* Data.files[0].uuid: "{file1}"
 * Data.files[0].private: true
 * Data.files[0].uri: null
 
@@ -936,7 +936,7 @@ Get document as other user
 * Content-Type: "application/json"
 * Data.uuid: {doc3}
 * Data.title: "Doc term and file"
-* Data.files[0].media_uuid: "{media1}"
+* Data.files[0].uuid: "{file1}"
 * Data.files[0].private: true
 * Data.files[0].uri: null
 

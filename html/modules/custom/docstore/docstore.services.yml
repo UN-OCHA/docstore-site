@@ -23,8 +23,8 @@ services:
   docstore.document_controller:
     class: \Drupal\docstore\Controller\DocumentController
     arguments: ['@config.factory', '@database', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@transliteration', '@file.mime_type.guesser', '@file_system', '@file.usage', '@logger.factory', '@state', '@entity_usage.usage']
-  docstore.media_controller:
-    class: \Drupal\docstore\Controller\MediaController
+  docstore.file_controller:
+    class: \Drupal\docstore\Controller\FileController
     arguments: ['@config.factory', '@database', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@transliteration', '@file.mime_type.guesser', '@file_system', '@file.usage', '@logger.factory', '@state', '@entity_usage.usage']
   docstore.vocabulary_controller:
     class: \Drupal\docstore\Controller\VocabularyController

@@ -1,0 +1,21 @@
+uuid: 914f669f-3578-4613-9716-6f38410da11a
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.media.selected_file_versions
+    - media.type.file
+  module:
+    - docstore
+id: media.file.selected_file_versions
+field_name: selected_file_versions
+entity_type: media
+bundle: file
+label: 'Selected file versions'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: selected_file_version

@@ -208,7 +208,7 @@ trait SearchableResourceTrait {
       foreach ($data as $item) {
         if (isset($item['files'])) {
           foreach ($item['files'] as $file) {
-            $files[$file['media_uuid']] = $file;
+            $files[$file['uuid']] = $file;
           }
         }
       }
@@ -246,8 +246,12 @@ trait SearchableResourceTrait {
 
       // Add extra metadata.
       if ($extra = $results->getExtraData('search_api_solr_response')) {
-        $output['_start'] = $extra['response']['start'];
-        $output['_numFoundExact'] = $extra['response']['numFoundExact'];
+        if (isset($extra['response']['start'])) {
+          $output['_start'] = $extra['response']['start'];
+        }
+        if (isset($extra['response']['_numFoundExact'])) {
+          $output['_numFoundExact'] = $extra['response']['numFoundExact'];
+        }
       }
 
       // Append data.

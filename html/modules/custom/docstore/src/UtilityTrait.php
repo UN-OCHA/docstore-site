@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Utility functions that don't depend on injected services.
@@ -234,10 +235,8 @@ trait UtilityTrait {
         $label = $plural ? 'terms' : 'term';
         break;
 
+      // No distinction for users of the API.
       case 'media':
-        $label = $plural ? 'media' : 'media';
-        break;
-
       case 'file':
         $label = $plural ? 'files' : 'file';
         break;
@@ -252,6 +251,42 @@ trait UtilityTrait {
     }
 
     return $lower_case ? $label : ucfirst($label);
+  }
+
+  /**
+   * Load a file referenced by a media.
+   *
+   * @param \Drupal\media\Entity\Media $media
+   *   Media.
+   *
+   * @return \Drupal\file\Entity\File
+   *   File referenced by the media.
+   *
+   * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+   *   404 Not Found if the file couldn't be loaded.
+   */
+  public function loadMediaFile(Media $media) {
+    /** @var \Drupal\file\Entity\File $file */
+    // @phpstan-ignore-next-line
+    $file = $media->field_media_file->entity;
+    if (empty($file)) {
+      throw new NotFoundHttpException('File does not exist');
+    }
+
+    return $file;
+  }
+
+  /**
+   * Check if a media is private.
+   *
+   * @param \Drupal\media\Entity\Media $media
+   *   Media.
+   *
+   * @return bool
+   *   TRUE if the media is private.
+   */
+  public function mediaIsPrivate(Media $media) {
+    return $this->fileIsPrivate($this->loadMediaFile($media));
   }
 
   /**
@@ -407,6 +442,33 @@ trait UtilityTrait {
    */
   public static function getFileUrl(File $file, $relative = FALSE) {
     return static::createFileUrl($file->getFileUri());
+  }
+
+  /**
+   * Get a media URL.
+   *
+   * @param \Drupal\media\Entity\Media $media
+   *   Media.
+   * @param bool $relative
+   *   Whether to return an absolute URL or a relative one.
+   *
+   * @return string
+   *   Media URL.
+   */
+  public static function getMediaUrl(Media $media, $relative = FALSE) {
+    $uri = '/files/' . $media->uuid() . '/' . $media->getName();
+
+    // This will generate an absolute URL. We wrap the URL generation into
+    // its own renderer to avoid "early rendering" exceptions due to cache
+    // metadata not being captured. The createFileUrl() method below has a bit
+    // more explanation.
+    //
+    // @see \Drupal\docstore\FileTrait::createFileUrl()
+    // @see https://www.drupal.org/node/2513810
+    // @see https://www.drupal.org/node/2638686
+    return \Drupal::service('renderer')->executeInRenderContext(new RenderContext(), function () use ($uri, $relative) {
+      return Url::fromUserInput($uri, ['absolute' => !$relative])->toString(FALSE);
+    });
   }
 
   /**
