@@ -373,18 +373,24 @@ class TermController extends ControllerBase {
         // Allow lookup by label.
         $target_entity = $this->findTargetByProperty($params['parent']);
         if (!empty($target_entity)) {
-          $item['parent'] = $target_entity->id();
+          $item['parent'] = [
+            'target_id' => $target_entity->id(),
+          ];
         }
       }
       else {
         if (Uuid::isValid($params['parent'])) {
           $parent = $this->loadTerm($params['parent']);
-          $item['parent'] = $parent->id();
+          $item['parent'] = [
+            'target_id' => $$parent->id(),
+          ];
         }
         else {
           // Assume it's a regular id.
           $parent = $this->loadTerm($params['parent']);
-          $item['parent'] = $parent->id();
+          $item['parent'] = [
+            'target_id' => $$parent->id(),
+          ];
         }
       }
     }

@@ -47,6 +47,7 @@ trait MetadataTrait {
       'private',
       'files',
       'vocabulary',
+      'parent',
     ];
 
     // Get the list of available fields for the entity type.
@@ -323,7 +324,7 @@ trait MetadataTrait {
    * @todo throw an error if no target was found?
    */
   protected function findTargetByProperty(array $data) {
-    if (!isset($data['_reference'], $data['_target'], $data['_field'], $data['value'])) {
+    if (!isset($data['_reference'], $data['_target'], $data['_field'], $data['_value'])) {
       return NULL;
     }
 
