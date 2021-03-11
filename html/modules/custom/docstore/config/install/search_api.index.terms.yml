@@ -95,6 +95,14 @@ field_settings:
     dependencies:
       module:
         - taxonomy
+  label:
+    label: Name
+    datasource_id: 'entity:taxonomy_term'
+    property_path: name
+    type: string
+    dependencies:
+      module:
+        - taxonomy
   langcode:
     label: Language
     datasource_id: 'entity:taxonomy_term'
@@ -104,7 +112,7 @@ field_settings:
       module:
         - taxonomy
   name:
-    label: Label
+    label: Name
     datasource_id: 'entity:taxonomy_term'
     property_path: name
     type: string
