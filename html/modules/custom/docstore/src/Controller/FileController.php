@@ -5,6 +5,7 @@ namespace Drupal\docstore\Controller;
 use Drupal\Component\Transliteration\TransliterationInterface;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Cache\Cache;
+use Drupal\Core\Cache\CacheableResponse;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
@@ -497,7 +498,6 @@ class FileController extends ControllerBase {
 
     // Update the list of selected file versions per provider.
     $this->setMediaSelectedFileVersions($media, $selection);
-    $media->save();
 
     $data = [
       'message' => 'File version selected',
@@ -505,6 +505,50 @@ class FileController extends ControllerBase {
     ];
 
     return $this->createJsonResponse($data, 200);
+  }
+
+  /**
+   * Check if a provider has access to a file.
+   *
+   * GET /api/v1/files/{uuid}/access.
+   *
+   * @param string $uuid
+   *   Media uuid.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   Docstore API request.
+   *
+   * @return \Drupal\Core\Cache\CacheableResponse
+   *   Response with a 200 code if the provider has access to the file, 403
+   *   otherwise.
+   */
+  public function checkFileAccess($uuid, Request $request) {
+    $code = 200;
+    $cache = $this->createResponseCache();
+    try {
+      /** @var \Drupal\user\UserInterface $provider */
+      $provider = $this->requireProvider();
+
+      /** @var \Drupal\media\Entity\Media $media */
+      $media = $this->loadMedia($uuid);
+
+      // Add the media and provider as a cache dependencies so that if the media
+      // changes like becoming public or private, or the provider changes like
+      // using a different api key, then the cache will be invalidated.
+      $cache
+        ->addCacheableDependency($provider)
+        ->addCacheableDependency($media);
+
+      // If private, check if the provider is the owner.
+      if ($this->mediaIsPrivate($media)) {
+        $this->providerIsOwner($media, $provider);
+      }
+    }
+    catch (\Exception $exception) {
+      $code = 403;
+    }
+
+    $response = new CacheableResponse('', $code);
+    return $response->addCacheableDependency($cache);
   }
 
   /**
