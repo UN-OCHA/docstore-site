@@ -1,0 +1,62 @@
+version: "2.2"
+
+networks:
+  default:
+
+volumes:
+  docstore-site-public:
+  docstore-site-private:
+
+services:
+  solr:
+    image: unocha/alpine-solr:8.1.1-201907-02
+    hostname: docstore-travis-solr
+    container_name: docstore-travis-solr
+    volumes:
+      - "./solr:/srv/confs:ro"
+    environment:
+      - SOLR_CORE=search_api_solr_8.x-3.0
+      - CORE=search_api_solr_8.x-3.0
+    networks:
+      - default
+
+  mysql:
+    image: unocha/alpine-mysql:10.4.13-r0-202006-01
+    hostname: docstore-travis-mysql
+    container_name: docstore-travis-mysql
+    environment:
+      - MYSQL_DB=docstore
+      - MYSQL_USER=docstore
+      - MYSQL_PASS=docstore
+    networks:
+      - default
+
+  drupal:
+    image: unocha/docstore-site:local
+    hostname: docstore-travis-site
+    container_name: docstore-travis-site
+    volumes:
+      - "./settings:/srv/www/shared/settings:ro"
+      # Mount volumes for the private and public files.
+      - "docstore-site-public:/srv/www/html/sites/default/files:rw"
+      - "docstore-site-private:/srv/www/html/sites/default/private:rw"
+      # Mount the folders needed for the tests.
+      - "../drop_folders:/srv/www/drop_folders:ro"
+      - "../tests:/srv/www/tests:ro"
+      - "../phpcs.xml:/srv/www/phpcs.xml:ro"
+    environment:
+      - TERM=xterm
+      - ENVIRONMENT=dev
+      - NGINX_SERVERNAME=docstore-travis-site,localhost,127.0.0.1
+      - NGINX_OVERRIDE_PROTOCOL=HTTP,docstore-travis-site,localhost,127.0.0.1
+      - DRUSH_OPTIONS_URI=http://docstore-travis-site
+      - DRUPAL_DB_DATABASE=docstore
+      - DRUPAL_DB_USERNAME=docstore
+      - DRUPAL_DB_PASSWORD=docstore
+      - DRUPAL_DB_HOST=mysql
+      - DRUPAL_DB_DRIVER=mysql
+    networks:
+      - default
+    depends_on:
+      - mysql
+      - solr

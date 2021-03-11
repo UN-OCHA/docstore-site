@@ -1,0 +1,21 @@
+uuid: f48fba5e-83e9-4227-9881-71de59d1ee74
+langcode: en
+status: true
+dependencies:
+  module:
+    - entity_reference_uuid
+    - media
+    - node
+id: node.files
+field_name: files
+entity_type: node
+type: entity_reference_uuid
+settings:
+  target_type: media
+module: entity_reference_uuid
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

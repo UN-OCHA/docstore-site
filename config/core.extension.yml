@@ -2,37 +2,41 @@ module:
   admin_toolbar: 0
   block: 0
   breakpoint: 0
-  dblog: 0
-  devel: 0
-  devel_php: 0
+  config: 0
+  config_filter: 0
+  config_ignore: 0
+  datetime: 0
+  datetime_range: 0
   docstore: 0
   dynamic_entity_reference: 0
   dynamic_page_cache: 0
   entity_reference: 0
   entity_reference_uuid: 0
+  entity_usage: 0
   facets: 0
   field: 0
   field_ui: 0
   file: 0
   filter: 0
+  geofield: 0
   image: 0
   language: 0
+  link: 0
   media: 0
-  media_library: 0
   node: 0
+  options: 0
   page_cache: 0
   path_alias: 0
   search_api: 0
-  search_api_db: 0
   search_api_solr: 0
+  serialization: 0
   system: 0
   taxonomy: 0
   text: 0
   toolbar: 0
   user: 0
   user_bundle: 0
-  views_ui: 0
-  views: 10
+  webhooks: 0
   minimal: 1000
 theme:
   stark: 0

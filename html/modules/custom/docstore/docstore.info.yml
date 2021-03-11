@@ -3,3 +3,6 @@ description: Document store
 package: OCHA
 type: module
 core: 8.x
+dependencies:
+  - search_api:search_api
+  - search_api_solr:search_api_solr

@@ -1,0 +1,18 @@
+ignored_config_entities:
+  - 'taxonomy.*'
+  - 'field.storage.taxonomy_term.*'
+  - 'field.field.taxonomy_term.*'
+  - 'node.type.*'
+  - 'field.storage.node.*'
+  - ~field.storage.node.author
+  - ~field.storage.node.files
+  - ~field.storage.node.private
+  - 'field.field.node.*'
+  - 'search_api.index.*'
+  - 'core.entity_view_display.taxonomy_term.*'
+  - 'core.entity_form_display.taxonomy_term.*'
+  - 'core.entity_form_display.node.*'
+  - 'webhooks.webhook.*'
+_core:
+  default_config_hash: UVH1aJ4b44UM-VdPVN7hNNuuVqfReJxwfVeDQH1Hvsk
+enable_export_filtering: true

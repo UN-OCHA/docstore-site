@@ -39,7 +39,7 @@ class DocStoreAuthenticationProvider implements AuthenticationProviderInterface 
    * {@inheritdoc}
    */
   public function authenticate(Request $request) {
-    // TODO: Add flood protection.
+    // @todo Add flood protection.
     // Get the provided key.
     if ($key = $this->authenticationService->getKey($request)) {
       // Find the linked user.
@@ -48,7 +48,7 @@ class DocStoreAuthenticationProvider implements AuthenticationProviderInterface 
       }
     }
 
-    return [];
+    return NULL;
   }
 
 }

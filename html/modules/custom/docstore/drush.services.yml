@@ -1,0 +1,6 @@
+services:
+  docstore.commands:
+    class: \Drupal\docstore\Commands\DocstoreCommands
+    arguments: ['@current_user', '@config.factory', '@database', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@file.mime_type.guesser', '@file_system', '@file.usage', '@state']
+    tags:
+      - { name: drush.command }

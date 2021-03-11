@@ -1,5 +1,14 @@
 # Document store
 
+## TODO
+
+### Document types
+
+- [x] check endpoint, use white/black list to avoid clashes
+- [x] add permission
+- [ ] delete when empty
+- [x] implement PUT, PATCH
+
 ## Naming conventions for fields, vocabularies
 
 - `base_`: basic data needed to make it work
@@ -14,6 +23,26 @@
 
 ```bash
 curl -X GET "http://docstore.local.docksal/api/documents" -H  "accept: application/json" -H  "API-KEY: abcd" | jq
+```
+
+```bash
+curl -g "http://docstore.local.docksal/api/documents?filter[f1][group][conjunction]=OR&filter[p1][condition][path]=silk_my_id&filter[p1][condition][operator]=%3D&filter[p1][condition][value]=42&filter[p1][condition][memberOf]=f1" | jq
+
+curl -g "http://docstore.local.docksal/api/documents?filter[f1][group][conjunction]=OR&filter[p1][condition][path]=silk_my_id&filter[p1][condition][operator]=%3D&filter[p1][condition][value]=42&filter[p1][condition][memberOf]=f1&filter[p2][condition][path]=silk_my_id&filter[p2][condition][operator]=%3D&filter[p2][condition][value]=7&filter[p2][condition][memberOf]=f1" | jq
+
+curl -g "http://docstore.local.docksal/api/documents?filter[f1][group][conjunction]=OR&filter[org][condition][memberOf]=f1&filter[org][condition][path]=silk_organizations_label&filter[org][condition][operator]=%3D&filter[org][condition][value]=WFP" | jq
+
+curl -g "http://docstore.local.docksal/api/documents?filter[f1][group][conjunction]=OR&filter[org][condition][memberOf]=f1&filter[org][condition][path]=silk_organizations_label&filter[org][condition][value]=WF*" | jq
+
+curl -g "http://docstore.local.docksal/api/documents?page[limit]=7&page[offset]=2" | jq
+
+# to be tested
+
+curl -g "http://docstore.local.docksal/api/documents?filter[f1][group][conjunction]=OR&filter[org][condition][memberOf]=f1&filter[org][condition][path]=silk_organizations_label&filter[org][condition][operator]=STARTS_WITH&filter[org][condition][value]=U" | jq
+
+curl -g "http://docstore.local.docksal/api/documents?filter[f1][group][conjunction]=OR&filter[p2][condition][memberOf]=f1&filter[org][condition][path]=silk_organizations&filter[org][condition][operator]=%3D&filter[org][condition][value]=caaa5a37-9717-4fbc-a732-c2ff6da4f1fa" | jq
+
+curl -g "http://docstore.local.docksal/api/documents?filter[f1][group][conjunction]=OR&filter[p1][condition][path]=silk_my_id&filter[p1][condition][operator]=%3D&filter[p1][condition][value]=42&filter[p1][condition][memberOf]=f1&filter[p2][condition][path]=silk_my_id&filter[p2][condition][operator]=%3D&filter[p2][condition][value]=7&filter[p2][condition][memberOf]=f1&filter[org][condition][path]=silk_organizations_label&filter[org][condition][operator]=STARTS_WITH&filter[org][condition][value]=U" | jq
 ```
 
 ### Create document
@@ -85,14 +114,20 @@ curl -X GET "http://docstore.local.docksal/api/vocabularies/f56fb44b-a17c-4b5e-b
 ### Add vocabulary field
 
 ```bash
-curl -X POST "http://docstore.local.docksal/api/vocabularies/test_my_vocabulary/fields" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"label\":\"My voc field\",\"target\":\"test_my_vocabulary\",\"multiple\":0}"
+curl -X POST "http://docstore.local.docksal/api/vocabularies/peter_test1/fields" -H  "accept: application/json" -H  "API-KEY: abcd" -H  "Content-Type: application/json" -d "{\"label\":\"ISO3\",\"target\":\"peter_test1\",\"multiple\":0}"
+```
+
+### Get vocabulary terms
+
+```bash
+curl -X GET "http://docstore.local.docksal/api/vocabularies/test_my_vocabulary/terms" -H  "accept: application/json" -H  "API-KEY: abcd" | jq
 ```
 
 ## Terms
 
 ### Get terms
 
-````bash
+```bash
 curl -X GET "http://docstore.local.docksal/api/terms" -H  "accept: application/json" -H  "API-KEY: abcd" | jq
 ```
 
@@ -192,4 +227,85 @@ curl -X POST "http://docstore.local.docksal/api/files" -H  "accept: application/
 
 ```bash
 curl -X POST -H  "accept: application/json" -H  "API-KEY: abcd" --data-binary "@updated.pdf" http://docstore.local.docksal/api/files/b51bf47c-b9f1-4fb2-addc-66127ee82c39/content | jq
+```
+
+## Private files
+
+- ~~Add visibility to file entity API~~
+- ~~Store in private file system~~
+- ~~/private/provider/ts/hash/path-to-file~~
+- ~~Controller to get provider~~
+- ~~Hash = key + path + ts~~
+
+- https://www.chapterthree.com/blog/drupal-8-9-media-entities-private-files-and-broken-access-control
+- https://www.drupal.org/project/media_revisions_ui
+
+## Ignore config
+
+```yaml
+taxonomy.*
+field.field.taxonomy_term.*
+field.storage.taxonomy_term.*
+~field.storage.taxonomy_term.base_provider_uuid
+~field.storage.taxonomy_term.created
+field.field.node.document.*
+~field.field.node.document.base_author_hid
+~field.field.node.document.base_files
+field.storage.node.*
+~field.storage.node.base_author_hid
+~field.storage.node.base_files
+core.entity_view_display.taxonomy_term.*
+core.entity_form_display.taxonomy_term.*
+core.entity_form_display.node.document.default
+search_api.index.documents
+core.entity_view_display.node.document.teaser
+core.entity_view_display.node.document.default
+```
+
+## Testing
+
+### SILK
+
+```bash
+ ./run.sh
+```
+
+Test using proxy
+
+```bash
+API=http://0.0.0.0:4010 ./run.sh
+```
+
+## Hooks
+
+- Incoming drupal, https://github.com/Bounteous-Inc/webhook_entities
+- Test endpoint http://webhook.site/
+
+## Clean
+
+```bash
+fin drush entity:delete taxonomy_term --bundle=disaster
+fin drush entity:delete node --bundle=assessment
+```
+
+## Sync
+
+### Jenkins drush jobs
+
+- `scr --verbose modules/custom/docstore/syncs/docstore_countries.php`
+- `scr --verbose modules/custom/docstore/syncs/docstore_disaster_types.php`
+- `scr --verbose modules/custom/docstore/syncs/docstore_functional_roles.php`
+- `scr --verbose modules/custom/docstore/syncs/docstore_global_coordination_groups.php`
+- `scr --verbose modules/custom/docstore/syncs/docstore_local_coordination_groups.php`
+- `scr --verbose modules/custom/docstore/syncs/docstore_organization_types.php`
+- `scr --verbose modules/custom/docstore/syncs/docstore_population_types.php`
+- `scr --verbose modules/custom/docstore/syncs/docstore_themes.php`
+- `scr --verbose modules/custom/docstore/syncs/docstore_vulnerable_groups.php`
+
+### Local sync jobs
+
+```bash
+php ./create_km.php
+php ./create_disasters.php
+php ./create_assessments.php
 ```

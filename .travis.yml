@@ -1,58 +1,57 @@
 dist: trusty
 language: php
-cache:
-  - composer
-
-addons:
-  chrome: stable
 
 php:
   - 7.3
 
-mysql:
-  database: drupal
-  username: root
-  encoding: utf8
+services:
+  - docker
 
-env:
-  global:
-     - DRUPAL_REPO='git://drupalcode.org/project/drupal.git'
-     - DRUPAL_VERSION='8.x'
-     - DRUSH_VERSION='8.*'
-     - PHPCS_VERSION='2.9.*@dev'
-     - CODER_VERSION='dev-8.x-2.x'
-     - DB=sqlite
-
-install:
-  ssh-agent -k
+# Make sure we have a recent version of docker.
+addons:
+  apt:
+    packages:
+      - docker-ce
 
 before_script:
-  # Composer.
-  - sed -i '1i export PATH="$HOME/.composer/vendor/bin:$PATH"' $HOME/.bashrc
-  - source $HOME/.bashrc
-  - composer self-update
-
   # Ensure the PHP environment is ready.
   - phpenv rehash
 
-  # Code sniff
-  - cd $TRAVIS_BUILD_DIR
-  - composer install
-
 script:
+  # Get docker information.
+  - docker version
+  - docker-compose version
+
   # PHP linting
   - test ! -d ./html/modules/custom || find -L ./html/modules/custom -iregex '.*\.\(php\|module\|inc\|install\)$' -print0 | xargs -0 -n 1 -P 4 php -l
-  - test ! -d ./html/modules/features || find -L ./html/modules/features -iregex '.*\.\(php\|module\|inc\|install\)$' -print0 | xargs -0 -n 1 -P 4 php -l
-  - test ! -d ./html/themes/custom || find -L ./html/themes/custom -iregex '.*\.\(php\|module\|inc\|install\)$' -print0 | xargs -0 -n 1 -P 4 php -l
 
-  # PHP CS
-  - ./vendor/bin/phpcs --config-set installed_paths vendor/drupal/coder/coder_sniffer
-  - test ! -d ./html/modules/custom || ./vendor/bin/phpcs -p --report=full ./html/modules/custom
-  - test ! -d ./html/modules/features || ./vendor/bin/phpcs -p --report=full ./html/modules/features
-  - # test ! -d ./html/themes/custom || ./vendor/bin/phpcs -p --report=full ./html/themes/custom
+  # Build local image.
+  - make
+
+  # Create the site, solr and mysql containers.
+  - docker-compose -f tests/docker-compose.yml up -d
+
+  # Dump some information about the created containers.
+  - docker ps -a
+
+  # Wait a bit for solr and mysql to be ready.
+  - sleep 10
+
+  # Install the site with the existing config.
+  - docker exec -it docstore-travis-site drush -y si --existing-config
+
+  # Ensure the file directories are writable.
+  - docker exec -it docstore-travis-site chmod -R 777 /srv/www/html/sites/default/files /srv/www/html/sites/default/private
+
+  # Check coding standards.
+  - docker exec -it -u appuser -w /srv/www docstore-travis-site ./vendor/bin/phpcs -p --report=full --standard=phpcs.xml ./html/modules/custom
+
+  # Run API tests.
+  - docker exec -it -u appuser -w /srv/www/tests -e HOST="http://docstore-travis-site" -e DRUSH="drush -v"  docstore-travis-site sh ./run.sh
 
 after_success:
   - echo "The tests completed without errors."
 
 after_failure:
   - echo "The tests failed. Please check the output above for problems."
+  - ../vendor/bin/drush watchdog:show --extended

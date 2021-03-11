@@ -1,12 +1,13 @@
-uuid: 61ef2e32-cb09-4bdd-b10b-cc7a45ee821c
+uuid: 3a718abf-fea7-448d-a6b3-a8ddca5266b4
 langcode: en
 status: true
 dependencies:
   config:
     - field.field.media.file.field_media_file
+    - field.field.media.file.selected_file_versions
     - media.type.file
   module:
-    - file
+    - docstore
 id: media.file.default
 targetEntityType: media
 bundle: file
@@ -18,13 +19,6 @@ content:
     region: content
     settings: {  }
     third_party_settings: {  }
-  field_media_file:
-    weight: 0
-    settings:
-      progress_indicator: throbber
-    third_party_settings: {  }
-    type: file_generic
-    region: content
   langcode:
     type: language_select
     weight: 2
@@ -40,6 +34,12 @@ content:
       size: 60
       placeholder: ''
     third_party_settings: {  }
+  selected_file_versions:
+    weight: 101
+    settings: {  }
+    third_party_settings: {  }
+    type: selected_file_version
+    region: content
   status:
     type: boolean_checkbox
     settings:
@@ -57,4 +57,5 @@ content:
       match_limit: 10
     region: content
     third_party_settings: {  }
-hidden: {  }
+hidden:
+  field_media_file: true

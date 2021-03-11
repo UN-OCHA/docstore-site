@@ -16,7 +16,7 @@ services:
       file: ${HOME}/.docksal/stacks/services.yml
       service: solr
     hostname: solr
-    image: docksal/solr:7.5
+    image: docksal/solr:8.6-edge
     user: solr
     labels:
       - io.docksal.virtual-host=solr.${VIRTUAL_HOST}

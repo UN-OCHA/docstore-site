@@ -3,6 +3,9 @@
         "drupal/core": {
             "i1149078-109, States API doesn't work with multiple select fields": "https://www.drupal.org/files/issues/2019-05-26/states-multiselect-1149078-109.patch",
             "https://www.drupal.org/project/drupal/issues/2061377?page=1#comment-13441615": "https://www.drupal.org/files/issues/2020-01-28/2061377-362.patch"
+        },
+        "drupal/config_ignore": {
+            "https://www.drupal.org/project/config_ignore/issues/2857247": "https://www.drupal.org/files/issues/2020-08-18/support-for-export-2857247-54.patch"
         }
     }
 }

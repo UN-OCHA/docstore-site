@@ -5,14 +5,35 @@
  * Contains Document Store code.
  */
 
-use Drupal\Component\Uuid\Uuid;
-use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\Core\Cache\Cache;
+use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\field\Entity\FieldConfig;
+use Drupal\Core\StreamWrapper\StreamWrapperManager;
+use Drupal\docstore\ManageFields;
 use Drupal\field\Entity\FieldStorageConfig;
-use Drupal\taxonomy\Entity\Vocabulary;
+use Drupal\node\Entity\NodeType;
 use Drupal\search_api\Entity\Index;
-use Drupal\search_api\Item\Field;
+use Drupal\search_api\Query\QueryInterface as SearchApiQueryInterface;
+use Drupal\search_api_solr\SolrBackendInterface;
+use Drupal\user\Entity\User;
+use Drupal\webhooks\Webhook;
+use Symfony\Component\VarDumper\Cloner\VarCloner;
+use Symfony\Component\VarDumper\Dumper\CliDumper;
+use Symfony\Component\Yaml\Yaml;
+use Solarium\Core\Query\QueryInterface as SolariumQueryInterface;
+
+/**
+ * Implements hook_file_download().
+ */
+function docstore_file_download($uri) {
+  if (StreamWrapperManager::getScheme($uri) == 'private') {
+    if (Drupal::currentUser()->isAnonymous()) {
+      return -1;
+    }
+  }
+
+  return NULL;
+}
 
 /**
  * Implements hook_form_FORM_ID_alter().
@@ -38,268 +59,492 @@ function docstore_form_field_ui_field_overview_form_remove_field_prefix(&$form, 
 }
 
 /**
- * Allowed field types and mapping to search API.
+ * Implements hook_search_api_solr_converted_query_alter().
  */
-function docstore_allowed_field_types() {
-  // TODO Add date field.
-  return [
-    'string' => 'string',
-    'entity_reference' => 'integer',
-    'entity_reference_uuid' => 'string',
-    'email' => 'string',
-    'timestamp' => 'date',
-    'integer' => 'integer',
-    'string_long' => 'text',
-  ];
+function docstore_search_api_solr_converted_query_alter(SolariumQueryInterface $solarium_query, SearchApiQueryInterface $query) {
+  /** @var \Solarium\QueryType\Select\Query\Query $solarium_query */
+  foreach ($solarium_query->getFilterQueries() as &$filter) {
+    $parts = explode(':', $filter->getQuery());
+    // Has to be the title or a label.
+    if ($parts[0] === 'ss_title' || strpos($parts[0], '_label')) {
+      // Is it a wildcard?
+      if (strpos($parts[1], '*"')) {
+        // No spaces allowed.
+        if (!strpos($parts[1], ' ')) {
+          $parts[1] = str_replace('"', '', $parts[1]);
+          $filter->setQuery(implode(':', $parts));
+        }
+      }
+    }
+  }
 }
 
 /**
- * Create a document field for a provider.
+ * Setup testing.
  */
-function docstore_create_document_field_for_provider($label, $field_type, $multiple = FALSE, $provider_prefix = 'shared_') {
-  // Check field types.
-  $allowed_types = docstore_allowed_field_types();
-  if (!isset($allowed_types[$field_type])) {
-    return;
-  }
+function _docstore_setup_testing() {
+  // Delete all nodes.
+  $documents = \Drupal::entityTypeManager()->getStorage('node')->loadMultiple();
+  \Drupal::entityTypeManager()->getStorage('node')->delete($documents);
 
-  // Create new machine name.
-  $field_name = docstore_generate_unique_machine_name($label, 'node', $provider_prefix);
+  // Delete all node types.
+  $node_types = \Drupal::entityTypeManager()->getStorage('node_type')->loadMultiple();
+  \Drupal::entityTypeManager()->getStorage('node_type')->delete($node_types);
 
-  // Create storage.
-  $field_storage = FieldStorageConfig::create([
-    'field_name' => $field_name,
-    'entity_type' => 'node',
-    'type' => $field_type,
-    'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
-  ]);
-  $field_storage->save();
+  // Delete all terms.
+  // @todo skip shared vocabularies.
+  $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadMultiple();
+  \Drupal::entityTypeManager()->getStorage('taxonomy_term')->delete($terms);
 
-  // Create instance.
-  FieldConfig::create([
-    'field_storage' => $field_storage,
-    'bundle' => 'document',
-    'label' => $label,
-  ])->save();
+  // Delete all vocabularies.
+  // @todo skip shared vocabularies.
+  $vocabularies = \Drupal::entityTypeManager()->getStorage('taxonomy_vocabulary')->loadMultiple();
+  \Drupal::entityTypeManager()->getStorage('taxonomy_vocabulary')->delete($vocabularies);
 
-  // Add to index.
-  docstore_add_document_field_to_index($field_name, $field_type, $label);
+  // Delete all media.
+  $media = \Drupal::entityTypeManager()->getStorage('media')->loadMultiple();
+  \Drupal::entityTypeManager()->getStorage('media')->delete($media);
 
-  return $field_name;
-}
+  // Delete all files.
+  $file = \Drupal::entityTypeManager()->getStorage('file')->loadMultiple();
+  \Drupal::entityTypeManager()->getStorage('file')->delete($file);
 
-/**
- * Create a reference field on a document for a provider.
- */
-function docstore_create_document_reference_field_for_provider($label, $bundle, $multiple = FALSE, $provider_prefix = 'shared_') {
-  $field_type = 'entity_reference_uuid';
-  $field_name = docstore_generate_unique_machine_name($label, 'node', $provider_prefix);
-  $field_storage = FieldStorageConfig::create([
-    'field_name' => $field_name,
-    'entity_type' => 'node',
-    'type' => $field_type,
-    'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
-    'settings' => [
-      'target_type' => 'taxonomy_term',
-    ],
-  ]);
-  $field_storage->save();
+  // Delete document fields.
+  /** @var \Drupal\Core\Entity\EntityFieldManager $entityFieldManager */
+  $entityFieldManager = Drupal::service('entity_field.manager');
 
-  // Create instance.
-  FieldConfig::create([
-    'field_storage' => $field_storage,
-    'bundle' => 'document',
-    'label' => $label,
-    'settings' => [
-      'handler' => 'default:taxonomy_term',
-      'handler_settings' => [
-        'target_bundles' => [
-          $bundle => $bundle,
-        ],
-      ],
-    ],
-  ])->save();
+  // @todo Reset node types.
+  $node_types = _docstore_get_defined_node_types();
 
-  // Add to index.
-  docstore_add_document_field_to_index($field_name, $field_type, $label);
+  foreach ($node_types as $node_type) {
+    $fields = $entityFieldManager->getFieldDefinitions('node', $node_type);
 
-  return $field_name;
-}
+    // Remove fields we need.
+    unset($fields['nid']);
+    unset($fields['uuid']);
+    unset($fields['vid']);
+    unset($fields['langcode']);
+    unset($fields['type']);
+    unset($fields['revision_timestamp']);
+    unset($fields['revision_uid']);
+    unset($fields['revision_log']);
+    unset($fields['status']);
+    unset($fields['uid']);
+    unset($fields['title']);
+    unset($fields['created']);
+    unset($fields['changed']);
+    unset($fields['promote']);
+    unset($fields['sticky']);
+    unset($fields['default_langcode']);
+    unset($fields['revision_default']);
+    unset($fields['revision_translation_affected']);
+    unset($fields['author']);
+    unset($fields['files']);
+    unset($fields['private']);
 
-/**
- * Add field to index.
- */
-function docstore_add_document_field_to_index($field_name, $field_type, $label) {
-  $field_type_mapping = docstore_allowed_field_types();
-
-  // Skip unknown field types.
-  if (!isset($field_type_mapping[$field_type])) {
-    return;
-  }
-
-  $index = Index::load('documents');
-
-  $field = new Field($index, $field_name);
-  $field->setType($field_type_mapping[$field_type]);
-  $field->setPropertyPath($field_name);
-  $field->setDatasourceId('entity:node');
-  $field->setLabel($label);
-  $index->addField($field);
-
-  // Add term name if needed.
-  if ($field_type == 'entity_reference' || $field_type == 'entity_reference_uuid') {
-    $field = new Field($index, $field_name . '_label');
-    $field->setType('string');
-    $field->setPropertyPath($field_name . ':entity:name');
-    $field->setDatasourceId('entity:node');
-    $field->setLabel($label . ' (name)');
-    $index->addField($field);
-  }
-
-  // Save.
-  $index->save();
-
-  // Re-index.
-  $index->reindex();
-}
-
-/**
- * Check is a vocabulary does exist.
- */
-function docstore_vocabulary_is_valid($machine_name, $provider_prefix) {
-  if (Uuid::isValid($machine_name)) {
-    $vocabulary = \Drupal::service('entity.repository')->loadEntityByUuid('taxonomy_vocabulary', $machine_name);
-  }
-  else {
-    // Assume it's the machine name.
-    $vocabulary = Vocabulary::load($machine_name);
-    if (!$vocabulary) {
-      return FALSE;
+    foreach ($fields as $field_name => $field_info) {
+      if (FieldStorageConfig::loadByName('node', $field_name)) {
+        FieldStorageConfig::loadByName('node', $field_name)->delete();
+      }
     }
   }
 
-  // Disallow access to base vocabularies.
-  if (strpos($machine_name, 'base_') === 0) {
-    return FALSE;
+  // Reset documents index.
+  $config_path = drupal_get_path('module', 'docstore') . '/config/install/search_api.index.documents.yml';
+  $data = Yaml::parseFile($config_path);
+  \Drupal::configFactory()->getEditable('search_api.index.documents')->setData($data)->save(TRUE);
+
+  $index = Index::load('documents');
+  $index->clear();
+
+  $server = $index->getServerInstance();
+  $solr = $server->getBackend();
+  if ($solr instanceof SolrBackendInterface) {
+    $connector = $solr->getSolrConnector();
+    $update_query = $connector->getUpdateQuery();
+    $update_query->addDeleteQuery('*:*');
+    $connector->update($update_query);
   }
 
-  // Disallow access to vocabulary of an other provider.
-  if (strpos($machine_name, 'shared_') !== 0 && strpos($machine_name, $provider_prefix) !== 0) {
-    return FALSE;
+  // Reset terms index.
+  $config_path = drupal_get_path('module', 'docstore') . '/config/install/search_api.index.terms.yml';
+  $data = Yaml::parseFile($config_path);
+  \Drupal::configFactory()->getEditable('search_api.index.terms')->setData($data)->save(TRUE);
+
+  $index = Index::load('terms');
+  $index->clear();
+
+  $server = $index->getServerInstance();
+  $solr = $server->getBackend();
+  if ($solr instanceof SolrBackendInterface) {
+    $connector = $solr->getSolrConnector();
+    $update_query = $connector->getUpdateQuery();
+    $update_query->addDeleteQuery('*:*');
+    $connector->update($update_query);
   }
 
-  // Check name.
-  return docstore_machine_name_exists($machine_name, 'taxonomy_vocabulary');
-}
+  // Remove webhooks.
+  /** @var \Drupal\webhooks\WebhooksService $webhooks_service */
+  $webhooks_service = \Drupal::service('webhooks.service');
+  $webhook_configs = $webhooks_service->loadMultipleByEvent(':');
 
-/**
- * Create a vocabulary for a provider.
- */
-function docstore_create_vocabulary_for_provider($label, $provider_prefix = 'shared_') {
-  $vid = docstore_generate_unique_machine_name($label, 'taxonomy_vocabulary', $provider_prefix);
+  foreach ($webhook_configs as $webhook_config) {
+    $webhook_config->delete();
+  }
 
-  $vocabulary = Vocabulary::create([
-    'vid' => $vid,
-    'machine_name' => $vid,
-    'name' => $label,
-  ]);
-
-  $vocabulary->save();
-
-  return $vid;
-}
-
-/**
- * Create a vocabulary field for a provider.
- */
-function docstore_create_vocabulary_field_for_provider($bundle, $label, $field_type, $multiple = FALSE, $provider_prefix = 'shared_') {
-  $field_name = docstore_generate_unique_machine_name($label, 'taxonomy_term', $provider_prefix);
-
-  // Create storage.
-  $field_storage = FieldStorageConfig::create([
-    'field_name' => $field_name,
-    'entity_type' => 'taxonomy_term',
-    'type' => $field_type,
-    'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
-  ]);
-  $field_storage->save();
-
-  // Create instance.
-  FieldConfig::create([
-    'field_storage' => $field_storage,
-    'bundle' => $bundle,
-    'label' => $label,
-  ])->save();
-
-  return $field_name;
-}
-
-/**
- * Create a reference field on a vocabulary for a provider.
- */
-function docstore_create_vocabulary_reference_field_for_provider($bundle, $label, $target, $multiple = FALSE, $provider_prefix = 'shared_') {
-  $field_type = 'entity_reference_uuid';
-  $field_name = docstore_generate_unique_machine_name($label, 'taxonomy_term', $provider_prefix);
-
-  // Create storage.
-  $field_storage = FieldStorageConfig::create([
-    'field_name' => $field_name,
-    'entity_type' => 'taxonomy_term',
-    'type' => $field_type,
-    'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
-    'settings' => [
-      'target_type' => 'taxonomy_term',
-    ],
-  ]);
-  $field_storage->save();
-
-  // Create instance.
-  FieldConfig::create([
-    'field_storage' => $field_storage,
-    'bundle' => $bundle,
-    'label' => $label,
-    'settings' => [
-      'handler' => 'default:taxonomy_term',
-      'handler_settings' => [
-        'target_bundles' => [
-          $target => $target,
-        ],
+  // Create user if needed.
+  if (!User::load(2)) {
+    User::create([
+      'uid' => 2,
+      'status' => 1,
+      'name' => 'Base provider',
+      'type' => 'provider',
+      'pass' => '',
+      'prefix' => [
+        'value' => '',
       ],
+    ])->save();
+  }
+
+  if (!User::load(3)) {
+    User::create([
+      'uid' => 3,
+      'status' => 1,
+      'name' => 'Silk test',
+      'type' => 'provider',
+      'pass' => '',
+      'prefix' => [
+        'value' => 'silk_',
+      ],
+      'api_keys' => [
+        'value' => 'abcd',
+      ],
+      'api_keys_read_only' => [
+        'value' => 'xyzzy',
+      ],
+      'dropfolder' => [
+        'value' => '../drop_folders/silk',
+      ],
+      'shared_secret' => [
+        'value' => 'verysecret',
+      ],
+    ])->save();
+  }
+
+  // Create user if needed.
+  if (!User::load(4)) {
+    User::create([
+      'uid' => 4,
+      'status' => 1,
+      'name' => 'Another test',
+      'type' => 'provider',
+      'pass' => '',
+      'prefix' => [
+        'value' => 'another_',
+      ],
+      'api_keys' => [
+        'value' => 'dcba',
+      ],
+      'api_keys_read_only' => [
+        'value' => 'yzzyx',
+      ],
+    ])->save();
+  }
+
+  // Rebuild endpoints and accessible resources.
+  \Drupal::service('docstore.document_controller')->rebuildEndpoints();
+  \Drupal::service('docstore.document_controller')->rebuildAccessibleResourceTypes('node_type');
+  \Drupal::service('docstore.vocabulary_controller')->rebuildAccessibleResourceTypes('taxonomy_vocabulary');
+
+  // Invalidate caches.
+  Cache::invalidateTags(['documents']);
+  Cache::invalidateTags(['document_fields']);
+  Cache::invalidateTags(['terms']);
+  Cache::invalidateTags(['vocabularies']);
+  Cache::invalidateTags(['vocabulary_fields']);
+  Cache::invalidateTags(['media']);
+  Cache::invalidateTags(['files']);
+  Cache::invalidateTags(['webhooks']);
+}
+
+/**
+ * Create node type.
+ */
+function docstore_create_node_type($type = 'document', $endpoint = 'documents') {
+  if (NodeType::load($type)) {
+    return;
+  }
+
+  $provider = user_load(2);
+  $manager = new ManageFields($provider, $type, Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+  $manager->createDocumentType([
+    'label' => ucfirst($type),
+    'machine_name' => $type,
+    'endpoint' => $endpoint,
+    'author' => 'common',
+    'fields_allowed' => TRUE,
+    'content_allowed' => TRUE,
+    'shared' => TRUE,
+  ]);
+}
+
+/**
+ * Implements hook_webhooks_event_info_alter().
+ */
+function docstore_webhooks_event_info_alter(&$options) {
+  $entities = [
+    'vocabulary',
+    'term',
+    'media',
+    'file',
+    'field:document',
+    'field:vocabulary',
+  ];
+
+  $entities = array_merge($entities, _docstore_get_defined_node_types());
+
+  $actions = [
+    'create',
+    'read',
+    'update',
+    'delete',
+  ];
+
+  $options = [];
+  foreach ($entities as $entity) {
+    foreach ($actions as $action) {
+      $options[$entity . ':' . $action] = [
+        'type' => 'Hook: ' . ucfirst($entity),
+        'event' => $entity . ':' . $action,
+      ];
+    }
+  }
+}
+
+/**
+ * Notify webhooks.
+ */
+function docstore_notify_webhooks($event, $payload) {
+  drupal_register_shutdown_function('_docstore_trigger_webhooks', $event, $payload);
+}
+
+/**
+ * Trigger webhooks.
+ */
+function _docstore_trigger_webhooks($event, $payload) {
+  /** @var \Drupal\webhooks\WebhooksService $webhooks_service */
+  $webhooks_service = \Drupal::service('webhooks.service');
+  $webhook_configs = $webhooks_service->loadMultipleByEvent($event);
+
+  /** @var \Drupal\webhooks\Entity\WebhookConfig $webhook_config */
+  foreach ($webhook_configs as $webhook_config) {
+    $webhook = new Webhook(
+      [
+        'event' => $event,
+        'payload' => $payload,
+      ],
+      [],
+      $event,
+      'application/json'
+    );
+
+    $webhooks_service->send($webhook_config, $webhook);
+  }
+}
+
+/**
+ * Get allowed API end points.
+ */
+function _docstore_get_allowed_api_endpoints() {
+  // @todo read from config.
+  $config = [
+    'any' => [
+      'read' => 'document',
+      'write' => FALSE,
+      'field' => FALSE,
     ],
-  ])->save();
+    'documents' => [
+      'read' => 'document',
+      'write' => 'document',
+      'field' => 'document',
+    ],
+    'assessments' => [
+      'read' => 'assessment',
+      'write' => 'assessment',
+      'field' => 'assessment',
+    ],
+    'disasters' => [
+      'read' => 'disaster',
+      'write' => 'disaster',
+      'field' => 'disaster',
+    ],
+    'assessment-documents' => [
+      'read' => 'assessment_document',
+      'write' => 'assessment_document',
+      'field' => 'assessment_document',
+    ],
+    'knowledge-managements' => [
+      'read' => 'knowledge_management',
+      'write' => 'knowledge_management',
+      'field' => 'knowledge_management',
+    ],
+  ];
 
-  return $field_name;
+  return $config;
 }
 
 /**
- * Generate a unique machine name.
+ * Get allowed node types.
  */
-function docstore_generate_unique_machine_name($label, $entity_type, $provider_prefix) {
-  $label = strtolower($label);
-  $label = preg_replace('/[^a-z0-9_]+/', '_', $label);
-  $label = preg_replace('/_+/', '_', $label);
-  $label = $provider_prefix . $label;
+function _docstore_get_defined_node_types() {
+  // @todo read from config.
+  $config = [
+    'document',
+    'disaster',
+    'assessment',
+    'assessment_document',
+    'knowledge_management',
+  ];
 
-  $label = trim(substr($label, 0, 31), '_');
-  $counter = 0;
-  $machine_name = $label;
-  while (docstore_machine_name_exists($machine_name, $entity_type)) {
-    $suffix = '_' . $counter++;
-    $machine_name = substr($label, 0, 31 - strlen($suffix)) . $suffix;
-  }
-  return $machine_name;
+  return $config;
 }
 
 /**
- * Check if a machine name already exists.
+ * Implements hook_theme_registry_alter().
  */
-function docstore_machine_name_exists($machine_name, $entity_type) {
-  if ($entity_type == 'taxonomy_vocabulary') {
-    $vocabulary = Vocabulary::load($machine_name);
-    return !empty($vocabulary);
+function docstore_theme_registry_alter(&$theme_registry) {
+  if (!isset($theme_registry['taxonomy_term'])) {
+    return;
   }
 
-  $field = FieldStorageConfig::loadByName($entity_type, $machine_name);
+  $module_path = drupal_get_path('module', 'docstore');
+  $theme_registry['taxonomy_term']['path'] = $module_path . '/templates';
+  $theme_registry['taxonomy_term']['theme path'] = $module_path;
+}
 
-  return !empty($field);
+/**
+ * Rebuild index fields.
+ */
+function docstore_rebuild_index_fields($machine_name = 'assessment') {
+  // Reset index.
+  $config_path = drupal_get_path('module', 'docstore') . '/config/install/search_api.index.documents.yml';
+  $data = Yaml::parseFile($config_path);
+
+  $uuid_service = \Drupal::service('uuid');
+  $data['uuid'] = $uuid_service->generate();
+  $data['id'] = 'documents_' . $machine_name;
+  $data['name'] = 'Index for ' . $machine_name;
+  $data['datasource_settings']['entity:node']['bundles']['default'] = FALSE;
+  $data['datasource_settings']['entity:node']['bundles']['selected'] = [$machine_name];
+  \Drupal::configFactory()->getEditable('search_api.index.documents_' . $machine_name)->setData($data)->save(TRUE);
+
+  $index = Index::load('documents_' . $machine_name);
+  $index->clear();
+
+  $entityFieldManager = Drupal::service('entity_field.manager');
+  $provider = user_load(2);
+  $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+
+  $map = $entityFieldManager->getFieldDefinitions('node', $machine_name);
+
+  // Remove fields we need.
+  unset($map['nid']);
+  unset($map['uuid']);
+  unset($map['vid']);
+  unset($map['langcode']);
+  unset($map['type']);
+  unset($map['revision_timestamp']);
+  unset($map['revision_uid']);
+  unset($map['revision_log']);
+  unset($map['status']);
+  unset($map['uid']);
+  unset($map['title']);
+  unset($map['created']);
+  unset($map['changed']);
+  unset($map['promote']);
+  unset($map['sticky']);
+  unset($map['default_langcode']);
+  unset($map['revision_default']);
+  unset($map['revision_translation_affected']);
+  unset($map['author']);
+  unset($map['files']);
+  unset($map['private']);
+
+  // Add to search index display.
+  $storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
+
+  /** @var \Drupal\Core\Entity\Entity\EntityViewDisplay $view_display */
+  $view_display = $storage->load('node.' . $machine_name . '.search_index');
+  if (!$view_display) {
+    $view_display = EntityViewDisplay::create([
+      'targetEntityType' => 'node',
+      'bundle' => $machine_name,
+      'mode' => 'search_index',
+      'status' => TRUE,
+    ]);
+  }
+
+  // Make sure it's active.
+  if (!$view_display->status()) {
+    $view_display->setStatus(TRUE);
+  }
+
+  foreach ($map as $field_name => $field_info) {
+    $view_display->setComponent($field_name, [
+      'type' => 'number_unformatted',
+      'settings' => [],
+    ]);
+
+    // Skip common fields, added using config.
+    if ($field_info->getFieldStorageDefinition()->getThirdPartySetting('docstore', 'common') === TRUE) {
+      continue;
+    }
+
+    $field_type = $field_info->getType();
+    if ($field_info->getType() === 'entity_reference_uuid') {
+      if ($field_info->getFieldStorageDefinition()->get('settings')['target_type'] === 'node') {
+        $field_type = 'node_reference';
+      }
+      else {
+        $field_type = 'term_reference';
+      }
+    }
+
+    // Add to index.
+    $manager->addDocumentFieldToIndex($field_info, $field_type, $field_info->getLabel());
+  }
+
+  $view_display->save();
+}
+
+/**
+ * Debug helper to dump a variable into a string.
+ *
+ * This handles complex data as opposed to `print_r` or `var_dump`.
+ *
+ * @param mixed $variable
+ *   Variable to dump to a string.
+ * @param string $id
+ *   Id of the log. If not defined, the dump will not be logged.
+ *
+ * @return string
+ *   String representation of the variable.
+ */
+function _docstore_vardump($variable, $id = '_docstore_vardump') {
+  $cloner = new VarCloner();
+  $dumper = new CliDumper();
+  $output = '';
+
+  $dumper->dump($cloner->cloneVar($variable), function ($line, $depth) use (&$output) {
+    // A negative depth means "end of dump".
+    if ($depth >= 0) {
+      // Adds a two spaces indentation to the line.
+      $output .= str_repeat('  ', $depth) . $line . "\n";
+    }
+  });
+
+  if (!empty($id)) {
+    \Drupal::logger($id)->notice($output);
+  }
+  return $output;
 }
