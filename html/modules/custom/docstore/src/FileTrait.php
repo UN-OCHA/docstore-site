@@ -292,7 +292,11 @@ trait FileTrait {
 
     // Save the content to disk.
     /** @var \Drupal\media\Entity\Media $media */
-    $media = $this->saveFileToDisk($file, $content, $provider);
+    $file = $this->saveFileToDisk($file, $content, $provider);
+
+    // Create media item.
+    $media = $this->createMediaEntity($file, FALSE, $provider);
+    $this->saveMedia($media, $file, $provider);
 
     return $media;
   }
