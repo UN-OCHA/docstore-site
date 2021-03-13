@@ -149,7 +149,7 @@ function docstore_local_coordination_groups_sync($url = '') {
         'name' => $row->label,
         'vid' => $vocabulary->id(),
         'created' => [],
-        'base_provider_uuid' => [],
+        'provider_uuid' => [],
         'parent' => [],
         'description' => '',
       ];
@@ -160,12 +160,12 @@ function docstore_local_coordination_groups_sync($url = '') {
       ];
 
       // Set owner.
-      $item['base_provider_uuid'][] = [
+      $item['provider_uuid'][] = [
         'target_uuid' => $provider->uuid(),
       ];
 
       // Store HID Id.
-      $item['base_author_hid'][] = [
+      $item['author'][] = [
         'value' => 'Shared',
       ];
 
@@ -251,3 +251,4 @@ function docstore_local_coordination_groups_sync($url = '') {
 
 // Auto execute.
 docstore_local_coordination_groups_sync();
+\Drupal::service('docstore.vocabulary_controller')->rebuildAccessibleResourceTypes('taxonomy_vocabulary');
