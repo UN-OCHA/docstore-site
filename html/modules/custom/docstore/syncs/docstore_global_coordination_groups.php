@@ -110,7 +110,7 @@ function docstore_vulnerable_group_sync() {
           'name' => $row->label,
           'vid' => $vocabulary->id(),
           'created' => [],
-          'base_provider_uuid' => [],
+          'provider_uuid' => [],
           'parent' => [],
           'description' => '',
         ];
@@ -121,12 +121,12 @@ function docstore_vulnerable_group_sync() {
         ];
 
         // Set owner.
-        $item['base_provider_uuid'][] = [
+        $item['provider_uuid'][] = [
           'target_uuid' => $provider->uuid(),
         ];
 
         // Store HID Id.
-        $item['base_author_hid'][] = [
+        $item['author'][] = [
           'value' => 'Shared',
         ];
 
@@ -184,3 +184,4 @@ function docstore_vulnerable_group_sync() {
 
 // Auto execute.
 docstore_vulnerable_group_sync();
+\Drupal::service('docstore.vocabulary_controller')->rebuildAccessibleResourceTypes('taxonomy_vocabulary');
