@@ -213,6 +213,11 @@ class ParseQueryParameters {
         $conditions->addConditionGroup($subgroup);
       }
       else {
+        // Turn contains into wildcard search.
+        if (strtolower($filter['condition']['operator']) === 'contains') {
+          $filter['condition']['value'] = mb_strtolower($filter['condition']['value']);
+          $filter['condition']['value'] .= '*';
+        }
         $conditions->addCondition($filter['condition']['path'], $filter['condition']['value'], $filter['condition']['operator']);
       }
     }

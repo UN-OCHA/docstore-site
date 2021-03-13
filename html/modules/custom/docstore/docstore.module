@@ -13,6 +13,7 @@ use Drupal\docstore\ManageFields;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\node\Entity\NodeType;
 use Drupal\search_api\Entity\Index;
+use Drupal\search_api\IndexInterface;
 use Drupal\search_api\Query\QueryInterface as SearchApiQueryInterface;
 use Drupal\search_api_solr\SolrBackendInterface;
 use Drupal\user\Entity\User;
@@ -547,4 +548,21 @@ function _docstore_vardump($variable, $id = '_docstore_vardump') {
     \Drupal::logger($id)->notice($output);
   }
   return $output;
+}
+
+/**
+ * Implements hook_search_api_solr_documents_alter().
+ *
+ * Add lower-case label for terms.
+ */
+function docstore_search_api_solr_documents_alter(&$documents, IndexInterface $index, $items) {
+  if ($index->id() !== 'terms') {
+    return;
+  }
+
+  foreach ($documents as &$document) {
+    if (isset($document->ss_name)) {
+      $document->setField('ss_label', mb_strtolower($document->ss_name));
+    }
+  }
 }
