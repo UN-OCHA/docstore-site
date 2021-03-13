@@ -132,4 +132,18 @@ trait DocumentTypeTrait {
     return $this->EndpointGetNodeType($type);
   }
 
+  /**
+   * Load a node type entity.
+   *
+   * @param string $id
+   *   Node type uuid or machine_name.
+   *
+   * @return \Drupal\node\Entity\NodeType
+   *   Node type entity.
+   */
+  protected function loadNodeType($id) {
+    /** @var \Drupal\node\Entity\NodeType */
+    return $this->loadResourceEntity('node_type', $id);
+  }
+
 }

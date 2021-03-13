@@ -1,8 +1,6 @@
 <?php
 
-//const API_URL = 'http://docstore.local.docksal/';
-//const API_URL = 'https://docstore.test/';
-const API_URL = 'https://ocha:dev@dev.docstore-unocha-org.ahconu.org/';
+const API_URL = 'http://docstore.local.docksal/';
 
 function post($url, $data) {
   $ch = curl_init($url);
@@ -15,7 +13,6 @@ function post($url, $data) {
       'Content-Type: application/json'
     ],
     CURLOPT_POSTFIELDS => json_encode($data),
-    // CURLOPT_SSL_VERIFYPEER => FALSE,
   ]);
 
   // Send the request.
@@ -43,14 +40,16 @@ function createNodeType() {
 
 function createVocabularies() {
   $vocabularies = [
-    'disaster_status',
+    'disaster_status' => 'Disaster Status',
   ];
 
-  foreach ($vocabularies as $vocabulary) {
+  foreach ($vocabularies as $machine_name => $label) {
     post(API_URL . 'api/v1/vocabularies', [
-      'label' => $vocabulary,
+      'label' => $label,
       'author' => 'RW',
-    ]);
+      'machine_name' => $machine_name,
+      'author' => 'Shared',
+  ]);
   }
 }
 
@@ -67,7 +66,7 @@ function createDisasterFields() {
     'disaster_status' => [
       'label' => 'Disaster status',
       'type' => 'term_reference',
-      'target' => 'silk_disaster_status',
+      'target' => 'disaster_status',
     ],
     'primary_country' => [
       'label' => 'Primary country',
@@ -117,7 +116,7 @@ function createDisasterFields() {
       $data['target'] = $field['target'];
     }
 
-    post(API_URL . 'api/v1/fields/disasters', $data);
+    post(API_URL . 'api/v1/types/disaster/fields', $data);
   }
 }
 
@@ -139,29 +138,28 @@ function syncDisasters($url = '') {
   foreach ($data->data as $row) {
     $disaster = [
       'title' => $row->fields->name,
-      'metadata' => [],
       'files' => [],
     ];
 
     // Id.
-    $disaster['metadata'][] = ['id' => $row->fields->id];
+    $disaster['id'] = $row->fields->id;
 
     // Status.
-    $disaster['metadata'][] = ['disaster_status' => $row->fields->status];
+    $disaster['disaster_status'] = $row->fields->status;
 
     // Glide.
     if (isset($row->fields->glide)) {
-      $disaster['metadata'][] = ['glide' => $row->fields->glide];
+      $disaster['glide'] = $row->fields->glide;
     }
 
     // Profile.
     if (isset($row->fields->profile->overview)) {
-      $disaster['metadata'][] = ['profile' => $row->fields->profile->overview];
+      $disaster['profile'] = $row->fields->profile->overview;
     }
 
     // Description.
     if (isset($row->fields->description)) {
-      $disaster['metadata'][] = ['description' => $row->fields->description];
+      $disaster['description'] = $row->fields->description;
     }
 
     // Disaster type.
@@ -177,7 +175,7 @@ function syncDisasters($url = '') {
         ];
       }
 
-      $disaster['metadata'][] = ['disaster_type' => $type_data];
+      $disaster['disaster_type'] = $type_data;
     }
 
     // Primary disaster type.
@@ -190,7 +188,7 @@ function syncDisasters($url = '') {
         'value' => $row->fields->primary_type->code,
       ];
 
-      $disaster['metadata'][] = ['primary_disaster_type' => [$type_data]];
+      $disaster['primary_disaster_type'] = [$type_data];
     }
 
     // Countries.
@@ -206,7 +204,7 @@ function syncDisasters($url = '') {
         ];
       }
 
-      $disaster['metadata'][] = ['countries' => $country_data];
+      $disaster['countries'] = $country_data;
     }
 
     // Primary country.
@@ -219,7 +217,7 @@ function syncDisasters($url = '') {
         'value' => $row->fields->primary_country->iso3,
       ];
 
-      $disaster['metadata'][] = ['primary_country' => [$country_data]];
+      $disaster['primary_country'] = [$country_data];
     }
 
     $disaster['author'] = 'RW';

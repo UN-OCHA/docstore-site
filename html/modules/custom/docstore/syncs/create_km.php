@@ -181,18 +181,24 @@ function syncKM() {
         $document_params[$header_lowercase[$i]] = $row[$i];
       }
       elseif ($header_lowercase[$i] === 'document') {
-        $document_params['files'][] = ['uri' => $row[$i]];
+        $row_values = explode(',', $row[$i]);
+        $row_values = array_map('trim', $row_values);
+        foreach ($row_values as $row_value) {
+          $document_params['files'][] = ['uri' => $row_value];
+        }
       }
       else {
         if ($header_lowercase[$i] === 'description') {
           $document_params[$header_lowercase[$i]] = $row[$i];
         }
         else {
-          $row_values = explode(',', $row[$i]);
-          $row_values = array_map('trim', $row_values);
-
           if ($header_lowercase[$i] === 'original_publication_date') {
-            continue;
+            $row_values = new DateTimeImmutable($row[$i] . '+00:00');
+            $row_values = $row_values->getTimestamp();
+          }
+          else {
+            $row_values = explode(',', $row[$i]);
+            $row_values = array_map('trim', $row_values);
           }
           $document_params[$header_lowercase[$i]] = $row_values;
         }
@@ -200,14 +206,14 @@ function syncKM() {
     }
 
     // Add common fields.
-    $document_params['author'] = 'test';
+    $document_params['author'] = 'AR';
     $documents[] = $document_params;
   }
 
   fclose($handle);
 
   $data = [
-    'author' => 'test',
+    'author' => 'AR',
     'documents' => $documents,
   ];
 

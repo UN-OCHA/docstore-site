@@ -521,20 +521,6 @@ class DocumentTypeController extends ControllerBase {
   }
 
   /**
-   * Load a node type entity.
-   *
-   * @param string $id
-   *   Node type uuid or machine_name.
-   *
-   * @return \Drupal\node\Entity\NodeType
-   *   Node type entity.
-   */
-  protected function loadNodeType($id) {
-    /** @var \Drupal\node\Entity\NodeType */
-    return $this->loadResourceEntity('node_type', $id);
-  }
-
-  /**
    * Build the document type data for the response.
    *
    * @param \Drupal\node\Entity\NodeType $node_type

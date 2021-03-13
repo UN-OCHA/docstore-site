@@ -1,8 +1,6 @@
 <?php
 
 const API_URL = 'http://docstore.local.docksal/';
-//const API_URL = 'https://docstore.test/';
-//const API_URL = 'https://ocha:dev@dev.docstore-unocha-org.ahconu.org/';
 
 function post($url, $data) {
   $ch = curl_init($url);
@@ -15,7 +13,6 @@ function post($url, $data) {
       'Content-Type: application/json'
     ],
     CURLOPT_POSTFIELDS => json_encode($data),
-    // CURLOPT_SSL_VERIFYPEER => FALSE,
   ]);
 
   // Send the request.
