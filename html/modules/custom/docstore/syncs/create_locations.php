@@ -27,7 +27,7 @@ function post($url, $data) {
 
 function createVocabularies() {
   $vocabularies = [
-    'locations' => "Locations",
+    'locations' => 'Locations',
   ];
 
   foreach ($vocabularies as $machine_name => $label) {
@@ -102,7 +102,6 @@ function syncLocations($url = '', $admin_level = 0) {
       'pcode' => $row->pcode,
       'iso3' => $row->iso3,
       'admin_level' => $row->admin_level,
-      'label' => $row->label,
     ];
 
     if (isset($row->geolocation) && isset($row->geolocation->lat)) {
