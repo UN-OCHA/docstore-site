@@ -28,7 +28,6 @@ function docstore_local_coordination_groups_fields() {
       'id' => 'string',
       'email' => 'string',
       'website' => 'string',
-      'type' => 'string',
       'global_cluster' => [
         'type' => 'term_reference',
         'target' => 'global_coordination_groups',
@@ -89,6 +88,7 @@ function docstore_local_coordination_groups_ensure_vocabulary_fields() {
       if (is_array($type)) {
         $manager->addVocabularyField($vocabulary, [
           'label' => $label,
+          'machine_name' => $label,
           'type' => $type['type'],
           'target' => $type['target'],
           'multiple' => $type['multiple'],
@@ -98,6 +98,7 @@ function docstore_local_coordination_groups_ensure_vocabulary_fields() {
       else {
         $manager->addVocabularyField($vocabulary, [
           'label' => $label,
+          'machine_name' => $label,
           'type' => $type,
           'author' => 'Shared',
         ]);
