@@ -36,17 +36,17 @@ function docstore_local_coordination_groups_fields() {
       ],
       'lead_agencies' => [
         'type' => 'term_reference',
-        'target' => 'hrinfo_organizations',
+        'target' => 'organizations',
         'multiple' => TRUE,
       ],
       'partners' => [
         'type' => 'term_reference',
-        'target' => 'hrinfo_organizations',
+        'target' => 'organizations',
         'multiple' => TRUE,
       ],
-      'operation' => [
+      'operations' => [
         'type' => 'term_reference',
-        'target' => 'hrinfo_operations',
+        'target' => 'operations',
         'multiple' => TRUE,
       ],
       'ngo_participation' => 'boolean',
@@ -186,7 +186,7 @@ function docstore_local_coordination_groups_sync($url = '') {
                 if (empty($lookup_item)) {
                   continue;
                 }
-                $uuid = '';
+
                 $entities = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadByProperties([
                   'name' => $lookup_item->label,
                   'vid' => $type['target'],
