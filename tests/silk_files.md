@@ -518,7 +518,7 @@ Attempt to create a file from the dropfolder, that doesn't exist.
 
 * Status: `400`
 * Content-Type: "application/json"
-* Data.message: "File not found in dropfolder"
+* Data.message: "File not found in dropfolder: unknown.txt"
 
 ## POST /files
 

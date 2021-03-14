@@ -27,7 +27,8 @@ function post($url, $data) {
 
 function createVocabularies() {
   $vocabularies = [
-    'locations' => 'Locations',
+    'organizations' => 'Organizations',
+    'organization_types' => 'Organization types',
   ];
 
   foreach ($vocabularies as $machine_name => $label) {
@@ -39,27 +40,29 @@ function createVocabularies() {
   }
 }
 
-function createLocationFields() {
+function createOrganizationsFields() {
   $fields = [
     'id' => [
       'label' => 'Id',
       'type' => 'string',
     ],
-    'pcode' => [
-      'label' => 'P-code',
+    'acronym' => [
+      'label' => 'Acronym',
       'type' => 'string',
     ],
-    'iso3' => [
-      'label' => 'P-code',
+    'homepage' => [
+      'label' => 'Homepage',
       'type' => 'string',
     ],
-    'admin_level' => [
-      'label' => 'Admin level',
+    'fts_id' => [
+      'label' => 'FTS Id',
       'type' => 'integer',
     ],
-    'geolocation' => [
-      'label' => 'Geo location',
-      'type' => 'geofield',
+    'organization_type' => [
+      'label' => 'Organization type',
+      'type' => 'term_reference',
+      'target' => 'organization_types',
+      'multiple' => FALSE,
     ],
   ];
 
@@ -77,71 +80,52 @@ function createLocationFields() {
       $data['target'] = $field['target'];
     }
 
-    post(API_URL . 'api/v1/vocabularies/locations/fields', $data);
+    post(API_URL . 'api/v1/vocabularies/organizations/fields', $data);
   }
 }
 
-function syncLocations($url = '', $admin_level = 0) {
+function syncorganizations($url = '') {
   if (empty($url)) {
-    $ts = 0;
-
-    $api_endpoint = 'https://www.humanitarianresponse.info/en/api/v1.0/locations';
-    $url = $api_endpoint . '?filter[admin_level]=' . $admin_level;
-    $url .= '&filter[changed][value]=' . $ts . '&filter[changed][operator]=>';
-    $url .= '&sort=changed,id';
+    $api_endpoint = 'https://www.humanitarianresponse.info/en/api/v1.0/organizations';
+    $url = $api_endpoint . '?sort=id';
   }
 
   $raw = file_get_contents($url);
   $data = json_decode($raw);
 
-  $locations = [];
+  $organizations = [];
   foreach ($data->data as $row) {
-    $location = [
+    $organization = [
       'label' => $row->label,
       'id' => $row->id,
-      'pcode' => $row->pcode,
-      'iso3' => $row->iso3,
-      'admin_level' => $row->admin_level,
+      'homepage' => $row->homepage ?? '',
+      'acronym' => $row->acronym ?? '',
+      'fts_id' => $row->fts_id ?? '',
     ];
 
-    if (isset($row->geolocation) && isset($row->geolocation->lat)) {
-      $location['geolocation'] = [
-        'lat' => $row->geolocation->lat,
-        'lon' => $row->geolocation->lon,
-        'value' => 'POINT (' . $row->geolocation->lat . ' ' . $row->geolocation->lon . ')',
-      ];
+    // Add type.
+    if (isset($row->type) && !empty($row->type)) {
+      $organization['organization_type_label'] = $row->type->label;
     }
 
-    // Add parent if needed
-    if (isset($row->parent) && !empty($row->parent)) {
-      $location['parent'] = [
-        '_reference' => 'term',
-        '_target' => 'locations',
-        '_field' => 'id',
-        '_value' => $row->parent[0]->id,
-     ];
-    }
-
-    $location['author'] = 'HRINFO';
-    $locations[] = $location;
+    $organization['author'] = 'HRINFO';
+    $organizations[] = $organization;
   }
 
   $post_data = [
     'author' => 'HRINFO',
-    'terms' => $locations,
+    'terms' => $organizations,
   ];
 
-  post(API_URL . 'api/v1/vocabularies/locations/terms/bulk', $post_data);
+  post(API_URL . 'api/v1/vocabularies/organizations/terms/bulk', $post_data);
 
   // Check for more data.
   if (isset($data->next) && isset($data->next->href)) {
     print $data->next->href;
-    syncLocations($data->next->href, $admin_level);
+    syncorganizations($data->next->href);
   }
 }
 
 createVocabularies();
-createLocationFields();
-syncLocations();
-syncLocations('', 1);
-syncLocations('', 2);
+createOrganizationsFields();
+syncorganizations();
