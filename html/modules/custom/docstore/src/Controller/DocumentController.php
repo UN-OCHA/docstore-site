@@ -530,6 +530,17 @@ class DocumentController extends ControllerBase {
               'target_uuid' => $media->uuid(),
             ];
           }
+          elseif (isset($uuid['filename'])) {
+            $content = $this->fetchDropfolderFileContent($uuid['filename'], $provider);
+            $file = $this->createFileEntity($uuid['filename'], 'undefined', FALSE, $provider);
+            $file = $this->saveFileToDisk($file, $content, $provider);
+            $media = $this->createMediaEntity($file, FALSE, $provider);
+            $this->saveMedia($media, $file, $provider);
+
+            $item['files'][] = [
+              'target_uuid' => $media->uuid(),
+            ];
+          }
         }
       }
     }

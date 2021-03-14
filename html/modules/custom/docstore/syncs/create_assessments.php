@@ -54,8 +54,6 @@ function createNodeType() {
 
 function createVocabularies() {
   $vocabularies = [
-    'Organizations' => 'ar_organizations',
-    'Locations' => 'ar_locations',
     'Units of measurement' => 'ar_units_of_measurement',
     'Assessment status' => 'ar_assessment_status',
   ];
@@ -82,7 +80,7 @@ function createAssessmentDocumentFields() {
   ];
 
   foreach ($fields as $machine_name => $field) {
-    post(API_URL . 'api/v1/fields/assessment-documents', [
+    post(API_URL . 'api/v1/types/assessment_document/fields', [
       'label' => $field['label'],
       'machine_name' => $machine_name,
       'type' => $field['type'],
@@ -164,19 +162,19 @@ function createAssessmentFields() {
     'organizations' => [
       'label' => 'Organizations',
       'type' => 'term_reference',
-      'target' => 'ar_organizations',
+      'target' => 'organizations',
       'multiple' => TRUE,
     ],
     'asst_organizations' => [
       'label' => 'Other organizations',
       'type' => 'term_reference',
-      'target' => 'ar_organizations',
+      'target' => 'organizations',
       'multiple' => TRUE,
     ],
     'locations' => [
       'label' => 'Locations',
       'type' => 'term_reference',
-      'target' => 'ar_locations',
+      'target' => 'locations',
       'multiple' => TRUE,
     ],
     'population_types' => [
@@ -236,7 +234,7 @@ function createAssessmentFields() {
       $data['target'] = $field['target'];
     }
 
-    post(API_URL . 'api/v1/fields/assessments', $data);
+    post(API_URL . 'api/v1/types/assessment/fields', $data);
   }
 }
 
@@ -252,19 +250,15 @@ function syncAssesments($url = '') {
   foreach ($data->data as $row) {
     $assessment = [
       'title' => $row->label,
-      'metadata' => [],
       'files' => [],
-    ];
-
-    $assessment['metadata'] = [
-      ['id' => $row->id],
-      ['other_location' => $row->other_location ?? ''],
-      ['subject' => $row->subject ?? ''],
-      ['methodology' => $row->methodology ?? ''],
-      ['key_findings' => $row->key_findings ?? ''],
-      ['sample_size' => $row->sample_size ?? ''],
-      ['frequency' => $row->frequency ?? ''],
-      ['ar_status_label' => $row->status ?? ''],
+      'id' => $row->id,
+      'other_location' => $row->other_location ?? '',
+      'subject' => $row->subject ?? '',
+      'methodology' => $row->methodology ?? '',
+      'key_findings' => $row->key_findings ?? '',
+      'sample_size' => $row->sample_size ?? '',
+      'frequency' => $row->frequency ?? '',
+      'ar_status_label' => $row->status ?? '',
     ];
 
     if (isset($row->collection_method)) {
@@ -272,7 +266,7 @@ function syncAssesments($url = '') {
       foreach ($row->collection_method as $collection_method) {
         $data_collection_method[] = $collection_method;
       }
-      $assessment['metadata'][] = ['collection_method' => $data_collection_method];
+      $assessment['collection_method'] = $data_collection_method;
     }
 
     if (isset($row->operation)) {
@@ -283,17 +277,15 @@ function syncAssesments($url = '') {
         }
 
         if (!empty($data_operation)) {
-          $assessment['metadata'][] = ['operation_label' => $data_operation];
+          $assessment['operation_label'] = $data_operation;
         }
       }
     }
 
     if (isset($row->date)) {
-      $assessment['metadata'][] = [
-        'ar_date' => [
-          'value' => str_replace(' ', 'T', $row->date->value),
-          'end_value' => str_replace(' ', 'T', $row->date->value2),
-        ],
+      $assessment['ar_date'] =[
+        'value' => str_replace(' ', 'T', $row->date->value),
+        'end_value' => str_replace(' ', 'T', $row->date->value2),
       ];
     }
 
@@ -310,7 +302,7 @@ function syncAssesments($url = '') {
         ];
       }
 
-      $assessment['metadata'][] = ['disasters' => $disaster_data];
+      $assessment['disasters'] = $disaster_data;
     }
 
     // Local coordination groups aka bundles.
@@ -328,7 +320,7 @@ function syncAssesments($url = '') {
         }
       }
 
-      $assessment['metadata'][] = ['local_groups' => $bundle_data];
+      $assessment['local_groups'] = $bundle_data;
     }
 
     // Organizations.
@@ -336,11 +328,17 @@ function syncAssesments($url = '') {
       $organization_data = [];
       foreach ($row->organizations as $organization) {
         if (isset($organization->label)) {
-          $organization_data[] = $organization->label;
+          $organization_data[] = [
+            '_action' => 'lookup',
+            '_reference' => 'term',
+            '_target' => 'organizations',
+            '_field' => 'id',
+            'value' => $organization->id,
+          ];
         }
       }
 
-      $assessment['metadata'][] = ['organizations_label' => $organization_data];
+      $assessment['organizations'] = $organization_data;
     }
 
     // Participating organizations.
@@ -348,11 +346,17 @@ function syncAssesments($url = '') {
       $organization_data = [];
       foreach ($row->participating_organizations as $organization) {
         if (isset($organization->label)) {
-          $organization_data[] = $organization->label;
+          $organization_data[] = [
+            '_action' => 'lookup',
+            '_reference' => 'term',
+            '_target' => 'organizations',
+            '_field' => 'id',
+            'value' => $organization->id,
+          ];
         }
       }
 
-      $assessment['metadata'][] = ['asst_organizations_label' => $organization_data];
+      $assessment['asst_organizations'] = $organization_data;
     }
 
     // Locations.
@@ -362,7 +366,7 @@ function syncAssesments($url = '') {
         $locations_data[] = $organization->label;
       }
 
-      $assessment['metadata'][] = ['locations_label' => $locations_data];
+      $assessment['locations_label'] = $locations_data;
     }
 
     // Population types.
@@ -380,7 +384,7 @@ function syncAssesments($url = '') {
         }
       }
 
-      $assessment['metadata'][] = ['population_types' => $population_type_data];
+      $assessment['population_types'] = $population_type_data;
     }
 
     // Themes.
@@ -398,7 +402,7 @@ function syncAssesments($url = '') {
         }
       }
 
-      $assessment['metadata'][] = ['themes' => $theme_data];
+      $assessment['themes'] = $theme_data;
     }
 
     // units_of_measurement.
@@ -411,7 +415,7 @@ function syncAssesments($url = '') {
       }
 
       if (!empty($unit_measurement_data)) {
-        $assessment['metadata'][] = ['units_of_measurement_label' => $unit_measurement_data];
+        $assessment['units_of_measurement_label'] = $unit_measurement_data;
       }
     }
 
@@ -421,7 +425,7 @@ function syncAssesments($url = '') {
 
       // Pass as an array.
       if ($report_data) {
-        $assessment['metadata'][] = ['assessment_report' => [$report_data]];
+        $assessment['assessment_report'] = [$report_data];
       }
     }
 
@@ -431,7 +435,7 @@ function syncAssesments($url = '') {
 
       // Pass as an array.
       if ($questionnaire_data) {
-        $assessment['metadata'][] = ['assessment_questionnaire' => [$questionnaire_data]];
+        $assessment['assessment_questionnaire'] = [$questionnaire_data];
       }
     }
 
@@ -441,7 +445,7 @@ function syncAssesments($url = '') {
 
       // Pass as an array.
       if ($data_data) {
-        $assessment['metadata'][] = ['assessment_data' => [$data_data]];
+        $assessment['assessment_data'] = [$data_data];
       }
     }
 
@@ -454,7 +458,7 @@ function syncAssesments($url = '') {
     'documents' => $assessments,
   ];
 
-  post(API_URL . 'api/v1/assessments/bulk', $post_data);
+  post(API_URL . 'api/v1/documents/assessments/bulk', $post_data);
 
   // Check for more data.
   if (isset($data->next->href)) {
@@ -480,10 +484,8 @@ function buildAssessmentDocument($data) {
       'author' => 'AR',
       'title' => $data->file->filename ?? 'Not applicable',
       'files' => [],
-      'metadata' => [
-        ['accessibility' => $data->accessibility ?? 'Publicly Available'],
-        ['instructions' => $data->instructions ?? ''],
-      ],
+      'accessibility' => $data->accessibility ?? 'Publicly Available',
+      'instructions' => $data->instructions ?? '',
     ],
   ];
 
@@ -492,8 +494,11 @@ function buildAssessmentDocument($data) {
   }
 
   if (isset($data->file->url)) {
-    $output['_data']['files'][] = [
+    $xoutput['_data']['files'][] = [
       'uri' => $data->file->url,
+    ];
+    $output['_data']['files'][] = [
+      'filename' => $data->file->filename,
     ];
   }
 

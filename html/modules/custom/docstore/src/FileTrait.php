@@ -252,7 +252,7 @@ trait FileTrait {
 
     $files = $this->fileSystem->scanDirectory($provider->get('dropfolder')->value, '/^' . $filename . '$/');
     if (empty($files)) {
-      throw new BadRequestHttpException('File not found in dropfolder');
+      throw new BadRequestHttpException('File not found in dropfolder: ' . $filename);
     }
 
     // Only get the content of the first file.
