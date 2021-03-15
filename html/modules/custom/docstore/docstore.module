@@ -566,3 +566,89 @@ function docstore_search_api_solr_documents_alter(&$documents, IndexInterface $i
     }
   }
 }
+
+/**
+ * Update operations on assessments.
+ */
+function docstore_update_assessments($url = '') {
+  if (empty($url)) {
+    $url = 'https://www.humanitarianresponse.info/api/v1.0/assessments';
+  }
+
+  $raw = file_get_contents($url);
+  $data = json_decode($raw);
+
+  foreach ($data->data as $row) {
+    $needs_save = FALSE;
+    $id = $row->id;
+
+    $storage = \Drupal::entityTypeManager()->getStorage('node');
+    $entities = $storage->loadByProperties([
+      'type' => 'assessment',
+      'id' => $id,
+    ]);
+
+    /** @var \Drupal\node\Entity\Node */
+    $node = $entities ? reset($entities) : NULL;
+
+    if (!$node) {
+      continue;
+    }
+
+    if (isset($row->operation)) {
+      if ($node->hasField('operations') && $node->get('operations')->isEmpty()) {
+        $data_operation = [];
+        foreach ($row->operation as $operation) {
+          if (!empty($operation)) {
+            $entities = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadByProperties([
+              'vid' => 'operations',
+              'id' => $operation->id,
+            ]);
+            $term = $entities ? reset($entities) : NULL;
+            if ($term) {
+              $data_operation[] = $term->uuid();
+            }
+          }
+        }
+
+        if (!empty($data_operation)) {
+          $needs_save = TRUE;
+          $node->set('operations', $data_operation);
+        }
+      }
+    }
+
+    if (isset($row->disasters)) {
+      if ($node->hasField('disasters') && $node->get('disasters')->isEmpty()) {
+        $data_disasters = [];
+        foreach ($row->disasters as $disaster) {
+          if (!empty($disaster)) {
+            $entities = \Drupal::entityTypeManager()->getStorage('node')->loadByProperties([
+              'type' => 'disaster',
+              'glide' => $disaster->glide,
+            ]);
+            $term = $entities ? reset($entities) : NULL;
+            if ($term) {
+              $data_disasters[] = $term->uuid();
+            }
+          }
+        }
+
+        if (!empty($data_disasters)) {
+          $needs_save = TRUE;
+          $node->set('disasters', $data_disasters);
+        }
+      }
+    }
+
+    if ($needs_save) {
+      $node->save();
+    }
+  }
+
+  // Check for more data.
+  if (isset($data->next->href)) {
+    print $data->next->href;
+    docstore_update_assessments($data->next->href);
+  }
+}
