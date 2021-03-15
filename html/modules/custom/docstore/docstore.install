@@ -35,6 +35,7 @@ function docstore_update_8003() {
   $manager->addDocumentField([
     'type' => 'assessment',
     'label' => 'Operations',
+    'machine_name' => 'operations',
     'type' => 'term_reference',
     'target' => 'operations',
     'multiple' => TRUE,
