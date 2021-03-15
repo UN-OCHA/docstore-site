@@ -652,3 +652,24 @@ function docstore_update_assessments($url = '') {
     docstore_update_assessments($data->next->href);
   }
 }
+
+/**
+ * Wipe index and solr backend.
+ */
+function docstore_wipe_index_and_solr($index_name = '') {
+  $index = Index::load($index_name);
+  if (!$index) {
+    return;
+  }
+
+  $index->clear();
+
+  $server = $index->getServerInstance();
+  $solr = $server->getBackend();
+  if ($solr instanceof SolrBackendInterface) {
+    $connector = $solr->getSolrConnector();
+    $update_query = $connector->getUpdateQuery();
+    $update_query->addDeleteQuery('*:*');
+    $connector->update($update_query);
+  }
+}

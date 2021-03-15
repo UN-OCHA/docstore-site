@@ -41,3 +41,14 @@ function docstore_update_8003() {
     'author' => 'AR',
   ]);
 }
+
+/**
+ * Force rebuild all indexes.
+ */
+function docstore_update_8004() {
+  docstore_wipe_index_and_solr('terms');
+  docstore_wipe_index_and_solr('documents_knowledge_management');
+  docstore_wipe_index_and_solr('documents_disaster');
+  docstore_wipe_index_and_solr('documents_assessment');
+  docstore_wipe_index_and_solr('documents_assessment_document');
+}
