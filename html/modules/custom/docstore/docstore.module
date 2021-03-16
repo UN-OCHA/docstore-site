@@ -575,6 +575,8 @@ function docstore_update_assessments($url = '') {
     $url = 'https://www.humanitarianresponse.info/api/v1.0/assessments';
   }
 
+  \Drupal::logger('docstore')->notice('Fetching data from ' . $url);
+
   $raw = file_get_contents($url);
   $data = json_decode($raw);
 
@@ -641,6 +643,121 @@ function docstore_update_assessments($url = '') {
       }
     }
 
+    if (isset($row->bundles)) {
+      if ($node->hasField('local_groups') && $node->get('local_groups')->isEmpty()) {
+        $data_local_groups = [];
+        foreach ($row->bundles as $bundle) {
+          if (!empty($bundle)) {
+            $entities = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadByProperties([
+              'vid' => 'local_coordination_groups',
+              'id' => $bundle->id,
+            ]);
+            $term = $entities ? reset($entities) : NULL;
+            if ($term) {
+              $data_local_groups[] = $term->uuid();
+            }
+          }
+        }
+
+        if (!empty($data_local_groups)) {
+          $needs_save = TRUE;
+          $node->set('local_groups', $data_local_groups);
+        }
+      }
+    }
+
+    if (isset($row->organizations)) {
+      if ($node->hasField('organizations') && $node->get('organizations')->isEmpty()) {
+        $data_organizations = [];
+        foreach ($row->organizations as $organization) {
+          if (!empty($organization)) {
+            $entities = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadByProperties([
+              'vid' => 'organizations',
+              'id' => $organization->id,
+            ]);
+            $term = $entities ? reset($entities) : NULL;
+            if ($term) {
+              $data_organizations[] = $term->uuid();
+            }
+          }
+        }
+
+        if (!empty($data_organizations)) {
+          $needs_save = TRUE;
+          $node->set('organizations', $data_organizations);
+        }
+      }
+    }
+
+    if (isset($row->participating_organizations)) {
+      if ($node->hasField('asst_organizations') && $node->get('asst_organizations')->isEmpty()) {
+        $data_organizations = [];
+        foreach ($row->participating_organizations as $organization) {
+          if (!empty($organization)) {
+            $entities = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadByProperties([
+              'vid' => 'organizations',
+              'id' => $organization->id,
+            ]);
+            $term = $entities ? reset($entities) : NULL;
+            if ($term) {
+              $data_organizations[] = $term->uuid();
+            }
+          }
+        }
+
+        if (!empty($data_organizations)) {
+          $needs_save = TRUE;
+          $node->set('asst_organizations', $data_organizations);
+        }
+      }
+    }
+
+    if (isset($row->population_types)) {
+      if ($node->hasField('population_types') && $node->get('population_types')->isEmpty()) {
+        $data_population_types = [];
+        foreach ($row->population_types as $population_type) {
+          if (!empty($population_type)) {
+            $entities = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadByProperties([
+              'vid' => 'population_types',
+              'id' => $population_type->id,
+            ]);
+            $term = $entities ? reset($entities) : NULL;
+            if ($term) {
+              $data_population_types[] = $term->uuid();
+            }
+          }
+        }
+
+        if (!empty($data_population_types)) {
+          $needs_save = TRUE;
+          $node->set('population_types', $data_population_types);
+        }
+      }
+    }
+
+    if (isset($row->themes)) {
+      if ($node->hasField('themes') && $node->get('themes')->isEmpty()) {
+        $data_themes = [];
+        foreach ($row->themes as $theme) {
+          if (!empty($theme)) {
+            $entities = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadByProperties([
+              'vid' => 'themes',
+              'id' => $theme->id,
+            ]);
+            $term = $entities ? reset($entities) : NULL;
+            if ($term) {
+              $data_themes[] = $term->uuid();
+            }
+          }
+        }
+
+        if (!empty($data_themes)) {
+          $needs_save = TRUE;
+          $node->set('themes', $data_themes);
+        }
+      }
+    }
+
     if ($needs_save) {
       $node->save();
     }
@@ -648,7 +765,6 @@ function docstore_update_assessments($url = '') {
 
   // Check for more data.
   if (isset($data->next->href)) {
-    print $data->next->href;
     docstore_update_assessments($data->next->href);
   }
 }

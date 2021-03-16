@@ -273,11 +273,17 @@ function syncAssesments($url = '') {
       $data_operation = [];
       foreach ($row->operation as $operation) {
         if (!empty($operation)) {
-          $data_operation[] = $operation;
+          $data_operation[] = [
+            '_action' => 'lookup',
+            '_reference' => 'term',
+            '_target' => 'operations',
+            '_field' => 'id',
+            '_value' => $operation->id,
+          ];
         }
 
         if (!empty($data_operation)) {
-          $assessment['operation_label'] = $data_operation;
+          $assessment['operations'] = $data_operation;
         }
       }
     }
@@ -298,7 +304,7 @@ function syncAssesments($url = '') {
           '_reference' => 'node',
           '_target' => 'disaster',
           '_field' => 'glide',
-          'value' => $disaster->glide,
+          '_value' => $disaster->glide,
         ];
       }
 
@@ -315,7 +321,7 @@ function syncAssesments($url = '') {
             '_reference' => 'term',
             '_target' => 'local_coordination_groups',
             '_field' => 'id',
-            'value' => $bundle->id,
+            '_value' => $bundle->id,
           ];
         }
       }
@@ -333,7 +339,7 @@ function syncAssesments($url = '') {
             '_reference' => 'term',
             '_target' => 'organizations',
             '_field' => 'id',
-            'value' => $organization->id,
+            '_value' => $organization->id,
           ];
         }
       }
@@ -351,7 +357,7 @@ function syncAssesments($url = '') {
             '_reference' => 'term',
             '_target' => 'organizations',
             '_field' => 'id',
-            'value' => $organization->id,
+            '_value' => $organization->id,
           ];
         }
       }
@@ -379,7 +385,7 @@ function syncAssesments($url = '') {
             '_reference' => 'term',
             '_target' => 'population_types',
             '_field' => 'id',
-            'value' => $population_type->id,
+            '_value' => $population_type->id,
           ];
         }
       }
@@ -397,7 +403,7 @@ function syncAssesments($url = '') {
             '_reference' => 'term',
             '_target' => 'themes',
             '_field' => 'id',
-            'value' => $theme->id,
+            '_value' => $theme->id,
           ];
         }
       }
