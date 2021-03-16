@@ -765,7 +765,6 @@ function docstore_update_assessments($url = '') {
 
   // Check for more data.
   if (isset($data->next->href)) {
-    print $data->next->href;
     docstore_update_assessments($data->next->href);
   }
 }
