@@ -236,7 +236,7 @@ trait ResourceTrait {
    */
   public function prepareEntityResourceDataForStorage(FieldableEntityInterface $entity) {
     $data = $this->prepareEntityResourceData($entity, NULL, TRUE);
-    return serialize($data);
+    return base64_encode(serialize($data));
   }
 
   /**

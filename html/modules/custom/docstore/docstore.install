@@ -6,6 +6,8 @@
  */
 
 use Drupal\search_api\Entity\Index;
+use Drupal\docstore\ManageFields;
+use Drupal\user\Entity\User;
 
 /**
  * Enable entity_usage.
@@ -21,4 +23,33 @@ function docstore_update_8002() {
   // Re-index.
   $index = Index::load('documents');
   $index->reindex();
+}
+
+/**
+ * Add operations fields to assessments.
+ */
+function docstore_update_8003() {
+  $provider = User::load(2);
+  $manager = new ManageFields($provider, 'assessment', Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+
+  $manager->addDocumentField([
+    'type' => 'assessment',
+    'label' => 'Operations',
+    'machine_name' => 'operations',
+    'type' => 'term_reference',
+    'target' => 'operations',
+    'multiple' => TRUE,
+    'author' => 'AR',
+  ]);
+}
+
+/**
+ * Force rebuild all indexes.
+ */
+function docstore_update_8004() {
+  docstore_wipe_index_and_solr('terms');
+  docstore_wipe_index_and_solr('documents_knowledge_management');
+  docstore_wipe_index_and_solr('documents_disaster');
+  docstore_wipe_index_and_solr('documents_assessment');
+  docstore_wipe_index_and_solr('documents_assessment_document');
 }

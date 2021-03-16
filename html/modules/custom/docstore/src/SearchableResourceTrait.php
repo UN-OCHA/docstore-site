@@ -368,7 +368,7 @@ trait SearchableResourceTrait {
       }
 
       // Unserialize the stored data.
-      $stored_data = unserialize(reset($values));
+      $stored_data = unserialize(base64_decode(reset($values)));
 
       // Skip if we cannot retrieve the resource's bundle.
       // @see \Drupal\docstore\ResourceTrait::massageResourceDataForEntityType()
