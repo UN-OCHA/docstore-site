@@ -16,6 +16,7 @@ use Drupal\search_api\Entity\Index;
 use Drupal\search_api\IndexInterface;
 use Drupal\search_api\Query\QueryInterface as SearchApiQueryInterface;
 use Drupal\search_api_solr\SolrBackendInterface;
+use Drupal\taxonomy\Entity\Term;
 use Drupal\user\Entity\User;
 use Drupal\webhooks\Webhook;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
@@ -571,6 +572,8 @@ function docstore_search_api_solr_documents_alter(&$documents, IndexInterface $i
  * Update operations on assessments.
  */
 function docstore_update_assessments($url = '') {
+  $provider = User::load(2);
+
   if (empty($url)) {
     $url = 'https://www.humanitarianresponse.info/api/v1.0/assessments';
   }
@@ -746,6 +749,23 @@ function docstore_update_assessments($url = '') {
             ]);
             $term = $entities ? reset($entities) : NULL;
             if ($term) {
+              $data_themes[] = $term->uuid();
+            }
+            else {
+              $item = [
+                'name' => $theme->label,
+                'id' => $theme->id,
+                'vid' => 'themes',
+                'author' => 'AR',
+                'created' => time(),
+                'provider_uuid' => [
+                  'target_uuid' => $provider->uuid(),
+                ],
+                'parent' => [],
+                'description' => '',
+              ];
+              $term = Term::create($item);
+              $term->save();
               $data_themes[] = $term->uuid();
             }
           }
