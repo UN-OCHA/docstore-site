@@ -133,6 +133,11 @@ trait MetadataTrait {
                 ];
               }
             }
+            elseif (isset($value['uuid'])) {
+              $item[$key][] = [
+                'target_uuid' => $value['uuid'],
+              ];
+            }
             else {
               // No action defined, pass as multi property.
               $item[$key][] = $value;
