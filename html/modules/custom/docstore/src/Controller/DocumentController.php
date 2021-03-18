@@ -524,7 +524,12 @@ class DocumentController extends ControllerBase {
           ];
         }
         else {
-          if (isset($uuid['uri'])) {
+          if (isset($uuid['media_uuid'])) {
+            $item['files'][] = [
+              'target_uuid' => $uuid['media_uuid'],
+            ];
+          }
+          elseif (isset($uuid['uri'])) {
             $media = $this->fetchAndCreateFile($uuid['uri'], $provider);
             $item['files'][] = [
               'target_uuid' => $media->uuid(),
