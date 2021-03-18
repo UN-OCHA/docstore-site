@@ -574,6 +574,9 @@ class DocumentController extends ControllerBase {
     // Invalidate cache.
     Cache::invalidateTags(['documents']);
 
+    // Trigger webhook.
+    docstore_notify_webhooks($node_type->id() . ':create', $this->prepareEntityResourceDataForResponse($document, $provider, TRUE));
+
     return [
       'message' => strtr('@type created', ['@type' => $node_type->label()]),
     ] + $this->prepareEntityResourceDataForResponse($document, $provider, $full_output);
@@ -610,6 +613,9 @@ class DocumentController extends ControllerBase {
 
     // Update the document.
     $data = $this->updateDocumentFromParameters($node_type, $params, $provider, $request->getMethod() === 'PUT');
+
+    // Trigger webhook.
+    docstore_notify_webhooks($node_type->id() . ':update', $data);
 
     return $this->createJsonResponse($data, 200);
   }
@@ -774,6 +780,9 @@ class DocumentController extends ControllerBase {
 
     // Delete the document.
     $data = $this->deleteDocumentFromParameters($node_type, $params, $provider);
+
+    // Trigger webhook.
+    docstore_notify_webhooks($node_type->id() . ':delete', $data);
 
     return $this->createJsonResponse($data, 200);
   }
