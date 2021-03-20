@@ -510,50 +510,35 @@ class DocumentController extends ControllerBase {
         $files = [$files];
       }
 
-      // Allow file uuid or file name.
+      // Allow file uuid, uri or file name (dropfolder).
       foreach ($files as $file) {
-        $uuid = NULL;
+        $media = NULL;
 
         // Assume it's a uuid.
         if (is_string($file)) {
-          $uuid = $file;
+          $media = $this->loadMedia($file);
         }
-        elseif (is_array($file)) {
-          if (isset($file['uuid'])) {
-            $uuid = $file['uuid'];
-          }
-          // @todo this is for backward compatibility, remove.
-          elseif (isset($file['media_uuid'])) {
-            $uuid = $file['media_uuid'];
-          }
-          elseif (isset($file['uri'])) {
-            $media = $this->fetchAndCreateFile($file['uri'], $provider);
-            $item['files'][] = [
-              'target_uuid' => $media->uuid(),
-            ];
-          }
-          elseif (isset($file['filename'])) {
-            $content = $this->fetchDropfolderFileContent($file['filename'], $provider);
-            $file = $this->createFileEntity($file['filename'], 'undefined', FALSE, $provider);
-            $file = $this->saveFileToDisk($file, $content, $provider);
-            $media = $this->createMediaEntity($file, FALSE, $provider);
-            $this->saveMedia($media, $file, $provider);
-
-            $item['files'][] = [
-              'target_uuid' => $media->uuid(),
-            ];
-          }
+        elseif (isset($file['uuid'])) {
+          $media = $this->loadMedia($file['uuid']);
+        }
+        // @todo this is for backward compatibility, remove.
+        elseif (isset($file['media_uuid'])) {
+          $media = $this->loadMedia($file['media_uuid']);
+        }
+        elseif (isset($file['uri'])) {
+          $media = $this->fetchAndCreateFile($file['uri'], $provider);
+        }
+        elseif (isset($file['filename'])) {
+          $content = $this->fetchDropfolderFileContent($file['filename'], $provider);
+          $file = $this->createFileEntity($file['filename'], 'undefined', FALSE, $provider);
+          $file = $this->saveFileToDisk($file, $content, $provider);
+          $media = $this->createMediaEntity($file, FALSE, $provider);
+          $this->saveMedia($media, $file, $provider);
         }
 
-        if (!empty($uuid)) {
-          /** @var \Drupal\media\Entity\Media $media */
-          $media = $this->entityRepository->loadEntityByUuid('media', $uuid);
-          if (empty($media)) {
-            throw new BadRequestHttpException(strtr('Media @uuid does not exist', ['@uuid' => $uuid]));
-          }
-
+        if (!empty($media)) {
           $item['files'][] = [
-            'target_uuid' => $file['uuid'],
+            'target_uuid' => $media->uuid(),
           ];
         }
       }
