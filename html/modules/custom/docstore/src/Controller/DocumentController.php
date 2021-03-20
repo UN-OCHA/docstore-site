@@ -511,33 +511,30 @@ class DocumentController extends ControllerBase {
       }
 
       // Allow file uuid or file name.
-      foreach ($files as $uuid) {
-        if (is_string($uuid)) {
-          /** @var \Drupal\media\Entity\Media $media */
-          $media = $this->entityRepository->loadEntityByUuid('media', $uuid);
-          if (empty($media)) {
-            throw new BadRequestHttpException(strtr('Media @uuid does not exist', ['@uuid' => $uuid]));
-          }
+      foreach ($files as $file) {
+        $uuid = NULL;
 
-          $item['files'][] = [
-            'target_uuid' => $media->uuid(),
-          ];
+        // Assume it's a uuid.
+        if (is_string($file)) {
+          $uuid = $file;
         }
-        else {
-          if (isset($uuid['media_uuid'])) {
-            $item['files'][] = [
-              'target_uuid' => $uuid['media_uuid'],
-            ];
+        elseif (is_array($file)) {
+          if (isset($file['uuid'])) {
+            $uuid = $file['uuid'];
           }
-          elseif (isset($uuid['uri'])) {
-            $media = $this->fetchAndCreateFile($uuid['uri'], $provider);
+          // @todo this is for backward compatibility, remove.
+          elseif (isset($file['media_uuid'])) {
+            $uuid = $file['media_uuid'];
+          }
+          elseif (isset($file['uri'])) {
+            $media = $this->fetchAndCreateFile($file['uri'], $provider);
             $item['files'][] = [
               'target_uuid' => $media->uuid(),
             ];
           }
-          elseif (isset($uuid['filename'])) {
-            $content = $this->fetchDropfolderFileContent($uuid['filename'], $provider);
-            $file = $this->createFileEntity($uuid['filename'], 'undefined', FALSE, $provider);
+          elseif (isset($file['filename'])) {
+            $content = $this->fetchDropfolderFileContent($file['filename'], $provider);
+            $file = $this->createFileEntity($file['filename'], 'undefined', FALSE, $provider);
             $file = $this->saveFileToDisk($file, $content, $provider);
             $media = $this->createMediaEntity($file, FALSE, $provider);
             $this->saveMedia($media, $file, $provider);
@@ -546,6 +543,18 @@ class DocumentController extends ControllerBase {
               'target_uuid' => $media->uuid(),
             ];
           }
+        }
+
+        if (!empty($uuid)) {
+          /** @var \Drupal\media\Entity\Media $media */
+          $media = $this->entityRepository->loadEntityByUuid('media', $uuid);
+          if (empty($media)) {
+            throw new BadRequestHttpException(strtr('Media @uuid does not exist', ['@uuid' => $uuid]));
+          }
+
+          $item['files'][] = [
+            'target_uuid' => $file['uuid'],
+          ];
         }
       }
     }
