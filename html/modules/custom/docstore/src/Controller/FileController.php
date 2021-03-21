@@ -244,9 +244,6 @@ class FileController extends ControllerBase {
     /** @var \Drupal\file\Entity\File $file */
     $file = $this->createFileEntity($params['filename'], $params['mimetype'], $private, $provider);
 
-    // Create the media entity.
-    $media = $this->createMediaEntity($file, $private, $provider);
-
     // Case 1: binary content provided in the request params.
     if (!empty($params['data'])) {
       $content = base64_decode($params['data']);
@@ -262,12 +259,15 @@ class FileController extends ControllerBase {
 
     // Save the file's content if provided.
     if (!empty($content)) {
-      $this->saveFileToDisk($file, $content, $provider);
+      $file = $this->saveFileToDisk($file, $content, $provider);
     }
     // Otherwise we save the file without content.
     else {
       $file->save();
     }
+
+    // Create the media entity.
+    $media = $this->createMediaEntity($file, $private, $provider);
 
     // Save the media and generate the symlinks if possible.
     $this->saveMedia($media, $file, $provider);
