@@ -416,6 +416,9 @@ class TermController extends ControllerBase {
     // Validate and save the term.
     $this->validateAndSaveEntity($term);
 
+    // Trigger webhook.
+    docstore_notify_webhooks('term:create', $this->prepareEntityResourceDataForResponse($term, $provider, TRUE));
+
     // Invalidate cache.
     Cache::invalidateTags(['terms']);
 
@@ -452,6 +455,12 @@ class TermController extends ControllerBase {
 
     // Update the term.
     $data = $this->updateTermFromParameters($vocabulary, $params, $provider, $request->getMethod() === 'PUT');
+
+    // Trigger webhook.
+    docstore_notify_webhooks('term:update', [
+      'uuid' => $term_id,
+      'vocabulary' => $id,
+    ]);
 
     return $this->createJsonResponse($data, 200);
   }
@@ -613,6 +622,12 @@ class TermController extends ControllerBase {
 
     // Delete the term.
     $data = $this->deleteTermFromParameters($vocabulary, $params, $provider);
+
+    // Trigger webhook.
+    docstore_notify_webhooks('term:delete', [
+      'uuid' => $term_id,
+      'vocabulary' => $id,
+    ]);
 
     return $this->createJsonResponse($data, 200);
   }
