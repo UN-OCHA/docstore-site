@@ -277,6 +277,9 @@ class FileController extends ControllerBase {
       'message' => 'File created',
     ] + $this->prepareMediaEntityData($media, $file, $provider);
 
+    // Notifiy webhooks.
+    docstore_notify_webhooks('file:create', $data['uuid']);
+
     return $this->createJsonResponse($data, 201);
   }
 
@@ -385,6 +388,9 @@ class FileController extends ControllerBase {
       'message' => 'File updated',
     ] + $this->prepareMediaEntityData($media, $file, $provider, $revisions);
 
+    // Notifiy webhooks.
+    docstore_notify_webhooks('file:update', $data['uuid']);
+
     return $this->createJsonResponse($data, 200);
   }
 
@@ -439,6 +445,9 @@ class FileController extends ControllerBase {
       'message' => 'File deleted',
       'uuid' => $media->uuid(),
     ];
+
+    // Notifiy webhooks.
+    docstore_notify_webhooks('file:delete', $data['uuid']);
 
     return $this->createJsonResponse($data, 200);
   }
@@ -639,6 +648,9 @@ class FileController extends ControllerBase {
       'message' => 'File content created',
     ] + $this->prepareMediaEntityData($media, $file, $provider);
 
+    // Notifiy webhooks.
+    docstore_notify_webhooks('file:update', $data['uuid']);
+
     return $this->createJsonResponse($data, 200);
   }
 
@@ -751,6 +763,8 @@ class FileController extends ControllerBase {
    *
    * @todo allow removal of a revision by the owner regardless of whether it's
    * in use by another provider or not?
+   *
+   * @todo notify webhooks? What event?
    */
   public function deleteFileRevision($uuid, $revision_id, Request $request) {
     /** @var \Drupal\user\UserInterface $provider */

@@ -294,30 +294,56 @@ function docstore_create_node_type($type = 'document', $endpoint = 'documents') 
  * Implements hook_webhooks_event_info_alter().
  */
 function docstore_webhooks_event_info_alter(&$options) {
-  $entities = [
-    'vocabulary',
-    'term',
-    'media',
-    'file',
-    'field:document',
-    'field:vocabulary',
+  $base_events = [
+    // Resource types.
+    'document_type' => 'Hook: document type',
+    'vocabulary' => 'Hook: vocabulary',
+    // Fields on resource types.
+    'field:document_type' => 'Hook: field on document type',
+    'field:vocabulary' => 'Hook: field on vocabulary',
+    // Individual resources.
+    'document' => 'Hook: document',
+    'term' => 'Hook: term',
+    'file' => 'Hook: file',
   ];
 
-  $entities = array_merge($entities, _docstore_get_defined_node_types());
+  $entity_type_manager = \Drupal::entityTypeManager();
+
+  // Get the list of node types.
+  $ids = $entity_type_manager
+    ->getStorage('node_type')
+    ->getQuery()
+    ->accessCheck(FALSE)
+    ->execute();
+  foreach ($ids as $id) {
+    $base_events['document:' . $id] = 'Hook: document ' . $id;
+  }
+
+  // Get the list of vocabularies.
+  $ids = $entity_type_manager
+    ->getStorage('taxonomy_vocabulary')
+    ->getQuery()
+    ->accessCheck(FALSE)
+    ->execute();
+  foreach ($ids as $id) {
+    $base_events['term:' . $id] = 'Hook: term ' . $id;
+  }
 
   $actions = [
     'create',
+    // @todo does it make sense to allow webhooks on read actions?
     'read',
     'update',
     'delete',
   ];
 
   $options = [];
-  foreach ($entities as $entity) {
+  foreach ($base_events as $base_event => $label) {
     foreach ($actions as $action) {
-      $options[$entity . ':' . $action] = [
-        'type' => 'Hook: ' . ucfirst($entity),
-        'event' => $entity . ':' . $action,
+      $event = $base_event . ':' . $action;
+      $options[$event] = [
+        'type' => $label . ' - ' . $action,
+        'event' => $event,
       ];
     }
   }
