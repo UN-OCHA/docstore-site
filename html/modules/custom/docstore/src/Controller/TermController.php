@@ -317,6 +317,13 @@ class TermController extends ControllerBase {
     // Create the term.
     $data = $this->createTermFromParameters($vocabulary, $params, $provider, TRUE);
 
+    // Notifiy webhooks.
+    docstore_notify_webhooks('term:' . $vocabulary->id() . ':create', $data['uuid']);
+    docstore_notify_webhooks('term:create', [
+      'uuid' => $data['uuid'],
+      'vocabulary' => $vocabulary->id(),
+    ]);
+
     return $this->createJsonResponse($data, 201);
   }
 
@@ -452,6 +459,13 @@ class TermController extends ControllerBase {
 
     // Update the term.
     $data = $this->updateTermFromParameters($vocabulary, $params, $provider, $request->getMethod() === 'PUT');
+
+    // Notifiy webhooks.
+    docstore_notify_webhooks('term:' . $vocabulary->id() . ':update', $data['uuid']);
+    docstore_notify_webhooks('term:update', [
+      'uuid' => $data['uuid'],
+      'vocabulary' => $vocabulary->id(),
+    ]);
 
     return $this->createJsonResponse($data, 200);
   }
@@ -613,6 +627,13 @@ class TermController extends ControllerBase {
 
     // Delete the term.
     $data = $this->deleteTermFromParameters($vocabulary, $params, $provider);
+
+    // Notifiy webhooks.
+    docstore_notify_webhooks('term:' . $vocabulary->id() . ':delete', $data['uuid']);
+    docstore_notify_webhooks('term:delete', [
+      'uuid' => $data['uuid'],
+      'vocabulary' => $vocabulary->id(),
+    ]);
 
     return $this->createJsonResponse($data, 200);
   }

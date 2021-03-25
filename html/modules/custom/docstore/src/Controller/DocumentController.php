@@ -452,6 +452,13 @@ class DocumentController extends ControllerBase {
     // Create document.
     $data = $this->createDocumentFromParameters($node_type, $params, $provider, TRUE);
 
+    // Notifiy webhooks.
+    docstore_notify_webhooks('document:' . $node_type->id() . ':create', $data['uuid']);
+    docstore_notify_webhooks('document:create', [
+      'uuid' => $data['uuid'],
+      'type' => $node_type->id(),
+    ]);
+
     return $this->createJsonResponse($data, 201);
   }
 
@@ -604,6 +611,13 @@ class DocumentController extends ControllerBase {
 
     // Update the document.
     $data = $this->updateDocumentFromParameters($node_type, $params, $provider, $request->getMethod() === 'PUT');
+
+    // Notifiy webhooks.
+    docstore_notify_webhooks('document:' . $node_type->id() . ':update', $data['uuid']);
+    docstore_notify_webhooks('document:update', [
+      'uuid' => $data['uuid'],
+      'type' => $node_type->id(),
+    ]);
 
     return $this->createJsonResponse($data, 200);
   }
@@ -768,6 +782,13 @@ class DocumentController extends ControllerBase {
 
     // Delete the document.
     $data = $this->deleteDocumentFromParameters($node_type, $params, $provider);
+
+    // Notifiy webhooks.
+    docstore_notify_webhooks('document:' . $node_type->id() . ':delete', $data['uuid']);
+    docstore_notify_webhooks('document:delete', [
+      'uuid' => $data['uuid'],
+      'type' => $node_type->id(),
+    ]);
 
     return $this->createJsonResponse($data, 200);
   }

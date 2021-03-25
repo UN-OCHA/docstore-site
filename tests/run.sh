@@ -15,6 +15,18 @@ get_media_uuid() {
   sed -nE 's/.*"media_uuid":"([^"]+)".*/\1/p'
 }
 
+# Stop the webhook server.
+stop_webhook_server() {
+  if [ "$DOCSTORE_PHP_WEBHOOK_SERVER_PID" != "" ]; then
+    echo "Stopping webhook test server"
+    kill $DOCSTORE_PHP_WEBHOOK_SERVER_PID
+    DOCSTORE_PHP_WEBHOOK_SERVER_PID=
+  fi
+}
+
+# Ensure the webhook server is stopped on error/exit.
+trap stop_webhook_server 0
+
 # Reset docstore for testing.
 $DRUSH docstore:test-reset
 
@@ -30,7 +42,6 @@ $DRUSH docstore:test-create-node-type document documents
 $DRUSH --verbose scr ../html/modules/custom/docstore/syncs/docstore_countries.php
 
 # Run base tests.
-$SILK -test.v -silk.url $API silk_webhooks.md || exit 1;
 $SILK -test.v -silk.url $API silk_vocabulary_crud.md || exit 1;
 $SILK -test.v -silk.url $API silk_vocabulary_bulk.md || exit 1;
 $SILK -test.v -silk.url $API silk_vocabulary_bulk_cud.md || exit 1;
@@ -46,6 +57,21 @@ $SILK -test.v -silk.url $API silk_child_terms.md || exit 1;
 $SILK -test.v -silk.url $API silk_private.md || exit 1;
 $SILK -test.v -silk.url $API silk_document_revisions.md || exit 1;
 $SILK -test.v -silk.url $API silk_term_revisions.md || exit 1;
+
+# Reset docstore for testing.
+$DRUSH docstore:test-reset
+
+# Start the PHP webhook server.
+php -S localhost:8765 -t webhooks &
+DOCSTORE_PHP_WEBHOOK_SERVER_PID=$!
+sleep 2
+export WEBHOOK_SERVER_URL=http://localhost:8765
+
+# Test webhooks.
+$SILK -test.v -silk.url $API silk_webhooks.md || exit 1;
+
+# Stop webhook server
+stop_webhook_server
 
 # Reset docstore for testing.
 $DRUSH docstore:test-reset
