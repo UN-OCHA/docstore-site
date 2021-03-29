@@ -260,6 +260,9 @@ class VocabularyController extends ControllerBase {
       'message' => 'Vocabulary created',
     ] + $this->buildVocabularyJsonOutput($vocabulary);
 
+    // Notifiy webhooks.
+    docstore_notify_webhooks('vocabulary:create', $vocabulary->id());
+
     return $this->createJsonResponse($data, 201);
   }
 
@@ -303,6 +306,9 @@ class VocabularyController extends ControllerBase {
       'uuid' => $vocabulary->uuid(),
     ];
 
+    // Notifiy webhooks.
+    docstore_notify_webhooks('vocabulary:update', $vocabulary->id());
+
     return $this->createJsonResponse($data, 200);
   }
 
@@ -345,6 +351,9 @@ class VocabularyController extends ControllerBase {
       'message' => 'Vocabulary deleted',
       'uuid' => $vocabulary->uuid(),
     ];
+
+    // Notifiy webhooks.
+    docstore_notify_webhooks('vocabulary:delete', $vocabulary->id());
 
     return $this->createJsonResponse($data, 200);
   }
@@ -447,6 +456,12 @@ class VocabularyController extends ControllerBase {
       'field_name' => $field_name,
     ];
 
+    // Notifiy webhooks.
+    docstore_notify_webhooks('field:vocabulary:create', [
+      'field' => $field_name,
+      'vocabulary' => $vocabulary->id(),
+    ]);
+
     return $this->createJsonResponse($data, 201);
   }
 
@@ -487,6 +502,12 @@ class VocabularyController extends ControllerBase {
       'field_name' => $field_name,
     ];
 
+    // Notifiy webhooks.
+    docstore_notify_webhooks('field:vocabulary:update', [
+      'field' => $field_name,
+      'vocabulary' => $vocabulary->id(),
+    ]);
+
     return $this->createJsonResponse($data, 200);
   }
 
@@ -523,6 +544,12 @@ class VocabularyController extends ControllerBase {
       'message' => 'Field deleted',
       'field_name' => $field_name,
     ];
+
+    // Notifiy webhooks.
+    docstore_notify_webhooks('field:vocabulary:delete', [
+      'field' => $field_name,
+      'vocabulary' => $vocabulary->id(),
+    ]);
 
     return $this->createJsonResponse($data, 200);
   }

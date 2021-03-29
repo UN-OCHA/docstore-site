@@ -517,8 +517,6 @@ class ManageFields {
       }
     }
 
-    docstore_notify_webhooks('document_type:create', $machine_name);
-
     return $node_type;
   }
 
@@ -592,8 +590,6 @@ class ManageFields {
     }
 
     $node_type->save();
-
-    docstore_notify_webhooks('document_type:update', $type);
 
     return $node_type;
   }
@@ -716,9 +712,6 @@ class ManageFields {
     // Add to index.
     $this->addDocumentFieldToIndex($field_config, $label);
 
-    // Trigger webhook.
-    docstore_notify_webhooks('field:document:create', $field_name);
-
     return $field_name;
   }
 
@@ -812,7 +805,6 @@ class ManageFields {
       $this->addDocumentFieldToIndex($field_config, $label);
     }
 
-    docstore_notify_webhooks('field:document:create', $field_name);
     return $field_name;
   }
 
@@ -857,7 +849,6 @@ class ManageFields {
       $field_config->setThirdPartySetting('docstore', 'private', $params['private']);
     }
 
-    docstore_notify_webhooks('field:document:update', $field_name);
     $field_config->save();
 
     return $field_name;
@@ -874,7 +865,6 @@ class ManageFields {
       throw new NotFoundHttpException('Field does not exist');
     }
 
-    docstore_notify_webhooks('field:document:delete', $field_name);
     $field_storage->delete();
 
     return $field_name;
@@ -939,7 +929,6 @@ class ManageFields {
     // Add author HID.
     $this->createVocabularyBaseFieldHidId($machine_name);
 
-    docstore_notify_webhooks('vocabulary:create', $machine_name);
     return $vocabulary;
   }
 
@@ -1077,7 +1066,6 @@ class ManageFields {
 
     $vocabulary->save();
 
-    docstore_notify_webhooks('vocabulary:update', $vocabulary->id());
     return $vocabulary;
   }
 
@@ -1096,7 +1084,6 @@ class ManageFields {
       throw new \Exception('Vocabulary is not owned by you');
     }
 
-    docstore_notify_webhooks('vocabulary:delete', $vocabulary->id());
     $vocabulary->delete();
 
     return $vocabulary;
@@ -1200,7 +1187,6 @@ class ManageFields {
       $field_config->setThirdPartySetting('docstore', 'private', $params['private']);
     }
 
-    docstore_notify_webhooks('field:vocabulary:update', $field_name);
     $field_config->save();
 
     return $field_name;
@@ -1220,7 +1206,6 @@ class ManageFields {
       throw new NotFoundHttpException('Field does not exist');
     }
 
-    docstore_notify_webhooks('field:vocabulary:delete', $field_name);
     $field_config->delete();
 
     return $field_name;
@@ -1277,7 +1262,6 @@ class ManageFields {
       $this->addTermFieldToIndex($field_config, $label);
     }
 
-    docstore_notify_webhooks('field:vocabulary:create', $field_name);
     return $field_name;
   }
 
@@ -1339,7 +1323,6 @@ class ManageFields {
       $this->addTermFieldToIndex($field_config, $label);
     }
 
-    docstore_notify_webhooks('field:vocabulary:create', $field_name);
     return $field_name;
   }
 

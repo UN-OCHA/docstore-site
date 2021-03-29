@@ -248,6 +248,9 @@ class DocumentTypeController extends ControllerBase {
       'message' => 'Document type created',
     ] + $this->buildDocumentTypeJsonOutput($node_type);
 
+    // Notify webhooks.
+    docstore_notify_webhooks('document_type:create', $node_type->id());
+
     return $this->createJsonResponse($data, 201);
   }
 
@@ -301,6 +304,9 @@ class DocumentTypeController extends ControllerBase {
       'message' => 'Document type updated',
     ] + $this->buildDocumentTypeJsonOutput($node_type);
 
+    // Notify webhooks.
+    docstore_notify_webhooks('document_type:update', $node_type->id());
+
     return $this->createJsonResponse($data, 200);
   }
 
@@ -339,6 +345,9 @@ class DocumentTypeController extends ControllerBase {
       'message' => strtr('@type deleted', ['@type' => $node_type->label()]),
       'uuid' => $node_type->uuid(),
     ];
+
+    // Notify webhooks.
+    docstore_notify_webhooks('document_type:delete', $node_type->id());
 
     return $this->createJsonResponse($data, 200);
   }
@@ -407,6 +416,12 @@ class DocumentTypeController extends ControllerBase {
       'message' => 'Field created',
       'field_name' => $field_name,
     ];
+
+    // Notify webhooks.
+    docstore_notify_webhooks('field:document_type:create', [
+      'field' => $field_name,
+      'document_type' => $node_type->id(),
+    ]);
 
     return $this->createJsonResponse($data, 201);
   }
@@ -480,6 +495,12 @@ class DocumentTypeController extends ControllerBase {
       'field_name' => $field_name,
     ];
 
+    // Notify webhooks.
+    docstore_notify_webhooks('field:document_type:update', [
+      'field' => $field_name,
+      'document_type' => $node_type->id(),
+    ]);
+
     return $this->createJsonResponse($data, 200);
   }
 
@@ -516,6 +537,12 @@ class DocumentTypeController extends ControllerBase {
       'message' => 'Field deleted',
       'field_name' => $field_name,
     ];
+
+    // Notify webhooks.
+    docstore_notify_webhooks('field:document_type:delete', [
+      'field' => $field_name,
+      'document_type' => $node_type->id(),
+    ]);
 
     return $this->createJsonResponse($data, 200);
   }
