@@ -43,7 +43,7 @@ function docstore_local_coordination_groups_fields() {
         'target' => 'organizations',
         'multiple' => TRUE,
       ],
-      'operations' => [
+      'operation' => [
         'type' => 'term_reference',
         'target' => 'operations',
         'multiple' => TRUE,
@@ -77,14 +77,24 @@ function docstore_local_coordination_groups_ensure_vocabularies() {
 
 /**
  * Ensure vocabulary fields do exist.
+ *
+ * @todo An earlier version of this added field 'operations', rather than
+ * 'operation'. It should be removed.
  */
 function docstore_local_coordination_groups_ensure_vocabulary_fields() {
   $provider = User::load(2);
   $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+  $vocabulary = Vocabulary::load('local_coordination_groups');
 
-  foreach (docstore_local_coordination_groups_fields() as $machine_name => $fields) {
-    $vocabulary = Vocabulary::load($machine_name);
+  // Load fields this vocabulary already has and skip those that exist.
+  $existing_fields = array_keys(\Drupal::service('entity_field.manager')->getFieldDefinitions('taxonomy_term', 'local_coordination_groups'));
+
+  foreach (docstore_local_coordination_groups_fields() as $fields) {
     foreach ($fields as $label => $type) {
+      if (in_array($label, $existing_fields)) {
+        continue;
+      }
+      print("\nField $label to be added\n");
       if (is_array($type)) {
         $manager->addVocabularyField($vocabulary, [
           'label' => $label,
@@ -122,6 +132,9 @@ function docstore_local_coordination_groups_sync($url = '') {
   // Load vocabulary.
   $vocabulary = Vocabulary::load('local_coordination_groups');
 
+  // Get vocabulary fields.
+  $fields = docstore_local_coordination_groups_fields()[$vocabulary->id()];
+
   // Load provider.
   $provider = User::load(2);
 
@@ -141,38 +154,34 @@ function docstore_local_coordination_groups_sync($url = '') {
           }
         }
       }
-      if (isset($term)) {
-        // @todo Consider updating - do we want this script to handle it?
-        print "\nTerm already exists, skipping.\n";
-        continue;
+      if (empty($term)) {
+        $item = [
+          'name' => $row->label,
+          'vid' => $vocabulary->id(),
+          'created' => [],
+          'provider_uuid' => [],
+          'parent' => [],
+          'description' => '',
+        ];
+
+        // Set creation time.
+        $item['created'][] = [
+          'value' => time(),
+        ];
+
+        // Set owner.
+        $item['provider_uuid'][] = [
+          'target_uuid' => $provider->uuid(),
+        ];
+
+        // Store HID Id.
+        $item['author'][] = [
+          'value' => 'Shared',
+        ];
+
+        $term = Term::create($item);
       }
-      $item = [
-        'name' => $row->label,
-        'vid' => $vocabulary->id(),
-        'created' => [],
-        'provider_uuid' => [],
-        'parent' => [],
-        'description' => '',
-      ];
 
-      // Set creation time.
-      $item['created'][] = [
-        'value' => time(),
-      ];
-
-      // Set owner.
-      $item['provider_uuid'][] = [
-        'target_uuid' => $provider->uuid(),
-      ];
-
-      // Store HID Id.
-      $item['author'][] = [
-        'value' => 'Shared',
-      ];
-
-      $term = Term::create($item);
-
-      $fields = docstore_local_coordination_groups_fields()[$vocabulary->id()];
       foreach ($fields as $name => $type) {
         $field_name = str_replace('-', '_', $name);
         if ($term->hasField($field_name)) {
@@ -223,6 +232,8 @@ function docstore_local_coordination_groups_sync($url = '') {
             $value = $row->{$name};
           }
 
+          // @todo We're updating whether something has changed or not.
+          // As there aren't too many, this is okay, but it could be better.
           if (!empty($value)) {
             $term->set($field_name, $value);
           }
