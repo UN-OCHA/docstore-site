@@ -77,9 +77,6 @@ function docstore_local_coordination_groups_ensure_vocabularies() {
 
 /**
  * Ensure vocabulary fields do exist.
- *
- * @todo An earlier version of this added field 'operations', rather than
- * 'operation'. It should be removed.
  */
 function docstore_local_coordination_groups_ensure_vocabulary_fields() {
   $provider = User::load(2);
@@ -184,8 +181,8 @@ function docstore_local_coordination_groups_sync($url = '') {
 
       foreach ($fields as $name => $type) {
         $field_name = str_replace('-', '_', $name);
-        if ($field_name === 'operation') {
-          $field_name = 'operations';
+        if ($field_name === 'operations') {
+          $name = 'operation';
         }
 
         if ($term->hasField($field_name)) {
