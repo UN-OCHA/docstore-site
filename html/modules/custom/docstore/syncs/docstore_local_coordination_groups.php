@@ -43,7 +43,7 @@ function docstore_local_coordination_groups_fields() {
         'target' => 'organizations',
         'multiple' => TRUE,
       ],
-      'operation' => [
+      'operations' => [
         'type' => 'term_reference',
         'target' => 'operations',
         'multiple' => TRUE,
@@ -184,6 +184,10 @@ function docstore_local_coordination_groups_sync($url = '') {
 
       foreach ($fields as $name => $type) {
         $field_name = str_replace('-', '_', $name);
+        if ($field_name === 'operation') {
+          $field_name = 'operations';
+        }
+
         if ($term->hasField($field_name)) {
           $value = FALSE;
           if (empty($row->{$name})) {
