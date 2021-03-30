@@ -151,9 +151,11 @@ function docstore_local_coordination_groups_sync($url = '') {
           }
         }
       }
+      $label = $row->label . " - " . reset($row->operation)->label;
+
       if (empty($term)) {
         $item = [
-          'name' => $row->label,
+          'name' => $label,
           'vid' => $vocabulary->id(),
           'created' => [],
           'provider_uuid' => [],
@@ -177,6 +179,12 @@ function docstore_local_coordination_groups_sync($url = '') {
         ];
 
         $term = Term::create($item);
+      }
+
+      // Needed once to update all terms.
+      $check = \Drupal::state()->get('docstore_sync_local_groups_name_update', '');
+      if (empty($check)) {
+        $term->set('name', $label);
       }
 
       foreach ($fields as $name => $type) {
@@ -265,3 +273,4 @@ function docstore_local_coordination_groups_sync($url = '') {
 // Auto execute.
 docstore_local_coordination_groups_sync();
 \Drupal::service('docstore.vocabulary_controller')->rebuildAccessibleResourceTypes('taxonomy_vocabulary');
+\Drupal::state()->set('docstore_sync_local_groups_name_update', 'processed');
