@@ -673,14 +673,22 @@ class DocumentController extends ControllerBase {
       unset($params['private']);
     }
 
+    $updated_fields = [];
+
     // @todo check that it's a boolean.
     if (isset($params['published'])) {
-      $document->setPublished($params['published']);
+      if ($params['published']) {
+        $document->setPublished();
+      }
+      else {
+        $document->setUnpublished();
+      }
+      $updated_fields['status'] = 1;
       unset($params['published']);
     }
 
     // Update the document fields from the given parameters.
-    $updated_fields = $this->updateEntityFieldsFromParameters($document, $params, $provider);
+    $updated_fields = array_merge($updated_fields, $this->updateEntityFieldsFromParameters($document, $params, $provider));
 
     // Reset all the fields that were not updated.
     if ($full_update) {
