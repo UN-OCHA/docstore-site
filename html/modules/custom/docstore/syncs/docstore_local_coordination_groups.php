@@ -271,7 +271,7 @@ function docstore_local_coordination_groups_sync($url = '') {
 
   // Check for more data.
   if (isset($data->next) && isset($data->next->href)) {
-    print "\nNext up:\n" . $data->next->href . "\n";
+    print serialize($data->next->href);
     docstore_local_coordination_groups_sync($data->next->href);
   }
 }
