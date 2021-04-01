@@ -28,6 +28,7 @@ function docstore_local_coordination_groups_fields() {
       'id' => 'string',
       'email' => 'string',
       'website' => 'string',
+      'display_label' => 'string',
       'global_cluster' => [
         'type' => 'term_reference',
         'target' => 'global_coordination_groups',
@@ -151,9 +152,16 @@ function docstore_local_coordination_groups_sync($url = '') {
           }
         }
       }
+
+      $display_label = $row->label;
+      if (isset($row->operation) && isset($row->operation[0])) {
+        $display_label .= " - " . reset($row->operation)->label;
+      }
+
       if (empty($term)) {
         $item = [
           'name' => $row->label,
+          'display_label' => $display_label,
           'vid' => $vocabulary->id(),
           'created' => [],
           'provider_uuid' => [],
@@ -177,6 +185,12 @@ function docstore_local_coordination_groups_sync($url = '') {
         ];
 
         $term = Term::create($item);
+      }
+
+      // Needed once to update all terms.
+      $check = \Drupal::state()->get('docstore_sync_local_groups_name_update', '');
+      if (empty($check)) {
+        $term->set('display_label', $display_label);
       }
 
       foreach ($fields as $name => $type) {
@@ -257,7 +271,7 @@ function docstore_local_coordination_groups_sync($url = '') {
 
   // Check for more data.
   if (isset($data->next) && isset($data->next->href)) {
-    print "\nNext up:\n" . $data->next->href;
+    print "\nNext up: $data->next->href \n";
     docstore_local_coordination_groups_sync($data->next->href);
   }
 }
@@ -265,3 +279,4 @@ function docstore_local_coordination_groups_sync($url = '') {
 // Auto execute.
 docstore_local_coordination_groups_sync();
 \Drupal::service('docstore.vocabulary_controller')->rebuildAccessibleResourceTypes('taxonomy_vocabulary');
+\Drupal::state()->set('docstore_sync_local_groups_name_update', 'processed');
