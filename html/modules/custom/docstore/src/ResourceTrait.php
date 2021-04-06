@@ -549,8 +549,13 @@ trait ResourceTrait {
       // @todo It would much easier if we were to use "name" for terms which is
       // the field name for the term label rather than "label" or if we were to
       // use "label" for all the entity types.
-      if ($entity->getEntityTypeId() === 'taxonony_term') {
+      if ($entity->getEntityTypeId() === 'taxonomy_term') {
         $label_key = 'label';
+
+        // Add display label to local_coordination_groups.
+        if ($entity->vid->first()->getValue()['target_id'] === 'local_coordination_groups') {
+          $item['display_label'] = $entity->display_label->first()->getValue()['value'];
+        }
       }
       else {
         $label_key = $this->entityTypeManager
