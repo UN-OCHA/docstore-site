@@ -550,7 +550,10 @@ trait ResourceTrait {
       // the field name for the term label rather than "label" or if we were to
       // use "label" for all the entity types.
       if ($entity->getEntityTypeId() === 'taxonomy_term') {
-        $label_key = 'label';
+        // @todo This was included when there was a typo in 'taxonomy_term',
+        // but it causes tests to fail, so specifying 'name' for now.
+        // $label_key = 'label';
+        $label_key = 'name';
 
         // Add display label to local_coordination_groups.
         if ($entity->vid->first()->getValue()['target_id'] === 'local_coordination_groups') {
