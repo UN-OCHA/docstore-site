@@ -557,7 +557,10 @@ trait ResourceTrait {
 
         // Add display label to local_coordination_groups.
         if ($entity->vid->first()->getValue()['target_id'] === 'local_coordination_groups') {
-          $item['display_label'] = $entity->display_label->first()->getValue()['value'];
+          $display_label = $entity->display_label ?? '';
+          if (isset($display_label[0])) {
+            $item['display_label'] = $display_label->first()->getValue()['value'];
+          }
         }
       }
       else {
