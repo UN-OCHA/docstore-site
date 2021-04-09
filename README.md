@@ -255,3 +255,65 @@ The files with a `create_` prefix are stand alone PHP files, which uses the API 
 
 The files with a `docstore_` prefix are drupal scripts which needs to be executed on the server using `drush scr`
 
+## Coverage report
+
+### Generate report
+
+Needs an old version of phpcov.
+
+```bash
+wget https://phar.phpunit.de/phpcov-6.0.1.phar
+fin exec php phpcov-6.0.1.phar merge --html code-coverage-report code-coverage-report-clover/
+```
+
+### Alter index.php
+
+This should be injected using the autoloader.
+
+```php
+<?php
+
+/**
+ * @file
+ * The PHP page that serves all page requests on a Drupal installation.
+ *
+ * All Drupal code is released under the GNU General Public License.
+ * See COPYRIGHT.txt and LICENSE.txt files in the "core" directory.
+ */
+
+use Drupal\Core\DrupalKernel;
+use Symfony\Component\HttpFoundation\Request;
+use SebastianBergmann\CodeCoverage\Filter;
+use SebastianBergmann\CodeCoverage\Driver\Xdebug;
+use SebastianBergmann\CodeCoverage\CodeCoverage;
+use SebastianBergmann\CodeCoverage\Report\Html\Facade as HtmlReport;
+use SebastianBergmann\CodeCoverage\Report\PHP;
+
+$autoloader = require_once 'autoload.php';
+
+$kernel = new DrupalKernel('prod', $autoloader);
+
+$filter = new Filter;
+$filter->addDirectoryToWhitelist('/var/www/html/modules/custom/docstore/src');
+
+$coverage = new CodeCoverage(
+  (new Xdebug),
+  $filter
+);
+
+$coverage->start('req1');
+
+$request = Request::createFromGlobals();
+$response = $kernel->handle($request);
+$response->send();
+
+$coverage->stop();
+
+
+(new HtmlReport)->process($coverage, '/var/www/code-coverage-report');
+@mkdir("/var/www/code-coverage-report-clover");
+$tmpfname = tempnam("/var/www/code-coverage-report-clover", "report");
+(new PHP)->process($coverage, $tmpfname . '.cov');
+
+$kernel->terminate($request, $response);
+```
