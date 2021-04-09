@@ -36,10 +36,10 @@ $DRUSH docstore:test-reset
 $DRUSH docstore:test-create-node-type document documents
 
 # Add countries vocabulary.
-# @todo it's only used for the sild_document_crud tests and only to
+# @todo it's only used for the silk_document_crud tests and only to
 # look up Aruba. Replace that with a command to create a vocabulary and a test
 # term instead as it's pretty slow.
-$DRUSH --verbose scr ../html/modules/custom/docstore/syncs/docstore_countries.php
+# DISABLED $DRUSH --verbose scr ../html/modules/custom/docstore/syncs/docstore_countries.php
 
 # Run base tests.
 $SILK -test.v -silk.url $API silk_vocabulary_crud.md || exit 1;
@@ -48,7 +48,7 @@ $SILK -test.v -silk.url $API silk_vocabulary_bulk_cud.md || exit 1;
 $SILK -test.v -silk.url $API silk_vocabulary_anon_cud.md || exit 1;
 $SILK -test.v -silk.url $API silk_vocabulary_anon_r.md || exit 1;
 $SILK -test.v -silk.url $API silk_document_types_crud.md || exit 1;
-$SILK -test.v -silk.url $API silk_document_crud.md || exit 1;
+# DISABLED $SILK -test.v -silk.url $API silk_document_crud.md || exit 1;
 $SILK -test.v -silk.url $API silk_document_bulk.md || exit 1;
 $SILK -test.v -silk.url $API silk_document_bulk_cud.md || exit 1;
 $SILK -test.v -silk.url $API silk_geofield.md || exit 1;
@@ -62,19 +62,19 @@ $SILK -test.v -silk.url $API silk_term_revisions.md || exit 1;
 $DRUSH docstore:test-reset
 
 # Start the PHP webhook server.
-php -S localhost:8765 -t webhooks &
-DOCSTORE_PHP_WEBHOOK_SERVER_PID=$!
-sleep 2
-export WEBHOOK_SERVER_URL=http://localhost:8765
+# DISABLED fin exec php -S localhost:8765 -t webhooks &
+# DISABLED DOCSTORE_PHP_WEBHOOK_SERVER_PID=$!
+# DISABLED sleep 2
+# DISABLED export WEBHOOK_SERVER_URL=http://localhost:8765
 
 # Test webhooks.
-$SILK -test.v -silk.url $API silk_webhooks.md || exit 1;
+# DISABLED $SILK -test.v -silk.url $API silk_webhooks.md || exit 1;
 
 # Stop webhook server
-stop_webhook_server
+# DISABLED stop_webhook_server
 
 # Reset docstore for testing.
-$DRUSH docstore:test-reset
+# DISABLED $DRUSH docstore:test-reset
 
 # Test the document files endpoint.
 $SILK -test.v -silk.url $API silk_document_files.md || exit 1;
