@@ -205,6 +205,23 @@ Expected output.
 * Data[2].error.status: 404
 * Data[2].error.message: "Term does not exist"
 
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
 ## GET /vocabularies/{machine_name}/terms/{term_uuid1}
 
 Check the `label` and `field_iso3` of the first term have been updated.
@@ -261,6 +278,23 @@ Expected output.
 * Data[0].uuid: {term_uuid2}
 * Data[1].message: "Term updated"
 * Data[1].uuid: {term_uuid3}
+
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
 
 ## GET /vocabularies/{machine_name}/terms/{term_uuid3}
 

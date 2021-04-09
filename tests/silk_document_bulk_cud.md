@@ -144,6 +144,23 @@ Expected output.
 * Data[2].error.status: 404
 * Data[2].error.message: "Document does not exist"
 
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
 ## GET /documents/test-document-bulk-cud/{doc_uuid1}
 
 Check the `title` and `field_id` of the first document have been updated.
@@ -200,6 +217,23 @@ Expected output.
 * Data[0].uuid: {doc_uuid2}
 * Data[1].message: "Test document bulk CUD updated"
 * Data[1].uuid: {doc_uuid3}
+
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
 
 ## GET /documents/test-document-bulk-cud/{doc_uuid3}
 
