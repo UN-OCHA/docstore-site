@@ -216,8 +216,15 @@ class ParseQueryParameters {
         // Turn contains into wildcard search.
         if (strtolower($filter['condition']['operator']) === 'contains') {
           $filter['condition']['value'] = mb_strtolower($filter['condition']['value']);
-          $filter['condition']['value'] .= '*';
+          $filter['condition']['value'] = '*' . $filter['condition']['value'] . '*';
         }
+
+        // Turn starts_with into wildcard search.
+        if (strtolower($filter['condition']['operator']) === 'starts_with') {
+          $filter['condition']['value'] = mb_strtolower($filter['condition']['value']);
+          $filter['condition']['value'] = $filter['condition']['value'] . '*';
+        }
+
         $conditions->addCondition($filter['condition']['path'], $filter['condition']['value'], $filter['condition']['operator']);
       }
     }

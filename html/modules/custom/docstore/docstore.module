@@ -71,11 +71,10 @@ function docstore_search_api_solr_converted_query_alter(SolariumQueryInterface $
     if ($parts[0] === 'ss_title' || strpos($parts[0], '_label')) {
       // Is it a wildcard?
       if (strpos($parts[1], '*"')) {
-        // No spaces allowed.
-        if (!strpos($parts[1], ' ')) {
-          $parts[1] = str_replace('"', '', $parts[1]);
-          $filter->setQuery(implode(':', $parts));
-        }
+        // Escape spaces.
+        $parts[1] = str_replace(' ', '\ ', $parts[1]);
+        $parts[1] = str_replace('"', '', $parts[1]);
+        $filter->setQuery(implode(':', $parts));
       }
     }
   }
