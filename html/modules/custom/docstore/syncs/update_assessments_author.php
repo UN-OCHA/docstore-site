@@ -36,9 +36,6 @@ function updateAssessmentAuthor() {
       continue;
     }
 
-    print $document->get('author')->value;
-    print $document->uuid() . "\n";
-
     if (!$document->get('author')->isEmpty() && $document->get('author')->value !== 'AR') {
       print "Skip document, already has contacts\n";
     }
