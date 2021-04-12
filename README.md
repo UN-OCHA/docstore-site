@@ -286,7 +286,6 @@ use Symfony\Component\HttpFoundation\Request;
 use SebastianBergmann\CodeCoverage\Filter;
 use SebastianBergmann\CodeCoverage\Driver\Xdebug;
 use SebastianBergmann\CodeCoverage\CodeCoverage;
-use SebastianBergmann\CodeCoverage\Report\Html\Facade as HtmlReport;
 use SebastianBergmann\CodeCoverage\Report\PHP;
 
 $autoloader = require_once 'autoload.php';
@@ -295,6 +294,10 @@ $kernel = new DrupalKernel('prod', $autoloader);
 
 $filter = new Filter;
 $filter->addDirectoryToWhitelist('/var/www/html/modules/custom/docstore/src');
+$filter->removeDirectoryFromWhitelist('/var/www/html/modules/custom/docstore/src/Plugin/Field/');
+$filter->removeDirectoryFromWhitelist('/var/www/html/modules/custom/docstore/src/Commands/');
+$filter->removeFileFromWhitelist('/var/www/html/modules/custom/docstore/src/EventSubscriber/DocstoreConfigEventSubscriber.php');
+$filter->removeFileFromWhitelist('/var/www/html/modules/custom/docstore/src/EventSubscriber/DocstoreSearchApiEventSubscriber.php');
 
 $coverage = new CodeCoverage(
   (new Xdebug),
@@ -309,8 +312,6 @@ $response->send();
 
 $coverage->stop();
 
-
-(new HtmlReport)->process($coverage, '/var/www/code-coverage-report');
 @mkdir("/var/www/code-coverage-report-clover");
 $tmpfname = tempnam("/var/www/code-coverage-report-clover", "report");
 (new PHP)->process($coverage, $tmpfname . '.cov');
