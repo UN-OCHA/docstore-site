@@ -180,7 +180,7 @@ trait SearchableResourceTrait {
 
     // Run the search API query.
     //
-    // The resulset is built when executing the query and contains a list of
+    // The resultset is built when executing the query and contains a list of
     // items with data extracted from the solr response without, initially,
     // data load from the the database, improving performances.
     //
