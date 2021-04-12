@@ -35,12 +35,6 @@ $DRUSH docstore:test-reset
 # by an API call where relevant.
 $DRUSH docstore:test-create-node-type document documents
 
-# Add countries vocabulary.
-# @todo it's only used for the silk_document_crud tests and only to
-# look up Aruba. Replace that with a command to create a vocabulary and a test
-# term instead as it's pretty slow.
-# DISABLED $DRUSH --verbose scr ../html/modules/custom/docstore/syncs/docstore_countries.php
-
 # Run base tests.
 $SILK -test.v -silk.url $API silk_vocabulary_crud.md || exit 1;
 $SILK -test.v -silk.url $API silk_vocabulary_bulk.md || exit 1;
@@ -48,7 +42,7 @@ $SILK -test.v -silk.url $API silk_vocabulary_bulk_cud.md || exit 1;
 $SILK -test.v -silk.url $API silk_vocabulary_anon_cud.md || exit 1;
 $SILK -test.v -silk.url $API silk_vocabulary_anon_r.md || exit 1;
 $SILK -test.v -silk.url $API silk_document_types_crud.md || exit 1;
-# DISABLED $SILK -test.v -silk.url $API silk_document_crud.md || exit 1;
+$SILK -test.v -silk.url $API silk_document_crud.md || exit 1;
 $SILK -test.v -silk.url $API silk_document_bulk.md || exit 1;
 $SILK -test.v -silk.url $API silk_document_bulk_cud.md || exit 1;
 $SILK -test.v -silk.url $API silk_geofield.md || exit 1;
@@ -57,6 +51,7 @@ $SILK -test.v -silk.url $API silk_child_terms.md || exit 1;
 $SILK -test.v -silk.url $API silk_private.md || exit 1;
 $SILK -test.v -silk.url $API silk_document_revisions.md || exit 1;
 $SILK -test.v -silk.url $API silk_term_revisions.md || exit 1;
+$SILK -test.v -silk.url $API silk_authentication_provider.md || exit 1;
 
 # Reset docstore for testing.
 $DRUSH docstore:test-reset

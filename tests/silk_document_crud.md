@@ -120,38 +120,6 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_id}
 
-## POST /types/test_doc_crud/fields
-
-Add country field.
-
-* Content-Type: "application/json"
-* Accept: "application/json"
-* API-KEY: abcd
-
-```json
-{
-  "label": "Country",
-  "author": "hid_123456789",
-  "type": "entity_reference_uuid",
-  "target": "countries"
-}
-```
-
-===
-
-Example output.
-
-```json
-{
-  "message": "Field created"
-}
-```
-
-* Status: `201`
-* Content-Type: "application/json"
-* Data.message: "Field created"
-* Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_country}
-
 ## POST /documents/test-document-crud
 
 Add a document as anonymous.
@@ -365,8 +333,7 @@ Add a private document.
   "title": "Private",
   "author": "hid_123456789",
   "private": true,
-  "{field_id}": 42,
-  "{field_country}_label": "Aruba"
+  "{field_id}": 42
 }
 ```
 
@@ -492,7 +459,6 @@ Get private document as owner.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
-* Data.silk_country.name: "Aruba"
 
 ## GET /documents/test-document-crud/{doc2}
 

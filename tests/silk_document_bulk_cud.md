@@ -1,5 +1,18 @@
 # Create, update, delete documents in bulk
 
+## DELETE /types/test_doc_bulk_cud
+
+Delete test type.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
 ## POST /types
 
 Create a document type.
@@ -308,3 +321,97 @@ Check that the fourth document doesn't exist anymore.
 Expected output.
 
 * Status: `404`
+
+## POST /documents/test-document-bulk-cud/bulk
+
+Create documents in bulk without author.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "documents": [
+    {
+      "title": "Doc1",
+      "{field_id}": "doc1"
+    },
+    {
+      "title": "Doc2",
+      "{field_id}": "doc2"
+    },
+    {
+      "title": "Doc3",
+      "{field_id}": "doc3"
+    },
+    {
+      "title": "Doc4",
+      "{field_id}": "doc4"
+    }
+  ]
+}
+```
+
+===
+
+Expected output.
+
+* Status: `400`
+* Content-Type: "application/json"
+
+## POST /documents/test-document-bulk-cud/bulk
+
+Create documents in bulk without documents.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "author": "Author"
+}
+```
+
+===
+
+Expected output.
+
+* Status: `400`
+* Content-Type: "application/json"
+
+## POST /documents/test-document-bulk-cud/bulk
+
+Create documents in bulk without documents.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "author": "Author",
+  "documents": "Not a string"
+}
+```
+
+===
+
+Expected output.
+
+* Status: `400`
+* Content-Type: "application/json"
+
+## DELETE /types/test_doc_bulk_cud
+
+Delete test type.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
