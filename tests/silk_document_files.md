@@ -371,9 +371,7 @@ Add private document `doc_private_2` with a public file.
   "title": "Doc private 2",
   "author": "common",
   "private": true,
-  "files": [
-    "{file_public_uuid_3}"
-  ]
+  "files": "{file_public_uuid_3}"
 }
 ```
 
