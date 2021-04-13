@@ -1136,6 +1136,36 @@ Example output.
 
 ## POST /documents/test-document-crud
 
+Add a minimal document with a non-existing field.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "title": "Minimal",
+  "author": "hid_123456789",
+  "unknown_field": 42
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Field unknown_field does not exist"
+}
+```
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Field unknown_field does not exist"
+
+## POST /documents/test-document-crud
+
 Add a minimal document.
 
 * Content-Type: "application/json"
@@ -1192,3 +1222,16 @@ Example output.
 
 * Content-Type: "application/json"
 * Data.message: "Unable to save resource: This value should be of the correct primitive type. (silk_needed.0.value)"
+
+## DELETE /types/test_doc_crud
+
+Delete test type.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"

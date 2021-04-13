@@ -557,15 +557,6 @@ class DocumentController extends ControllerBase {
     /** @var \Drupal\node\Entity\Node $document */
     $document = Node::create($item);
 
-    // Check for invalid fields.
-    foreach ($item as $key => $data) {
-      if (!$document->hasField($key)) {
-        throw new BadRequestHttpException(strtr('Unknown field @field', [
-          '@field' => $key,
-        ]));
-      }
-    }
-
     // Create a new revision if necessary.
     $this->createEntityRevisionFromParameters($document, $params, $provider);
 
