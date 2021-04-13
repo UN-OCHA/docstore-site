@@ -10,7 +10,6 @@ Delete test type.
 
 ===
 
-* Status: `200`
 * Content-Type: "application/json"
 
 ## POST /types
@@ -215,6 +214,9 @@ Update (partially) documents in bulk.
     {
       "uuid": "{doc_uuid3}",
       "{field_id}": "doc3_new"
+    },
+    {
+      "{field_id}": "doc3_new"
     }
   ]
 }
@@ -230,6 +232,7 @@ Expected output.
 * Data[0].uuid: {doc_uuid2}
 * Data[1].message: "Test document bulk CUD updated"
 * Data[1].uuid: {doc_uuid3}
+* Data[2].error.message: "Document id is required"
 
 ## GET /wait
 

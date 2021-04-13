@@ -689,7 +689,6 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-
 ## GET /documents/test-document-crud
 
 Test filters.
