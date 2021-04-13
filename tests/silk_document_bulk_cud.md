@@ -1,17 +1,5 @@
 # Create, update, delete documents in bulk
 
-## DELETE /types/test_doc_bulk_cud
-
-Delete test type.
-
-* Content-Type: "application/json"
-* Accept: "application/json"
-* API-KEY: abcd
-
-===
-
-* Content-Type: "application/json"
-
 ## POST /types
 
 Create a document type.
