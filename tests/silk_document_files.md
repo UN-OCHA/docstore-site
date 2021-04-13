@@ -319,9 +319,15 @@ Add public document `doc_public_3` with 3 public file.
   "title": "Doc public 3",
   "author": "common",
   "files": [
-    "{file_public_uuid_4}",
-    "{file_public_uuid_5}",
-    "{file_public_uuid_6}"
+    {
+      "uuid": "{file_public_uuid_4}"
+    },
+    {
+      "media_uuid": "{file_public_uuid_5}"
+    },
+    {
+      "uuid": "{file_public_uuid_6}"
+    }
   ]
 }
 ```
@@ -735,3 +741,45 @@ Get a public document's files as owner.
 * Data.results[0].uri: /.+\/files\/[0-9a-f-]{36}\/.+/
 * Data.results[1].uuid: {file_public_uuid_1}
 * Data.results[1].uri: /.+\/files\/[0-9a-f-]{36}\/.+/
+
+## POST /documents/{doc_type}
+
+Add document with a public filename.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "title": "Filename test",
+  "author": "common",
+  "private": true,
+  "files": [
+    {
+      "filename": "test_file.txt"
+    },
+    {
+      "uri": "https://www.unocha.org/robots.txt"
+    }
+  ]
+}
+```
+
+===
+
+* Status: `201`
+* Content-Type: "application/json"
+
+## DELETE /types/test_doc_files
+
+Delete test type.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
