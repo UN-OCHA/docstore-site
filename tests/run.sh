@@ -52,6 +52,8 @@ $SILK -test.v -silk.url $API silk_private.md || exit 1;
 $SILK -test.v -silk.url $API silk_document_revisions.md || exit 1;
 $SILK -test.v -silk.url $API silk_term_revisions.md || exit 1;
 $SILK -test.v -silk.url $API silk_authentication_provider.md || exit 1;
+$SILK -test.v -silk.url $API silk_authentication_service.md || exit 1;
+
 
 # Reset docstore for testing.
 $DRUSH docstore:test-reset
