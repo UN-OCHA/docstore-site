@@ -550,18 +550,7 @@ trait ResourceTrait {
       // the field name for the term label rather than "label" or if we were to
       // use "label" for all the entity types.
       if ($entity->getEntityTypeId() === 'taxonomy_term') {
-        // @todo This was included when there was a typo in 'taxonomy_term',
-        // but it causes tests to fail, so specifying 'name' for now.
-        // $label_key = 'label';
-        $label_key = 'name';
-
-        // Add display label to local_coordination_groups.
-        if ($entity->vid->first()->getValue()['target_id'] === 'local_coordination_groups') {
-          $display_label = $entity->display_label ?? '';
-          if (isset($display_label[0])) {
-            $item['display_label'] = $display_label->first()->getValue()['value'];
-          }
-        }
+        $label_key = 'label';
       }
       else {
         $label_key = $this->entityTypeManager
@@ -579,6 +568,11 @@ trait ResourceTrait {
       if ($entity->getEntityTypeId() === 'node' && $expand_references) {
         $extra_data = $this->prepareEntityResourceData($entity, $provider, FALSE);
         $item = array_merge($item, $extra_data);
+      }
+
+      // Add display label if there is one.
+      if (isset($entity->display_label) && !$entity->display_label->isEmpty()) {
+        $item['display_label'] = $entity->display_label->first()->getValue()['value'];
       }
 
       $data[] = $item;

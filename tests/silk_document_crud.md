@@ -492,7 +492,7 @@ Get private document as owner.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
-* Data.silk_country.name: "Aruba"
+* Data.silk_country.label: "Aruba"
 
 ## GET /documents/test-document-crud/{doc2}
 
