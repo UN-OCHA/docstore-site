@@ -75,7 +75,6 @@ function docstore_search_api_solr_converted_query_alter(SolariumQueryInterface $
         $parts[1] = str_replace(' ', '\ ', $parts[1]);
         $parts[1] = str_replace('"', '', $parts[1]);
         $filter->setQuery(implode(':', $parts));
-        _docstore_vardump($parts);
       }
     }
   }

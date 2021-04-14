@@ -108,7 +108,7 @@ function syncLocations($url = '', $admin_level = 0) {
       $location['geolocation'] = [
         'lat' => $row->geolocation->lat,
         'lon' => $row->geolocation->lon,
-        'value' => 'POINT (' . $row->geolocation->lat . ' ' . $row->geolocation->lon . ')',
+        'value' => 'POINT (' . $row->geolocation->lon . ' ' . $row->geolocation->lat . ')',
       ];
     }
 
