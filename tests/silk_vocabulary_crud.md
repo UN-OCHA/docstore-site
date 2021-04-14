@@ -110,6 +110,17 @@ Example output.
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // UUID {uuid}
 * Data.machine_name: /^[0-9a-z_]+$/ // Machine_name {machine_name}
 
+## GET /vocabularies
+
+Get all vocabularies.
+
+* Accept: "application/json"
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
 ## GET /vocabularies/abc
 
 Get a non existing vocabulary.
@@ -1372,3 +1383,79 @@ Delete webhook.
 
 * Status: `200`
 * Data.message: "Webhook deleted"
+
+## POST /vocabularies
+
+Create non-shared vocabulary.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Private voc",
+  "machine_name": "voc_crud_private",
+  "author": "hid_123456789",
+  "shared": false
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Vocabulary created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Vocabulary created"
+* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // UUID {uuid}
+* Data.machine_name: /^[0-9a-z_]+$/ // Machine_name {machine_name}
+
+## GET /vocabularies/{machine_name}
+
+Get a vocabulary.
+
+* Accept: "application/json"
+
+===
+
+* Status: `403`
+* Content-Type: "application/json"
+
+## GET /vocabularies/{machine_name}
+
+Get a vocabulary.
+
+* Accept: "application/json"
+* API-KEY: dcba
+
+===
+
+* Status: `403`
+* Content-Type: "application/json"
+
+## GET /vocabularies/{machine_name}
+
+Get a vocabulary.
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+{
+  "label": "Private voc"
+}
+```
+
+* Status: `200`
+* Content-Type: "application/json"
