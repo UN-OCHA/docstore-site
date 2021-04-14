@@ -3,6 +3,7 @@ DRUSH=${DRUSH:-"fin drush"}
 SILK=${SILK:-"./silk"}
 HOST=${HOST:-"http://docstore.local.docksal"}
 API=${API:-"$HOST/api/v1"}
+SKIP_WEBHOOK=${SKIP_WEBHOOK:-"1"}
 
 # Helpers to extract uuids.
 get_uuid() {
@@ -53,25 +54,27 @@ $SILK -test.v -silk.url $API silk_document_revisions.md || exit 1;
 $SILK -test.v -silk.url $API silk_term_revisions.md || exit 1;
 $SILK -test.v -silk.url $API silk_authentication_provider.md || exit 1;
 $SILK -test.v -silk.url $API silk_authentication_service.md || exit 1;
+$SILK -test.v -silk.url $API silk_webhook_controller.md || exit 1;
 
+if [ "$SKIP_WEBHOOK" != "1" ]; then
+  # Reset docstore for testing.
+  $DRUSH docstore:test-reset
+
+  # Start the PHP webhook server.
+  # php -S localhost:8765 -t webhooks &
+  DOCSTORE_PHP_WEBHOOK_SERVER_PID=$!
+  sleep 2
+  export WEBHOOK_SERVER_URL=http://localhost:8765
+
+  # Test webhooks.
+  $SILK -test.v -silk.url $API silk_webhooks.md || exit 1;
+
+  # Stop webhook server
+  stop_webhook_server
+fi
 
 # Reset docstore for testing.
 $DRUSH docstore:test-reset
-
-# Start the PHP webhook server.
-# DISABLED fin exec php -S localhost:8765 -t webhooks &
-# DISABLED DOCSTORE_PHP_WEBHOOK_SERVER_PID=$!
-# DISABLED sleep 2
-# DISABLED export WEBHOOK_SERVER_URL=http://localhost:8765
-
-# Test webhooks.
-# DISABLED $SILK -test.v -silk.url $API silk_webhooks.md || exit 1;
-
-# Stop webhook server
-# DISABLED stop_webhook_server
-
-# Reset docstore for testing.
-# DISABLED $DRUSH docstore:test-reset
 
 # Test the document files endpoint.
 $SILK -test.v -silk.url $API silk_document_files.md || exit 1;
