@@ -65,7 +65,7 @@ if [ "$SKIP_WEBHOOK" != "1" ]; then
   $DRUSH docstore:test-reset
 
   # Start the PHP webhook server.
-  # php -S localhost:8765 -t webhooks &
+  php -S localhost:8765 -t webhooks &
   DOCSTORE_PHP_WEBHOOK_SERVER_PID=$!
   sleep 2
   export WEBHOOK_SERVER_URL=http://localhost:8765
