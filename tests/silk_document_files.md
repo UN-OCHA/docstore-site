@@ -760,7 +760,7 @@ Add document with a public filename.
       "filename": "test_file.txt"
     },
     {
-      "uri": "https://www.unocha.org/robots.txt"
+      "uri": "{HOST}/robots.txt"
     }
   ]
 }
