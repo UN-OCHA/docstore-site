@@ -319,4 +319,3 @@ Delete test type.
 
 * Status: `200`
 * Content-Type: "application/json"
-

@@ -55,6 +55,7 @@ $SILK -test.v -silk.url $API silk_term_revisions.md || exit 1;
 $SILK -test.v -silk.url $API silk_authentication_provider.md || exit 1;
 $SILK -test.v -silk.url $API silk_authentication_service.md || exit 1;
 $SILK -test.v -silk.url $API silk_webhook_controller.md || exit 1;
+$SILK -test.v -silk.url $API silk_provider.md || exit 1;
 
 if [ "$SKIP_WEBHOOK" != "1" ]; then
   # Reset docstore for testing.
