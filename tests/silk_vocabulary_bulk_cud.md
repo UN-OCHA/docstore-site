@@ -68,6 +68,67 @@ Example output.
 
 ## POST /vocabularies/{machine_name}/terms/bulk
 
+Create terms without author.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "terms": [
+    {
+      "label": "Term1",
+      "{field_iso3}": "AFG"
+    },
+    {
+      "label": "Term2",
+      "{field_iso3}": "BEL"
+    },
+    {
+      "label": "Term3",
+      "{field_iso3}": "FRA"
+    },
+    {
+      "label": "Term4",
+      "{field_iso3}": "OPT"
+    }
+  ]
+}
+```
+
+===
+
+Expected output.
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: The "author" property is required and must be a string
+
+## POST /vocabularies/{machine_name}/terms/bulk
+
+Create terms without terms.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "author": "test"
+}
+```
+
+===
+
+Expected output.
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: The "terms" property is required and must be an array.
+
+## POST /vocabularies/{machine_name}/terms/bulk
+
 Create terms in bulk.
 
 * Content-Type: "application/json"
@@ -112,6 +173,46 @@ Expected output.
 * Data[1].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Term2 uuid {term_uuid2}
 * Data[2].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Term3 uuid {term_uuid3}
 * Data[3].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Term4 uuid {term_uuid4}
+
+## POST /vocabularies/{machine_name}/terms/bulk
+
+Create terms in bulk.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "author": "Author",
+  "terms": [
+    {
+      "label": "Term5",
+      "{field_iso3}": "AFG",
+      "parent": "{term_uuid2}"
+    },
+    {
+      "label": "Term6",
+      "{field_iso3}": "AFG",
+      "parent": {
+        "_reference": "term",
+        "_target": "{machine_name}",
+        "_field": "name",
+        "_value": "Term2"
+      }
+    }
+  ]
+}
+```
+
+===
+
+Expected output.
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].message: "Term created"
+* Data[0].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Term1 uuid {term_uuid5}
 
 ## POST /vocabularies/{machine_name}/terms/bulk
 
@@ -187,6 +288,16 @@ Update terms in bulk. This is a full update so the `label` is mandatory.
       "uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
       "label": "Non existing term",
       "{field_iso3}": "nothing"
+    },
+    {
+      "my_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "label": "Non existing term",
+      "{field_iso3}": "nothing"
+    },
+    {
+      "uuid": "{term_uuid2}",
+      "label": "Term1 with non-existing field",
+      "my_label": "Non existing field"
     }
   ]
 }
@@ -204,6 +315,10 @@ Expected output.
 * Data[1].error.message: "Label is required"
 * Data[2].error.status: 404
 * Data[2].error.message: "Term does not exist"
+* Data[3].error.status: 400
+* Data[3].error.message: "Term id is required"
+* Data[4].error.status: 400
+* Data[4].error.message: "Field my_label cannot be changed"
 
 ## GET /wait
 
@@ -335,10 +450,13 @@ Delete elements in bulk.
       "uuid": "{term_uuid3}"
     },
     {
-      "uuid": "{term_uuid4}"
+      "id": "{term_uuid4}"
     },
     {
       "uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    },
+    {
+      "label": "aaaaaaaa"
     }
   ]
 }
