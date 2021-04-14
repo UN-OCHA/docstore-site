@@ -5,6 +5,9 @@ HOST=${HOST:-"http://docstore.local.docksal"}
 API=${API:-"$HOST/api/v1"}
 SKIP_WEBHOOK=${SKIP_WEBHOOK:-"1"}
 
+# Export host for silk.
+export HOST
+
 # Helpers to extract uuids.
 get_uuid() {
   sed -nE 's/.*"uuid":"([^"]+)".*/\1/p'
