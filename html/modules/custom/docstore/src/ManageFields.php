@@ -283,7 +283,7 @@ class ManageFields {
       // For daterange fields, index the end date.
       // @todo check the search api daterange type to see if it's
       // necessary to index the end date like that.
-      case 'datarange':
+      case 'daterange':
         $field = new Field($index, $field_name . '_end_');
         $field->setType('date');
         $field->setPropertyPath($field_name . ':end_value');
