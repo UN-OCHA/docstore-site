@@ -201,7 +201,8 @@ Update (partially) documents in bulk.
     },
     {
       "uuid": "{doc_uuid3}",
-      "{field_id}": "doc3_new"
+      "{field_id}": "doc3_new",
+      "published": false
     },
     {
       "{field_id}": "doc3_new"
@@ -254,6 +255,7 @@ Expected output.
 ```json
 {
   "uuid": "{doc_uuid3}",
+  "published": false,
   "title": "Doc3",
   "{field_id}": "doc3_new"
 }
@@ -278,10 +280,13 @@ Delete elements in bulk.
       "uuid": "{doc_uuid3}"
     },
     {
-      "uuid": "{doc_uuid4}"
+      "id": "{doc_uuid4}"
     },
     {
       "uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    },
+    {
+      "my_id": "123"
     }
   ]
 }
@@ -299,6 +304,8 @@ Expected output.
 * Data[1].uuid: {doc_uuid4}
 * Data[2].error.status: 404
 * Data[2].error.message: "Document does not exist"
+* Data[3].error.status: 400
+* Data[3].error.message: "Document id is required"
 
 ## GET /documents/test-document-bulk-cud/{doc_uuid4}
 
