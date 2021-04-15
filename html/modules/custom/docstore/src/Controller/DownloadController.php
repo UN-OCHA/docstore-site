@@ -14,6 +14,7 @@ use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\docstore\UtilityTrait;
 use Drupal\file\FileUsage\FileUsageInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -95,7 +96,7 @@ class DownloadController extends ControllerBase {
   /**
    * Download a file.
    *
-   * This endpoints acts similarly to the nginx rules.
+   * This endpoints emulates the nginx rules.
    *
    * @param string $uuid
    *   Media uuid.
@@ -120,28 +121,27 @@ class DownloadController extends ControllerBase {
 
     // Retrieve the headers necessary to determine the version of the file.
     $provider_uuid = $this->getProviderUuidHeaderValue($request);
-    $provider_token = $this->getProviderTokenHeaderValue($request);
 
     // Look for public file matching the media uuid.
     $base = $this->fileSystem->realpath('public://') . '/media';
     $file = $this->lookForFile($base, $provider_uuid, $path);
+    $private = FALSE;
 
     // If there is no public file, look for a private one.
     if (empty($file)) {
-      // Return a 404 if no token was provided as we cannot determine the
-      // private link.
-      if (empty($provider_token)) {
-        throw new NotFoundHttpException('File not found');
-      }
-
       // Look for private file matching the media uuid.
-      $base = $this->fileSystem->realpath('private://') . '/media/' . $provider_token;
+      $base = $this->fileSystem->realpath('private://') . '/media';
       $file = $this->lookForFile($base, $provider_uuid, $path);
+      $private = TRUE;
     }
 
     // If no public or private file was found, return a 404.
     if (empty($file)) {
       throw new NotFoundHttpException('File not found');
+    }
+    // Otherwise if the file is private, check access.
+    elseif ($private) {
+      static::checkMediaAccess($uuid, $request);
     }
 
     $headers = [
@@ -167,27 +167,6 @@ class DownloadController extends ControllerBase {
       $value = $request->headers->get('X-Docstore-Provider-Uuid');
       // It's supposed to be a uuid.
       if (Uuid::isValid($value)) {
-        return $value;
-      }
-    }
-    return '';
-  }
-
-  /**
-   * Get the value of the X-Docstore-Provider-Token header.
-   *
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   Docstore API request.
-   *
-   * @return string
-   *   The provider token if defined.
-   */
-  public function getProviderTokenHeaderValue(Request $request) {
-    if ($request->headers->has('X-Docstore-Provider-Token')) {
-      $value = $request->headers->get('X-Docstore-Provider-Token');
-      // It's supposed to be a hash.
-      // @see \Drupal\docstore\FileTrait::getProviderPrivateFileToken()
-      if (preg_match('/^[0-9a-f]{32}$/', $value) !== FALSE) {
         return $value;
       }
     }
@@ -248,6 +227,25 @@ class DownloadController extends ControllerBase {
       }
     }
     return '';
+  }
+
+  /**
+   * Check access to the media.
+   *
+   * @param string $uuid
+   *   Media uuid.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   Docstore API request.
+   *
+   * @throws \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException
+   *   403 Access Denied if the provider doesn't have access to the media.
+   */
+  public static function checkMediaAccess($uuid, Request $request) {
+    $response = \Drupal::service('docstore.file_controller')
+      ->checkFileAccess($uuid, $request);
+    if ($response->getStatusCode() != 200) {
+      throw new AccessDeniedHttpException('Access denied');
+    }
   }
 
 }

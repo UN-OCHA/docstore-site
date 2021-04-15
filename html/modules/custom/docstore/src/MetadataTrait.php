@@ -139,6 +139,16 @@ trait MetadataTrait {
               ];
             }
             else {
+              // Use proper properties for dateranges.
+              if ($field_definitions[$key]->getType() === 'daterange') {
+                if (isset($value['start'])) {
+                  $value['value'] = $value['start'];
+                }
+                if (isset($value['end'])) {
+                  $value['end_value'] = $value['end'];
+                }
+              }
+
               // No action defined, pass as multi property.
               $item[$key][] = $value;
             }
@@ -466,6 +476,19 @@ trait MetadataTrait {
           }
         }
       }
+
+      // Use proper properties for dateranges.
+      $field_info = $entity->getFieldDefinition($name);
+      if ($field_info->getType() === 'daterange') {
+        if (isset($values['start'])) {
+          $values['value'] = $values['start'];
+        }
+        if (isset($values['end'])) {
+          $values['end_value'] = $values['end'];
+        }
+      }
+
+      // Set field value.
       $entity->set($name, $values);
     }
     else {
