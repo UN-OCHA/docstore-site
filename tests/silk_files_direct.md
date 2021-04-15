@@ -1,5 +1,33 @@
 # Direct file access.
 
+## GET /api/v1/me
+
+Get the provider uuid for `provider_1`.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: /^[0-9a-f]{8}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{12}$/ // UUID {provider_uuid_1}
+
+## GET /api/v1/me
+
+Get the provider uuid for `provider_2`.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: dcba
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.uuid: /^[0-9a-f]{8}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{12}$/ // UUID {provider_uuid_2}
+
 ## POST /api/v1/files
 
 Create a public file `file_public_1` with content.
@@ -24,7 +52,7 @@ Note: the data is "Public file 1" encoded in base64.
 * Status: `201`
 * Content-Type: "application/json"
 * Data.message: "File created"
-* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // UUID {file_public_uuid_1}
+* Data.uuid: /^[0-9a-f]{8}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{12}$/ // UUID {file_public_uuid_1}
 
 ## POST /api/v1/files
 
@@ -50,7 +78,7 @@ Note: the data is "Private file 1" encoded in base64.
 * Status: `201`
 * Content-Type: "application/json"
 * Data.message: "File created"
-* Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // UUID {file_private_uuid_1}
+* Data.uuid: /^[0-9a-f]{8}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{12}$/ // UUID {file_private_uuid_1}
 
 ## GET /files/not-a-uuid/pouet.txt
 
@@ -85,7 +113,7 @@ Public file 1
 
 Get the content of the public file `file_public_1` as a different provider
 
-* X-Docstore-Provider-Uuid: {PROVIDER_UUID2}
+* X-Docstore-Provider-Uuid: {provider_uuid_2}
 
 ===
 
@@ -100,7 +128,7 @@ Public file 1
 
 Get the content of the public file `file_public_1` as the owner
 
-* X-Docstore-Provider-Uuid: {PROVIDER_UUID1}
+* X-Docstore-Provider-Uuid: {provider_uuid_1}
 
 ===
 
@@ -125,6 +153,8 @@ extension.
 Get the content of the public file `file_public_1` as a different provider with
 the wrong extension.
 
+* X-Docstore-Provider-Uuid: {provider_uuid_2}
+
 ===
 
 * Status: `404`
@@ -134,6 +164,8 @@ the wrong extension.
 Get the content of the public file `file_public_1` as the owner with the wrong
 extension.
 
+* X-Docstore-Provider-Uuid: {provider_uuid_1}
+
 ===
 
 * Status: `404`
@@ -141,29 +173,29 @@ extension.
 
 ## GET /files/{file_private_uuid_1}/pouet.txt
 
-Get the content of the public file `file_public_1` as anonymous.
+Get the content of the private file `file_private_1` as anonymous.
 
 ===
 
-* Status: `404`
+* Status: `403`
 
 ## GET /files/{file_private_uuid_1}/pouet.txt
 
-Get the content of the public file `file_public_1` as a different provider.
+Get the content of the private file `file_private_1` as a different provider.
 
-* X-Docstore-Provider-Uuid: {PROVIDER_UUID2}
-* X-Docstore-Provider-Token: {PROVIDER_TOKEN2}
+* X-Docstore-Provider-Uuid: {provider_uuid_2}
+* API-KEY: dcba
 
 ===
 
-* Status: `404`
+* Status: `403`
 
 ## GET /files/{file_private_uuid_1}/pouet.txt
 
 Get the content of the private file `file_private_1` as the owner.
 
-* X-Docstore-Provider-Uuid: {PROVIDER_UUID1}
-* X-Docstore-Provider-Token: {PROVIDER_TOKEN1}
+* X-Docstore-Provider-Uuid: {provider_uuid_1}
+* API-KEY: abcd
 
 ===
 
@@ -188,8 +220,8 @@ extension.
 Get the content of the private file `file_private_1` as a different provider with
 the wrong extension.
 
-* X-Docstore-Provider-Uuid: {PROVIDER_UUID2}
-* X-Docstore-Provider-Token: {PROVIDER_TOKEN2}
+* X-Docstore-Provider-Uuid: {provider_uuid_2}
+* API-KEY: dcba
 
 ===
 
@@ -200,9 +232,286 @@ the wrong extension.
 Get the content of the private file `file_private_1` as the owner with the wrong
 extension.
 
-* X-Docstore-Provider-Uuid: {PROVIDER_UUID1}
-* X-Docstore-Provider-Token: {PROVIDER_TOKEN1}
+* X-Docstore-Provider-Uuid: {provider_uuid_1}
+* API-KEY: abcd
 
 ===
 
 * Status: `404`
+
+## GET /api/v1/files/{file_public_uuid_1}/revisions
+
+Get the revisions for the file.
+
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data[0].id: /.+/ // Id of the latest revision {file_public_revision_1}
+
+## PUT /api/v1/files/{file_public_uuid_1}/select
+
+Select the current version of the public file `file_public_1` for the second
+provider.
+
+* API-KEY: dcba
+
+```json
+{
+  "target": "{file_public_revision_1}"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "File version selected"
+
+
+## POST /api/v1/files/{file_public_uuid_1}/content
+
+Updat the content of the public file `file_public_1`.
+
+Note: the data is "Public file 1 - Updated" encoded in base64.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```txt
+Public file 1 - Updated
+
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "File content created"
+* Data.uuid: {file_public_uuid_1}
+
+## GET /api/v1/files/{file_public_uuid_1}/content
+
+Get the content of the public file `file_public_1` as anomymous
+
+===
+
+```txt
+Public file 1 - Updated
+
+```
+
+* Status: `200`
+
+## GET /api/v1/files/{file_public_uuid_1}/content
+
+Get the content of the public file `file_public_1` as another provider
+
+* API-KEY: dcba
+
+===
+
+```txt
+Public file 1 - Updated
+
+```
+
+* Status: `200`
+
+## GET /api/v1/files/{file_public_uuid_1}/content
+
+Get the content of the public file `file_public_1` as the owner
+
+* API-KEY: abcd
+
+===
+
+```txt
+Public file 1 - Updated
+
+```
+
+* Status: `200`
+
+## GET /files/{file_public_uuid_1}/pouet.txt
+
+Get the content of the public file `file_public_1` as anonymous.
+
+It should be the latest version.
+
+===
+
+```txt
+Public file 1 - Updated
+
+```
+
+* Status: `200`
+
+## GET /files/{file_public_uuid_1}/pouet.txt
+
+Get the content of the public file `file_public_1` as another provider.
+
+It should be the first version as it was selected for this provider.
+
+* X-Docstore-Provider-Uuid: {provider_uuid_2}
+
+===
+
+```txt
+Public file 1
+
+```
+
+* Status: `200`
+
+## GET /files/{file_public_uuid_1}/pouet.txt
+
+Get the content of the public file `file_public_1` as the owner.
+
+It should be the latest version.
+
+* X-Docstore-Provider-Uuid: {provider_uuid_1}
+
+===
+
+```txt
+Public file 1 - Updated
+
+```
+
+* Status: `200`
+
+## PUT /api/v1/files/{file_public_uuid_1}/select
+
+Select the latest version of the public file `file_public_1` for the second
+provider.
+
+* API-KEY: dcba
+
+```json
+{
+  "target": "latest"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "File version selected"
+
+## GET /files/{file_public_uuid_1}/pouet.txt
+
+Get the content of the public file `file_public_1` as anonymous.
+
+It should be the latest version.
+
+===
+
+```txt
+Public file 1 - Updated
+
+```
+
+* Status: `200`
+
+## GET /files/{file_public_uuid_1}/pouet.txt
+
+Get the content of the public file `file_public_1` as another provider.
+
+It should be the latest version.
+
+* X-Docstore-Provider-Uuid: {provider_uuid_2}
+
+===
+
+```txt
+Public file 1 - Updated
+
+```
+
+* Status: `200`
+
+## GET /files/{file_public_uuid_1}/pouet.txt
+
+Get the content of the public file `file_public_1` as the owner.
+
+It should be the latest version.
+
+* X-Docstore-Provider-Uuid: {provider_uuid_1}
+
+===
+
+```txt
+Public file 1 - Updated
+
+```
+
+* Status: `200`
+
+## PUT /api/v1/files/{file_public_uuid_1}/select
+
+Hide the public file `file_public_1` for the second provider.
+
+* API-KEY: dcba
+
+```json
+{
+  "target": "hidden"
+}
+```
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+* Data.message: "File version selected"
+
+## GET /files/{file_public_uuid_1}/pouet.txt
+
+Get the content of the public file `file_public_1` as anonymous.
+
+It should be the latest version.
+
+===
+
+```txt
+Public file 1 - Updated
+
+```
+
+* Status: `200`
+
+## GET /files/{file_public_uuid_1}/pouet.txt
+
+Get the content of the public file `file_public_1` as another provider.
+
+It should be a 404 not found.
+
+* X-Docstore-Provider-Uuid: {provider_uuid_2}
+
+===
+
+* Status: `404`
+
+## GET /files/{file_public_uuid_1}/pouet.txt
+
+Get the content of the public file `file_public_1` as the owner.
+
+It should be the latest version.
+
+* X-Docstore-Provider-Uuid: {provider_uuid_1}
+
+===
+
+```txt
+Public file 1 - Updated
+
+```
+
+* Status: `200`
+

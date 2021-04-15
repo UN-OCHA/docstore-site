@@ -615,13 +615,10 @@ trait FileTrait {
         str_repeat($characters, 12),
       ]);
 
-      // Glob pattern for a hash.
-      $token_pattern = str_repeat($characters, 32);
-
       // Public and private path patterns.
       $bases = [
         'public' => $this->fileSystem->realpath('public://media'),
-        'private' => $this->fileSystem->realpath('private://media') . '/' . $token_pattern,
+        'private' => $this->fileSystem->realpath('private://media'),
       ];
 
       foreach ($bases as $type => $base) {
@@ -674,8 +671,7 @@ trait FileTrait {
 
     // Determine the base path for the symlinks based on the private state.
     if ($private) {
-      $token = $this->getProviderPrivateFileToken($owner);
-      $base = $this->fileSystem->realpath('private://media') . '/' . $token;
+      $base = $this->fileSystem->realpath('private://media');
     }
     else {
       $base = $this->fileSystem->realpath('public://media');
@@ -791,12 +787,9 @@ trait FileTrait {
       $link = $this->fileSystem->realpath('public://') . '/media';
     }
     // Otherwise if the provider is the owner, generate a symlink in the private
-    // directory with a token specific to the provider as part of the path.
-    // Nginx will ensure that the symlink can only be accessed if the same
-    // token is provided via the X-Docstore-Provider-Token header.
+    // directory.
     elseif ($this->providerIsOwner($media, $provider)) {
-      $token = $this->getProviderPrivateFileToken($provider);
-      $link = $this->fileSystem->realpath('private://') . '/media/' . $token;
+      $link = $this->fileSystem->realpath('private://') . '/media';
     }
     // Skip if the media is private and the provider is not the owner as it
     // means it doesn't have access to it.
@@ -887,7 +880,7 @@ trait FileTrait {
    *     the provider.
    */
   public function removeMediaSymlink(Media $media, UserInterface $provider, $type) {
-    $link = $this->generateSymlinkLink($media, $provider, 'provider-hidden');
+    $link = $this->generateSymlinkLink($media, $provider, $type);
     if (!empty($link)) {
       @unlink($link);
     }
@@ -915,22 +908,6 @@ trait FileTrait {
     if (!@symlink($target, $link)) {
       throw new HttpException(500, 'Unable to create link to file');
     }
-  }
-
-  /**
-   * Get the token used for the private symlinks.
-   *
-   * @param \Drupal\user\UserInterface $provider
-   *   Provider.
-   *
-   * @return string
-   *   Token.
-   */
-  public function getProviderPrivateFileToken(UserInterface $provider) {
-    // @phpstan-ignore-next-line
-    $api_key = $provider->get('api_keys')->value;
-    // @todo does that even makes sense as "secured" token?
-    return md5($api_key . $provider->uuid());
   }
 
   /**
@@ -963,11 +940,13 @@ trait FileTrait {
     $values = [];
     foreach ($selection as $provider_uuid => $target) {
       $values[] = [
-        'povider_uuid' => $provider_uuid,
+        'provider_uuid' => $provider_uuid,
         'target' => $target,
       ];
     }
-    $media->selected_file_versions->setValue($values);
+    $media->get('selected_file_versions')->setValue($values);
+    $media->setNewRevision(FALSE);
+    $media->save();
   }
 
   /**
