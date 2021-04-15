@@ -139,6 +139,16 @@ trait MetadataTrait {
               ];
             }
             else {
+              // Use proper properties for dateranges.
+              if ($field_definitions[$key]->getType() === 'daterange') {
+                if (isset($value['start'])) {
+                  $value['value'] = $value['start'];
+                }
+                if (isset($value['end'])) {
+                  $value['end_value'] = $value['end'];
+                }
+              }
+
               // No action defined, pass as multi property.
               $item[$key][] = $value;
             }
