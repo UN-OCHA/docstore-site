@@ -98,10 +98,5 @@ $SILK -test.v -silk.url $API silk_exceptions.md || exit 1;
 # Reset docstore for testing.
 $DRUSH docstore:test-reset
 
-export PROVIDER_UUID1="$(curl -s -H "API-KEY: abcd" $API/me | get_uuid)"
-export PROVIDER_UUID2="$(curl -s -H "API-KEY: dcba" $API/me | get_uuid)"
-export PROVIDER_TOKEN1=$(php -r "print md5('abcd' . '$PROVIDER_UUID1');")
-export PROVIDER_TOKEN2=$(php -r "print md5('dbca' . '$PROVIDER_UUID2');")
-
 # Run direct download tests.
 $SILK -test.v -silk.url $HOST silk_files_direct.md || exit 1;

@@ -655,6 +655,18 @@ docstore_delete_file:
     _auth: ['docstore_auth']
     docstore_crud: 'D'
     docstore_access_level: 'A'
+docstore_check_access_file:
+  path: '/api/v1/files/{uuid}/access'
+  defaults:
+    _controller: 'docstore.file_controller:checkFileAccess'
+    _title: 'Check if the provider has access to the file'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
 docstore_get_file_usage:
   path: '/api/v1/files/{uuid}/usage'
   defaults:
@@ -759,8 +771,9 @@ docstore_download_file:
   defaults:
     _controller: 'docstore.download_controller:downloadFile'
     _title: 'Download a file'
-  methods: [GET]
   requirements:
-    _access: 'TRUE'
+    _docstore_access_check: 'TRUE'
   options:
+    _auth: ['docstore_auth']
     docstore_crud: 'R'
+    docstore_access_level: 'B'
