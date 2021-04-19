@@ -28,7 +28,7 @@ function docstore_local_coordination_groups_fields() {
       'id' => 'string',
       'email' => 'string',
       'website' => 'string',
-      'display_label' => 'string',
+      'display_name' => 'string',
       'global_cluster' => [
         'type' => 'term_reference',
         'target' => 'global_coordination_groups',
@@ -153,15 +153,15 @@ function docstore_local_coordination_groups_sync($url = '') {
         }
       }
 
-      $display_label = $row->label;
+      $display_name = $row->label;
       if (isset($row->operation) && isset($row->operation[0])) {
-        $display_label .= " - " . reset($row->operation)->label;
+        $display_name .= " - " . reset($row->operation)->label;
       }
 
       if (empty($term)) {
         $item = [
           'name' => $row->label,
-          'display_label' => $display_label,
+          'display_name' => $display_name,
           'vid' => $vocabulary->id(),
           'created' => [],
           'provider_uuid' => [],
@@ -190,7 +190,7 @@ function docstore_local_coordination_groups_sync($url = '') {
       // Needed once to update all terms.
       $check = \Drupal::state()->get('docstore_sync_local_groups_name_update', '');
       if (empty($check)) {
-        $term->set('display_label', $display_label);
+        $term->set('display_name', $display_name);
       }
 
       foreach ($fields as $name => $type) {

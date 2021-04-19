@@ -571,8 +571,8 @@ trait ResourceTrait {
       }
 
       // Add display label if there is one.
-      if (isset($entity->display_label) && !$entity->display_label->isEmpty()) {
-        $item['display_label'] = $entity->display_label->first()->getValue()['value'];
+      if (!empty($entity->display_name) && !$entity->display_name->isEmpty()) {
+        $item['display_name'] = $entity->display_name->value;
       }
 
       $data[] = $item;
