@@ -5,8 +5,9 @@
  * Contains Document Store code.
  */
 
-use Drupal\search_api\Entity\Index;
 use Drupal\docstore\ManageFields;
+use Drupal\search_api\Entity\Index;
+use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\user\Entity\User;
 
 /**
@@ -33,7 +34,6 @@ function docstore_update_8003() {
   $manager = new ManageFields($provider, 'assessment', Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
 
   $manager->addDocumentField([
-    'type' => 'assessment',
     'label' => 'Operations',
     'machine_name' => 'operations',
     'type' => 'term_reference',
@@ -52,4 +52,36 @@ function docstore_update_8004() {
   docstore_wipe_index_and_solr('documents_disaster');
   docstore_wipe_index_and_solr('documents_assessment');
   docstore_wipe_index_and_solr('documents_assessment_document');
+}
+
+/**
+ * Add display label to ar_life_cycle_steps.
+ */
+function docstore_update_8005() {
+  $provider = User::load(2);
+  $manager = new ManageFields($provider, NULL, Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+
+  $vocabulary = Vocabulary::load('ar_life_cycle_steps');
+  $manager->addVocabularyField($vocabulary, [
+    'label' => 'Display name',
+    'machine_name' => 'display_name',
+    'type' => 'string',
+    'author' => 'AR',
+  ]);
+}
+
+/**
+ * Add display label to ar_hpc_document_repository.
+ */
+function docstore_update_8006() {
+  $provider = User::load(2);
+  $manager = new ManageFields($provider, NULL, Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+
+  $vocabulary = Vocabulary::load('ar_hpc_document_repository');
+  $manager->addVocabularyField($vocabulary, [
+    'label' => 'Display name',
+    'machine_name' => 'display_name',
+    'type' => 'string',
+    'author' => 'AR',
+  ]);
 }
