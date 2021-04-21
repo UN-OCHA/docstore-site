@@ -549,7 +549,7 @@ trait ResourceTrait {
       // @todo It would much easier if we were to use "name" for terms which is
       // the field name for the term label rather than "label" or if we were to
       // use "label" for all the entity types.
-      if ($entity->getEntityTypeId() === 'taxonony_term') {
+      if ($entity->getEntityTypeId() === 'taxonomy_term') {
         $label_key = 'label';
       }
       else {
@@ -568,6 +568,11 @@ trait ResourceTrait {
       if ($entity->getEntityTypeId() === 'node' && $expand_references) {
         $extra_data = $this->prepareEntityResourceData($entity, $provider, FALSE);
         $item = array_merge($item, $extra_data);
+      }
+
+      // Add display label if there is one.
+      if (!empty($entity->display_name) && !$entity->display_name->isEmpty()) {
+        $item['display_name'] = $entity->display_name->value;
       }
 
       $data[] = $item;
