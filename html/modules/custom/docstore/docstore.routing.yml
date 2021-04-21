@@ -497,6 +497,18 @@ docstore_get_vocabulary_terms:
     _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'B'
+docstore_get_vocabulary_terms_option_list:
+  path: '/api/v1/vocabularies/{id}/terms/options'
+  defaults:
+    _controller: 'docstore.term_controller:getTermsAsOptionList'
+    _title: 'Get vocabulary terms'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
 docstore_create_term_in_vocabulary:
   path: '/api/v1/vocabularies/{id}/terms'
   defaults:
