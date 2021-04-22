@@ -155,7 +155,7 @@ function docstore_local_coordination_groups_sync($url = '') {
 
       $display_name = $row->label;
       if (isset($row->operation) && isset($row->operation[0])) {
-        $display_name .= " - " . reset($row->operation)->label;
+        $display_name .= ' (' . reset($row->operation)->label . ')';
       }
 
       if (empty($term)) {
