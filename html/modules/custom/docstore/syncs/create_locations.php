@@ -145,3 +145,4 @@ createLocationFields();
 syncLocations();
 syncLocations('', 1);
 syncLocations('', 2);
+syncLocations('', 3);

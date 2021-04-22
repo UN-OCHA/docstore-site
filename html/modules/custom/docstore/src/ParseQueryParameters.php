@@ -36,7 +36,7 @@ class ParseQueryParameters {
    *
    * @var int
    */
-  const SIZE_MAX = 100;
+  const SIZE_MAX = 5000;
 
   /**
    * The direction key in the sort parameter: sort[lorem][<direction>].

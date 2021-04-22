@@ -6,7 +6,9 @@
  */
 
 use Drupal\docstore\ManageFields;
+use Drupal\field\Entity\FieldConfig;
 use Drupal\search_api\Entity\Index;
+use Drupal\search_api\Item\Field;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\user\Entity\User;
 
@@ -84,4 +86,38 @@ function docstore_update_8006() {
     'type' => 'string',
     'author' => 'AR',
   ]);
+}
+
+/**
+ * Add admin_level to term search index.
+ */
+function docstore_update_8007() {
+  $provider = User::load(2);
+  $manager = new ManageFields($provider, NULL, Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+
+  $field_config = FieldConfig::loadByName('taxonomy_term', 'locations', 'admin_level');
+  $manager->addTermFieldToIndex($field_config, 'Admin level');
+
+  // Re-index.
+  $index = Index::load('terms');
+  $index->reindex();
+}
+
+/**
+ * Add parents of terms.
+ */
+function docstore_update_8008() {
+  $index = Index::load('terms');
+
+  $field = new Field($index, 'parents');
+  $field->setType('string');
+  $field->setPropertyPath('parents');
+  $field->setLabel('Parents');
+  $index->addField($field);
+
+  // Save.
+  $index->save();
+
+  // Re-index.
+  $index->reindex();
 }
