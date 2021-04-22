@@ -8,6 +8,7 @@
 use Drupal\docstore\ManageFields;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\search_api\Entity\Index;
+use Drupal\search_api\Item\Field;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\user\Entity\User;
 
@@ -99,5 +100,24 @@ function docstore_update_8007() {
 
   // Re-index.
   $index = Index::load('terms');
+  $index->reindex();
+}
+
+/**
+ * Add parents of terms.
+ */
+function docstore_update_8008() {
+  $index = Index::load('terms');
+
+  $field = new Field($index, 'parents');
+  $field->setType('string');
+  $field->setPropertyPath('parents');
+  $field->setLabel('Parents');
+  $index->addField($field);
+
+  // Save.
+  $index->save();
+
+  // Re-index.
   $index->reindex();
 }
