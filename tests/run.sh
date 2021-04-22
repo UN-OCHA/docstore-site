@@ -23,7 +23,7 @@ get_media_uuid() {
 stop_webhook_server() {
   if [ "$DOCSTORE_PHP_WEBHOOK_SERVER_PID" != "" ]; then
     echo "Stopping webhook test server"
-    kill $DOCSTORE_PHP_WEBHOOK_SERVER_PID
+    kill "$DOCSTORE_PHP_WEBHOOK_SERVER_PID"
     DOCSTORE_PHP_WEBHOOK_SERVER_PID=
   fi
 }
@@ -40,26 +40,21 @@ $DRUSH docstore:test-reset
 $DRUSH docstore:test-create-node-type document documents
 
 # Run base tests.
-$SILK -test.v -silk.url $API silk_vocabulary_crud.md || exit 1;
-$SILK -test.v -silk.url $API silk_vocabulary_bulk.md || exit 1;
-$SILK -test.v -silk.url $API silk_vocabulary_bulk_cud.md || exit 1;
-$SILK -test.v -silk.url $API silk_vocabulary_anon_cud.md || exit 1;
-$SILK -test.v -silk.url $API silk_vocabulary_anon_r.md || exit 1;
-$SILK -test.v -silk.url $API silk_document_types_crud.md || exit 1;
-$SILK -test.v -silk.url $API silk_document_crud.md || exit 1;
-$SILK -test.v -silk.url $API silk_document_bulk.md || exit 1;
-$SILK -test.v -silk.url $API silk_document_bulk_cud.md || exit 1;
-$SILK -test.v -silk.url $API silk_geofield.md || exit 1;
-$SILK -test.v -silk.url $API silk_daterange.md || exit 1;
-$SILK -test.v -silk.url $API silk_linkfield.md || exit 1;
-$SILK -test.v -silk.url $API silk_child_terms.md || exit 1;
-$SILK -test.v -silk.url $API silk_private.md || exit 1;
-$SILK -test.v -silk.url $API silk_document_revisions.md || exit 1;
-$SILK -test.v -silk.url $API silk_term_revisions.md || exit 1;
-$SILK -test.v -silk.url $API silk_authentication_provider.md || exit 1;
-$SILK -test.v -silk.url $API silk_authentication_service.md || exit 1;
-$SILK -test.v -silk.url $API silk_webhook_controller.md || exit 1;
-$SILK -test.v -silk.url $API silk_provider.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_vocabulary_crud.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_vocabulary_bulk.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_vocabulary_bulk_cud.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_vocabulary_anon_cud.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_vocabulary_anon_r.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_document_types_crud.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_document_crud.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_document_bulk.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_document_bulk_cud.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_geofield.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_linkfield.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_child_terms.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_private.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_document_revisions.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_term_revisions.md || exit 1;
 
 if [ "$SKIP_WEBHOOK" != "1" ]; then
   # Reset docstore for testing.
@@ -82,26 +77,24 @@ fi
 $DRUSH docstore:test-reset
 
 # Test the document files endpoint.
-$SILK -test.v -silk.url $API silk_document_files.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_document_files.md || exit 1;
 
 # Reset docstore for testing.
 $DRUSH docstore:test-reset
 
-# Add document type
-$DRUSH docstore:test-create-node-type document documents
-
 # Prepare for file related tests.
-export FILE_PRIVATE=$(base64 ./files/private.pdf | tr -d '\n')
+FILE_PRIVATE=$(base64 ./files/private.pdf | tr -d '\n')
+export FILE_PRIVATE
 
 # Run file tests.
-$SILK -test.v -silk.url $API silk_files.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_files.md || exit 1;
 
 # Run tests that depends on the files.
-$SILK -test.v -silk.url $API silk_create.md || exit 1;
-$SILK -test.v -silk.url $API silk_exceptions.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_create.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_exceptions.md || exit 1;
 
 # Reset docstore for testing.
 $DRUSH docstore:test-reset
 
 # Run direct download tests.
-$SILK -test.v -silk.url $HOST silk_files_direct.md || exit 1;
+$SILK -test.v -silk.url "$HOST" silk_files_direct.md || exit 1;

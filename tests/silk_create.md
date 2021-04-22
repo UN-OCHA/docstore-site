@@ -690,9 +690,34 @@ Example output.
 * Data.description: "Term updated"
 * Data.vocabulary: {organization}
 
+
+## POST /types
+
+Create a document type.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "machine_name": "test_doc",
+  "endpoint": "test-document",
+  "label": "Document",
+  "author": "common"
+}
+```
+
+===
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.machine_name: /.+/ // Endpoint {doc_type_machine_name}
+* Data.endpoint: /.+/ // Endpoint {doc_type_endpoint}
+
 # Add fields to documents
 
-## POST /types/document/fields
+## POST /types/{doc_type_machine_name}/fields
 
 Add city field.
 
@@ -723,7 +748,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_city}
 
-## POST /types/document/fields
+## POST /types/{doc_type_machine_name}/fields
 
 Add organizations field.
 
@@ -755,7 +780,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_organization}
 
-## POST /types/document/fields
+## POST /types/{doc_type_machine_name}/fields
 
 Add id field.
 
@@ -786,7 +811,7 @@ Example output.
 * Data.message: "Field created"
 * Data.field_name: /^[0-9a-z_]+$/ // Machine_name {field_id}
 
-## POST /documents/documents
+## POST /documents/{doc_type_endpoint}
 
 Add a document without a file.
 
@@ -839,7 +864,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## POST /documents/documents
+## POST /documents/{doc_type_endpoint}
 
 Add a document using term labels.
 
@@ -894,7 +919,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/documents
+## GET /documents/{doc_type_endpoint}
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -921,7 +946,7 @@ Example output.
 * Content-Type: "application/json"
 * Data[0].uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {file1}
 
-## POST /documents/documents
+## POST /documents/{doc_type_endpoint}
 
 Add a document with a file.
 
@@ -976,7 +1001,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/documents/{doc3}
+## GET /documents/{doc_type_endpoint}/{doc3}
 
 Get document as owner.
 
@@ -993,7 +1018,7 @@ Get document as owner.
 * Data.files[0].private: true
 * Data.files[0].uri: /.+/
 
-## GET /documents/documents/{doc3}
+## GET /documents/{doc_type_endpoint}/{doc3}
 
 Get document as anonymous
 
@@ -1009,7 +1034,7 @@ Get document as anonymous
 * Data.files[0].private: true
 * Data.files[0].uri: null
 
-## GET /documents/documents/{doc3}
+## GET /documents/{doc_type_endpoint}/{doc3}
 
 Get document as other user
 
@@ -1026,7 +1051,7 @@ Get document as other user
 * Data.files[0].private: true
 * Data.files[0].uri: null
 
-## POST /documents/documents
+## POST /documents/{doc_type_endpoint}
 
 Add an unpublished document.
 
@@ -1076,7 +1101,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## POST /documents/documents
+## POST /documents/{doc_type_endpoint}
 
 Add a private document.
 
@@ -1126,7 +1151,7 @@ Example output.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/documents/{doc4}
+## GET /documents/{doc_type_endpoint}/{doc4}
 
 Get unpublished document as owner.
 
@@ -1140,7 +1165,7 @@ Get unpublished document as owner.
 * Data.uuid: {doc4}
 * Data.published: false
 
-## GET /documents/documents/{doc5}
+## GET /documents/{doc_type_endpoint}/{doc5}
 
 Get private document as owner.
 
@@ -1154,7 +1179,7 @@ Get private document as owner.
 * Data.uuid: {doc5}
 * Data.private: true
 
-## GET /documents/documents/{doc4}
+## GET /documents/{doc_type_endpoint}/{doc4}
 
 Get unpublished document as anonymous.
 
@@ -1166,7 +1191,7 @@ Get unpublished document as anonymous.
 * Content-Type: "application/json"
 * Data.message: "Document {doc4} does not exist"
 
-## GET /documents/documents/{doc5}
+## GET /documents/{doc_type_endpoint}/{doc5}
 
 Get private document as anonymous.
 
@@ -1178,7 +1203,7 @@ Get private document as anonymous.
 * Content-Type: "application/json"
 * Data.message: "Document {doc5} does not exist"
 
-## GET /documents/documents/{doc4}
+## GET /documents/{doc_type_endpoint}/{doc4}
 
 Get unpublished document as other provider.
 
@@ -1191,7 +1216,7 @@ Get unpublished document as other provider.
 * Content-Type: "application/json"
 * Data.message: "Document {doc4} does not exist"
 
-## GET /documents/documents/{doc5}
+## GET /documents/{doc_type_endpoint}/{doc5}
 
 Get private document as other provider.
 
@@ -1226,7 +1251,7 @@ Example output.
 * Content-Type: "application/json"
 * Data.message: "Term is in use and can not be deleted"
 
-## GET /documents/documents
+## GET /documents/{doc_type_endpoint}
 
 Test filters.
 
@@ -1242,7 +1267,7 @@ Test filters.
 * Content-Type: "application/json"
 * Data.results[1].uuid: {doc1}
 
-## GET /documents/documents
+## GET /documents/{doc_type_endpoint}
 
 Test sort.
 
@@ -1256,7 +1281,7 @@ Test sort.
 * Content-Type: "application/json"
 * Data.results[0].uuid: {doc5}
 
-## GET /documents/documents
+## GET /documents/{doc_type_endpoint}
 
 Test sort as anonymous.
 
@@ -1269,7 +1294,7 @@ Test sort as anonymous.
 * Content-Type: "application/json"
 * Data.results[0].uuid: {doc3}
 
-## GET /documents/documents
+## GET /documents/{doc_type_endpoint}
 
 Test limit.
 
@@ -1283,7 +1308,7 @@ Test limit.
 * Content-Type: "application/json"
 * Data.results[0].uuid: {doc5}
 
-## GET /documents/documents
+## GET /documents/{doc_type_endpoint}
 
 Test offset.
 
@@ -1302,7 +1327,7 @@ Test offset.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/documents
+## GET /documents/{doc_type_endpoint}
 
 Test offset as anonymous.
 
@@ -1320,7 +1345,7 @@ Test offset as anonymous.
 * Status: `200`
 * Content-Type: "application/json"
 
-## GET /documents/documents
+## GET /documents/{doc_type_endpoint}
 
 Test illegal sort.
 
@@ -1334,7 +1359,7 @@ Test illegal sort.
 * Content-Type: "application/json"
 * Data.message: "Sort \"createdxx\" is not valid solr field."
 
-## GET /documents/documents
+## GET /documents/{doc_type_endpoint}
 
 Test full text search.
 
