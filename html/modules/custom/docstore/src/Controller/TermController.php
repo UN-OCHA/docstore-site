@@ -134,6 +134,25 @@ class TermController extends ControllerBase {
   }
 
   /**
+   * Get terms as option list.
+   *
+   * @param string $id
+   *   Vocabulary id or uuid.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   Docstore API request.
+   *
+   * @return \Drupal\Core\Cache\CacheableJsonResponse
+   *   JSON response with the list of terms.
+   */
+  public function getTermsAsOptionList($id, Request $request) {
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
+    $vocabulary = $this->loadVocabulary($id);
+
+    // Get the terms.
+    return $this->searchResources($request, 'taxonomy_term__option_list', $vocabulary);
+  }
+
+  /**
    * Get term.
    *
    * @param string $id
