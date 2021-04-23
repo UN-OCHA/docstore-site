@@ -119,6 +119,10 @@ field_settings:
     dependencies:
       module:
         - taxonomy
+  parents:
+    label: Parents
+    property_path: parents
+    type: string
   provider_uuid:
     label: 'Provider UUID'
     datasource_id: 'entity:taxonomy_term'
