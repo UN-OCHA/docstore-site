@@ -161,7 +161,7 @@ class ManageFields {
    *   Field label.
    */
   public function addTermFieldToIndex(FieldConfig $field_config, $label) {
-    $this->addFieldToIndex('terms_' . $field_config->bundle(), 'entity:taxonomy_term', $field_config, $label);
+    $this->addFieldToIndex('terms_' . $field_config->getTargetBundle(), 'entity:taxonomy_term', $field_config, $label);
   }
 
   /**
@@ -937,8 +937,8 @@ class ManageFields {
     $data['uuid'] = $uuid_service->generate();
     $data['id'] = 'terms_' . $machine_name;
     $data['name'] = 'Index for terms of ' . $machine_name;
-    $data['datasource_settings']['entity:node']['bundles']['default'] = FALSE;
-    $data['datasource_settings']['entity:node']['bundles']['selected'] = [$machine_name];
+    $data['datasource_settings']['entity:taxonomy_term']['bundles']['default'] = FALSE;
+    $data['datasource_settings']['entity:taxonomy_term']['bundles']['selected'] = [$machine_name];
     \Drupal::configFactory()->getEditable('search_api.index.terms_' . $machine_name)->setData($data)->save(TRUE);
 
     return $vocabulary;
