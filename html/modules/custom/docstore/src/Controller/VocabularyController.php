@@ -244,7 +244,7 @@ class VocabularyController extends ControllerBase {
     /** @var \Drupal\user\UserInterface $provider */
     $provider = $this->requireProvider();
 
-    // Delete field storage and config.
+    // Create field storage and config.
     $manager = new ManageFields($provider, '', $this->entityFieldManager, $this->entityTypeManager, $this->database);
 
     // Create vocabulary.
