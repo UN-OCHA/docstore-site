@@ -89,7 +89,7 @@ class StoreEntityFields extends ProcessorPluginBase {
       $definition = [
         'label' => $this->t('Stored entity fields'),
         'description' => $this->t('Stores the pre-processed fields of an entity.'),
-        'type' => 'string',
+        'type' => 'solr_string_storage',
         'processor_id' => $this->getPluginId(),
         'is_list' => FALSE,
       ];
