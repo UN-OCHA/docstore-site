@@ -121,3 +121,10 @@ function docstore_update_8008() {
   // Re-index.
   $index->reindex();
 }
+
+/**
+ * Split into separate indexes.
+ */
+function docstore_update_8009() {
+  docstore_rebuild_all_term_indexes();
+}

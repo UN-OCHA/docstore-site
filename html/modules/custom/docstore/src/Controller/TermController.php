@@ -408,14 +408,14 @@ class TermController extends ControllerBase {
         if (Uuid::isValid($params['parent'])) {
           $parent = $this->loadTerm($params['parent']);
           $item['parent'] = [
-            'target_id' => $$parent->id(),
+            'target_id' => $parent->id(),
           ];
         }
         else {
           // Assume it's a regular id.
           $parent = $this->loadTerm($params['parent']);
           $item['parent'] = [
-            'target_id' => $$parent->id(),
+            'target_id' => $parent->id(),
           ];
         }
       }
@@ -548,6 +548,36 @@ class TermController extends ControllerBase {
 
     // Remove the author as it cannot be changed.
     unset($params['author']);
+
+    // Add support for hierarchical vocabularies.
+    if (isset($params['parent'])) {
+      if (is_array($params['parent'])) {
+        // Allow lookup by label.
+        $target_entity = $this->findTargetByProperty($params['parent']);
+        if (!empty($target_entity)) {
+          $term->set('parent', [
+            'target_id' => $target_entity->id(),
+          ]);
+        }
+      }
+      else {
+        if (Uuid::isValid($params['parent'])) {
+          $parent = $this->loadTerm($params['parent']);
+          $term->set('parent', [
+            'target_id' => $parent->id(),
+          ]);
+        }
+        else {
+          // Assume it's a regular id.
+          $parent = $this->loadTerm($params['parent']);
+          $term->set('parent', [
+            'target_id' => $parent->id(),
+          ]);
+        }
+      }
+
+      unset($params['parent']);
+    }
 
     // Update the term fields from the given parameters.
     $updated_fields = $this->updateEntityFieldsFromParameters($term, $params, $provider);

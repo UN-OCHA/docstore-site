@@ -12,17 +12,18 @@ use Drupal\Core\StreamWrapper\StreamWrapperManager;
 use Drupal\docstore\ManageFields;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\node\Entity\NodeType;
+use Drupal\search_api_solr\SolrBackendInterface;
 use Drupal\search_api\Entity\Index;
 use Drupal\search_api\IndexInterface;
 use Drupal\search_api\Query\QueryInterface as SearchApiQueryInterface;
-use Drupal\search_api_solr\SolrBackendInterface;
 use Drupal\taxonomy\Entity\Term;
+use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\user\Entity\User;
 use Drupal\webhooks\Webhook;
+use Solarium\Core\Query\QueryInterface as SolariumQueryInterface;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
 use Symfony\Component\Yaml\Yaml;
-use Solarium\Core\Query\QueryInterface as SolariumQueryInterface;
 
 /**
  * Implements hook_file_download().
@@ -582,7 +583,7 @@ function _docstore_vardump($variable, $id = '_docstore_vardump') {
  * Add lower-case label for terms.
  */
 function docstore_search_api_solr_documents_alter(&$documents, IndexInterface $index, $items) {
-  if ($index->id() !== 'terms') {
+  if (strpos($index->id(), 'terms') === FALSE) {
     return;
   }
 
@@ -832,5 +833,86 @@ function docstore_wipe_index_and_solr($index_name = '') {
     $update_query = $connector->getUpdateQuery();
     $update_query->addDeleteQuery('*:*');
     $connector->update($update_query);
+  }
+}
+
+/**
+ * Rebuild index fields.
+ */
+function docstore_rebuild_term_index_fields($machine_name = '') {
+  // Create index.
+  $config_path = drupal_get_path('module', 'docstore') . '/config/install/search_api.index.terms.yml';
+  $data = Yaml::parseFile($config_path);
+
+  $uuid_service = \Drupal::service('uuid');
+  $data['uuid'] = $uuid_service->generate();
+  $data['id'] = 'terms_' . $machine_name;
+  $data['name'] = 'Index for terms of ' . $machine_name;
+  $data['datasource_settings']['entity:taxonomy_term']['bundles']['default'] = FALSE;
+  $data['datasource_settings']['entity:taxonomy_term']['bundles']['selected'] = [$machine_name];
+  \Drupal::configFactory()->getEditable('search_api.index.terms_' . $machine_name)->setData($data)->save(TRUE);
+
+  $index = Index::load('terms_' . $machine_name);
+  $index->clear();
+
+  $entityFieldManager = Drupal::service('entity_field.manager');
+  $provider = user_load(2);
+  $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+
+  $map = $entityFieldManager->getFieldDefinitions('taxonomy_term', $machine_name);
+
+  // Remove fields we need.
+  unset($map['tid']);
+  unset($map['uuid']);
+  unset($map['vid']);
+  unset($map['langcode']);
+  unset($map['type']);
+  unset($map['revision_id']);
+  unset($map['revision_created']);
+  unset($map['revision_user']);
+  unset($map['revision_log_message']);
+  unset($map['status']);
+  unset($map['uid']);
+  unset($map['name']);
+  unset($map['created']);
+  unset($map['changed']);
+  unset($map['description']);
+  unset($map['default_langcode']);
+  unset($map['revision_default']);
+  unset($map['revision_translation_affected']);
+  unset($map['author']);
+  unset($map['weight']);
+  unset($map['private']);
+  unset($map['parent']);
+  unset($map['provider_uuid']);
+
+  foreach ($map as $field_info) {
+    // Skip common fields, added using config.
+    if ($field_info->getFieldStorageDefinition()->getThirdPartySetting('docstore', 'common') === TRUE) {
+      continue;
+    }
+
+    $field_type = $field_info->getType();
+    if ($field_info->getType() === 'entity_reference_uuid') {
+      if ($field_info->getFieldStorageDefinition()->get('settings')['target_type'] === 'node') {
+        $field_type = 'node_reference';
+      }
+      else {
+        $field_type = 'term_reference';
+      }
+    }
+
+    // Add to index.
+    $manager->addTermFieldToIndex($field_info, $field_type, $field_info->getLabel());
+  }
+}
+
+/**
+ * Add index for all vocabularies.
+ */
+function docstore_rebuild_all_term_indexes() {
+  $vocabularies = Vocabulary::loadMultiple();
+  foreach ($vocabularies as $vocabulary) {
+    docstore_rebuild_term_index_fields($vocabulary->id());
   }
 }
