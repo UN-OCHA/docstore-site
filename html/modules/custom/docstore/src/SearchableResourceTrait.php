@@ -67,6 +67,12 @@ trait SearchableResourceTrait {
    *   JSON response with the found resources.
    */
   public function searchResources(Request $request, $entity_type_id, ?ConfigEntityBundleBase $bundle_entity = NULL, $id = NULL, $with_revisions = FALSE, $files_only = FALSE) {
+    $option_list = FALSE;
+    if (strpos($entity_type_id, '__option_list') !== FALSE) {
+      $entity_type_id = str_replace('__option_list', '', $entity_type_id);
+      $option_list = TRUE;
+    }
+
     // Load the search API index.
     if ($entity_type_id === 'node') {
       if (is_null($bundle_entity)) {
@@ -75,6 +81,18 @@ trait SearchableResourceTrait {
       }
       else {
         $index = Index::load('documents_' . $bundle_entity->id());
+      }
+    }
+    elseif ($entity_type_id === 'taxonomy_term') {
+      if (is_null($bundle_entity)) {
+        throw new BadRequestHttpException('Any request not allowed');
+      }
+      else {
+        $index = Index::load('terms_' . $bundle_entity->id());
+        // Fallback to generic index.
+        if (empty($index)) {
+          $index = Index::load('terms');
+        }
       }
     }
     else {
@@ -136,6 +154,11 @@ trait SearchableResourceTrait {
       $this->parseSearchParameters($request, $query, $cache);
     }
 
+    // Remove paging for option lists.
+    if ($option_list) {
+      $query->range(0, 9999);
+    }
+
     // Filter the type of resources this query is against.
     $query->addCondition($entity_type->getKey('bundle'), $accessible_resource_types, 'IN');
 
@@ -167,9 +190,13 @@ trait SearchableResourceTrait {
     // Add a default sort if not was provided.
     $sorts = $query->getSorts();
     if (empty($sorts)) {
+      // Sort option list by label.
+      if ($option_list) {
+        $query->sort($entity_type->getKey('label'), 'ASC');
+      }
       // Sort by ID descending which basically corresponds to sorting by
       // creation date descending.
-      if ($index->getField($entity_type->getKey('id')) !== NULL) {
+      elseif ($index->getField($entity_type->getKey('id')) !== NULL) {
         $query->sort($entity_type->getKey('id'), 'DESC');
       }
       // Otherwise sort by label.
@@ -200,6 +227,23 @@ trait SearchableResourceTrait {
 
     // Prepare the data to return.
     $data = $this->prepareResultSetData($results, $provider);
+
+    // We only need uuid, label and display_name.
+    if ($option_list) {
+      $keep = [
+        'uuid',
+        'label',
+        'display_name',
+      ];
+
+      foreach ($data as &$row) {
+        foreach ($row as $name => $value) {
+          if (!in_array($name, $keep)) {
+            unset($row[$name]);
+          }
+        }
+      }
+    }
 
     // If instructed so, only return the list of unique files associated with
     // the document(s).

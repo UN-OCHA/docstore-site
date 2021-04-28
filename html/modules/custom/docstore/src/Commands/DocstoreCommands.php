@@ -257,7 +257,7 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
   }
 
   /**
-   * Reset the docstore for testing.
+   * Create test node type.
    *
    * @param string $id
    *   Node type id.
@@ -334,6 +334,14 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
       'prefix' => 'another_',
       'api_keys' => 'dcba',
       'api_keys_read_only' => 'yzzyx',
+    ]);
+
+    // Test provider 3.
+    // For creating vocabulary field through api without a prefix.
+    $this->createProvider(5, [
+      'name' => 'Prefix-less test',
+      'prefix' => '',
+      'api_keys' => 'zzzz',
     ]);
 
     $this->logger->success('Successfully created/resetted test users.');

@@ -36,7 +36,7 @@ class ParseQueryParameters {
    *
    * @var int
    */
-  const SIZE_MAX = 100;
+  const SIZE_MAX = 5000;
 
   /**
    * The direction key in the sort parameter: sort[lorem][<direction>].
@@ -164,7 +164,7 @@ class ParseQueryParameters {
   public function parsePaging(array $pagers) {
     $expanded = $pagers + [
       static::OFFSET_KEY => static::DEFAULT_OFFSET,
-      static::SIZE_KEY => static::SIZE_MAX,
+      static::SIZE_KEY => 100,
     ];
 
     if ($expanded[static::SIZE_KEY] > static::SIZE_MAX) {
@@ -413,7 +413,6 @@ class ParseQueryParameters {
   protected function expandSortItem(array $sort_item) {
     $defaults = [
       static::DIRECTION_KEY => 'ASC',
-      static::LANGUAGE_KEY => NULL,
     ];
 
     if (!isset($sort_item[static::PATH_KEY])) {
@@ -423,7 +422,6 @@ class ParseQueryParameters {
     $expected_keys = [
       static::PATH_KEY,
       static::DIRECTION_KEY,
-      static::LANGUAGE_KEY,
     ];
 
     $expanded = array_merge($defaults, $sort_item);

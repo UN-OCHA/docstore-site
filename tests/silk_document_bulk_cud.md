@@ -144,6 +144,16 @@ Expected output.
 * Data[2].error.status: 404
 * Data[2].error.message: "Document does not exist"
 
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
+
 ## GET /documents/test-document-bulk-cud/{doc_uuid1}
 
 Check the `title` and `field_id` of the first document have been updated.

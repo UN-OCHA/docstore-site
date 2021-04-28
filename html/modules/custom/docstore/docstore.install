@@ -5,8 +5,11 @@
  * Contains Document Store code.
  */
 
-use Drupal\search_api\Entity\Index;
 use Drupal\docstore\ManageFields;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\search_api\Entity\Index;
+use Drupal\search_api\Item\Field;
+use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\user\Entity\User;
 
 /**
@@ -33,7 +36,6 @@ function docstore_update_8003() {
   $manager = new ManageFields($provider, 'assessment', Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
 
   $manager->addDocumentField([
-    'type' => 'assessment',
     'label' => 'Operations',
     'machine_name' => 'operations',
     'type' => 'term_reference',
@@ -52,4 +54,77 @@ function docstore_update_8004() {
   docstore_wipe_index_and_solr('documents_disaster');
   docstore_wipe_index_and_solr('documents_assessment');
   docstore_wipe_index_and_solr('documents_assessment_document');
+}
+
+/**
+ * Add display label to ar_life_cycle_steps.
+ */
+function docstore_update_8005() {
+  $provider = User::load(2);
+  $manager = new ManageFields($provider, NULL, Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+
+  $vocabulary = Vocabulary::load('ar_life_cycle_steps');
+  $manager->addVocabularyField($vocabulary, [
+    'label' => 'Display name',
+    'machine_name' => 'display_name',
+    'type' => 'string',
+    'author' => 'AR',
+  ]);
+}
+
+/**
+ * Add display label to ar_hpc_document_repository.
+ */
+function docstore_update_8006() {
+  $provider = User::load(2);
+  $manager = new ManageFields($provider, NULL, Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+
+  $vocabulary = Vocabulary::load('ar_hpc_document_repository');
+  $manager->addVocabularyField($vocabulary, [
+    'label' => 'Display name',
+    'machine_name' => 'display_name',
+    'type' => 'string',
+    'author' => 'AR',
+  ]);
+}
+
+/**
+ * Add admin_level to term search index.
+ */
+function docstore_update_8007() {
+  $provider = User::load(2);
+  $manager = new ManageFields($provider, NULL, Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+
+  $field_config = FieldConfig::loadByName('taxonomy_term', 'locations', 'admin_level');
+  $manager->addTermFieldToIndex($field_config, 'Admin level');
+
+  // Re-index.
+  $index = Index::load('terms');
+  $index->reindex();
+}
+
+/**
+ * Add parents of terms.
+ */
+function docstore_update_8008() {
+  $index = Index::load('terms');
+
+  $field = new Field($index, 'parents');
+  $field->setType('string');
+  $field->setPropertyPath('parents');
+  $field->setLabel('Parents');
+  $index->addField($field);
+
+  // Save.
+  $index->save();
+
+  // Re-index.
+  $index->reindex();
+}
+
+/**
+ * Split into separate indexes.
+ */
+function docstore_update_8009() {
+  docstore_rebuild_all_term_indexes();
 }
