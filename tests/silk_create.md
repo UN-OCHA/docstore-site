@@ -231,6 +231,23 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_brussels}
 
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
 ## GET /vocabularies/{city}/terms/{city_brussels}
 
 * Accept: "application/json"
@@ -285,7 +302,25 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_borgerhout}
 
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
 ## GET /vocabularies/{city}/terms/{city_borgerhout}
+
 
 * Accept: "application/json"
 * API-KEY: abcd
@@ -337,6 +372,23 @@ Example output.
 * Content-Type: "application/json"
 * Data.message: "Term updated"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {city_borgerhout}
+
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
 
 ## GET /vocabularies/{city}/terms/{city_borgerhout}
 
@@ -519,6 +571,23 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {organization_wfp}
 
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
 ## GET /vocabularies/{organization}/terms/{organization_wfp}
 
 * Accept: "application/json"
@@ -574,6 +643,23 @@ Example output.
 * Content-Type: "application/json"
 * Data.message: "Term updated"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/
+
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
 
 ## GET /vocabularies/{organization}/terms/{organization_wfp}
 

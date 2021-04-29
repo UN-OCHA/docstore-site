@@ -165,51 +165,6 @@ class DocumentTypeController extends ControllerBase {
   }
 
   /**
-   * Get the document type or document types accessible to the provider.
-   *
-   * @param string $id
-   *   Node type ID. If not defined, return all the document types accessible
-   *   to the provider.
-   *
-   * @return \Drupal\Core\Cache\CacheableJsonResponse
-   *   JSON response with the list of document types or document type's data.
-   */
-  public function getAccessibleDocumentTypes($id = NULL) {
-    $data = [];
-    $entity_type_id = 'node_type';
-
-    // Set the response cache.
-    $cache = $this->createResponseCache()->addCacheTags(['document_types']);
-
-    /** @var \Drupal\user\UserInterface $provider */
-    $provider = $this->getProvider();
-
-    // Get the list of documen types accessible to the provider.
-    // If `id` is set, then the list will just contain it.
-    $node_type_ids = $this->getAccessibleResourceTypes($entity_type_id, $provider, $id);
-
-    // Get the node type storage and the id field.
-    $storage = $this->entityTypeManager->getStorage($entity_type_id);
-    $id_key = $storage->getEntityType()->getKey('id');
-
-    /** @var \Drupal\node\Entity\NodeType[] $node_types */
-    $node_types = $storage->loadByProperties([$id_key => $node_type_ids]);
-
-    // Prepare the vocabularies data.
-    foreach ($node_types as $node_type) {
-      $data[] = $this->buildDocumentTypeJsonOutput($node_type);
-      $cache->addCacheableDependency($node_type);
-    }
-
-    // Only return the data for the given document type id.
-    if (isset($id)) {
-      $data = reset($data);
-    }
-
-    return $this->createCacheableJsonResponse($cache, $data, 200);
-  }
-
-  /**
    * Create document type.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request

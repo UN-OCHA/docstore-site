@@ -3,6 +3,10 @@ DRUSH=${DRUSH:-"fin drush"}
 SILK=${SILK:-"./silk"}
 HOST=${HOST:-"http://docstore.local.docksal"}
 API=${API:-"$HOST/api/v1"}
+SKIP_WEBHOOK=${SKIP_WEBHOOK:-"1"}
+
+# Export host for silk.
+export HOST
 
 # Helpers to extract uuids.
 get_uuid() {
@@ -30,6 +34,11 @@ trap stop_webhook_server 0
 # Reset docstore for testing.
 $DRUSH docstore:test-reset
 
+# Add document type.
+# @todo check if that's used in the tests and whether that should be replaced
+# by an API call where relevant.
+$DRUSH docstore:test-create-node-type document documents
+
 # Run base tests.
 $SILK -test.v -silk.url "$API" silk_vocabulary_crud.md || exit 1;
 $SILK -test.v -silk.url "$API" silk_vocabulary_bulk.md || exit 1;
@@ -47,20 +56,22 @@ $SILK -test.v -silk.url "$API" silk_private.md || exit 1;
 $SILK -test.v -silk.url "$API" silk_document_revisions.md || exit 1;
 $SILK -test.v -silk.url "$API" silk_term_revisions.md || exit 1;
 
-# Reset docstore for testing.
-$DRUSH docstore:test-reset
+if [ "$SKIP_WEBHOOK" != "1" ]; then
+  # Reset docstore for testing.
+  $DRUSH docstore:test-reset
 
-# Start the PHP webhook server.
-php -S localhost:8765 -t webhooks &
-DOCSTORE_PHP_WEBHOOK_SERVER_PID=$!
-sleep 2
-export WEBHOOK_SERVER_URL=http://localhost:8765
+  # Start the PHP webhook server.
+  php -S localhost:8765 -t webhooks &
+  DOCSTORE_PHP_WEBHOOK_SERVER_PID=$!
+  sleep 2
+  export WEBHOOK_SERVER_URL=http://localhost:8765
 
-# Test webhooks.
-$SILK -test.v -silk.url "$API" silk_webhooks.md || exit 1;
+  # Test webhooks.
+  $SILK -test.v -silk.url $API silk_webhooks.md || exit 1;
 
-# Stop webhook server
-stop_webhook_server
+  # Stop webhook server
+  stop_webhook_server
+fi
 
 # Reset docstore for testing.
 $DRUSH docstore:test-reset

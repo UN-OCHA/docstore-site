@@ -51,6 +51,23 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {term1}
 
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
 ## GET /vocabularies/testrev/terms
 
 Get term.
@@ -128,6 +145,23 @@ Update title.
 * Content-Type: "application/json"
 * Data.message: "Term updated"
 * Data.uuid: {term1}
+
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
 
 ## GET /vocabularies/testrev/terms/{term1}
 
@@ -228,6 +262,23 @@ Update title.
 * Data.message: "Term updated"
 * Data.uuid: {term1}
 
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
+
 ## PATCH /vocabularies/testrev/terms/{term1}
 
 Update description.
@@ -248,6 +299,23 @@ Update description.
 * Content-Type: "application/json"
 * Data.message: "Term updated"
 * Data.uuid: {term1}
+
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
 
 ## GET /vocabularies/testrev/terms/{term1}
 
@@ -330,6 +398,23 @@ Force a new revision.
 * Content-Type: "application/json"
 * Data.message: "Term updated"
 * Data.uuid: {term1}
+
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
 
 ## GET /vocabularies/testrev/terms/{term1}
 
@@ -428,6 +513,23 @@ Force a new revision as draft.
 * Content-Type: "application/json"
 * Data.message: "Term updated"
 * Data.uuid: {term1}
+
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
 
 ## GET /vocabularies/testrev/terms/{term1}
 
@@ -537,6 +639,23 @@ Publish version 5.
 * Content-Type: "application/json"
 * Data.message: "Term revision published"
 * Data.uuid: {term1}
+
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
 
 ## GET /vocabularies/testrev/terms/{term1}
 

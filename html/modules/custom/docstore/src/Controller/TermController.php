@@ -427,15 +427,6 @@ class TermController extends ControllerBase {
     // Create term.
     $term = Term::create($item);
 
-    // Check for invalid fields.
-    foreach ($item as $key => $data) {
-      if (!$term->hasField($key)) {
-        throw new BadRequestHttpException(strtr('Unknown field @field', [
-          '@field' => $key,
-        ]));
-      }
-    }
-
     // Create a new revision if necessary.
     $this->createEntityRevisionFromParameters($term, $params, $provider);
 

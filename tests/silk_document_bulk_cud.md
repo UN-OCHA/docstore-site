@@ -194,6 +194,10 @@ Update (partially) documents in bulk.
     },
     {
       "uuid": "{doc_uuid3}",
+      "{field_id}": "doc3_new",
+      "published": false
+    },
+    {
       "{field_id}": "doc3_new"
     }
   ]
@@ -210,6 +214,24 @@ Expected output.
 * Data[0].uuid: {doc_uuid2}
 * Data[1].message: "Test document bulk CUD updated"
 * Data[1].uuid: {doc_uuid3}
+* Data[2].error.message: "Document id is required"
+
+## GET /wait
+
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+Example output.
+
+```json
+[
+]
+```
+
+* Status: `200`
+* Content-Type: "application/json"
 
 ## GET /documents/test-document-bulk-cud/{doc_uuid3}
 
@@ -226,6 +248,7 @@ Expected output.
 ```json
 {
   "uuid": "{doc_uuid3}",
+  "published": false,
   "title": "Doc3",
   "{field_id}": "doc3_new"
 }
@@ -250,10 +273,13 @@ Delete elements in bulk.
       "uuid": "{doc_uuid3}"
     },
     {
-      "uuid": "{doc_uuid4}"
+      "id": "{doc_uuid4}"
     },
     {
       "uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    },
+    {
+      "my_id": "123"
     }
   ]
 }
@@ -271,6 +297,8 @@ Expected output.
 * Data[1].uuid: {doc_uuid4}
 * Data[2].error.status: 404
 * Data[2].error.message: "Document does not exist"
+* Data[3].error.status: 400
+* Data[3].error.message: "Document id is required"
 
 ## GET /documents/test-document-bulk-cud/{doc_uuid4}
 
@@ -284,3 +312,97 @@ Check that the fourth document doesn't exist anymore.
 Expected output.
 
 * Status: `404`
+
+## POST /documents/test-document-bulk-cud/bulk
+
+Create documents in bulk without author.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "documents": [
+    {
+      "title": "Doc1",
+      "{field_id}": "doc1"
+    },
+    {
+      "title": "Doc2",
+      "{field_id}": "doc2"
+    },
+    {
+      "title": "Doc3",
+      "{field_id}": "doc3"
+    },
+    {
+      "title": "Doc4",
+      "{field_id}": "doc4"
+    }
+  ]
+}
+```
+
+===
+
+Expected output.
+
+* Status: `400`
+* Content-Type: "application/json"
+
+## POST /documents/test-document-bulk-cud/bulk
+
+Create documents in bulk without documents.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "author": "Author"
+}
+```
+
+===
+
+Expected output.
+
+* Status: `400`
+* Content-Type: "application/json"
+
+## POST /documents/test-document-bulk-cud/bulk
+
+Create documents in bulk without documents.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "author": "Author",
+  "documents": "Not a string"
+}
+```
+
+===
+
+Expected output.
+
+* Status: `400`
+* Content-Type: "application/json"
+
+## DELETE /types/test_doc_bulk_cud
+
+Delete test type.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+===
+
+* Status: `200`
+* Content-Type: "application/json"
