@@ -121,3 +121,25 @@ function docstore_update_8008() {
   // Re-index.
   $index->reindex();
 }
+
+/**
+ * Split into separate indexes.
+ */
+function docstore_update_8009() {
+  docstore_rebuild_all_term_indexes();
+}
+
+/**
+ * Add display_name to term search index.
+ */
+function docstore_update_8010() {
+  $provider = User::load(2);
+  $manager = new ManageFields($provider, NULL, Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+
+  $field_config = FieldConfig::loadByName('taxonomy_term', 'local_coordination_groups', 'display_name');
+  $manager->addTermFieldToIndex($field_config, 'Display name');
+
+  // Re-index.
+  $index = Index::load('terms_local_coordination_groups');
+  $index->reindex();
+}

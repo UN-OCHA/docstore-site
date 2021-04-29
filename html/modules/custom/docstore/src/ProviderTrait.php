@@ -131,7 +131,13 @@ trait ProviderTrait {
             /** @var \Drupal\entity_reference_uuid\EntityReferenceUuidFieldItemListInterface $provider_uuid */
             $provider_uuid = $resource->get('provider_uuid');
             if (!empty($provider_uuid)) {
-              $is_owner = $provider_uuid->entity->uuid() === $provider->uuid();
+              if (isset($provider_uuid->entity)) {
+                $is_owner = $provider_uuid->entity->uuid() === $provider->uuid();
+              }
+              else {
+                // No provider specified, allow access.
+                $is_owner = TRUE;
+              }
             }
           }
           break;

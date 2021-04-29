@@ -122,13 +122,6 @@ Example output.
 
 ===
 
-Example output.
-
-```json
-[
-]
-```
-
 * Status: `200`
 * Content-Type: "application/json"
 

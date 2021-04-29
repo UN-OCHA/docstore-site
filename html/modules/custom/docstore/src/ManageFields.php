@@ -161,7 +161,7 @@ class ManageFields {
    *   Field label.
    */
   public function addTermFieldToIndex(FieldConfig $field_config, $label) {
-    $this->addFieldToIndex('terms', 'entity:taxonomy_term', $field_config, $label);
+    $this->addFieldToIndex('terms_' . $field_config->getTargetBundle(), 'entity:taxonomy_term', $field_config, $label);
   }
 
   /**
@@ -929,6 +929,18 @@ class ManageFields {
     // Add author HID.
     $this->createVocabularyBaseFieldHidId($machine_name);
 
+    // Create index.
+    $config_path = drupal_get_path('module', 'docstore') . '/config/install/search_api.index.terms.yml';
+    $data = Yaml::parseFile($config_path);
+
+    $uuid_service = \Drupal::service('uuid');
+    $data['uuid'] = $uuid_service->generate();
+    $data['id'] = 'terms_' . $machine_name;
+    $data['name'] = 'Index for terms of ' . $machine_name;
+    $data['datasource_settings']['entity:taxonomy_term']['bundles']['default'] = FALSE;
+    $data['datasource_settings']['entity:taxonomy_term']['bundles']['selected'] = [$machine_name];
+    \Drupal::configFactory()->getEditable('search_api.index.terms_' . $machine_name)->setData($data)->save(TRUE);
+
     return $vocabulary;
   }
 
@@ -1082,6 +1094,12 @@ class ManageFields {
     // Provider can only update own vocabulary.
     if ($vocabulary->getThirdPartySetting('docstore', 'provider_uuid') !== $this->provider->uuid()) {
       throw new \Exception('Vocabulary is not owned by you');
+    }
+
+    // Delete the index.
+    $index = Index::load('terms_' . $vocabulary->id());
+    if ($index) {
+      $index->delete();
     }
 
     $vocabulary->delete();

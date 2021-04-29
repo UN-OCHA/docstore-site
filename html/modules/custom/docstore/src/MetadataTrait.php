@@ -792,9 +792,8 @@ trait MetadataTrait {
     switch ($entity_type_id) {
       case 'taxonomy_term':
         $whitelist += [
-          // @todo review if that should be whitelisted. Not sure how that
-          // can be modified via the API.
           'parent' => 'parent',
+          'weight' => 'weight',
           'description' => 'description',
         ];
         break;

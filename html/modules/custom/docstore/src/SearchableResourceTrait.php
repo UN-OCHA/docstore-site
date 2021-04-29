@@ -83,6 +83,18 @@ trait SearchableResourceTrait {
         $index = Index::load('documents_' . $bundle_entity->id());
       }
     }
+    elseif ($entity_type_id === 'taxonomy_term') {
+      if (is_null($bundle_entity)) {
+        throw new BadRequestHttpException('Any request not allowed');
+      }
+      else {
+        $index = Index::load('terms_' . $bundle_entity->id());
+        // Fallback to generic index.
+        if (empty($index)) {
+          $index = Index::load('terms');
+        }
+      }
+    }
     else {
       $index = Index::load($this->getResourceType($entity_type_id));
     }
