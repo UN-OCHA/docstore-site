@@ -69,7 +69,7 @@ function docstore_search_api_solr_converted_query_alter(SolariumQueryInterface $
   foreach ($solarium_query->getFilterQueries() as &$filter) {
     $parts = explode(':', $filter->getQuery());
     // Has to be the title or a label.
-    if ($parts[0] === 'ss_title' || strpos($parts[0], '_label')) {
+    if ($parts[0] === 'ss_title' || $parts[0] === 'ss_display_name' || strpos($parts[0], '_label')) {
       // Is it a wildcard?
       if (strpos($parts[1], '*"')) {
         // Escape spaces.
