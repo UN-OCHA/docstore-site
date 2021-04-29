@@ -69,7 +69,7 @@ function docstore_search_api_solr_converted_query_alter(SolariumQueryInterface $
   foreach ($solarium_query->getFilterQueries() as &$filter) {
     $parts = explode(':', $filter->getQuery());
     // Has to be the title or a label.
-    if ($parts[0] === 'ss_title' || strpos($parts[0], '_label')) {
+    if ($parts[0] === 'ss_title' || $parts[0] === 'ss_display_name' || strpos($parts[0], '_label')) {
       // Is it a wildcard?
       if (strpos($parts[1], '*"')) {
         // Escape spaces.
@@ -579,8 +579,6 @@ function _docstore_vardump($variable, $id = '_docstore_vardump') {
 
 /**
  * Implements hook_search_api_solr_documents_alter().
- *
- * Add lower-case label for terms.
  */
 function docstore_search_api_solr_documents_alter(&$documents, IndexInterface $index, $items) {
   if (strpos($index->id(), 'terms') === FALSE) {
@@ -588,8 +586,14 @@ function docstore_search_api_solr_documents_alter(&$documents, IndexInterface $i
   }
 
   foreach ($documents as &$document) {
+    // Add lower-case label for terms.
     if (isset($document->ss_name)) {
       $document->setField('ss_label', mb_strtolower($document->ss_name));
+    }
+
+    // Add lower-case label for display name.
+    if (isset($document->ss_display_name)) {
+      $document->setField('ss_display_name', mb_strtolower($document->ss_display_name));
     }
   }
 }
