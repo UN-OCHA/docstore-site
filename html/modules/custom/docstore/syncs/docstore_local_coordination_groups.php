@@ -214,6 +214,9 @@ function docstore_local_coordination_groups_sync($url = '') {
                 if ($lookup_item->label === 'République centrafricaine') {
                   $lookup_item->label = 'Central African Republic';
                 }
+                if ($lookup_item->label === 'Colombie') {
+                  $lookup_item->label = 'Colombia';
+                }
 
                 $entities = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadByProperties([
                   'name' => $lookup_item->label,
