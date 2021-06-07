@@ -143,3 +143,27 @@ function docstore_update_8010() {
   $index = Index::load('terms_local_coordination_groups');
   $index->reindex();
 }
+
+/**
+ * Add display_name for locations.
+ */
+function docstore_update_8011() {
+  $provider = User::load(2);
+  $manager = new ManageFields($provider, NULL, Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+
+  $vocabulary = Vocabulary::load('locations');
+
+  $manager->addVocabularyField($vocabulary, [
+    'label' => 'Display name',
+    'machine_name' => 'display_name',
+    'type' => 'string',
+    'author' => 'Shared',
+  ]);
+
+  $field_config = FieldConfig::loadByName('taxonomy_term', 'locations', 'display_name');
+  $manager->addTermFieldToIndex($field_config, 'Display name');
+
+  // Re-index.
+  $index = Index::load('terms_locations');
+  $index->reindex();
+}
