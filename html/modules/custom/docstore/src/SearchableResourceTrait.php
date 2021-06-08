@@ -67,6 +67,8 @@ trait SearchableResourceTrait {
    *   JSON response with the found resources.
    */
   public function searchResources(Request $request, $entity_type_id, ?ConfigEntityBundleBase $bundle_entity = NULL, $id = NULL, $with_revisions = FALSE, $files_only = FALSE) {
+    static $retry_interval = 1;
+
     $option_list = FALSE;
     if (strpos($entity_type_id, '__option_list') !== FALSE) {
       $entity_type_id = str_replace('__option_list', '', $entity_type_id);
@@ -219,8 +221,27 @@ trait SearchableResourceTrait {
     }
     // @todo better handle the exception to avoid showing internals.
     catch (SearchApiSolrException $exception) {
+      if ($retry_interval <= 4) {
+        // Log it.
+        if ($this->loggerFactory) {
+          $this->loggerFactory->get('searchResources')->warning($exception->getMessage());
+        }
+
+        // Sleep on it.
+        sleep($retry_interval);
+
+        // Double the interval.
+        $retry_interval *= 2;
+
+        return $this->searchResources($request, $entity_type_id, $bundle_entity, $id, $with_revisions, $files_only);
+      }
+
+      // Fail hard.
       throw new BadRequestHttpException($exception->getMessage());
     }
+
+    // Reset retry interval.
+    $retry_interval = 1;
 
     // Add cache info from the query.
     $cache->addCacheableDependency($query);
