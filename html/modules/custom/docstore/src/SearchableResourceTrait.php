@@ -240,6 +240,9 @@ trait SearchableResourceTrait {
       throw new BadRequestHttpException($exception->getMessage());
     }
 
+    // Reset retry interval.
+    $retry_interval = 1;
+
     // Add cache info from the query.
     $cache->addCacheableDependency($query);
 
