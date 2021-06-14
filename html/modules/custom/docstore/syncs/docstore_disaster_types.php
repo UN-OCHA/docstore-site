@@ -182,4 +182,4 @@ function docstore_disaster_types_sync() {
 
 // Auto execute.
 docstore_disaster_types_sync();
-// \Drupal::service('docstore.vocabulary_controller')->rebuildAccessibleResourceTypes('taxonomy_vocabulary');
+\Drupal::service('docstore.vocabulary_controller')->rebuildAccessibleResourceTypes('taxonomy_vocabulary');
