@@ -222,8 +222,25 @@ class DocumentController extends ControllerBase {
     // Load the node type if not a request against all types of documents.
     $node_type = $type !== 'any' ? $this->loadDocumentType($type) : NULL;
 
-    // Get the document's data.
-    return $this->searchResources($request, 'node', $node_type, $id);
+    // Get the provider.
+    $provider = $this->getProvider();
+
+    // Load the document.
+    $document = $this->loadDocument($id);
+
+    // Prepare the response data.
+    $data = $this->prepareEntityResourceDataForResponse($document, $provider);
+
+    // Add cache contexts and tags.
+    $cache = $this->createResponseCache()
+      ->addCacheTags(['documents'])
+      ->addCacheableDependency($document);
+
+    if (isset($node_type)) {
+      $cache->addCacheableDependency($node_type);
+    }
+
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
