@@ -22,7 +22,7 @@ function docstore_disasters_vocabularies() {
 /**
  * List of fields.
  */
-function docstore_disasters_fields() {
+function docstore_disaster_types_fields() {
   return [
     'disaster_types' => [
       'id' => 'string',
@@ -38,7 +38,7 @@ function docstore_disasters_ensure_vocabularies() {
   $provider = User::load(2);
   $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
 
-  foreach (docstore_disasters_vocabularies() as $machine_name => $label) {
+  foreach (docstore_disaster_types_vocabularies() as $machine_name => $label) {
     $vocabulary = Vocabulary::load($machine_name);
     if (!$vocabulary) {
       $vocabulary = $manager->createVocabulary([
@@ -54,11 +54,11 @@ function docstore_disasters_ensure_vocabularies() {
 /**
  * Ensure vocabulary fields do exist.
  */
-function docstore_disasters_ensure_vocabulary_fields() {
+function docstore_disaster_types_ensure_vocabulary_fields() {
   $provider = User::load(2);
   $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
 
-  foreach (docstore_disasters_fields() as $machine_name => $fields) {
+  foreach (docstore_disaster_types_fields() as $machine_name => $fields) {
     $vocabulary = Vocabulary::load($machine_name);
     foreach ($fields as $label => $type) {
       if (is_array($type)) {
@@ -84,8 +84,8 @@ function docstore_disasters_ensure_vocabulary_fields() {
  * Sync disasters from vocabulary.
  */
 function docstore_disaster_types_sync() {
-  docstore_disasters_ensure_vocabularies();
-  docstore_disasters_ensure_vocabulary_fields();
+  //docstore_disaster_types_ensure_vocabularies();
+  //docstore_disaster_types_ensure_vocabulary_fields();
 
   $http_client = \Drupal::httpClient();
   $url = 'https://api.reliefweb.int/v1/references/disaster-types?appname=vocabulary';
@@ -134,17 +134,21 @@ function docstore_disaster_types_sync() {
         $term = reset($term);
       }
 
-      $fields = docstore_disasters_fields()[$vocabulary->id()];
+      $fields = docstore_disaster_types_fields()[$vocabulary->id()];
       // Add description field.
       $fields['description'] = 'string';
 
       foreach ($fields as $name => $type) {
         $field_name = str_replace('-', '_', $name);
+        // disaster_type_code is actually code.
+        if ($field_name === 'disaster_type_code') {
+          $field_name = 'common_disaster_type_code';
+          $name = 'code';
+        }
+        if ($field_name === 'id') {
+          $field_name = 'common_id';
+        }
         if ($term->hasField($field_name)) {
-          // disaster_type_code is actually code.
-          if ($field_name === 'disaster_type_code') {
-            $name = 'code';
-          }
 
           $value = FALSE;
           if (isset($row->fields->{$name})) {
@@ -158,18 +162,6 @@ function docstore_disaster_types_sync() {
             else {
               $value = FALSE;
             }
-          }
-
-          if ($type === 'geofield') {
-            if (empty($value->lat) || empty($value->lon)) {
-              continue;
-            }
-
-            $value = [
-              'lat' => $value->lat,
-              'lon' => $value->lon,
-              'value' => 'POINT (' . $value->lat . ' ' . $value->lon . ')',
-            ];
           }
 
           $term->set($field_name, $value);
@@ -190,4 +182,4 @@ function docstore_disaster_types_sync() {
 
 // Auto execute.
 docstore_disaster_types_sync();
-\Drupal::service('docstore.vocabulary_controller')->rebuildAccessibleResourceTypes('taxonomy_vocabulary');
+// \Drupal::service('docstore.vocabulary_controller')->rebuildAccessibleResourceTypes('taxonomy_vocabulary');

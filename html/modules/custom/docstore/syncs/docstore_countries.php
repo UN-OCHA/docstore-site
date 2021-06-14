@@ -188,8 +188,24 @@ function docstore_countries_territory_term($data) {
  * Sync countries from vocabulary.
  */
 function docstore_countries_sync() {
-  docstore_countries_ensure_vocabularies();
-  docstore_countries_ensure_vocabulary_fields();
+  //docstore_countries_ensure_vocabularies();
+  //docstore_countries_ensure_vocabulary_fields();
+
+  $field_map = [
+    'common_admin_level' => 'admin_level',
+    'common_dgacm_list' => 'dgacm_list',
+    'common_fts_api_id' => 'fts_api_id',
+    'common_hrinfo_id' => 'hrinfo_id',
+    'common_id' => 'id',
+    'common_iso2' => 'iso2',
+    'common_iso3' => 'iso3',
+    'common_m49' => 'm49',
+    'common_regex' => 'regex',
+    'common_reliefweb_id' => 'reliefweb_id',
+    'common_unterm_list' => 'unterm-list',
+    'common_x_alpha_2' => 'x-alpha-2',
+    'common_x_alpha_3' => 'x-alpha-3',
+  ];
 
   $http_client = \Drupal::httpClient();
   $url = 'https://vocabulary.unocha.org/json/beta-v3/countries.json';
@@ -238,50 +254,49 @@ function docstore_countries_sync() {
         $term = reset($term);
       }
 
-      $fields = docstore_countries_fields()['countries'];
-      foreach ($fields as $name => $type) {
-        $field_name = str_replace('-', '_', $name);
-        if ($term->hasField($field_name)) {
-          $value = FALSE;
-          if (isset($row->{$name})) {
-            $value = $row->{$name};
+      $fields = \Drupal::service('entity_field.manager')
+        ->getFieldDefinitions('taxonomy_term', 'countries');
+      foreach (array_keys($fields) as $name) {
+        $value = NULL;
+        if ($name == 'name') {
+          $term->set($name, $row->label->default);
+        }
+        if ($name == 'common_geolocation') {
+          if (isset($row->geolocation) && isset($row->geolocation->lat)) {
+            $term->set($name, 'POINT (' . $row->geolocation->lon . ' ' . $row->geolocation->lat . ')');
           }
-
-          if ($type === 'boolean') {
-            if ($value === 'Y') {
-              $value = TRUE;
-            }
-            else {
-              $value = FALSE;
-            }
+          continue;
+        }
+        if ($name === 'common_territory') {
+          $territory_term = docstore_countries_territory_term($row);
+          if ($territory_term) {
+            $term->set($name, ['target_id' => $territory_term->id()]);
           }
+          continue;
+        }
+        $field_name = '';
+        if (isset($field_map[$name])) {
+          $field_name = $field_map[$name];
+        }
+        else {
+          continue;
+        }
 
-          if ($type === 'geofield') {
-            if (empty($value->lat) || empty($value->lon)) {
-              continue;
-            }
+        if (isset($row->{$field_name})) {
+          $value = $row->{$field_name};
+        }
 
-            $value = [
-              'lat' => $value->lat,
-              'lon' => $value->lon,
-              'value' => 'POINT (' . $value->lat . ' ' . $value->lon . ')',
-            ];
+        if ($field_name == 'unterm-list' || $field_name == 'dgacm-list') {
+          if ($value === 'Y') {
+            $value = TRUE;
           }
-
-          if ($field_name === 'territory') {
-            $territory_term = docstore_countries_territory_term($row);
-            if (!$territory_term) {
-              continue;
-            }
-
-            $term->territory = [];
-            $term->territory[] = [
-              'target_id' => $territory_term->id(),
-            ];
-            continue;
+          else {
+            $value = FALSE;
           }
+        }
 
-          $term->set($field_name, $value);
+        if ($value !== NULL) {
+          $term->set($name, $value);
         }
       }
 
