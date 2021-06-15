@@ -228,7 +228,7 @@ class DocumentController extends ControllerBase {
 
     // Load the document.
     $document = $this->loadDocument($id);
-    
+
     // Add cache contexts and tags.
     $cache = $this->createResponseCache()
       ->addCacheTags(['documents'])
@@ -237,17 +237,18 @@ class DocumentController extends ControllerBase {
     if (isset($node_type)) {
       $cache->addCacheableDependency($node_type);
     }
-    
+
     // Check access to the document: either public and published or provider is
     // the owner.
     if (!empty($document->private->value) || !$document->isPublished()) {
       if (!$this->providerIsOwner($document, $provider, 'owner_id', FALSE)) {
-        throw new CacheableNotFoundHttpException($cache, strtr('@label does not exist', [
+        throw new CacheableNotFoundHttpException($cache, strtr('@label @id does not exist', [
           '@label' => $this->getResourceTypeLabel('node', FALSE),
+          '@id' => $id,
         ]));
       }
     }
-    
+
     // Prepare the response data.
     $data = $this->prepareEntityResourceDataForResponse($document, $provider);
 
