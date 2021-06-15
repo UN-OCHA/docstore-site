@@ -151,6 +151,93 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
   }
 
   /**
+   * Update disaster_types.
+   *
+   * @command docstore:update-disaster-types
+   * @usage docstore:update-disaster-types
+   *   Update countries from RWapi.
+   * @validate-module-enabled docstore
+   */
+  public function updateDisasterTypes() {
+
+    $url = 'https://api.reliefweb.int/v1/references/disaster-types?appname=vocabulary';
+
+    // Load vocabulary.
+    $vocabulary = $this->entityTypeManager
+      ->getStorage('taxonomy_term')->load('disaster_types');
+
+    // Load provider.
+    $provider = $this->entityTypeManager
+      ->getStorage('user')->load(2);
+
+    $response = $this->httpClient->request('GET', $url);
+    if ($response->getStatusCode() === 200) {
+      $raw = $response->getBody()->getContents();
+      $data = json_decode($raw);
+
+      foreach ($data->data as $row) {
+        $term = taxonomy_term_load_multiple_by_name($row->fields->name, 'disaster_types');
+        if (!$term) {
+          $item = [
+            'name' => $row->fields->name,
+            'vid' => $vocabulary->id(),
+            'created' => [],
+            'provider_uuid' => [],
+            'parent' => [],
+            'description' => '',
+          ];
+
+          // Set creation time.
+          $item['created'][] = [
+            'value' => time(),
+          ];
+
+          // Set owner.
+          $item['provider_uuid'][] = [
+            'target_uuid' => $provider->uuid(),
+          ];
+
+          // Store HID Id.
+          $item['author'][] = [
+            'value' => 'Shared',
+          ];
+
+          $term = Term::create($item);
+        }
+        else {
+          $term = reset($term);
+        }
+
+        $fields = [
+          'id' => 'common_id',
+          'code' => 'disaster_type_code',
+          'description' => 'description',
+        ];
+
+        foreach ($fields as $name => $field_name) {
+          if ($term->hasField($field_name)) {
+            $value = FALSE;
+            if (isset($row->fields->{$name})) {
+              $value = $row->fields->{$name};
+            }
+
+            $term->set($field_name, $value);
+          }
+        }
+
+        $violations = $term->validate();
+        if (count($violations) > 0) {
+          print($violations->get(0)->getMessage());
+          print($violations->get(0)->getPropertyPath());
+        }
+        else {
+          $term->save();
+        }
+      }
+    }
+  }
+
+  /**
    * Update countries.
    *
    * @command docstore:update-countries
