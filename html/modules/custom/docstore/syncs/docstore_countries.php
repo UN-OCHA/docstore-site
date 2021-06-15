@@ -3,6 +3,9 @@
 /**
  * @file
  * Sync countries from vocabulary.
+ *
+ * N.B. This was for original import - use `docstore:update-countries` drush
+ * command instead.
  */
 
 use Drupal\Component\Utility\Unicode;
@@ -188,24 +191,8 @@ function docstore_countries_territory_term($data) {
  * Sync countries from vocabulary.
  */
 function docstore_countries_sync() {
-  //docstore_countries_ensure_vocabularies();
-  //docstore_countries_ensure_vocabulary_fields();
-
-  $field_map = [
-    'common_admin_level' => 'admin_level',
-    'common_dgacm_list' => 'dgacm_list',
-    'common_fts_api_id' => 'fts_api_id',
-    'common_hrinfo_id' => 'hrinfo_id',
-    'common_id' => 'id',
-    'common_iso2' => 'iso2',
-    'common_iso3' => 'iso3',
-    'common_m49' => 'm49',
-    'common_regex' => 'regex',
-    'common_reliefweb_id' => 'reliefweb_id',
-    'common_unterm_list' => 'unterm-list',
-    'common_x_alpha_2' => 'x-alpha-2',
-    'common_x_alpha_3' => 'x-alpha-3',
-  ];
+  docstore_countries_ensure_vocabularies();
+  docstore_countries_ensure_vocabulary_fields();
 
   $http_client = \Drupal::httpClient();
   $url = 'https://vocabulary.unocha.org/json/beta-v3/countries.json';
@@ -254,49 +241,50 @@ function docstore_countries_sync() {
         $term = reset($term);
       }
 
-      $fields = \Drupal::service('entity_field.manager')
-        ->getFieldDefinitions('taxonomy_term', 'countries');
-      foreach (array_keys($fields) as $name) {
-        $value = NULL;
-        if ($name == 'name') {
-          $term->set($name, $row->label->default);
-        }
-        if ($name == 'common_geolocation') {
-          if (isset($row->geolocation) && isset($row->geolocation->lat)) {
-            $term->set($name, 'POINT (' . $row->geolocation->lon . ' ' . $row->geolocation->lat . ')');
+      $fields = docstore_countries_fields()['countries'];
+      foreach ($fields as $name => $type) {
+        $field_name = str_replace('-', '_', $name);
+        if ($term->hasField($field_name)) {
+          $value = FALSE;
+          if (isset($row->{$name})) {
+            $value = $row->{$name};
           }
-          continue;
-        }
-        if ($name === 'common_territory') {
-          $territory_term = docstore_countries_territory_term($row);
-          if ($territory_term) {
-            $term->set($name, ['target_id' => $territory_term->id()]);
-          }
-          continue;
-        }
-        $field_name = '';
-        if (isset($field_map[$name])) {
-          $field_name = $field_map[$name];
-        }
-        else {
-          continue;
-        }
 
-        if (isset($row->{$field_name})) {
-          $value = $row->{$field_name};
-        }
-
-        if ($field_name == 'unterm-list' || $field_name == 'dgacm-list') {
-          if ($value === 'Y') {
-            $value = TRUE;
+          if ($type === 'boolean') {
+            if ($value === 'Y') {
+              $value = TRUE;
+            }
+            else {
+              $value = FALSE;
+            }
           }
-          else {
-            $value = FALSE;
-          }
-        }
 
-        if ($value !== NULL) {
-          $term->set($name, $value);
+          if ($type === 'geofield') {
+            if (empty($value->lat) || empty($value->lon)) {
+              continue;
+            }
+
+            $value = [
+              'lat' => $value->lat,
+              'lon' => $value->lon,
+              'value' => 'POINT (' . $value->lat . ' ' . $value->lon . ')',
+            ];
+          }
+
+          if ($field_name === 'territory') {
+            $territory_term = docstore_countries_territory_term($row);
+            if (!$territory_term) {
+              continue;
+            }
+
+            $term->territory = [];
+            $term->territory[] = [
+              'target_id' => $territory_term->id(),
+            ];
+            continue;
+          }
+
+          $term->set($field_name, $value);
         }
       }
 

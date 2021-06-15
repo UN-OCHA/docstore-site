@@ -5,6 +5,7 @@ namespace Drupal\docstore\Commands;
 use Consolidation\SiteAlias\SiteAliasManagerAwareInterface;
 use Consolidation\SiteAlias\SiteAliasManagerAwareTrait;
 use Consolidation\SiteProcess\ProcessManagerAwareTrait;
+use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
@@ -21,8 +22,9 @@ use Drupal\docstore\ResourceTrait;
 use Drupal\docstore\RevisionableResourceTrait;
 use Drupal\file\FileUsage\FileUsageInterface;
 use Drupal\search_api_solr\SolrBackendInterface;
-use Drupal\user\Entity\User;
+use Drupal\taxonomy\Entity\Term;
 use Drush\Commands\DrushCommands;
+use GuzzleHttp\ClientInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -113,6 +115,13 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
   protected $state;
 
   /**
+   * The HTTP client.
+   *
+   * @var \GuzzleHttp\ClientInterface
+   */
+  protected $httpClient;
+
+  /**
    * {@inheritdoc}
    */
   public function __construct(
@@ -125,7 +134,8 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
       MimeTypeGuesser $mimeTypeGuesser,
       FileSystem $file_system,
       FileUsageInterface $file_usage,
-      State $state
+      State $state,
+      ClientInterface $httpClient
     ) {
     $this->currentUser = $current_user;
     $this->configFactory = $config_factory;
@@ -137,6 +147,221 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
     $this->fileSystem = $file_system;
     $this->fileUsage = $file_usage;
     $this->state = $state;
+    $this->httpClient = $httpClient;
+  }
+
+  /**
+   * Update countries.
+   *
+   * @command docstore:update-countries
+   * @usage docstore:update-countries
+   *   Update countries from taas site.
+   * @validate-module-enabled docstore
+   */
+  public function updateCountries() {
+
+    $field_map = [
+      'common_admin_level' => 'admin_level',
+      'common_dgacm_list' => 'dgacm_list',
+      'common_fts_api_id' => 'fts_api_id',
+      'common_hrinfo_id' => 'hrinfo_id',
+      'common_id' => 'id',
+      'common_iso2' => 'iso2',
+      'common_iso3' => 'iso3',
+      'common_m49' => 'm49',
+      'common_regex' => 'regex',
+      'common_reliefweb_id' => 'reliefweb_id',
+      'common_unterm_list' => 'unterm-list',
+      'common_x_alpha_2' => 'x-alpha-2',
+      'common_x_alpha_3' => 'x-alpha-3',
+    ];
+
+    $url = 'https://vocabulary.unocha.org/json/beta-v3/countries.json';
+
+    // Load vocabulary.
+    $vocabulary = $this->entityTypeManager
+      ->getStorage('taxonomy_term')->load('countries');
+
+    // Load provider.
+    $provider = $this->entityTypeManager
+      ->getStorage('user')->load(2);
+
+    $response = $this->httpClient->request('GET', $url);
+    if ($response->getStatusCode() === 200) {
+      $raw = $response->getBody()->getContents();
+      $data = json_decode($raw);
+
+      foreach ($data->data as $row) {
+        $term = taxonomy_term_load_multiple_by_name($row->label->default, 'countries');
+        if (!$term) {
+          $item = [
+            'name' => $row->label->default,
+            'vid' => $vocabulary->id(),
+            'created' => [],
+            'provider_uuid' => [],
+            'parent' => [],
+            'description' => '',
+          ];
+
+          // Set creation time.
+          $item['created'][] = [
+            'value' => time(),
+          ];
+
+          // Set owner.
+          $item['provider_uuid'][] = [
+            'target_uuid' => $provider->uuid(),
+          ];
+
+          $item['author'][] = [
+            'value' => 'Shared',
+          ];
+
+          $term = Term::create($item);
+        }
+        else {
+          $term = reset($term);
+        }
+
+        $fields = $this->entityFieldManager
+          ->getFieldDefinitions('taxonomy_term', 'countries');
+        foreach (array_keys($fields) as $name) {
+          $value = NULL;
+          if ($name == 'name') {
+            $term->set($name, $row->label->default);
+          }
+          if ($name == 'common_geolocation') {
+            if (isset($row->geolocation) && isset($row->geolocation->lat)) {
+              $term->set($name, 'POINT (' . $row->geolocation->lon . ' ' . $row->geolocation->lat . ')');
+            }
+            continue;
+          }
+          if ($name === 'common_territory') {
+            $territory_term = $this->createTerritoryTerms($row);
+            if ($territory_term) {
+              $term->set($name, ['target_id' => $territory_term->id()]);
+            }
+            continue;
+          }
+          $field_name = '';
+          if (isset($field_map[$name])) {
+            $field_name = $field_map[$name];
+          }
+          else {
+            continue;
+          }
+
+          if (isset($row->{$field_name})) {
+            $value = $row->{$field_name};
+          }
+
+          if ($field_name == 'unterm-list' || $field_name == 'dgacm-list') {
+            if ($value === 'Y') {
+              $value = TRUE;
+            }
+            else {
+              $value = FALSE;
+            }
+          }
+
+          if ($value !== NULL) {
+            $term->set($name, $value);
+          }
+        }
+
+        $violations = $term->validate();
+        if (count($violations) > 0) {
+          print($violations->get(0)->getMessage());
+          print($violations->get(0)->getPropertyPath());
+        }
+        else {
+          $term->save();
+        }
+      }
+    }
+  }
+
+  /**
+   * Create territory terms.
+   */
+  protected function createTerritoryTerms($data) {
+    $properties = [
+      'region',
+      'sub-region',
+      'intermediate-region',
+    ];
+
+    $territories = [];
+    foreach ($properties as $property) {
+      if (empty($data->{$property}->code)) {
+        continue;
+      }
+
+      $territories[] = [
+        'code' => $data->{$property}->code,
+        'label' => $data->{$property}->label->default,
+      ];
+    }
+
+    if (empty($territories)) {
+      return FALSE;
+    }
+
+    $parent = FALSE;
+    foreach ($territories as $territory) {
+      // Make sure term name is not too long.
+      $short_name = $territory['label'];
+      if (mb_strlen($territory['label']) > 250) {
+        $short_name = Unicode::truncate($territory['label'], 250, TRUE, TRUE);
+      }
+
+      if (!$parent) {
+        $existing = taxonomy_term_load_multiple_by_name($short_name, 'territories');
+      }
+      else {
+        $parent_tid = 0;
+        $item = $parent->get('tid')->getValue();
+        if (!empty($item[0])) {
+          $parent_tid = $item[0]['value'];
+        }
+        $query = $this->entityTypeManager
+          ->getStorage('taxonomy_term')
+          ->getQuery()
+          ->condition('name', $short_name)
+          ->condition('parent', $parent_tid);
+        $tids = $query->execute();
+        $existing = $this->entityTypeManager
+          ->getStorage('taxonomy_term')
+          ->loadMultiple($tids);
+      }
+
+      if (!empty($existing)) {
+        $term = reset($existing);
+        $parent = $term;
+        continue;
+      }
+
+      $term_data = [
+        'vid' => 'territories',
+        'name' => $short_name,
+        'description' => $territory['label'],
+        'code' => [],
+      ];
+
+      $term_data['code'][] = [
+        'value' => $territory['code'],
+      ];
+
+      if (isset($parent) && isset($parent_tid)) {
+        $term_data['parent'] = $parent_tid;
+      }
+      $term = Term::create($term_data);
+      $term->save();
+
+      $parent = $term;
+    }
+
+    return $term;
   }
 
   /**
