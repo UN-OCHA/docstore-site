@@ -30,6 +30,7 @@ use Drupal\user\UserInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException;
 
 /**
@@ -226,17 +227,27 @@ class DocumentController extends ControllerBase {
     // Get the provider.
     $provider = $this->getProvider();
 
-    // Load the document.
-    $document = $this->loadDocument($id);
-
     // Add cache contexts and tags.
     $cache = $this->createResponseCache()
-      ->addCacheTags(['documents'])
-      ->addCacheableDependency($document);
+      ->addCacheTags(['documents']);
 
     if (isset($node_type)) {
       $cache->addCacheableDependency($node_type);
     }
+
+    // Load the document.
+    try {
+      $document = $this->loadDocument($id);
+    }
+    catch (NotFoundHttpException $exception) {
+      throw new CacheableNotFoundHttpException($cache, strtr('@label @id does not exist', [
+        '@label' => $this->getResourceTypeLabel('node', FALSE),
+        '@id' => $id,
+      ]));
+    }
+
+    // Add cache information from the document itself.
+    $cache->addCacheableDependency($document);
 
     // Check access to the document: either public and published or provider is
     // the owner.
