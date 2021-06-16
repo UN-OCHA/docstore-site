@@ -153,6 +153,188 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
   }
 
   /**
+   * Update locations.
+   *
+   * @param int $admin_level
+   *   Admin level to import (need to be imported from 0 to 3, in that order).
+   * @param int $page_number
+   *   HRinfo api page number - useful for picking up again after a time out.
+   * @param string $url
+   *   HRinfo api url for next set of results.
+   *
+   * @command docstore:update-locations
+   * @usage docstore:update-locations
+   *   Update locations from HRinfo api.
+   * @validate-module-enabled docstore
+   */
+  public function updateLocations($admin_level = 0, $page_number = 0, $url = '') {
+
+    if (empty($url)) {
+      $url = 'https://www.humanitarianresponse.info/en/api/v1.0/locations?filter[admin_level]=' . $admin_level;
+      if ($page_number > 0) {
+        $url .= '&page[number]=' . $page_number;
+      }
+    }
+
+    // Load vocabulary.
+    $vocabulary = $this->entityTypeManager->getStorage('taxonomy_term')
+      ->load('locations');
+
+    // Get vocabulary fields.
+    $fields = $this->entityFieldManager
+      ->getFieldDefinitions('taxonomy_term', 'locations');
+
+    // Load provider.
+    $provider = $this->entityTypeManager->getStorage('user')->load(2);
+
+    $response = $this->httpClient->request('GET', $url);
+    if ($response->getStatusCode() === 200) {
+      $this->logger->info('Failed to get api response.');
+    }
+    $raw = $response->getBody()->getContents();
+    $data = json_decode($raw);
+
+    foreach ($data->data as $row) {
+      $term = NULL;
+      $parent = NULL;
+      $possible_terms = NULL;
+      $possible_parents = NULL;
+
+      $possible_terms = $this->entityTypeManager
+        ->getStorage('taxonomy_term')
+        ->getQuery()
+        ->condition('vid', 'locations')
+        ->condition('id', $row->id)
+        ->execute();
+      $term = $this->entityTypeManager
+        ->getStorage('taxonomy_term')
+        ->load(reset($possible_terms));
+
+      $display_name = $row->label;
+      if ($admin_level > 0) {
+        if (!empty($row->parent) && !empty($row->parent[0]) && isset($row->parent[0]->id)) {
+          $possible_parents = $this->entityTypeManager
+            ->getStorage('taxonomy_term')
+            ->getQuery()
+            ->condition('vid', 'locations')
+            ->condition('id', $row->parent[0]->id)
+            ->execute();
+          $parent = $this->entityTypeManager
+            ->getStorage('taxonomy_term')
+            ->load(reset($possible_parents));
+          if (!empty($parent->display_name->value)) {
+            $parent_display_name = $parent->display_name->value;
+            $display_name = $parent_display_name . ' > ' . $display_name;
+          }
+        }
+      }
+
+      if (empty($term)) {
+        $item = [
+          'name' => $row->label,
+          'display_name' => $display_name,
+          'vid' => $vocabulary->id(),
+          'created' => [],
+          'provider_uuid' => [],
+          'parent' => [],
+          'description' => '',
+        ];
+
+        // Set creation time.
+        $item['created'][] = [
+          'value' => time(),
+        ];
+
+        // Set parent.
+        if (!empty($parent)) {
+          $item['parent'][] = [
+            'target_uuid' => $parent->id(),
+          ];
+        }
+
+        // Set owner.
+        $item['provider_uuid'][] = [
+          'target_uuid' => $provider->uuid(),
+        ];
+
+        $item['author'][] = [
+          'value' => 'Shared',
+        ];
+
+        $term = Term::create($item);
+      }
+
+      foreach (array_keys($fields) as $name) {
+
+        $field_name = str_replace('-', '_', $name);
+
+        // Handle special cases.
+        if ($field_name == 'id') {
+          continue;
+        }
+        if ($field_name == 'hrinfo_id') {
+          $term->set($field_name, $row->id);
+          continue;
+        }
+        if ($field_name == 'parent') {
+          if (!empty($parent)) {
+            $term->set($field_name, $parent->id());
+          }
+          continue;
+        }
+        if ($field_name == 'changed') {
+          continue;
+        }
+        if ($field_name == 'created') {
+          continue;
+        }
+        if ($field_name == 'display_name') {
+          $term->set($field_name, $display_name);
+          continue;
+        }
+        if ($field_name == 'geolocation') {
+          if (isset($row->geolocation) && isset($row->geolocation->lat)) {
+            $term->set($field_name, 'POINT (' . $row->geolocation->lon . ' ' . $row->geolocation->lat . ')');
+          }
+          continue;
+        }
+
+        if ($term->hasField($field_name)) {
+          $value = FALSE;
+          if (empty($row->{$name})) {
+            continue;
+          }
+          else {
+            if ($term->{$field_name}->value != $row->{$name}) {
+              $value = $row->{$name};
+            }
+          }
+
+          if (!empty($value)) {
+            $term->set($field_name, $value);
+          }
+        }
+      }
+
+      $violations = $term->validate();
+      if (count($violations) > 0) {
+        drush_print($violations->get(0)->getMessage());
+        drush_print($violations->get(0)->getPropertyPath());
+      }
+      else {
+        $term->save();
+      }
+    }
+
+    // Check for more data.
+    if (isset($data->next) && isset($data->next->href)) {
+      drush_print("Next page:");
+      drush_print($data->next->href);
+      $this->updateLocations($admin_level, 0, $data->next->href);
+    }
+  }
+
+  /**
    * Update disasters.
    *
    * @param int $days_ago
@@ -422,7 +604,6 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
           'target_uuid' => $provider->uuid(),
         ];
 
-        // Store HID Id.
         $item['author'][] = [
           'value' => 'Shared',
         ];
