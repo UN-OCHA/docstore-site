@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystem;
+use Drupal\Core\Http\Exception\CacheableNotFoundHttpException;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\State\State;
@@ -29,6 +30,7 @@ use Drupal\user\UserInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException;
 
 /**
@@ -222,8 +224,46 @@ class DocumentController extends ControllerBase {
     // Load the node type if not a request against all types of documents.
     $node_type = $type !== 'any' ? $this->loadDocumentType($type) : NULL;
 
-    // Get the document's data.
-    return $this->searchResources($request, 'node', $node_type, $id);
+    // Get the provider.
+    $provider = $this->getProvider();
+
+    // Add cache contexts and tags.
+    $cache = $this->createResponseCache()
+      ->addCacheTags(['documents']);
+
+    if (isset($node_type)) {
+      $cache->addCacheableDependency($node_type);
+    }
+
+    // Load the document.
+    try {
+      $document = $this->loadDocument($id);
+    }
+    catch (NotFoundHttpException $exception) {
+      throw new CacheableNotFoundHttpException($cache, strtr('@label @id does not exist', [
+        '@label' => $this->getResourceTypeLabel('node', FALSE),
+        '@id' => $id,
+      ]));
+    }
+
+    // Add cache information from the document itself.
+    $cache->addCacheableDependency($document);
+
+    // Check access to the document: either public and published or provider is
+    // the owner.
+    if (!empty($document->private->value) || !$document->isPublished()) {
+      if (!$this->providerIsOwner($document, $provider, 'owner_id', FALSE)) {
+        throw new CacheableNotFoundHttpException($cache, strtr('@label @id does not exist', [
+          '@label' => $this->getResourceTypeLabel('node', FALSE),
+          '@id' => $id,
+        ]));
+      }
+    }
+
+    // Prepare the response data.
+    $data = $this->prepareEntityResourceDataForResponse($document, $provider);
+
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**

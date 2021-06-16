@@ -3,6 +3,9 @@
 /**
  * @file
  * Sync countries from vocabulary.
+ *
+ * N.B. This was for original import - use `docstore:update-countries` drush
+ * command instead.
  */
 
 use Drupal\Component\Utility\Unicode;

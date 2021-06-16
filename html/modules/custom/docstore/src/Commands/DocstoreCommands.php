@@ -5,6 +5,7 @@ namespace Drupal\docstore\Commands;
 use Consolidation\SiteAlias\SiteAliasManagerAwareInterface;
 use Consolidation\SiteAlias\SiteAliasManagerAwareTrait;
 use Consolidation\SiteProcess\ProcessManagerAwareTrait;
+use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
@@ -21,6 +22,7 @@ use Drupal\docstore\ResourceTrait;
 use Drupal\docstore\RevisionableResourceTrait;
 use Drupal\file\FileUsage\FileUsageInterface;
 use Drupal\search_api_solr\SolrBackendInterface;
+use Drupal\node\Entity\Node;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\user\Entity\User;
 use Drush\Commands\DrushCommands;
@@ -151,7 +153,7 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
   }
 
   /**
-   * Update disasters.
+   * Update locations.
    *
    * @param int $admin_level
    *   Admin level to import (need to be imported from 0 to 3, in that order).
@@ -330,6 +332,529 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
       drush_print($data->next->href);
       $this->updateLocations($admin_level, 0, $data->next->href);
     }
+  }
+
+  /**
+   * Update disasters.
+   *
+   * @param int $days_ago
+   *   When to start updates from.
+   * @param string $date
+   *   ATOM format date for querying RWapi.
+   * @param string $url
+   *   RWapi url for next set of results.
+   *
+   * @command docstore:update-disasters
+   * @usage docstore:update-disasters
+   *   Update countries from RWapi.
+   * @validate-module-enabled docstore
+   */
+  public function updateDisasters($days_ago = 0, $date = '', $url = '') {
+    if (empty($date)) {
+      if (empty($days_ago)) {
+        $days_ago = 100;
+      }
+      $date = date(DATE_ATOM, mktime(0, 0, 0, date('m'), date('d') - $days_ago, date('Y')));
+    }
+
+    // Load provider.
+    $provider = $this->entityTypeManager->getStorage('user')->load(2);
+
+    if (empty($url)) {
+      $url = 'https://api.reliefweb.int/v1/disasters?appname=vocabulary&preset=external&limit=100';
+      $url .= '&fields[include][]=country.iso3';
+      $url .= '&fields[include][]=primary_country.iso3';
+      $url .= '&fields[include][]=profile.overview';
+      $url .= '&fields[include][]=description';
+      $url .= '&fields[include][]=type.code';
+      $url .= '&fields[include][]=primary_type.code';
+      $url .= '&fields[include][]=glide';
+      $url .= '&filter[field]=date.created';
+      $url .= '&filter[value][from]=' . urlencode($date);
+    }
+
+    $response = $this->httpClient->request('GET', $url);
+    if ($response->getStatusCode() !== 200) {
+      $this->logger->info('Failed to get api response.');
+    }
+    $raw = $response->getBody()->getContents();
+    $data = json_decode($raw);
+
+    foreach ($data->data as $row) {
+      $node = NULL;
+      $possible_nodes = NULL;
+      $possible_nodes = $this->entityTypeManager
+        ->getStorage('node')
+        ->loadByProperties(['type' => 'disaster', 'id' => $row->id]);
+      $node = reset($possible_nodes);
+
+      if (empty($node)) {
+        $item = [
+          'title' => $row->fields->name,
+          'type' => 'disaster',
+          'created' => [],
+          'provider_uuid' => [],
+          'description' => '',
+        ];
+
+        // Set owner.
+        $item['provider_uuid'][] = [
+          'target_uuid' => $provider->uuid(),
+        ];
+
+        // Set creation time.
+        $item['created'][] = [
+          'value' => time(),
+        ];
+
+        $item['author'][] = [
+          'value' => 'Shared',
+        ];
+        $node = Node::create($item);
+      }
+
+      $node->set('title', $row->fields->name);
+      $node->set('files', []);
+
+      // Id.
+      $node->set('id', $row->fields->id);
+
+      // Status.
+      // Needs to create terms if they don't already exist.
+      $status_term = NULL;
+      $status_term = $this->entityTypeManager
+        ->getStorage('taxonomy_term')
+        ->loadByProperties(['name' => $row->fields->status]);
+      if (empty($status_term)) {
+        // Create it.
+        $item = [
+          'name' => $row->fields->status,
+          'vid' => 'disaster_status',
+          'created' => [],
+          'provider_uuid' => [],
+          'description' => '',
+        ];
+
+        // Set creation time.
+        $item['created'][] = [
+          'value' => time(),
+        ];
+
+        // Set owner.
+        $item['provider_uuid'][] = [
+          'target_uuid' => $provider->uuid(),
+        ];
+
+        $item['author'][] = [
+          'value' => 'Shared',
+        ];
+
+        $status_term = Term::create($item);
+        $status_term->save();
+        $status_tid = $status_term->id();
+      }
+      else {
+        $status_tid = reset($status_term)->id();
+      }
+      $node->set('disaster_status', ['target_id' => $status_tid]);
+
+      // Glide.
+      if (isset($row->fields->glide)) {
+        $node->set('glide', $row->fields->glide);
+      }
+
+      // Profile.
+      if (isset($row->fields->profile->overview)) {
+        $node->set('profile', $row->fields->profile->overview);
+      }
+
+      // Description.
+      if (isset($row->fields->description)) {
+        $node->set('description', $row->fields->description);
+      }
+
+      // Disaster type.
+      if (isset($row->fields->type) && !empty($row->fields->type)) {
+        $type_data = [];
+        foreach ($row->fields->type as $type) {
+          $query = $this->entityTypeManager
+            ->getStorage('taxonomy_term')
+            ->getQuery()
+            ->condition('vid', 'disaster_types')
+            ->condition('common_disaster_type_code', $type->code);
+          $term_ids = $query->execute();
+          $term_id = reset($term_ids);
+          $type_data[] = [
+            'target_id' => $term_id,
+          ];
+        }
+        $node->set('disaster_type', $type_data);
+      }
+
+      // Primary disaster type.
+      if (isset($row->fields->primary_type) && !empty($row->fields->primary_type)) {
+        $query = $this->entityTypeManager
+          ->getStorage('taxonomy_term')
+          ->getQuery()
+          ->condition('vid', 'disaster_types')
+          ->condition('common_disaster_type_code', $row->fields->primary_type->code);
+        $term_ids = $query->execute();
+        $term_id = reset($term_ids);
+        $type = ['target_id' => $term_id];
+        $node->set('primary_disaster_type', $type);
+      }
+
+      // Countries.
+      if (isset($row->fields->country) && !empty($row->fields->country)) {
+        $country_data = [];
+        foreach ($row->fields->country as $country) {
+          $query = $this->entityTypeManager
+            ->getStorage('taxonomy_term')
+            ->getQuery()
+            ->condition('vid', 'countries')
+            ->condition('common_iso3', $country->iso3);
+          $term_ids = $query->execute();
+          $term_id = reset($term_ids);
+          $country_data[] = [
+            'target_id' => $term_id,
+          ];
+        }
+        $node->set('countries', $country_data);
+      }
+
+      // Primary country.
+      if (isset($row->fields->primary_country) && !empty($row->fields->primary_country)) {
+        $query = $this->entityTypeManager
+          ->getStorage('taxonomy_term')
+          ->getQuery()
+          ->condition('vid', 'countries')
+          ->condition('common_iso3', $row->fields->primary_country->iso3);
+        $term_ids = $query->execute();
+        $term_id = reset($term_ids);
+        $country = ['target_id' => $term_id];
+        $node->set('primary_country', $country);
+      }
+
+      $node->set('author', 'RW');
+
+      $violations = $node->validate();
+      if (count($violations) > 0) {
+        drush_print($violations->get(0)->getMessage());
+        drush_print($violations->get(0)->getPropertyPath());
+      }
+      else {
+        $node->save();
+      }
+    }
+
+    // Check for more data.
+    if (isset($data->links) && isset($data->links->next->href)) {
+      drush_print('Next page:');
+      drush_print($data->links->next->href);
+      $this->updateDisasters(0, $date, $data->links->next->href);
+    }
+  }
+
+  /**
+   * Update disaster_types.
+   *
+   * @command docstore:update-disaster-types
+   * @usage docstore:update-disaster-types
+   *   Update countries from RWapi.
+   * @validate-module-enabled docstore
+   */
+  public function updateDisasterTypes() {
+
+    $url = 'https://api.reliefweb.int/v1/references/disaster-types?appname=vocabulary';
+
+    // Load vocabulary.
+    $vocabulary = $this->entityTypeManager
+      ->getStorage('taxonomy_term')->load('disaster_types');
+
+    // Load provider.
+    $provider = $this->entityTypeManager
+      ->getStorage('user')->load(2);
+
+    $response = $this->httpClient->request('GET', $url);
+    if ($response->getStatusCode() !== 200) {
+      $this->logger->info('Failed to get api response.');
+    }
+    $raw = $response->getBody()->getContents();
+    $data = json_decode($raw);
+
+    foreach ($data->data as $row) {
+      $terms = taxonomy_term_load_multiple_by_name($row->fields->name, 'disaster_types');
+      if (!$terms) {
+        $item = [
+          'name' => $row->fields->name,
+          'vid' => $vocabulary->id(),
+          'created' => [],
+          'provider_uuid' => [],
+          'parent' => [],
+          'description' => '',
+        ];
+
+        // Set creation time.
+        $item['created'][] = [
+          'value' => time(),
+        ];
+
+        // Set owner.
+        $item['provider_uuid'][] = [
+          'target_uuid' => $provider->uuid(),
+        ];
+
+        $item['author'][] = [
+          'value' => 'Shared',
+        ];
+
+        $term = Term::create($item);
+      }
+      else {
+        $term = reset($terms);
+      }
+
+      $fields = [
+        'id' => 'common_id',
+        'name' => 'name',
+        'code' => 'common_disaster_type_code',
+        'description' => 'description',
+      ];
+
+      foreach ($fields as $name => $field_name) {
+        if ($term->hasField($field_name)) {
+          $value = FALSE;
+          if (isset($row->fields->{$name})) {
+            $value = $row->fields->{$name};
+          }
+
+          $term->set($field_name, $value);
+        }
+      }
+
+      $violations = $term->validate();
+      if (count($violations) > 0) {
+        drush_print($violations->get(0)->getMessage());
+        drush_print($violations->get(0)->getPropertyPath());
+      }
+      else {
+        $term->save();
+      }
+    }
+  }
+
+  /**
+   * Update countries.
+   *
+   * @command docstore:update-countries
+   * @usage docstore:update-countries
+   *   Update countries from taas site.
+   * @validate-module-enabled docstore
+   */
+  public function updateCountries() {
+
+    $field_map = [
+      'common_admin_level' => 'admin_level',
+      'common_dgacm_list' => 'dgacm_list',
+      'common_fts_api_id' => 'fts_api_id',
+      'common_hrinfo_id' => 'hrinfo_id',
+      'common_id' => 'id',
+      'common_iso2' => 'iso2',
+      'common_iso3' => 'iso3',
+      'common_m49' => 'm49',
+      'common_regex' => 'regex',
+      'common_reliefweb_id' => 'reliefweb_id',
+      'common_unterm_list' => 'unterm-list',
+      'common_x_alpha_2' => 'x-alpha-2',
+      'common_x_alpha_3' => 'x-alpha-3',
+    ];
+
+    $url = 'https://vocabulary.unocha.org/json/beta-v3/countries.json';
+
+    // Load vocabulary.
+    $vocabulary = $this->entityTypeManager
+      ->getStorage('taxonomy_term')->load('countries');
+
+    // Load provider.
+    $provider = $this->entityTypeManager
+      ->getStorage('user')->load(2);
+
+    $response = $this->httpClient->request('GET', $url);
+    if ($response->getStatusCode() === 200) {
+      $raw = $response->getBody()->getContents();
+      $data = json_decode($raw);
+
+      foreach ($data->data as $row) {
+        $term = taxonomy_term_load_multiple_by_name($row->label->default, 'countries');
+        if (!$term) {
+          $item = [
+            'name' => $row->label->default,
+            'vid' => $vocabulary->id(),
+            'created' => [],
+            'provider_uuid' => [],
+            'parent' => [],
+            'description' => '',
+          ];
+
+          // Set creation time.
+          $item['created'][] = [
+            'value' => time(),
+          ];
+
+          // Set owner.
+          $item['provider_uuid'][] = [
+            'target_uuid' => $provider->uuid(),
+          ];
+
+          $item['author'][] = [
+            'value' => 'Shared',
+          ];
+
+          $term = Term::create($item);
+        }
+        else {
+          $term = reset($term);
+        }
+
+        $fields = $this->entityFieldManager
+          ->getFieldDefinitions('taxonomy_term', 'countries');
+        foreach (array_keys($fields) as $name) {
+          $value = NULL;
+          if ($name == 'name') {
+            $term->set($name, $row->label->default);
+          }
+          if ($name == 'common_geolocation') {
+            if (isset($row->geolocation) && isset($row->geolocation->lat)) {
+              $term->set($name, 'POINT (' . $row->geolocation->lon . ' ' . $row->geolocation->lat . ')');
+            }
+            continue;
+          }
+          if ($name === 'common_territory') {
+            $territory_term = $this->createTerritoryTerms($row);
+            if ($territory_term) {
+              $term->set($name, ['target_id' => $territory_term->id()]);
+            }
+            continue;
+          }
+          $field_name = '';
+          if (isset($field_map[$name])) {
+            $field_name = $field_map[$name];
+          }
+          else {
+            continue;
+          }
+
+          if (isset($row->{$field_name})) {
+            $value = $row->{$field_name};
+          }
+
+          if ($field_name == 'unterm-list' || $field_name == 'dgacm-list') {
+            if ($value === 'Y') {
+              $value = TRUE;
+            }
+            else {
+              $value = FALSE;
+            }
+          }
+
+          if ($value !== NULL) {
+            $term->set($name, $value);
+          }
+        }
+
+        $violations = $term->validate();
+        if (count($violations) > 0) {
+          drush_print($violations->get(0)->getMessage());
+          drush_print($violations->get(0)->getPropertyPath());
+        }
+        else {
+          $term->save();
+        }
+      }
+    }
+  }
+
+  /**
+   * Create territory terms.
+   */
+  protected function createTerritoryTerms($data) {
+    $properties = [
+      'region',
+      'sub-region',
+      'intermediate-region',
+    ];
+
+    $territories = [];
+    foreach ($properties as $property) {
+      if (empty($data->{$property}->code)) {
+        continue;
+      }
+
+      $territories[] = [
+        'code' => $data->{$property}->code,
+        'label' => $data->{$property}->label->default,
+      ];
+    }
+
+    if (empty($territories)) {
+      return FALSE;
+    }
+
+    $parent = FALSE;
+    foreach ($territories as $territory) {
+      // Make sure term name is not too long.
+      $short_name = $territory['label'];
+      if (mb_strlen($territory['label']) > 250) {
+        $short_name = Unicode::truncate($territory['label'], 250, TRUE, TRUE);
+      }
+
+      if (!$parent) {
+        $existing = taxonomy_term_load_multiple_by_name($short_name, 'territories');
+      }
+      else {
+        $parent_tid = 0;
+        $item = $parent->get('tid')->getValue();
+        if (!empty($item[0])) {
+          $parent_tid = $item[0]['value'];
+        }
+        $query = $this->entityTypeManager
+          ->getStorage('taxonomy_term')
+          ->getQuery()
+          ->condition('name', $short_name)
+          ->condition('parent', $parent_tid);
+        $tids = $query->execute();
+        $existing = $this->entityTypeManager
+          ->getStorage('taxonomy_term')
+          ->loadMultiple($tids);
+      }
+
+      if (!empty($existing)) {
+        $term = reset($existing);
+        $parent = $term;
+        continue;
+      }
+
+      $term_data = [
+        'vid' => 'territories',
+        'name' => $short_name,
+        'description' => $territory['label'],
+        'code' => [],
+      ];
+
+      $term_data['code'][] = [
+        'value' => $territory['code'],
+      ];
+
+      if (isset($parent) && isset($parent_tid)) {
+        $term_data['parent'] = $parent_tid;
+      }
+      $term = Term::create($term_data);
+      $term->save();
+
+      $parent = $term;
+    }
+
+    return $term;
   }
 
   /**
