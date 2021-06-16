@@ -3,6 +3,9 @@
 /**
  * @file
  * Sync disasters from vocabulary.
+ *
+ * N.B. This was for original import - use `docstore:update-disaster-types`
+ * drush command instead.
  */
 
 use Drupal\docstore\ManageFields;
