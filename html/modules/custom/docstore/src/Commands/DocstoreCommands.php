@@ -24,6 +24,7 @@ use Drupal\file\FileUsage\FileUsageInterface;
 use Drupal\search_api_solr\SolrBackendInterface;
 use Drupal\node\Entity\Node;
 use Drupal\taxonomy\Entity\Term;
+use Drupal\user\Entity\User;
 use Drush\Commands\DrushCommands;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
