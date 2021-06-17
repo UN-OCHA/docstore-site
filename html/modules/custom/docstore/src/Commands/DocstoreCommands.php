@@ -261,7 +261,6 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
       }
 
       foreach (array_keys($fields) as $name) {
-
         $field_name = str_replace('-', '_', $name);
 
         // Handle special cases.
