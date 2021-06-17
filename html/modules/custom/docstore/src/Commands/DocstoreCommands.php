@@ -176,10 +176,6 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
       }
     }
 
-    // Load vocabulary.
-    $vocabulary = $this->entityTypeManager->getStorage('taxonomy_term')
-      ->load('locations');
-
     // Get vocabulary fields.
     $fields = $this->entityFieldManager
       ->getFieldDefinitions('taxonomy_term', 'locations');
@@ -233,7 +229,7 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
         $item = [
           'name' => $row->label,
           'display_name' => $display_name,
-          'vid' => $vocabulary->id(),
+          'vid' => 'locations',
           'created' => [],
           'provider_uuid' => [],
           'parent' => [],
@@ -265,7 +261,6 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
       }
 
       foreach (array_keys($fields) as $name) {
-
         $field_name = str_replace('-', '_', $name);
 
         // Handle special cases.
@@ -567,10 +562,6 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
 
     $url = 'https://api.reliefweb.int/v1/references/disaster-types?appname=vocabulary';
 
-    // Load vocabulary.
-    $vocabulary = $this->entityTypeManager
-      ->getStorage('taxonomy_term')->load('disaster_types');
-
     // Load provider.
     $provider = $this->entityTypeManager
       ->getStorage('user')->load(2);
@@ -587,7 +578,7 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
       if (!$terms) {
         $item = [
           'name' => $row->fields->name,
-          'vid' => $vocabulary->id(),
+          'vid' => 'disaster_types',
           'created' => [],
           'provider_uuid' => [],
           'parent' => [],
@@ -671,10 +662,6 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
 
     $url = 'https://vocabulary.unocha.org/json/beta-v3/countries.json';
 
-    // Load vocabulary.
-    $vocabulary = $this->entityTypeManager
-      ->getStorage('taxonomy_term')->load('countries');
-
     // Load provider.
     $provider = $this->entityTypeManager
       ->getStorage('user')->load(2);
@@ -689,7 +676,7 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
         if (!$term) {
           $item = [
             'name' => $row->label->default,
-            'vid' => $vocabulary->id(),
+            'vid' => 'countries',
             'created' => [],
             'provider_uuid' => [],
             'parent' => [],
