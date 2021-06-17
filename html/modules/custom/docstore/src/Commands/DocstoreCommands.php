@@ -794,7 +794,6 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
         'label' => $data->{$property}->label->default,
       ];
     }
-
     if (empty($territories)) {
       return FALSE;
     }
