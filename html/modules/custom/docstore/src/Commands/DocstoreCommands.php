@@ -202,9 +202,11 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
         ->condition('vid', 'locations')
         ->condition('id', $row->id)
         ->execute();
-      $term = $this->entityTypeManager
-        ->getStorage('taxonomy_term')
-        ->load(reset($possible_terms));
+      if (!empty($possible_terms)) {
+        $term = $this->entityTypeManager
+          ->getStorage('taxonomy_term')
+          ->load(reset($possible_terms));
+      }
 
       $display_name = $row->label;
       if ($admin_level > 0) {
@@ -215,9 +217,11 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
             ->condition('vid', 'locations')
             ->condition('id', $row->parent[0]->id)
             ->execute();
-          $parent = $this->entityTypeManager
-            ->getStorage('taxonomy_term')
-            ->load(reset($possible_parents));
+          if (!empty($possible_parents)) {
+            $parent = $this->entityTypeManager
+              ->getStorage('taxonomy_term')
+              ->load(reset($possible_parents));
+          }
           if (!empty($parent->display_name->value)) {
             $parent_display_name = $parent->display_name->value;
             $display_name = $parent_display_name . ' > ' . $display_name;
@@ -479,9 +483,11 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
             ->condition('common_disaster_type_code', $type->code);
           $term_ids = $query->execute();
           $term_id = reset($term_ids);
-          $type_data[] = [
-            'target_id' => $term_id,
-          ];
+          if (!empty($term_id)) {
+            $type_data[] = [
+              'target_id' => $term_id,
+            ];
+          }
         }
         $node->set('disaster_type', $type_data);
       }
@@ -495,8 +501,10 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
           ->condition('common_disaster_type_code', $row->fields->primary_type->code);
         $term_ids = $query->execute();
         $term_id = reset($term_ids);
-        $type = ['target_id' => $term_id];
-        $node->set('primary_disaster_type', $type);
+        if (!empty($term_id)) {
+          $type = ['target_id' => $term_id];
+          $node->set('primary_disaster_type', $type);
+        }
       }
 
       // Countries.
@@ -510,9 +518,11 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
             ->condition('common_iso3', $country->iso3);
           $term_ids = $query->execute();
           $term_id = reset($term_ids);
-          $country_data[] = [
-            'target_id' => $term_id,
-          ];
+          if (!empty($term_id)) {
+            $country_data[] = [
+              'target_id' => $term_id,
+            ];
+          }
         }
         $node->set('countries', $country_data);
       }
@@ -526,8 +536,10 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
           ->condition('common_iso3', $row->fields->primary_country->iso3);
         $term_ids = $query->execute();
         $term_id = reset($term_ids);
-        $country = ['target_id' => $term_id];
-        $node->set('primary_country', $country);
+        if (!empty($term_id)) {
+          $country = ['target_id' => $term_id];
+          $node->set('primary_country', $country);
+        }
       }
 
       $node->set('author', 'RW');
@@ -782,7 +794,6 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
         'label' => $data->{$property}->label->default,
       ];
     }
-
     if (empty($territories)) {
       return FALSE;
     }
@@ -810,9 +821,11 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
           ->condition('name', $short_name)
           ->condition('parent', $parent_tid);
         $tids = $query->execute();
-        $existing = $this->entityTypeManager
-          ->getStorage('taxonomy_term')
-          ->loadMultiple($tids);
+        if (!empty($tids)) {
+          $existing = $this->entityTypeManager
+            ->getStorage('taxonomy_term')
+            ->loadMultiple($tids);
+        }
       }
 
       if (!empty($existing)) {
