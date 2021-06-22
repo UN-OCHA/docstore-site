@@ -155,8 +155,6 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
   /**
    * Update locations.
    *
-   * @param int $admin_level
-   *   Admin level to import (need to be imported from 0 to 3, in that order).
    * @param int $page_number
    *   HRinfo api page number - useful for picking up again after a time out.
    * @param string $url
@@ -167,12 +165,12 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
    *   Update locations from HRinfo api.
    * @validate-module-enabled docstore
    */
-  public function updateLocations($admin_level = 0, $page_number = 0, $url = '') {
+  public function updateLocations($page_number = 0, $url = '') {
 
     if (empty($url)) {
-      $url = 'https://www.humanitarianresponse.info/en/api/v1.0/locations?filter[admin_level]=' . $admin_level;
+      $url = 'https://www.humanitarianresponse.info/en/api/v1.0/locations';
       if ($page_number > 0) {
-        $url .= '&page[number]=' . $page_number;
+        $url .= '?page[number]=' . $page_number;
       }
     }
 
@@ -209,23 +207,21 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
       }
 
       $display_name = $row->label;
-      if ($admin_level > 0) {
-        if (!empty($row->parent) && !empty($row->parent[0]) && isset($row->parent[0]->id)) {
-          $possible_parents = $this->entityTypeManager
+      if (!empty($row->parent) && !empty($row->parent[0]) && isset($row->parent[0]->id)) {
+        $possible_parents = $this->entityTypeManager
+          ->getStorage('taxonomy_term')
+          ->getQuery()
+          ->condition('vid', 'locations')
+          ->condition('id', $row->parent[0]->id)
+          ->execute();
+        if (!empty($possible_parents)) {
+          $parent = $this->entityTypeManager
             ->getStorage('taxonomy_term')
-            ->getQuery()
-            ->condition('vid', 'locations')
-            ->condition('id', $row->parent[0]->id)
-            ->execute();
-          if (!empty($possible_parents)) {
-            $parent = $this->entityTypeManager
-              ->getStorage('taxonomy_term')
-              ->load(reset($possible_parents));
-          }
-          if (!empty($parent->display_name->value)) {
-            $parent_display_name = $parent->display_name->value;
-            $display_name = $parent_display_name . ' > ' . $display_name;
-          }
+            ->load(reset($possible_parents));
+        }
+        if (!empty($parent->display_name->value)) {
+          $parent_display_name = $parent->display_name->value;
+          $display_name = $parent_display_name . ' > ' . $display_name;
         }
       }
 
@@ -291,6 +287,13 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
           $term->set($field_name, $display_name);
           continue;
         }
+        if ($field_name == 'admin_level') {
+          $levels = count($row->parents);
+          if ($levels > 0) {
+            $term->set($field_name, $levels - 1);
+          }
+          continue;
+        }
         if ($field_name == 'geolocation') {
           if (isset($row->geolocation) && isset($row->geolocation->lat)) {
             $term->set($field_name, 'POINT (' . $row->geolocation->lon . ' ' . $row->geolocation->lat . ')');
@@ -329,7 +332,7 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
     if (isset($data->next) && isset($data->next->href)) {
       drush_print("Next page:");
       drush_print($data->next->href);
-      $this->updateLocations($admin_level, 0, $data->next->href);
+      $this->updateLocations(0, $data->next->href);
     }
   }
 
