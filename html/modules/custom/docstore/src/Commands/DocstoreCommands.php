@@ -265,6 +265,7 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
 
         // Handle special cases.
         if ($field_name == 'id') {
+          $term->set($field_name, $row->id);
           continue;
         }
         if ($field_name == 'hrinfo_id') {
