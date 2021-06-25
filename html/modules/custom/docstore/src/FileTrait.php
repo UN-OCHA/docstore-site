@@ -21,16 +21,6 @@ trait FileTrait {
   use UtilityTrait;
 
   /**
-   * Generate a uuid.
-   *
-   * @return string
-   *   Uuid.
-   */
-  public static function generateUuid() {
-    return \Drupal::service('uuid')->generate();
-  }
-
-  /**
    * Generate a file uri based on its uuid and filename.
    *
    * @param string $uuid
@@ -64,12 +54,15 @@ trait FileTrait {
    *   Whether the file is private or not.
    * @param \Drupal\user\UserInterface $provider
    *   Provider.
+   * @param string|null $uuid
+   *   Optional media UUID to use to generate the file UUID.
    *
    * @return \Drupal\file\Entity\File
    *   Media referencing the file.
    */
-  public function createFileEntity($filename, $mimetype, $private, UserInterface $provider) {
-    $uuid = static::generateUuid();
+  public function createFileEntity($filename, $mimetype, $private, UserInterface $provider, $uuid = NULL) {
+    // Generate a new UUID based on the given uuid if defined.
+    $uuid = $this->generateUuid($uuid);
 
     // Create URI.
     $extension = pathinfo($filename, PATHINFO_EXTENSION);
@@ -95,12 +88,18 @@ trait FileTrait {
    *   Whether the media is private or not.
    * @param \Drupal\user\UserInterface $provider
    *   Provider.
+   * @param string|null $uuid
+   *   Optional UUID to use for the media.
    *
    * @return \Drupal\media\Entity\Media
    *   Media referencing the file.
    */
-  public function createMediaEntity(File $file, $private, UserInterface $provider) {
+  public function createMediaEntity(File $file, $private, UserInterface $provider, $uuid = NULL) {
+    // Use the provided UUID or generate an new one.
+    $uuid = $uuid ?: static::generateUuid();
+
     $media = Media::create([
+      'uuid' => $uuid,
       'bundle' => 'file',
       'uid' => $provider->id(),
       'name' => $file->getFilename(),
@@ -174,7 +173,7 @@ trait FileTrait {
    *
    * @todo adjust the exception based on the result of the request.
    *
-   * @todo investigate refactoring the this and fetchAndCreateFile() to
+   * @todo investigate refactoring this and fetchRemoteContentAndCreateFile() to
    * fetch the content asynchronously.
    */
   public function fetchRemoteFileContent($uri) {
@@ -260,12 +259,14 @@ trait FileTrait {
   }
 
   /**
-   * Fetch and create a file.
+   * Fetch a remote file and create a file resource.
    *
    * @param string $uri
    *   File uri.
    * @param \Drupal\user\UserInterface $provider
    *   Provider.
+   * @param string|null $uuid
+   *   Optional media uuid.
    *
    * @return \Drupal\media\Entity\Media
    *   Media referencing the file.
@@ -274,7 +275,11 @@ trait FileTrait {
    *   400 Bad Request if the file name from the uri doesn't have a valid
    *   extension.
    */
-  public function fetchAndCreateFile($uri, UserInterface $provider) {
+  public function fetchRemoteContentAndCreateFile($uri, UserInterface $provider, $uuid = NULL) {
+    if (!empty($uuid) && !$this->validateEntityUuid('media', $uuid)) {
+      throw new BadRequestHttpException('File UUID invalid or already in use');
+    }
+
     $filename = basename($uri);
 
     // Disallow file name without an extension.
@@ -288,14 +293,60 @@ trait FileTrait {
 
     // Create the file entity.
     /** @var \Drupal\file\Entity\File $file */
-    $file = $this->createFileEntity($filename, 'undefined', FALSE, $provider);
+    $file = $this->createFileEntity($filename, 'undefined', FALSE, $provider, $uuid);
 
     // Save the content to disk.
     /** @var \Drupal\media\Entity\Media $media */
     $file = $this->saveFileToDisk($file, $content, $provider);
 
     // Create media item.
-    $media = $this->createMediaEntity($file, FALSE, $provider);
+    $media = $this->createMediaEntity($file, FALSE, $provider, $uuid);
+    $this->saveMedia($media, $file, $provider);
+
+    return $media;
+  }
+
+  /**
+   * Fetch a dropfolder file and create a file resource.
+   *
+   * @param string $filename
+   *   File name.
+   * @param \Drupal\user\UserInterface $provider
+   *   Provider.
+   * @param string|null $uuid
+   *   Optional media uuid.
+   *
+   * @return \Drupal\media\Entity\Media
+   *   Media referencing the file.
+   *
+   * @throws \Symfony\Component\HttpKernel\Exception\BadRequestHttpException
+   *   400 Bad Request if the file name from the uri doesn't have a valid
+   *   extension.
+   */
+  public function fetchDropfolderContentAndCreateFile($filename, UserInterface $provider, $uuid = NULL) {
+    if (!empty($uuid) && !$this->validateEntityUuid('media', $uuid)) {
+      throw new BadRequestHttpException('File UUID invalid or already in use');
+    }
+
+    // Disallow file name without an extension.
+    $extension = pathinfo($filename, PATHINFO_EXTENSION);
+    if (empty($extension)) {
+      throw new BadRequestHttpException('A valid file extension is required');
+    }
+
+    // Fetch the file content.
+    $content = $this->fetchDropfolderFileContent($filename, $provider);
+
+    // Create the file entity.
+    /** @var \Drupal\file\Entity\File $file */
+    $file = $this->createFileEntity($filename, 'undefined', FALSE, $provider, $uuid);
+
+    // Save the content to disk.
+    /** @var \Drupal\media\Entity\Media $media */
+    $file = $this->saveFileToDisk($file, $content, $provider);
+
+    // Create media item.
+    $media = $this->createMediaEntity($file, FALSE, $provider, $uuid);
     $this->saveMedia($media, $file, $provider);
 
     return $media;

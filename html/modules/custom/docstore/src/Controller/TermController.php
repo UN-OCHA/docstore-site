@@ -393,6 +393,16 @@ class TermController extends ControllerBase {
       'description' => $params['description'] ?? '',
     ];
 
+    // Set the UUID if provided and valid.
+    if (!empty($params['uuid'])) {
+      if ($this->validateEntityUuid('taxonomy_term', $params['uuid'])) {
+        $item['uuid'] = $params['uuid'];
+      }
+      else {
+        throw new BadRequestHttpException('Term UUID invalid or already in use');
+      }
+    }
+
     // Add support for hierarchical vocabularies.
     if (isset($params['parent'])) {
       if (is_array($params['parent'])) {

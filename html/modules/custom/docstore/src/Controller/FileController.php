@@ -241,9 +241,20 @@ class FileController extends ControllerBase {
     // Support private files.
     $private = !empty($params['private']);
 
+    // Get the UUID if provided and valid.
+    $uuid = NULL;
+    if (!empty($params['uuid'])) {
+      if ($this->validateEntityUuid('media', $params['uuid'])) {
+        $uuid = $params['uuid'];
+      }
+      else {
+        throw new BadRequestHttpException('File UUID invalid or already in use');
+      }
+    }
+
     // Create the file entity.
     /** @var \Drupal\file\Entity\File $file */
-    $file = $this->createFileEntity($params['filename'], $params['mimetype'], $private, $provider);
+    $file = $this->createFileEntity($params['filename'], $params['mimetype'], $private, $provider, $uuid);
 
     // Case 1: binary content provided in the request params.
     if (!empty($params['data'])) {
@@ -268,7 +279,7 @@ class FileController extends ControllerBase {
     }
 
     // Create the media entity.
-    $media = $this->createMediaEntity($file, $private, $provider);
+    $media = $this->createMediaEntity($file, $private, $provider, $uuid);
 
     // Save the media and generate the symlinks if possible.
     $this->saveMedia($media, $file, $provider);

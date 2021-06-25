@@ -540,6 +540,16 @@ class DocumentController extends ControllerBase {
       'status' => Node::PUBLISHED,
     ];
 
+    // Set the UUID if provided and valid.
+    if (!empty($params['uuid'])) {
+      if ($this->validateEntityUuid('node', $params['uuid'])) {
+        $item['uuid'] = $params['uuid'];
+      }
+      else {
+        throw new BadRequestHttpException('Document UUID invalid or already in use');
+      }
+    }
+
     // Published.
     if (isset($params['published'])) {
       $item['status'] = empty($params['published']) ? Node::NOT_PUBLISHED : Node::PUBLISHED;
@@ -560,27 +570,31 @@ class DocumentController extends ControllerBase {
       // Allow file uuid, uri or file name (dropfolder).
       foreach ($files as $file) {
         $media = NULL;
+        $uuid = NULL;
 
         // Assume it's a uuid.
         if (is_string($file)) {
-          $media = $this->loadMedia($file);
+          $uuid = $file;
         }
         elseif (isset($file['uuid'])) {
-          $media = $this->loadMedia($file['uuid']);
+          $uuid = $file['uuid'];
         }
         // @todo this is for backward compatibility, remove.
         elseif (isset($file['media_uuid'])) {
-          $media = $this->loadMedia($file['media_uuid']);
+          $uuid = $file['media_uuid'];
         }
-        elseif (isset($file['uri'])) {
-          $media = $this->fetchAndCreateFile($file['uri'], $provider);
+
+        // Remote file.
+        if (isset($file['uri'])) {
+          $media = $this->fetchRemoteContentAndCreateFile($file['uri'], $provider, $uuid);
         }
+        // Dropfolder file.
         elseif (isset($file['filename'])) {
-          $content = $this->fetchDropfolderFileContent($file['filename'], $provider);
-          $file = $this->createFileEntity($file['filename'], 'undefined', FALSE, $provider);
-          $file = $this->saveFileToDisk($file, $content, $provider);
-          $media = $this->createMediaEntity($file, FALSE, $provider);
-          $this->saveMedia($media, $file, $provider);
+          $media = $this->fetchDropfolderContentAndCreateFile($file['filename'], $provider, $uuid);
+        }
+        // Existing file.
+        elseif (!empty($uuid)) {
+          $media = $this->loadMedia($uuid);
         }
 
         if (!empty($media)) {
