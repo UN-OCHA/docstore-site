@@ -160,6 +160,99 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
    * @param string $url
    *   HRinfo api url for next set of results.
    *
+   * @command docstore:fix-empty-locations
+   * @usage docstore:fix-empty-locations
+   *   Update incomplete locations from HRinfo api.
+   * @validate-module-enabled docstore
+   */
+  public function fixEmptyLocations($page_number = 0, $url = '') {
+    $query = \Drupal::entityQuery('taxonomy_term');
+    $query->condition('vid', 'locations');
+    $query->condition('id', NULL, 'IS NULL');
+    $tids = $query->execute();
+    $count = count($tids);
+
+    foreach ($tids as $tid) {
+      $this->logger->info('Processing ' . $tid);
+
+      // Load term.
+      $term = taxonomy_term_load($tid);
+
+      // Get first assessment.
+      $query = \Drupal::database()->select('taxonomy_index', 'ti');
+      $query->fields('ti', ['nid']);
+      $query->condition('ti.tid', $tid);
+      $nids = $query->execute()->fetchAssoc();
+      $nid = reset($nids);
+
+      // Fetch assessment from HRInfo.
+      $node = node_load($nid);
+      $url = 'https://www.humanitarianresponse.info/en/api/v1.0/assessments/' . $node->get('id')->value;
+      $response = \Drupal::httpClient()->request('GET', $url);
+      if ($response->getStatusCode() !== 200) {
+        $this->logger->error('Failed to get api response for ' . $url);
+        return;
+      }
+
+      $raw = $response->getBody()->getContents();
+      $data = json_decode($raw);
+      $row = $data->data[0];
+
+      foreach ($row->locations as $location) {
+        if ($location->label == $term->getName()) {
+          $term->set('id', $location->id);
+
+          $url = 'https://www.humanitarianresponse.info/en/api/v1.0/locations/' . $location->id;
+          $response = \Drupal::httpClient()->request('GET', $url);
+          if ($response->getStatusCode() !== 200) {
+            $this->logger->error('Failed to get api response for ' . $url);
+            return;
+          }
+
+          $raw = $response->getBody()->getContents();
+          $location_data = json_decode($raw);
+          $location_details = $location_data->data[0];
+
+          // Get parent.
+          $parents = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadByProperties([
+            'id' => $location_details->parent[0]->id,
+          ]);
+          $parent = reset($parents);
+
+          $term->set('parent', $parent->id());
+          $display_name = $parent->get('display_name')->value;
+          if (!empty($display_name)) {
+            $display_name .= ' > ';
+          }
+          $display_name .= $term->getName();
+          $term->set('display_name', $display_name);
+
+          $term->set('pcode', $location_details->pcode);
+
+          if (isset($location_details->geolocation) && isset($location_details->geolocation->lat)) {
+            $term->set('geolocation', 'POINT (' . $location_details->geolocation->lon . ' ' . $location_details->geolocation->lat . ')');
+          }
+
+          $levels = count($location_details->parents);
+          if ($levels > 0) {
+            $term->set('admin_level', $levels - 1);
+          }
+
+          $term->save();
+          continue;
+        }
+      }
+    }
+  }
+
+  /**
+   * Update locations.
+   *
+   * @param int $page_number
+   *   HRinfo api page number - useful for picking up again after a time out.
+   * @param string $url
+   *   HRinfo api url for next set of results.
+   *
    * @command docstore:update-locations
    * @usage docstore:update-locations
    *   Update locations from HRinfo api.
