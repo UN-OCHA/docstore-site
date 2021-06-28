@@ -48,6 +48,7 @@ trait MetadataTrait {
       'files',
       'vocabulary',
       'parent',
+      'uuid',
     ];
 
     // Get the list of available fields for the entity type.

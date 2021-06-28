@@ -87,3 +87,9 @@ $DRUSH docstore:test-reset
 
 # Run direct download tests.
 $SILK -test.v -silk.url "$HOST" silk_files_direct.md || exit 1;
+
+# Reset docstore for testing.
+$DRUSH docstore:test-reset
+
+# Test providing a UUID when creating a resource.
+$SILK -test.v -silk.url "$API" silk_uuids.md || exit 1;
