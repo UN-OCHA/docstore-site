@@ -153,6 +153,74 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
   }
 
   /**
+   * Add HRinfo ids to locations where necessary.
+   *
+   * Some terms were imported from HRinfo without an id. This fixes that.
+   *
+   * @command docstore:fix-location-ids
+   * @usage docstore:fix-location-ids
+   *   Add location ids where they're missing.
+   * @validate-module-enabled docstore
+   */
+  public function fixLocationIds() {
+    $query = $this->entityTypeManager
+      ->getStorage('taxonomy_term')
+      ->getQuery()
+      ->condition('vid', 'locations')
+      ->condition('id', NULL, 'IS NULL');
+    $tids_with_missing_id_value = $query->execute();
+    $counter = 0;
+
+    foreach ($tids_with_missing_id_value as $tid) {
+      $this->logger->info('Processing ' . $tid);
+
+      // Load term.
+      $term = $this->entityTypeManager
+        ->getStorage('taxonomy_term')
+        ->load($tid);
+
+      // Get an assessment tagged with the location.
+      $query = $this->database->select('taxonomy_index', 'ti');
+      $query->fields('ti', ['nid']);
+      $query->condition('ti.tid', $tid);
+      $nids = $query->execute()->fetchAssoc();
+      $nid = reset($nids);
+
+      // Fetch assessment details from HRInfo.
+      $node = $this->entityTypeManager
+        ->getStorage('node')
+        ->load($nid);
+      if (empty($node)) {
+        $this->logger->error('Failed to load node for nid ' . $nid);
+        continue;
+      }
+      $url = 'https://www.humanitarianresponse.info/en/api/v1.0/assessments/' . $node->get('id')->value;
+      $response = $this->httpClient->request('GET', $url);
+      if ($response->getStatusCode() !== 200) {
+        $this->logger->error('Failed to get api response for ' . $url);
+        return;
+      }
+
+      $raw = $response->getBody()->getContents();
+      $data = json_decode($raw);
+      $row = $data->data[0];
+
+      foreach ($row->locations as $location) {
+        if ($location->label == $term->getName()) {
+          $term->set('id', $location->id);
+          $term->save();
+          continue;
+        }
+      }
+      $counter++;
+      if ($counter % 50 === 0) {
+        drush_print("Progress: $counter locations updated.");
+      }
+    }
+    drush_print("Finished: $counter locations updated.");
+  }
+
+  /**
    * Update locations.
    *
    * @param int $page_number
@@ -182,8 +250,9 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
     $provider = $this->entityTypeManager->getStorage('user')->load(2);
 
     $response = $this->httpClient->request('GET', $url);
-    if ($response->getStatusCode() === 200) {
-      $this->logger->info('Failed to get api response.');
+    if ($response->getStatusCode() !== 200) {
+      $this->logger->error('Failed to get api response for ' . $url);
+      return;
     }
     $raw = $response->getBody()->getContents();
     $data = json_decode($raw);
