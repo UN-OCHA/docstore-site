@@ -615,7 +615,7 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
         }
       }
 
-      $node->set('author', 'RW');
+      $node->set('author', 'Shared');
 
       $violations = $node->validate();
       if (count($violations) > 0) {
