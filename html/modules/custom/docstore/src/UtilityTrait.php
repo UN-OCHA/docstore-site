@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * Utility functions that don't depend on injected services.
@@ -520,6 +521,59 @@ trait UtilityTrait {
     $value = is_numeric($value) ? '@' . $value : $value;
     $date = date_create($value, new \DateTimeZone('UTC'));
     return !empty($date) ? $date->format('c') : NULL;
+  }
+
+  /**
+   * Validate a UUID and check if it's already in use for the entity type.
+   *
+   * @param string $entity_type_id
+   *   Entity type.
+   * @param string $uuid
+   *   UUID.
+   *
+   * @return bool
+   *   TRUE if the UUID is valid and not in use.
+   */
+  public function validateEntityUuid($entity_type_id, $uuid) {
+    if (Uuid::isValid($uuid)) {
+      if (isset($this->entityTypeManager)) {
+        $entity_type_manager = $this->entityTypeManager;
+      }
+      else {
+        $entity_type_manager = \Drupal::entityTypeManager();
+      }
+
+      $storage = $entity_type_manager
+        ->getStorage($entity_type_id);
+
+      $uuid_key = $storage
+        ->getEntityType()
+        ->getKey('uuid');
+
+      $result = $storage
+        ->getQuery()
+        ->condition($uuid_key, $uuid)
+        ->execute();
+
+      return empty($result);
+    }
+    return FALSE;
+  }
+
+  /**
+   * Generate a uuid.
+   *
+   * @param string $uuid
+   *   Optional uuid to use to generate another UUID.
+   *
+   * @return string
+   *   Uuid.
+   */
+  public function generateUuid($uuid = NULL) {
+    if (!empty($uuid) && Uuid::isValid($uuid)) {
+      return Uuid::v3(Uuid::fromString($uuid), $uuid)->toRfc4122();
+    }
+    return Uuid::v4()->toRfc4122();
   }
 
 }

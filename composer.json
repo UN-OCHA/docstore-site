@@ -50,7 +50,8 @@
         "drupal/stage_file_proxy": "^1.0@RC",
         "drupal/user_bundle": "^1.0",
         "drupal/webhooks": "1.x-dev@dev",
-        "drush/drush": "^9.0.0"
+        "drush/drush": "^9.0.0",
+        "symfony/uid": "^5.3"
     },
     "require-dev": {
         "dmore/chrome-mink-driver": "^2.7",

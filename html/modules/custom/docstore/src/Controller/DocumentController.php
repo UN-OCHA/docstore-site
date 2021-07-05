@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystem;
+use Drupal\Core\Http\Exception\CacheableNotFoundHttpException;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\State\State;
@@ -29,6 +30,7 @@ use Drupal\user\UserInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException;
 
 /**
@@ -222,8 +224,46 @@ class DocumentController extends ControllerBase {
     // Load the node type if not a request against all types of documents.
     $node_type = $type !== 'any' ? $this->loadDocumentType($type) : NULL;
 
-    // Get the document's data.
-    return $this->searchResources($request, 'node', $node_type, $id);
+    // Get the provider.
+    $provider = $this->getProvider();
+
+    // Add cache contexts and tags.
+    $cache = $this->createResponseCache()
+      ->addCacheTags(['documents']);
+
+    if (isset($node_type)) {
+      $cache->addCacheableDependency($node_type);
+    }
+
+    // Load the document.
+    try {
+      $document = $this->loadDocument($id);
+    }
+    catch (NotFoundHttpException $exception) {
+      throw new CacheableNotFoundHttpException($cache, strtr('@label @id does not exist', [
+        '@label' => $this->getResourceTypeLabel('node', FALSE),
+        '@id' => $id,
+      ]));
+    }
+
+    // Add cache information from the document itself.
+    $cache->addCacheableDependency($document);
+
+    // Check access to the document: either public and published or provider is
+    // the owner.
+    if (!empty($document->private->value) || !$document->isPublished()) {
+      if (!$this->providerIsOwner($document, $provider, 'owner_id', FALSE)) {
+        throw new CacheableNotFoundHttpException($cache, strtr('@label @id does not exist', [
+          '@label' => $this->getResourceTypeLabel('node', FALSE),
+          '@id' => $id,
+        ]));
+      }
+    }
+
+    // Prepare the response data.
+    $data = $this->prepareEntityResourceDataForResponse($document, $provider);
+
+    return $this->createCacheableJsonResponse($cache, $data, 200);
   }
 
   /**
@@ -500,6 +540,16 @@ class DocumentController extends ControllerBase {
       'status' => Node::PUBLISHED,
     ];
 
+    // Set the UUID if provided and valid.
+    if (!empty($params['uuid'])) {
+      if ($this->validateEntityUuid('node', $params['uuid'])) {
+        $item['uuid'] = $params['uuid'];
+      }
+      else {
+        throw new BadRequestHttpException('Document UUID invalid or already in use');
+      }
+    }
+
     // Published.
     if (isset($params['published'])) {
       $item['status'] = empty($params['published']) ? Node::NOT_PUBLISHED : Node::PUBLISHED;
@@ -520,27 +570,31 @@ class DocumentController extends ControllerBase {
       // Allow file uuid, uri or file name (dropfolder).
       foreach ($files as $file) {
         $media = NULL;
+        $uuid = NULL;
 
         // Assume it's a uuid.
         if (is_string($file)) {
-          $media = $this->loadMedia($file);
+          $uuid = $file;
         }
         elseif (isset($file['uuid'])) {
-          $media = $this->loadMedia($file['uuid']);
+          $uuid = $file['uuid'];
         }
         // @todo this is for backward compatibility, remove.
         elseif (isset($file['media_uuid'])) {
-          $media = $this->loadMedia($file['media_uuid']);
+          $uuid = $file['media_uuid'];
         }
-        elseif (isset($file['uri'])) {
-          $media = $this->fetchAndCreateFile($file['uri'], $provider);
+
+        // Remote file.
+        if (isset($file['uri'])) {
+          $media = $this->fetchRemoteContentAndCreateFile($file['uri'], $provider, $uuid);
         }
+        // Dropfolder file.
         elseif (isset($file['filename'])) {
-          $content = $this->fetchDropfolderFileContent($file['filename'], $provider);
-          $file = $this->createFileEntity($file['filename'], 'undefined', FALSE, $provider);
-          $file = $this->saveFileToDisk($file, $content, $provider);
-          $media = $this->createMediaEntity($file, FALSE, $provider);
-          $this->saveMedia($media, $file, $provider);
+          $media = $this->fetchDropfolderContentAndCreateFile($file['filename'], $provider, $uuid);
+        }
+        // Existing file.
+        elseif (!empty($uuid)) {
+          $media = $this->loadMedia($uuid);
         }
 
         if (!empty($media)) {
