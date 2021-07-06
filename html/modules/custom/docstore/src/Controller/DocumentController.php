@@ -584,13 +584,13 @@ class DocumentController extends ControllerBase {
           $uuid = $file['media_uuid'];
         }
 
-        // Existing file.
-        if (!empty($uuid) && $this->validateEntityUuid('file', $uuid)) {
+        // Existing media.
+        if (!empty($uuid) && !$this->validateEntityUuid('media', $uuid)) {
           $media = $this->loadMedia($uuid);
         }
-        // Existing media.
-        if (!empty($uuid) && $this->validateEntityUuid('media', $uuid)) {
-          $media = $this->loadMedia($uuid);
+        // Existing file.
+        elseif (!empty($uuid) && !$this->validateEntityUuid('file', $uuid)) {
+          $media = $this->loadFile($uuid);
         }
         // Remote file.
         elseif (isset($file['uri'])) {
