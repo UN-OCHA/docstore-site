@@ -508,7 +508,7 @@ WARNING: This is allowed, but uri will be ignored if uuid already exists.
 
 * Status: `201`
 * Content-Type: "application/json"
-* Data.message: "File UUID invalid or already in use"
+* Data.message: "Test document uuid created"
 
 ## POST /documents/{doc_type}
 
