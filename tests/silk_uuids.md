@@ -485,6 +485,8 @@ Public file 1
 
 Add document `doc_8` fetching a file, specifying an existing file uuid.
 
+WARNING: This is allowed, but uri will be ignored if uuid already exists.
+
 * Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
@@ -504,7 +506,7 @@ Add document `doc_8` fetching a file, specifying an existing file uuid.
 
 ===
 
-* Status: `400`
+* Status: `201`
 * Content-Type: "application/json"
 * Data.message: "File UUID invalid or already in use"
 
