@@ -144,9 +144,17 @@ trait MetadataTrait {
               if ($field_definitions[$key]->getType() === 'daterange') {
                 if (isset($value['start'])) {
                   $value['value'] = $value['start'];
+                  // Add time part if needed.
+                  if (strlen($value['value']) === 10) {
+                    $value['value'] .= "T00:00:00";
+                  }
                 }
                 if (isset($value['end'])) {
                   $value['end_value'] = $value['end'];
+                  // Add time part if needed.
+                  if (strlen($value['end_value']) === 10) {
+                    $value['end_value'] .= "T00:00:00";
+                  }
                 }
               }
 
@@ -483,9 +491,17 @@ trait MetadataTrait {
       if ($field_info->getType() === 'daterange') {
         if (isset($values['start'])) {
           $values['value'] = $values['start'];
+          // Add time part if needed.
+          if (strlen($values['value']) === 10) {
+            $values['value'] .= "T00:00:00";
+          }
         }
         if (isset($values['end'])) {
           $values['end_value'] = $values['end'];
+          // Add time part if needed.
+          if (strlen($values['end_value']) === 10) {
+            $values['end_value'] .= "T00:00:00";
+          }
         }
       }
 
