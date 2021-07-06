@@ -585,6 +585,10 @@ class DocumentController extends ControllerBase {
         }
 
         // Existing file.
+        if (!empty($uuid) && $this->validateEntityUuid('file', $uuid)) {
+          $media = $this->loadMedia($uuid);
+        }
+        // Existing media.
         if (!empty($uuid) && $this->validateEntityUuid('media', $uuid)) {
           $media = $this->loadMedia($uuid);
         }
