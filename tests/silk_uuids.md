@@ -629,6 +629,8 @@ Test file for drop folder import
 
 Add document `doc_11` fetching a file, specifying an existing file uuid.
 
+WARNING: This is allowed, but uri will be ignored if uuid already exists.
+
 * Content-Type: "application/json"
 * Accept: "application/json"
 * API-KEY: abcd
@@ -639,7 +641,7 @@ Add document `doc_11` fetching a file, specifying an existing file uuid.
   "author": "common",
   "files": [
     {
-       "filename": "test_file.txt",
+      "filename": "test_file.txt",
       "uuid": "{file_fetch_uuid_1}"
     }
   ]
@@ -648,7 +650,7 @@ Add document `doc_11` fetching a file, specifying an existing file uuid.
 
 ===
 
-* Status: `400`
+* Status: `201`
 * Content-Type: "application/json"
-* Data.message: "File UUID invalid or already in use"
+* Data.message: "Test document uuid created"
 
