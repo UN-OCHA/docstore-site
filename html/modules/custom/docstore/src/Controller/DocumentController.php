@@ -585,11 +585,11 @@ class DocumentController extends ControllerBase {
         }
 
         // Remote file.
-        if (isset($file['uri'])) {
+        if (isset($file['uri']) && empty($uuid)) {
           $media = $this->fetchRemoteContentAndCreateFile($file['uri'], $provider, $uuid);
         }
         // Dropfolder file.
-        elseif (isset($file['filename'])) {
+        elseif (isset($file['filename']) && empty($uuid)) {
           $media = $this->fetchDropfolderContentAndCreateFile($file['filename'], $provider, $uuid);
         }
         // Existing file.
