@@ -34,7 +34,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class FileController extends ControllerBase {
 
-  use Filetrait;
+  use FileTrait;
   use MetadataTrait;
   use ProviderTrait;
   use ResourceTrait;
