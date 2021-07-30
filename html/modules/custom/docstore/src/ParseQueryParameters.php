@@ -228,6 +228,7 @@ class ParseQueryParameters {
         // Search title using label field.
         if ($filter['condition']['path'] === 'title') {
           $filter['condition']['path'] = 'label';
+          $filter['condition']['value'] = mb_strtolower($filter['condition']['value']);
         }
 
         // Add condition.
