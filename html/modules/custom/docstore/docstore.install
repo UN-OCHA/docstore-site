@@ -191,3 +191,13 @@ function docstore_update_8012() {
   $index = Index::load('terms_locations');
   $index->reindex();
 }
+
+/**
+ * Add label field for documents.
+ */
+function docstore_update_8013() {
+  docstore_rebuild_index_fields('assessment');
+  docstore_rebuild_index_fields('assessment_document');
+  docstore_rebuild_index_fields('disaster');
+  docstore_rebuild_index_fields('knowledge_management');
+}
