@@ -25,8 +25,8 @@
     ],
     "require": {
         "composer/installers": "^1.7",
-        "cweagans/composer-patches": "^1.6.5",
-        "drupal-composer/preserve-paths": "^0.1.4",
+        "cweagans/composer-patches": "^1.7",
+        "drupal-composer/preserve-paths": "^0.1.6",
         "drupal/admin_denied": "^1.0",
         "drupal/admin_toolbar": "^2.0",
         "drupal/config_ignore": "2.x-dev",
@@ -50,7 +50,7 @@
         "drupal/stage_file_proxy": "^1.0@RC",
         "drupal/user_bundle": "^1.0",
         "drupal/webhooks": "1.x-dev@dev",
-        "drush/drush": "^9.0.0",
+        "drush/drush": "^10.3",
         "symfony/uid": "^5.3"
     },
     "require-dev": {
