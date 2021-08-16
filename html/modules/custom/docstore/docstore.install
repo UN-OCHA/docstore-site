@@ -201,3 +201,54 @@ function docstore_update_8013() {
   docstore_rebuild_index_fields('disaster');
   docstore_rebuild_index_fields('knowledge_management');
 }
+
+/**
+ * Merge theme terms.
+ */
+function docstore_update_8014(&$sandbox) {
+  if (!isset($sandbox['current'])) {
+    $sandbox['current'] = 0;
+    $sandbox['mapping'] = [];
+  }
+
+  $query = \Drupal::entityQuery('taxonomy_term')
+    ->condition('vid', 'themes')
+    ->condition('tid', $sandbox['current'], '>')
+    ->sort('tid')
+    ->range(0, 50);
+  $tids = $query->execute();
+
+  if (empty($tids)) {
+    $sandbox['#finished'] = TRUE;
+    return;
+  }
+
+  $sandbox['#finished'] = FALSE;
+
+  $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadMultiple($tids);
+  foreach ($terms as $term) {
+    $sandbox['current'] = $term->id();
+
+    if (!isset($sandbox['mapping'][$term->label()])) {
+      $sandbox['mapping'][$term->label()] = $term->uuid();
+    }
+    else {
+      $new_id = $sandbox['mapping'][$term->label()];
+      $nodes = \Drupal::entityTypeManager()->getStorage('node')->loadByProperties([
+        'themes' => $term->uuid(),
+      ]);
+
+      foreach ($nodes as $node) {
+        foreach ($node->themes as $key => $theme) {
+          if ($theme->entity->uuid() === $term->uuid()) {
+            $node->themes[$key]->target_uuid = $new_id;
+            $node->save();
+            break;
+          }
+        }
+      }
+
+      $term->delete();
+    }
+  }
+}
