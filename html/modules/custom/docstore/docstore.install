@@ -229,11 +229,11 @@ function docstore_update_8014(&$sandbox) {
   foreach ($terms as $term) {
     $sandbox['current'] = $term->id();
 
-    if (!isset($sandbox['mapping'][$term->label()])) {
-      $sandbox['mapping'][$term->label()] = $term->uuid();
+    if (!isset($sandbox['mapping'][mb_strtolower($term->label())])) {
+      $sandbox['mapping'][mb_strtolower($term->label())] = $term->uuid();
     }
     else {
-      $new_id = $sandbox['mapping'][$term->label()];
+      $new_id = $sandbox['mapping'][mb_strtolower($term->label())];
       $nodes = \Drupal::entityTypeManager()->getStorage('node')->loadByProperties([
         'themes' => $term->uuid(),
       ]);
