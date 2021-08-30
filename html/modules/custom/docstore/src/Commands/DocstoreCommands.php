@@ -417,8 +417,8 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
    *   RWapi url for next set of results.
    *
    * @command docstore:update-disasters
-   * @usage docstore:update-disasters
-   *   Update countries from RWapi.
+   * @usage docstore:update-disasters 7
+   *   From RWapi, add any disasters created in the past 7 days.
    * @validate-module-enabled docstore
    */
   public function updateDisasters($days_ago = 0, $date = '', $url = '') {
