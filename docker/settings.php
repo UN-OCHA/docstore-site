@@ -31,6 +31,9 @@ $databases['default']['default'] = array_filter([
   'collation' => getenv('DRUPAL_DB_COLLATION'),
 ]);
 
+// Default sync directory.
+$settings['config_sync_directory'] = '/srv/www/config';
+
 // Load everything else from snippets under /srv/www/shared/settings.
 // @TODO: Use some sort of key/value store.
 if (file_exists('/srv/www/shared/settings')) {
