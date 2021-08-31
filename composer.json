@@ -79,6 +79,11 @@
         "bin-dir": "vendor/bin/",
         "sort-packages": true
     },
+    "autoload": {
+        "classmap": [
+            "scripts/composer/ScriptHandler.php"
+        ]
+    },
     "extra": {
         "enable-patching": true,
         "patchLevel": {
