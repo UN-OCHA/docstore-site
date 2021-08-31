@@ -49,6 +49,9 @@ script:
   # List custom modules (for debugging the tests).
   - docker exec -it docstore-travis-site ls -l /srv/www/html/modules/custom/docstore
 
+  # Try importing the config.
+  - docker exec -it docstore-travis-site drush -y cim
+
   # Try enabling the docstore module.
   - docker exec -it docstore-travis-site drush -y en docstore
 
