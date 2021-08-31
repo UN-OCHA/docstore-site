@@ -49,6 +49,9 @@ script:
   # List custom modules (for debugging the tests).
   - docker exec -it docstore-travis-site ls -l /srv/www/html/modules/custom/docstore
 
+  # Try enabling the docstore module.
+  - docker exec -it docstore-travis-site drush -y en docstore
+
   # Test custom drush command.
   - docker exec -it docstore-travis-site drush -v docstore:createTestFile
 
