@@ -136,9 +136,13 @@
             "@gulp-cleanup"
         ],
         "post-install-cmd": [
+            "DrupalProject\\composer\\ScriptHandler::createRequiredFiles",
+            "DrupalProject\\composer\\ScriptHandler::removeUnnecessaryFiles",
             "@git-hooks"
         ],
         "post-update-cmd": [
+            "DrupalProject\\composer\\ScriptHandler::createRequiredFiles",
+            "DrupalProject\\composer\\ScriptHandler::removeUnnecessaryFiles",
             "@git-hooks"
         ]
     }
