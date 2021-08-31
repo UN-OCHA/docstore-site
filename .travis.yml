@@ -49,6 +49,9 @@ script:
   # List custom modules (for debugging the tests).
   - docker exec -it docstore-travis-site ls -l /srv/www/html/modules/custom/docstore
 
+  # Test custom drush command.
+  - docker exec -it docstore-travis-site drush -v docstore:createTestFile
+
   # Run API tests.
   - docker exec -it -u appuser -w /srv/www/tests -e HOST="http://docstore-travis-site" -e DRUSH="drush -v"  docstore-travis-site sh ./run.sh
 
