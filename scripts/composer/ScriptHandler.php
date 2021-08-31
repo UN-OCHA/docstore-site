@@ -12,11 +12,10 @@ use Webmozart\PathUtil\Path;
 /**
  * Scripts to help installation.
  */
-
 class ScriptHandler {
 
   /**
-   * Create files and dirs needed for unit testing.
+   * Create files dir needed for unit testing.
    *
    * @param \Composer\Script\Event $event
    *   Composer script event.

@@ -47,7 +47,7 @@ script:
   - docker exec -it -u appuser -w /srv/www docstore-travis-site ./vendor/bin/phpcs -p --report=full --standard=phpcs.xml ./html/modules/custom
 
   # List custom modules (for debugging the tests).
-  - docker exec -it docstore-travis-site ls -l /srv/www/html/modules/custom
+  - docker exec -it docstore-travis-site tree /srv/www/html/modules/custom
 
   # Run API tests.
   - docker exec -it -u appuser -w /srv/www/tests -e HOST="http://docstore-travis-site" -e DRUSH="drush -v"  docstore-travis-site sh ./run.sh
