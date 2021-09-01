@@ -46,9 +46,6 @@ script:
   # Check coding standards.
   - docker exec -it -u appuser -w /srv/www docstore-travis-site ./vendor/bin/phpcs -p --report=full --standard=phpcs.xml ./html/modules/custom
 
-  # Check if previous command is run.
-  - docker exec -it docstore-travis-site echo "Check the previous command is run."
-
   # Run API tests.
   - docker exec -it -u appuser -w /srv/www/tests -e HOST="http://docstore-travis-site" -e DRUSH="drush -v"  docstore-travis-site sh ./run.sh
 
