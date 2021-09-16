@@ -252,3 +252,27 @@ function docstore_update_8014(&$sandbox) {
     }
   }
 }
+
+/**
+ * Set view mode for rendered entity.
+ */
+function docstore_update_8015() {
+  $machine_names = [
+    'assessment',
+    'assessment_document',
+    'knowledge_management',
+  ];
+
+  foreach ($machine_names as $machine_name) {
+    // Update rendered item on search index.
+    $index = Index::load('documents_' . $machine_name);
+    if ($rendered_item_field = $index->getField('rendered_item')) {
+      $rendered_item_config = $rendered_item_field->getConfiguration();
+      if (!isset($rendered_item_config['view_mode']['entity:node'][$machine_name])) {
+        $rendered_item_config['view_mode']['entity:node'][$machine_name] = 'search_index';
+        $rendered_item_field->setConfiguration($rendered_item_config);
+        $index->save();
+      }
+    }
+  }
+}

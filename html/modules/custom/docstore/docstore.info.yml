@@ -2,7 +2,7 @@ name: Document store
 description: Document store
 package: OCHA
 type: module
-core: 8.x
+core_version_requirement: ^8 || ^9
 dependencies:
   - search_api:search_api
   - search_api_solr:search_api_solr

@@ -471,7 +471,7 @@ function docstore_rebuild_index_fields($machine_name = 'assessment') {
 
   $entityFieldManager = Drupal::service('entity_field.manager');
   $provider = user_load(2);
-  $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+  $manager = new ManageFields($provider, $machine_name, Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
 
   $map = $entityFieldManager->getFieldDefinitions('node', $machine_name);
 
