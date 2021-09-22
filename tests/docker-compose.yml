@@ -21,7 +21,7 @@ services:
       - default
 
   mysql:
-    image: unocha/alpine-mysql:10.4.13-r0-202006-01
+    image: unocha/alpine-mysql:10.4
     hostname: docstore-travis-mysql
     container_name: docstore-travis-mysql
     environment:
@@ -49,6 +49,8 @@ services:
       - ENVIRONMENT=dev
       - NGINX_SERVERNAME=docstore-travis-site,localhost,127.0.0.1
       - NGINX_OVERRIDE_PROTOCOL=HTTP,docstore-travis-site,localhost,127.0.0.1
+      - NGINX_LIMIT_HUMANS=128r/s
+      - NGINX_BURST_HUMANS=128
       - DRUSH_OPTIONS_URI=http://docstore-travis-site
       - DRUPAL_DB_DATABASE=docstore
       - DRUPAL_DB_USERNAME=docstore
