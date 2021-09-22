@@ -277,7 +277,7 @@ function docstore_create_node_type($type = 'document', $endpoint = 'documents') 
     return;
   }
 
-  $provider = user_load(2);
+  $provider = \Drupal\user\Entity\User::load(2);
   $manager = new ManageFields($provider, $type, Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
   $manager->createDocumentType([
     'label' => ucfirst($type),
@@ -470,7 +470,7 @@ function docstore_rebuild_index_fields($machine_name = 'assessment') {
   $index->clear();
 
   $entityFieldManager = Drupal::service('entity_field.manager');
-  $provider = user_load(2);
+  $provider = \Drupal\user\Entity\User::load(2);
   $manager = new ManageFields($provider, $machine_name, Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
 
   $map = $entityFieldManager->getFieldDefinitions('node', $machine_name);
@@ -539,7 +539,7 @@ function docstore_rebuild_index_fields($machine_name = 'assessment') {
     }
 
     // Add to index.
-    $manager->addDocumentFieldToIndex($field_info, $field_type, $field_info->getLabel());
+    $manager->addDocumentFieldToIndex($field_info, $field_info->getLabel());
   }
 
   $view_display->save();
@@ -865,7 +865,7 @@ function docstore_rebuild_term_index_fields($machine_name = '') {
   $index->clear();
 
   $entityFieldManager = Drupal::service('entity_field.manager');
-  $provider = user_load(2);
+  $provider = \Drupal\user\Entity\User::load(2);
   $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
 
   $map = $entityFieldManager->getFieldDefinitions('taxonomy_term', $machine_name);
