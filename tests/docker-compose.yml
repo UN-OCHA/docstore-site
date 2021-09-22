@@ -9,11 +9,15 @@ volumes:
 
 services:
   solr:
-    image: unocha/alpine-solr:8.1.1-201907-02
+    image: solr:8.9.0-slim
     hostname: docstore-travis-solr
     container_name: docstore-travis-solr
     volumes:
-      - "./solr:/srv/confs:ro"
+      - "./solr:/solr-config:ro"
+    command:
+      - solr-precreate
+      - search_api_solr_8.x-3.0
+      - /solr-config
     environment:
       - SOLR_CORE=search_api_solr_8.x-3.0
       - CORE=search_api_solr_8.x-3.0
@@ -21,7 +25,7 @@ services:
       - default
 
   mysql:
-    image: unocha/alpine-mysql:10.4
+    image: unocha/alpine-mysql:10.5.12-r0-202109-01
     hostname: docstore-travis-mysql
     container_name: docstore-travis-mysql
     environment:
