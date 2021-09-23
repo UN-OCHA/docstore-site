@@ -381,47 +381,6 @@ function _docstore_trigger_webhooks($event, $payload) {
 }
 
 /**
- * Get allowed API end points.
- */
-function _docstore_get_allowed_api_endpoints() {
-  // @todo read from config.
-  $config = [
-    'any' => [
-      'read' => 'document',
-      'write' => FALSE,
-      'field' => FALSE,
-    ],
-    'documents' => [
-      'read' => 'document',
-      'write' => 'document',
-      'field' => 'document',
-    ],
-    'assessments' => [
-      'read' => 'assessment',
-      'write' => 'assessment',
-      'field' => 'assessment',
-    ],
-    'disasters' => [
-      'read' => 'disaster',
-      'write' => 'disaster',
-      'field' => 'disaster',
-    ],
-    'assessment-documents' => [
-      'read' => 'assessment_document',
-      'write' => 'assessment_document',
-      'field' => 'assessment_document',
-    ],
-    'knowledge-managements' => [
-      'read' => 'knowledge_management',
-      'write' => 'knowledge_management',
-      'field' => 'knowledge_management',
-    ],
-  ];
-
-  return $config;
-}
-
-/**
  * Get allowed node types.
  */
 function _docstore_get_defined_node_types() {

@@ -1808,4 +1808,63 @@ class ManageFields {
     return $protected_fields;
   }
 
+  /**
+   * Get status of a document type.
+   */
+  public function getDocumentStatus() {
+    $result = [];
+
+    // Load the search api index.
+    $index = Index::load('documents_' . $this->nodeType);
+    if (empty($index)) {
+      return;
+    }
+
+    $result = [
+      'total' => $index->getTrackerInstance()->getTotalItemsCount(),
+      'remaining' => $index->getTrackerInstance()->getRemainingItemsCount(),
+      'indexed' => $index->getTrackerInstance()->getIndexedItemsCount(),
+    ];
+
+    $indexed_fields = $this->getIndexedDocumentFields();
+    $document_fields = $this->getDocumentFields();
+    $diff = array_diff_key($document_fields, $indexed_fields);
+    if (isset($diff['revision_timestamp'])) {
+      unset($diff['revision_timestamp']);
+    }
+    if (isset($diff['revision_uid'])) {
+      unset($diff['revision_uid']);
+    }
+    if (isset($diff['revision_log'])) {
+      unset($diff['revision_log']);
+    }
+    if (isset($diff['status'])) {
+      unset($diff['status']);
+    }
+    if (isset($diff['uid'])) {
+      unset($diff['uid']);
+    }
+    if (isset($diff['promote'])) {
+      unset($diff['promote']);
+    }
+    if (isset($diff['sticky'])) {
+      unset($diff['sticky']);
+    }
+    if (isset($diff['default_langcode'])) {
+      unset($diff['default_langcode']);
+    }
+    if (isset($diff['revision_default'])) {
+      unset($diff['revision_default']);
+    }
+    if (isset($diff['revision_translation_affected'])) {
+      unset($diff['revision_translation_affected']);
+    }
+
+    $result['missing_fields'] = array_keys($diff);
+    $result['document_fields'] = array_keys($document_fields);
+    $result['indexed_fields'] = array_keys($indexed_fields);
+
+    return $result;
+  }
+
 }
