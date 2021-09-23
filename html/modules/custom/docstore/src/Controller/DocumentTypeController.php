@@ -708,4 +708,31 @@ class DocumentTypeController extends ControllerBase {
     return $this->createJsonResponse($data, 200);
   }
 
+  /**
+   * Get status.
+   *
+   * @param string $type
+   *   Document type.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   JSON response.
+   */
+  public function getDocumentStatus($type, Request $request) {
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->loadNodeType($type);
+
+    /** @var \Drupal\user\UserInterface $provider */
+    $provider = $this->requireProvider();
+
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->entityTypeManager, $this->database);
+
+    // Get status.
+    $data = $manager->getDocumentStatus();
+
+    return $this->createJsonResponse($data, 200);
+  }
+
 }
