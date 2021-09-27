@@ -200,6 +200,70 @@ docstore_document_delete_field:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 
+# Document index fields
+docstore_document_get_indexed_fields:
+  path: '/api/v1/types/{type}/indexed'
+  defaults:
+    _controller: 'docstore.doctype_controller:getIndexedDocumentFields'
+    _title: 'Get document indexed fields'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_document_create_indexed_fields:
+  path: '/api/v1/types/{type}/indexed'
+  defaults:
+    _controller: 'docstore.doctype_controller:createIndexedDocumentField'
+    _title: 'Create document field'
+  methods: [POST]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'C'
+    docstore_access_level: 'A'
+docstore_document_get_indexed_field:
+  path: '/api/v1/types/{type}/indexed/{id}'
+  defaults:
+    _controller: 'docstore.doctype_controller:getIndexedDocumentField'
+    _title: 'Get document field'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_document_delete_indexed_field:
+  path: '/api/v1/types/{type}/indexed/{id}'
+  defaults:
+    _controller: 'docstore.doctype_controller:deleteIndexedDocumentField'
+    _title: 'Delete document field'
+  methods: [DELETE]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+
+# Status
+docstore_document_get_status:
+  path: '/api/v1/types/{type}/status'
+  defaults:
+    _controller: 'docstore.doctype_controller:getDocumentStatus'
+    _title: 'Get status'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+
 # Documents
 docstore_get_any_document:
   path: '/api/v1/documents'

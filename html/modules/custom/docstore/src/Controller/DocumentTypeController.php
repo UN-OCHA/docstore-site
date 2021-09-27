@@ -383,6 +383,167 @@ class DocumentTypeController extends ControllerBase {
   }
 
   /**
+   * Create indexed document field.
+   *
+   * @param string $type
+   *   Document type.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   JSON response.
+   */
+  public function createIndexedDocumentField($type, Request $request) {
+    // Parse JSON.
+    $params = $this->getRequestContent($request);
+
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->loadNodeType($type);
+
+    /** @var \Drupal\user\UserInterface $provider */
+    $provider = $this->requireProvider();
+
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->entityTypeManager, $this->database);
+
+    // Create the field.
+    $manager->addIndexedDocumentField($params);
+
+    $data = [
+      'message' => 'Field index created',
+    ];
+
+    // Invalidate cache.
+    Cache::invalidateTags(['document_fields']);
+
+    return $this->createJsonResponse($data, 201);
+  }
+
+  /**
+   * Get indexed document field.
+   *
+   * @param string $type
+   *   Document type.
+   * @param string $id
+   *   Field id.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Drupal\Core\Cache\CacheableJsonResponse
+   *   JSON response with the field data.
+   */
+  public function getIndexedDocumentField($type, $id, Request $request) {
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->loadNodeType($type);
+
+    /** @var \Drupal\user\UserInterface $provider */
+    $provider = $this->requireProvider();
+
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->entityTypeManager, $this->database);
+
+    // Get the document fields.
+    $data = $manager->getIndexedDocumentFields();
+
+    // Add cache.
+    $cache = $this->createResponseCache()->addCacheTags(['document_fields']);
+
+    return $this->createCacheableJsonResponse($cache, $data[$id], 200);
+  }
+
+  /**
+   * Delete document field.
+   *
+   * @param string $type
+   *   Document type.
+   * @param string $id
+   *   Field id.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   JSON response.
+   */
+  public function deleteIndexedDocumentField($type, $id, Request $request) {
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->loadNodeType($type);
+
+    /** @var \Drupal\user\UserInterface $provider */
+    $provider = $this->requireProvider();
+
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->entityTypeManager, $this->database);
+
+    // Delete the indexed document fields.
+    $manager->deleteIndexedDocumentField($id);
+
+    $data = [
+      'message' => 'Field index deleted',
+      'field_name' => $id,
+    ];
+
+    // Invalidate cache.
+    Cache::invalidateTags(['document_fields']);
+
+    return $this->createJsonResponse($data, 200);
+  }
+
+  /**
+   * Build the document type data for the response.
+   *
+   * @param \Drupal\node\Entity\NodeType $node_type
+   *   Full node type.
+   *
+   * @return array
+   *   Associative array with the document type details.
+   */
+  protected function buildDocumentTypeJsonOutput(NodeType $node_type) {
+    return [
+      'machine_name' => $node_type->id(),
+      'label' => $node_type->label(),
+      'shared' => $node_type->getThirdPartySetting('docstore', 'shared'),
+      'private' => $node_type->getThirdPartySetting('docstore', 'private'),
+      'content_allowed' => $node_type->getThirdPartySetting('docstore', 'content_allowed'),
+      'fields_allowed' => $node_type->getThirdPartySetting('docstore', 'fields_allowed'),
+      'provider_uuid' => $node_type->getThirdPartySetting('docstore', 'provider_uuid'),
+      'author' => $node_type->getThirdPartySetting('docstore', 'author'),
+      'allow_duplicates' => $node_type->getThirdPartySetting('docstore', 'allow_duplicates'),
+      'use_revisions' => $node_type->shouldCreateNewRevision(),
+      'endpoint' => $node_type->getThirdPartySetting('docstore', 'endpoint'),
+    ];
+  }
+
+  /**
+   * Get indexed fields of a document.
+   *
+   * @param string $type
+   *   Document type.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Drupal\Core\Cache\CacheableJsonResponse
+   *   JSON response with the list of indexed fields.
+   */
+  public function getIndexedDocumentFields($type, Request $request) {
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->loadNodeType($type);
+
+    /** @var \Drupal\user\UserInterface $provider */
+    $provider = $this->requireProvider();
+
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->entityTypeManager, $this->database);
+
+    // Get the document fields.
+    $data = $manager->getIndexedDocumentFields($type);
+
+    // Add cache.
+    $cache = $this->createResponseCache()->addCacheTags(['document_fields']);
+
+    return $this->createCacheableJsonResponse($cache, $data, 200);
+  }
+
+  /**
    * Create document field.
    *
    * @param string $type
@@ -548,28 +709,30 @@ class DocumentTypeController extends ControllerBase {
   }
 
   /**
-   * Build the document type data for the response.
+   * Get status.
    *
-   * @param \Drupal\node\Entity\NodeType $node_type
-   *   Full node type.
+   * @param string $type
+   *   Document type.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
    *
-   * @return array
-   *   Associative array with the document type details.
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   JSON response.
    */
-  protected function buildDocumentTypeJsonOutput(NodeType $node_type) {
-    return [
-      'machine_name' => $node_type->id(),
-      'label' => $node_type->label(),
-      'shared' => $node_type->getThirdPartySetting('docstore', 'shared'),
-      'private' => $node_type->getThirdPartySetting('docstore', 'private'),
-      'content_allowed' => $node_type->getThirdPartySetting('docstore', 'content_allowed'),
-      'fields_allowed' => $node_type->getThirdPartySetting('docstore', 'fields_allowed'),
-      'provider_uuid' => $node_type->getThirdPartySetting('docstore', 'provider_uuid'),
-      'author' => $node_type->getThirdPartySetting('docstore', 'author'),
-      'allow_duplicates' => $node_type->getThirdPartySetting('docstore', 'allow_duplicates'),
-      'use_revisions' => $node_type->shouldCreateNewRevision(),
-      'endpoint' => $node_type->getThirdPartySetting('docstore', 'endpoint'),
-    ];
+  public function getDocumentStatus($type, Request $request) {
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->loadNodeType($type);
+
+    /** @var \Drupal\user\UserInterface $provider */
+    $provider = $this->requireProvider();
+
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->entityTypeManager, $this->database);
+
+    // Get status.
+    $data = $manager->getDocumentStatus();
+
+    return $this->createJsonResponse($data, 200);
   }
 
 }

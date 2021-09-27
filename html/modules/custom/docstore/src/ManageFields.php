@@ -141,6 +141,135 @@ class ManageFields {
   }
 
   /**
+   * Get indexed document fields.
+   */
+  public function getIndexedDocumentFields() {
+    return $this->getIndexedFields('documents_' . $this->nodeType);
+  }
+
+  /**
+   * Get indexed term fields.
+   *
+   * @param string $type
+   *   Bundle.
+   */
+  public function getIndexedTermFields($type) {
+    return $this->getIndexedFields('terms_' . $type);
+  }
+
+  /**
+   * Get indexed fields.
+   *
+   * @param string $index_name
+   *   Search API index name.
+   */
+  public function getIndexedFields($index_name) {
+    // Load the search api index.
+    $index = Index::load($index_name);
+    if (empty($index)) {
+      return;
+    }
+
+    $fields = $index->getFields(TRUE);
+    $result = [];
+    foreach ($fields as $key => $field) {
+      $result[$key] = [
+        'id' => $key,
+        'label' => $field->getLabel(),
+        'field' => $field->getFieldIdentifier(),
+        'datasource' => $field->getDatasourceId(),
+        'path' => $field->getPropertyPath(),
+        'combined_path' => $field->getCombinedPropertyPath(),
+      ];
+    }
+
+    return $result;
+  }
+
+  /**
+   * Add indexed document field.
+   */
+  public function addIndexedDocumentField($params) {
+    // We need the machine name.
+    if (!isset($params['machine_name'])) {
+      throw new \Exception('Machine name is required');
+    }
+
+    // Allow acces to own or shared document type.
+    $node_type = NodeType::load($this->nodeType);
+    if (!$node_type) {
+      throw new \Exception('Document type does not exist');
+    }
+
+    if ($node_type->getThirdPartySetting('docstore', 'provider_uuid') !== $this->provider->uuid()) {
+      if (!$node_type->getThirdPartySetting('docstore', 'fields_allowed')) {
+        throw new \Exception('You cannot add fields to this document type');
+      }
+    }
+
+    $field_config = FieldConfig::loadByName('node', $this->nodeType, $params['machine_name']);
+    if (empty($field_config)) {
+      throw new NotFoundHttpException('Field does not exist');
+    }
+
+    // Add to search index display.
+    $storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
+
+    /** @var \Drupal\Core\Entity\Entity\EntityViewDisplay $view_display */
+    $view_display = $storage->load('node.' . $this->nodeType . '.search_index');
+
+    if (empty($view_display)) {
+      $view_display = EntityViewDisplay::create([
+        'targetEntityType' => 'node',
+        'bundle' => $this->nodeType,
+        'mode' => 'search_index',
+        'status' => TRUE,
+      ]);
+    }
+
+    // Make sure it's active.
+    if (!$view_display->status()) {
+      $view_display->setStatus(TRUE);
+    }
+
+    $view_display->setComponent($params['machine_name'], [
+      'settings' => [],
+    ])->save();
+
+    // Add to index.
+    $this->addDocumentFieldToIndex($field_config, $field_config->getLabel());
+  }
+
+  /**
+   * Delete indexed field.
+   *
+   * @param string $id
+   *   Machine name.
+   */
+  public function deleteIndexedDocumentField($id) {
+    return $this->deleteIndexedField('documents_' . $this->nodeType, $id);
+  }
+
+  /**
+   * Delete indexed field.
+   *
+   * @param string $index_name
+   *   Search API index name.
+   * @param string $id
+   *   Machine name.
+   */
+  public function deleteIndexedField($index_name, $id) {
+    // Load the search api index.
+    $index = Index::load($index_name);
+    if (empty($index)) {
+      throw new NotFoundHttpException();
+    }
+
+    $index->removeField($id);
+    $index->save();
+  }
+
+  /**
    * Add document field to index.
    *
    * @param \Drupal\field\Entity\FieldConfig $field_config
@@ -1677,6 +1806,65 @@ class ManageFields {
 
     $cache[$entity_type_id] = $protected_fields;
     return $protected_fields;
+  }
+
+  /**
+   * Get status of a document type.
+   */
+  public function getDocumentStatus() {
+    $result = [];
+
+    // Load the search api index.
+    $index = Index::load('documents_' . $this->nodeType);
+    if (empty($index)) {
+      return;
+    }
+
+    $result = [
+      'total' => $index->getTrackerInstance()->getTotalItemsCount(),
+      'remaining' => $index->getTrackerInstance()->getRemainingItemsCount(),
+      'indexed' => $index->getTrackerInstance()->getIndexedItemsCount(),
+    ];
+
+    $indexed_fields = $this->getIndexedDocumentFields();
+    $document_fields = $this->getDocumentFields();
+    $diff = array_diff_key($document_fields, $indexed_fields);
+    if (isset($diff['revision_timestamp'])) {
+      unset($diff['revision_timestamp']);
+    }
+    if (isset($diff['revision_uid'])) {
+      unset($diff['revision_uid']);
+    }
+    if (isset($diff['revision_log'])) {
+      unset($diff['revision_log']);
+    }
+    if (isset($diff['status'])) {
+      unset($diff['status']);
+    }
+    if (isset($diff['uid'])) {
+      unset($diff['uid']);
+    }
+    if (isset($diff['promote'])) {
+      unset($diff['promote']);
+    }
+    if (isset($diff['sticky'])) {
+      unset($diff['sticky']);
+    }
+    if (isset($diff['default_langcode'])) {
+      unset($diff['default_langcode']);
+    }
+    if (isset($diff['revision_default'])) {
+      unset($diff['revision_default']);
+    }
+    if (isset($diff['revision_translation_affected'])) {
+      unset($diff['revision_translation_affected']);
+    }
+
+    $result['missing_fields'] = array_keys($diff);
+    $result['document_fields'] = array_keys($document_fields);
+    $result['indexed_fields'] = array_keys($indexed_fields);
+
+    return $result;
   }
 
 }
