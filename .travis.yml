@@ -24,7 +24,7 @@ before_script:
 
 script:
   # Get docker information.
-  - ocker version
+  - docker version
   - docker-compose version
 
   # PHP linting
