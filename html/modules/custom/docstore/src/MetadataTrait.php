@@ -485,6 +485,14 @@ trait MetadataTrait {
           }
         }
       }
+      elseif (is_array($values)) {
+        // Single value entity reference.
+        if ($entity->getFieldDefinition($name)->getFieldStorageDefinition()->getCardinality() === 1) {
+          if (isset($values['uuid'])) {
+            $values = $values['uuid'];
+          }
+        }
+      }
 
       // Use proper properties for dateranges.
       $field_info = $entity->getFieldDefinition($name);
