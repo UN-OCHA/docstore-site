@@ -38,12 +38,17 @@ function updateAssessmentLevels() {
     }
 
     if (!$document->get('level_of_representation')->isEmpty()) {
-      print "Skip document, already has contacts\n";
+      print "Skip document, already has data\n";
     }
 
-    $document->set('level_of_representation', $data['level']);
-    $document->save();
-    $updated_uuids[] = $document->uuid();
+    try {
+      $document->set('level_of_representation', $data['level']);
+      $document->save();
+      $updated_uuids[] = $document->uuid();
+    }
+    catch (Exception $e) {
+      print "Save failed\n";
+    }
   }
 
   fclose($handle);
