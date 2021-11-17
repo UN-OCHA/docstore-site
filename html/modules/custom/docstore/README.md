@@ -301,6 +301,7 @@ fin drush entity:delete node --bundle=assessment
 - `scr --verbose modules/custom/docstore/syncs/docstore_population_types.php`
 - `scr --verbose modules/custom/docstore/syncs/docstore_themes.php`
 - `scr --verbose modules/custom/docstore/syncs/docstore_vulnerable_groups.php`
+- `scr --verbose modules/custom/docstore/syncs/update_assessments_level.php`
 
 ### Local sync jobs
 
