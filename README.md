@@ -4,6 +4,11 @@ Swagger documentation can be found at https://un-ocha.github.io/doc-store-api/
 
 Code can be found at https://github.com/UN-OCHA/docstore-site
 
+For local development, add this line to settings.local.php:
+`$config['config_split.config_split.config_dev']['status'] = TRUE;`
+After importing a fresh database, run `drush cim` to enable devel and database
+log.
+
 ## Remarks
 
 When creating content you have to specify an `author`, this is a basic text field and the document store only keeps track of it, it's up to the client application to add validation.
