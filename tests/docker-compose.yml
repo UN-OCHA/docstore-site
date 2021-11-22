@@ -9,7 +9,7 @@ volumes:
 
 services:
   solr:
-    image: solr:8.9.0-slim
+    image: solr:8.10.1-slim
     hostname: docstore-travis-solr
     container_name: docstore-travis-solr
     volumes:
