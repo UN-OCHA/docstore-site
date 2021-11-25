@@ -530,7 +530,7 @@ function _docstore_vardump($variable, $id = '_docstore_vardump') {
  * Implements hook_search_api_solr_documents_alter().
  */
 function docstore_search_api_solr_documents_alter(&$documents, IndexInterface $index, $items) {
-  if (strpos($index->id(), 'terms') === FALSE) {
+  if (strpos($index->id(), 'terms') === 0) {
     foreach ($documents as &$document) {
       // Add lower-case label for terms.
       if (isset($document->ss_name)) {

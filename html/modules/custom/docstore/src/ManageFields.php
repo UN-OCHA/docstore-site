@@ -1362,7 +1362,6 @@ class ManageFields {
    * Create a vocabulary field for a provider.
    */
   protected function createVocabularyField($author, $bundle, $label, $machine_name, $field_type, $multiple, $required, $private) {
-    $new_field = FALSE;
     $field_name = $machine_name;
     if (empty($field_name)) {
       $provider_prefix = $bundle . '_';
@@ -1378,7 +1377,6 @@ class ManageFields {
     // Create storage.
     $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
     if (empty($field_storage)) {
-      $new_field = TRUE;
       $field_storage = FieldStorageConfig::create([
         'field_name' => $field_name,
         'entity_type' => 'taxonomy_term',
@@ -1405,9 +1403,7 @@ class ManageFields {
     $field_config->save();
 
     // Add to index.
-    if (!empty($new_field)) {
-      $this->addTermFieldToIndex($field_config, $label);
-    }
+    $this->addTermFieldToIndex($field_config, $label);
 
     return $field_name;
   }
@@ -1416,7 +1412,6 @@ class ManageFields {
    * Create a reference field on a vocabulary for a provider.
    */
   protected function createVocabularyReferenceField($author, $bundle, $label, $machine_name, $target, $multiple, $required, $private) {
-    $new_field = FALSE;
     $field_type = 'entity_reference_uuid';
 
     $field_name = $machine_name;
@@ -1428,7 +1423,6 @@ class ManageFields {
     // Create storage.
     $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
     if (empty($field_storage)) {
-      $new_field = TRUE;
       $field_storage = FieldStorageConfig::create([
         'field_name' => $field_name,
         'entity_type' => 'taxonomy_term',
@@ -1466,9 +1460,7 @@ class ManageFields {
     $field_config->save();
 
     // Add to index.
-    if (!empty($new_field)) {
-      $this->addTermFieldToIndex($field_config, $label);
-    }
+    $this->addTermFieldToIndex($field_config, $label);
 
     return $field_name;
   }
