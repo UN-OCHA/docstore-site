@@ -298,3 +298,15 @@ function docstore_update_8016() {
   $index = Index::load('terms_locations');
   $index->reindex();
 }
+
+/**
+ * Re-index all term indexes.
+ */
+function docstore_update_8017() {
+  $indexes = Index::loadMultiple();
+  foreach ($indexes as $index) {
+    if (strpos($index->label(), 'terms') === 0) {
+      $index->id();
+    }
+  }
+}
