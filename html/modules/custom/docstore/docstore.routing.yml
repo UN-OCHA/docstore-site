@@ -263,6 +263,18 @@ docstore_document_get_status:
     _auth: ['docstore_auth']
     docstore_crud: 'R'
     docstore_access_level: 'A'
+docstore_get_vocabulary_status:
+  path: '/api/v1/vocabularies/{id}/status'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:getVocabularyStatus'
+    _title: 'Get status'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
 
 # Documents
 docstore_get_any_document:
