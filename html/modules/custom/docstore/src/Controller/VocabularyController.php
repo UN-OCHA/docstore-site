@@ -588,4 +588,39 @@ class VocabularyController extends ControllerBase {
     return $data;
   }
 
+  /**
+   * Get vocabulary status.
+   *
+   * @param string $id
+   *   Vocabulary ID.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Drupal\Core\Cache\CacheableJsonResponse
+   *   JSON response with the vocabulary's data.
+   */
+  public function getVocabularyStatus($id, Request $request) {
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
+    $vocabulary = $this->loadVocabulary($id);
+
+    /** @var \Drupal\user\UserInterface $provider */
+    $provider = $this->requireProvider();
+
+    // Check if the vocabulary is accessible to the provider.
+    try {
+      $this->getAccessibleResourceTypes('taxonomy_vocabulary', $provider, $vocabulary->id());
+    }
+    catch (AccessDeniedHttpException $exception) {
+      throw new AccessDeniedHttpException('You are not allowed to access the vocabulary');
+    }
+
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, '', $this->entityFieldManager, $this->entityTypeManager, $this->database);
+
+    // Get status.
+    $data = $manager->getVocabularyStatus($vocabulary);
+
+    return $this->createJsonResponse($data, 200);
+  }
+
 }
