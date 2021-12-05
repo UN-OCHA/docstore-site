@@ -79,7 +79,7 @@ export FILE_PRIVATE
 $SILK -test.v -silk.url "$API" silk_files.md || exit 1;
 
 # Run file revision tests.
-$SILK -silk.url "$HOST" silk_file_revisions.md || exit 1;
+$SILK -test.v -silk.url "$HOST" silk_file_revisions.md || exit 1;
 
 # Run tests that depends on the files.
 $SILK -test.v -silk.url "$API" silk_create.md || exit 1;
