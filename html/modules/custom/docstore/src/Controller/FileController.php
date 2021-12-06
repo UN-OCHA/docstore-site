@@ -16,6 +16,7 @@ use Drupal\Core\File\FileSystem;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\State\State;
+use Drupal\docstore\DocumentTypeTrait;
 use Drupal\docstore\FileTrait;
 use Drupal\docstore\MetadataTrait;
 use Drupal\docstore\ProviderTrait;
@@ -34,6 +35,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class FileController extends ControllerBase {
 
+  use DocumentTypeTrait;
   use FileTrait;
   use MetadataTrait;
   use ProviderTrait;
@@ -431,7 +433,7 @@ class FileController extends ControllerBase {
 
     // Check if the media is in use.
     $usage_count = count($this->entityUsage->listSources($media));
-    if (!empty($usage)) {
+    if (!empty($usage_count)) {
       throw new BadRequestHttpException(strtr('File is still in use in @num places', [
         '@num' => $usage_count,
       ]));
@@ -601,6 +603,8 @@ class FileController extends ControllerBase {
       ->addCacheTags(['files'])
       ->addCacheableDependency($media);
 
+    $endpoints = array_flip($this->getEndpoints());
+
     // Generate a list of resource endpoints for the entities referencing
     // the media.
     $usage_list = $this->entityUsage->listUsage($media);
@@ -612,7 +616,8 @@ class FileController extends ControllerBase {
         ->loadMultiple(array_keys($entity_ids));
 
       foreach ($entities as $entity) {
-        $data[] = '/api/' . $resource_type . '/' . $entity->bundle() . '/' . $entity->uuid();
+        $endpoint = $endpoints[$entity->bundle()] ?? $entity->bundle();
+        $data[] = '/api/v1/' . $resource_type . '/' . $endpoint . '/' . $entity->uuid();
         $cache->addCacheableDependency($entity);
       }
     }
@@ -846,11 +851,19 @@ class FileController extends ControllerBase {
     $selection = $this->getMediaSelectedFileVersions($media);
 
     // Check if the revision is in use by another provider.
+    $selected_by_provider = FALSE;
     foreach ($selection as $provider_uuid => $target) {
-      if ($target === $file->uuid() && $provider_uuid !== $provider->uuid()) {
-        // Deletion is forbidden if the current revision is in use by another
-        // provider.
-        throw new HttpException(403, 'The revision is in use by another provider');
+      if ($target === $file->uuid()) {
+        if ($provider_uuid !== $provider->uuid()) {
+          // Deletion is forbidden if the current revision is in use by another
+          // provider.
+          throw new HttpException(403, 'The revision is in use by another provider');
+        }
+        else {
+          // Keep track of the fact this revision was the one selected by the
+          // provider.
+          $selected_by_provider = TRUE;
+        }
       }
     }
 
@@ -876,14 +889,27 @@ class FileController extends ControllerBase {
 
     // Mark the revision as non default and delete it.
     $revision->isDefaultRevision(FALSE);
-    $revision->delete();
+    $this->deleteMediaRevision($revision->getRevisionId());
 
-    // Load the media with in its latest revision and regenerate the symlinks.
-    $this->regenerateMediaSymlinks($this->loadMedia($uuid));
+    // Load the media in its latest revision.
+    $media = $this->loadMedia($uuid);
+
+    // If the deleted revision was selected for the provider, then we change it
+    // to the latest version of the media.
+    if ($selected_by_provider) {
+      $selection = $this->getMediaSelectedFileVersions($media);
+      $target = $this->selectMediaRevisionForProvider($media, $media->getRevisionId(), $provider);
+      $selection[$provider->uuid()] = $target;
+      $this->setMediaSelectedFileVersions($media, $selection);
+    }
+
+    // Regenerate the symlinks to make sure everything is up to date.
+    $this->regenerateMediaSymlinks($media);
 
     $data = [
       'message' => 'Revision deleted',
       'uuid' => $revision->uuid(),
+      'revision_id' => $revision->getRevisionId(),
     ];
 
     return $this->createJsonResponse($data, 200);
