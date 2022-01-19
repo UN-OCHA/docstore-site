@@ -95,6 +95,8 @@ class ManageFields {
       'string_long' => 'text',
       'geofield' => 'string',
       'link' => 'string',
+      'telephone' => 'string',
+      'address' => '',
     ];
   }
 
@@ -318,7 +320,7 @@ class ManageFields {
 
     // Skip unknown field types.
     $field_type_mapping = $this->allowedFieldTypes();
-    if (!isset($field_type_mapping[$field_type])) {
+    if (!isset($field_type_mapping[$field_type]) || empty($field_type_mapping[$field_type])) {
       return;
     }
 
