@@ -128,13 +128,13 @@ function syncAssesments($url = '') {
 
     if (isset($row->address)) {
       $assessment['address'] = [
-        'country_code' => $row->address->country,
-        'administrative_area' => $row->address->thoroughfare,
-        'locality' => $row->address->locality,
-        'dependent_locality' => $row->address->dependent_locality,
-        'postal_code' => $row->address->postal_code,
-        'address_line1' => $row->address->premise,
-        'address_line2' => $row->address->sub_premise,
+        'country_code' => $row->address->country ?? '',
+        //'administrative_area' => $row->address->thoroughfare ?? '',
+        'locality' => $row->address->locality ?? '',
+        'dependent_locality' => $row->address->dependent_locality ?? '',
+        'postal_code' => $row->address->postal_code ?? '',
+        'address_line1' => $row->address->premise ?? '',
+        'address_line2' => $row->address->sub_premise ?? '',
       ];
     }
 
@@ -199,7 +199,7 @@ function syncAssesments($url = '') {
         }
       }
 
-      $assessment['location'] = $organization_data;
+      $assessment['location'] = $location_data;
     }
 
     $assessment['author'] = 'HRInfo';
@@ -210,7 +210,7 @@ function syncAssesments($url = '') {
     'author' => 'HRInfo',
     'terms' => $assessments,
   ];
-print_r($post_data);
+
   post(API_URL . 'api/v1/vocabularies/offices/terms/bulk', $post_data);
 
   // Check for more data.
