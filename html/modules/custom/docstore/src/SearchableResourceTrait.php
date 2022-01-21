@@ -307,7 +307,69 @@ trait SearchableResourceTrait {
       // Multiple results.
       $output = [
         '_count' => $results->getResultCount(),
+        '_facets' => [],
       ];
+
+      // Build facets.
+      if ($query->getIndex()->getServerInstance()->supportsFeature('search_api_facets')) {
+        $facet_source_id = strtr('docstore:!index', [
+          '!index' => $query->getIndex()->id(),
+        ]);
+
+        $solr_facets = $results->getExtraData('search_api_facets');
+
+        /** @var \Drupal\facets\FacetManager\DefaultFacetManager $fm */
+        $facet_manager = \Drupal::getContainer()->get('facets.manager');
+        $facets = $facet_manager->getFacetsByFacetSourceId($facet_source_id);
+
+        $meta = [];
+        /** @var \Drupal\facets\FacetInterface $facets[] */
+        foreach ($facets as $facet) {
+          $facet_source = $facet->getFacetSource();
+          $field_settings = $facet_source->getDataDefinition($facet->getFieldIdentifier())->getSettings();
+
+          $facet_data = [
+            'id' => $facet->getFieldIdentifier(),
+            'label' => $facet->getName(),
+            'definition' => $field_settings,
+            'items' => [],
+          ];
+
+          $facet_uuids = [];
+          foreach ($solr_facets[$facet->getFieldIdentifier()] as $facet_info) {
+            $facet_uuids[] = trim(trim($facet_info['filter'], '"'));
+          }
+
+          $storage = $this->entityTypeManager->getStorage($field_settings['target_type']);
+          $uuid_key = $storage->getEntityType()->getKey('uuid');
+          if (!empty($uuid_key)) {
+            $entity_ids = $storage->getQuery()->condition($uuid_key, $facet_uuids, 'IN')->execute();
+            $entities = $storage->loadMultiple($entity_ids);
+          }
+
+          foreach ($solr_facets[$facet->getFieldIdentifier()] as $facet_info) {
+            $facet_uuid = trim(trim($facet_info['filter'], '"'));
+
+            foreach ($entities as $entity) {
+              if ($entity->uuid() == $facet_uuid) {
+                $facet_data['items'][$facet_uuid] = [
+                  'filter' => $facet_uuid,
+                  'label' => $entity->label(),
+                  'count' => $facet_info['count'],
+                ];
+              }
+            }
+          }
+
+          if ($facet_data) {
+            $meta[] = $facet_data;
+          }
+        }
+
+        if (!empty($meta)) {
+          $output['_facets'] = $meta;
+        }
+      }
 
       // Add extra metadata.
       if ($extra = $results->getExtraData('search_api_solr_response')) {
