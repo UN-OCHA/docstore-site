@@ -60,8 +60,3 @@ services:
     arguments: []
     tags:
       - { name: event_subscriber }
-  docstore.query_pre_execute:
-    class: Drupal\docstore\EventSubscriber\SearchApiQueryPreExecute
-    arguments: ['@facets.manager']
-    tags:
-      - {name: event_subscriber}

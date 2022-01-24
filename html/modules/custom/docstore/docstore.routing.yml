@@ -200,6 +200,32 @@ docstore_document_delete_field:
     docstore_crud: 'R'
     docstore_access_level: 'A'
 
+# Document facets
+docstore_document_get_facets:
+  path: '/api/v1/types/{type}/facets'
+  defaults:
+    _controller: 'docstore.doctype_controller:getDocumentFacets'
+    _title: 'Get document facets'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_document_create_facets:
+  path: '/api/v1/types/{type}/facets'
+  defaults:
+    _controller: 'docstore.doctype_controller:setDocumentFacets'
+    _title: 'Create document field'
+  methods: [POST]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'C'
+    docstore_access_level: 'A'
+
 # Document index fields
 docstore_document_get_indexed_fields:
   path: '/api/v1/types/{type}/indexed'
@@ -557,6 +583,32 @@ docstore_vocabulary_delete_fields:
   options:
     _auth: ['docstore_auth']
     docstore_crud: 'D'
+    docstore_access_level: 'A'
+
+# Vocabulary facets
+docstore_vocabulary_get_facets:
+  path: '/api/v1/vocabularies/{id}/facets'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:getVocabularyFacets'
+    _title: 'Get vocabulary facets'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'A'
+docstore_vocabulary_create_facets:
+  path: '/api/v1/vocabularies/{id}/facets'
+  defaults:
+    _controller: 'docstore.vocabulary_controller:setVocabularyFacets'
+    _title: 'Create vocabulary field'
+  methods: [POST]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'C'
     docstore_access_level: 'A'
 
 # Terms
