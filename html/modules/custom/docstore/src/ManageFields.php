@@ -398,6 +398,11 @@ class ManageFields {
           $field->setDatasourceId($datasource_id);
           $field->setLabel($label . ' (' . $label_field . ')');
           $index->addField($field);
+
+          // @todo add using new endpoint.
+          $enabled_facets = $index->getThirdPartySetting('docstore', 'facets', []);
+          $enabled_facets[] = $field_name;
+          $index->setThirdPartySetting('docstore', 'facets', $enabled_facets);
         }
         break;
 

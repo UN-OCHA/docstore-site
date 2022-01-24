@@ -207,6 +207,37 @@ trait SearchableResourceTrait {
       }
     }
 
+    // Add facets.
+    $add_facets = TRUE;
+    $index->getThirdPartySetting('docstore', 'facets', []);
+    if ($add_facets && $query->getIndex()->getServerInstance()->supportsFeature('search_api_facets')) {
+      $enabled_facets = [
+        'local_groups' => [
+          'field' => 'local_groups',
+          'limit' => 999,
+          'missing' => FALSE,
+          'operator' => 'AND',
+          'min_count' => 1,
+        ],
+        'ar_status' => [
+          'field' => 'ar_status',
+          'limit' => 999,
+          'missing' => FALSE,
+          'operator' => 'AND',
+          'min_count' => 1,
+        ],
+        'organizations' => [
+          'field' => 'organizations',
+          'limit' => 999,
+          'missing' => FALSE,
+          'operator' => 'AND',
+          'min_count' => 1,
+        ],
+      ];
+
+      $query->setOption('search_api_facets', $enabled_facets);
+    }
+
     // Run the search API query.
     //
     // The resulset is built when executing the query and contains a list of
@@ -312,42 +343,29 @@ trait SearchableResourceTrait {
 
       // Build facets.
       if ($query->getIndex()->getServerInstance()->supportsFeature('search_api_facets')) {
-        $facet_source_id = strtr('docstore:!index', [
-          '!index' => $query->getIndex()->id(),
-        ]);
-
+        $facet_array = [];
         $solr_facets = $results->getExtraData('search_api_facets');
-
-        /** @var \Drupal\facets\FacetManager\DefaultFacetManager $fm */
-        $facet_manager = \Drupal::getContainer()->get('facets.manager');
-        $facets = $facet_manager->getFacetsByFacetSourceId($facet_source_id);
-
-        $meta = [];
-        /** @var \Drupal\facets\FacetInterface $facets[] */
-        foreach ($facets as $facet) {
-          $facet_source = $facet->getFacetSource();
-          $field_settings = $facet_source->getDataDefinition($facet->getFieldIdentifier())->getSettings();
+        foreach ($solr_facets as $field => $solr_facet) {
+          $field_info = $index->getField($field);
 
           $facet_data = [
-            'id' => $facet->getFieldIdentifier(),
-            'label' => $facet->getName(),
-            'definition' => $field_settings,
+            'id' => $field,
+            'label' => $field_info->getLabel(),
             'items' => [],
           ];
 
-          $facet_uuids = [];
-          foreach ($solr_facets[$facet->getFieldIdentifier()] as $facet_info) {
-            $facet_uuids[] = trim(trim($facet_info['filter'], '"'));
+          foreach ($solr_facet as $facet_item) {
+            $facet_uuids[] = trim(trim($facet_item['filter'], '"'));
           }
 
-          $storage = $this->entityTypeManager->getStorage($field_settings['target_type']);
+          $storage = $this->entityTypeManager->getStorage($field_info->getDataDefinition()->getSettings()['target_type']);
           $uuid_key = $storage->getEntityType()->getKey('uuid');
           if (!empty($uuid_key)) {
             $entity_ids = $storage->getQuery()->condition($uuid_key, $facet_uuids, 'IN')->execute();
             $entities = $storage->loadMultiple($entity_ids);
           }
 
-          foreach ($solr_facets[$facet->getFieldIdentifier()] as $facet_info) {
+          foreach ($solr_facets[$field] as $facet_info) {
             $facet_uuid = trim(trim($facet_info['filter'], '"'));
 
             foreach ($entities as $entity) {
@@ -361,13 +379,11 @@ trait SearchableResourceTrait {
             }
           }
 
-          if ($facet_data) {
-            $meta[] = $facet_data;
-          }
+          $facet_array[] = $facet_data;
         }
 
-        if (!empty($meta)) {
-          $output['_facets'] = $meta;
+        if (!empty($facet_array)) {
+          $output['_facets'] = $facet_array;
         }
       }
 
