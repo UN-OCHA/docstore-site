@@ -398,11 +398,6 @@ class ManageFields {
           $field->setDatasourceId($datasource_id);
           $field->setLabel($label . ' (' . $label_field . ')');
           $index->addField($field);
-
-          // @todo add using new endpoint.
-          $enabled_facets = $index->getThirdPartySetting('docstore', 'facets', []);
-          $enabled_facets[] = $field_name;
-          $index->setThirdPartySetting('docstore', 'facets', $enabled_facets);
         }
         break;
 
@@ -1723,6 +1718,61 @@ class ManageFields {
     $field_config->save();
 
     $this->addDocumentFieldToIndex($field_config, $label);
+  }
+
+  /**
+   * Get document facets.
+   */
+  public function getDocumentFacets() {
+    return $this->getIndexFacets('documents_' . $this->nodeType);
+  }
+
+  /**
+   * Set document facets.
+   */
+  public function setDocumentFacets($facets) {
+    return $this->setIndexFacets('documents_' . $this->nodeType, $facets);
+  }
+
+  /**
+   * Get vocabulary facets.
+   */
+  public function getVocabularyFacets($type) {
+    return $this->getIndexFacets('terms_' . $type);
+  }
+
+  /**
+   * Set vocabulary facets.
+   */
+  public function setVocabularyFacets($type, $facets) {
+    return $this->setIndexFacets('terms_' . $type, $facets);
+  }
+
+  /**
+   * Get facets of an index.
+   */
+  public function getIndexFacets($index_name) {
+    $index = Index::load($index_name);
+    if (empty($index)) {
+      return;
+    }
+
+    return $index->getThirdPartySetting('docstore', 'facets', []);
+  }
+
+  /**
+   * Set facets for an index.
+   */
+  public function setIndexFacets($index_name, $facets) {
+    $index = Index::load($index_name);
+    if (empty($index)) {
+      return;
+    }
+
+    $index->setThirdPartySetting('docstore', 'facets', $facets);
+    $index->save();
+
+    return $facets;
   }
 
   /**

@@ -623,4 +623,83 @@ class VocabularyController extends ControllerBase {
     return $this->createJsonResponse($data, 200);
   }
 
+  /**
+   * Get vocabulary facets.
+   *
+   * @param string $id
+   *   Vocabulary Id.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   JSON response.
+   */
+  public function getVocabularyFacets($id, Request $request) {
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
+    $vocabulary = $this->loadVocabulary($id);
+
+    /** @var \Drupal\user\UserInterface $provider */
+    $provider = $this->requireProvider();
+
+    // Check if the vocabulary is accessible to the provider.
+    try {
+      $this->getAccessibleResourceTypes('taxonomy_vocabulary', $provider, $vocabulary->id());
+    }
+    catch (AccessDeniedHttpException $exception) {
+      throw new AccessDeniedHttpException('You are not allowed to access the vocabulary');
+    }
+
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, '', $this->entityFieldManager, $this->entityTypeManager, $this->database);
+
+    // Get facets.
+    $data = $manager->getVocabularyFacets($id);
+
+    // Add cache.
+    $cache = $this->createResponseCache()->addCacheTags(['vocabulary_facets']);
+
+    return $this->createCacheableJsonResponse($cache, $data, 200);
+  }
+
+  /**
+   * Set vocabulary facets.
+   *
+   * @param string $id
+   *   Vocabulary Id.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   JSON response.
+   */
+  public function setVocabularyFacets($id, Request $request) {
+    /** @var \Drupal\taxonomy\Entity\Vocabulary $vocabulary */
+    $vocabulary = $this->loadVocabulary($id);
+
+    /** @var \Drupal\user\UserInterface $provider */
+    $provider = $this->requireProvider();
+
+    // Check if the vocabulary is accessible to the provider.
+    try {
+      $this->getAccessibleResourceTypes('taxonomy_vocabulary', $provider, $vocabulary->id());
+    }
+    catch (AccessDeniedHttpException $exception) {
+      throw new AccessDeniedHttpException('You are not allowed to access the vocabulary');
+    }
+
+    // Parse JSON.
+    $params = $this->getRequestContent($request);
+
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, '', $this->entityFieldManager, $this->entityTypeManager, $this->database);
+
+    // Get facets.
+    $data = $manager->setDocumentFacets($id, $params['facets'] ?? []);
+
+    // Invalidate cache.
+    Cache::invalidateTags(['vocabulary_facets']);
+
+    return $this->createJsonResponse($data, 200);
+  }
+
 }

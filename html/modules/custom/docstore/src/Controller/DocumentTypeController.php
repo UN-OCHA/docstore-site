@@ -709,6 +709,69 @@ class DocumentTypeController extends ControllerBase {
   }
 
   /**
+   * Get document facets.
+   *
+   * @param string $type
+   *   Document type.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   JSON response.
+   */
+  public function getDocumentFacets($type, Request $request) {
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->loadNodeType($type);
+
+    /** @var \Drupal\user\UserInterface $provider */
+    $provider = $this->requireProvider();
+
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->entityTypeManager, $this->database);
+
+    // Get facets.
+    $data = $manager->getDocumentFacets();
+
+    // Add cache.
+    $cache = $this->createResponseCache()->addCacheTags(['document_facets']);
+
+    return $this->createCacheableJsonResponse($cache, $data, 200);
+  }
+
+  /**
+   * Set document facets.
+   *
+   * @param string $type
+   *   Document type.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   API request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   JSON response.
+   */
+  public function setDocumentFacets($type, Request $request) {
+    /** @var \Drupal\node\Entity\NodeType $node_type */
+    $node_type = $this->loadNodeType($type);
+
+    /** @var \Drupal\user\UserInterface $provider */
+    $provider = $this->requireProvider();
+
+    // Parse JSON.
+    $params = $this->getRequestContent($request);
+
+    /** @var \Drupal\docstore\ManageFields $manager */
+    $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->entityTypeManager, $this->database);
+
+    // Get facets.
+    $data = $manager->setDocumentFacets($params['facets'] ?? []);
+
+    // Invalidate cache.
+    Cache::invalidateTags(['document_facets']);
+
+    return $this->createJsonResponse($data, 200);
+  }
+
+  /**
    * Get status.
    *
    * @param string $type
