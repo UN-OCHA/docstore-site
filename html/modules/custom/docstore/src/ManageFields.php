@@ -737,6 +737,22 @@ class ManageFields {
   }
 
   /**
+   * Get vocabulary fields.
+   *
+   * @param \Drupal\taxonomy\Entity\Vocabulary $vocabulary
+   *   The vocabulary.
+   */
+  public function getVocabularyFields(Vocabulary $vocabulary) {
+    $data = [];
+    $map = $this->entityFieldManager->getFieldDefinitions('taxonomy_term', $vocabulary->id());
+    foreach ($map as $field_name => $field_info) {
+      $data[$field_name] = $field_info->getType();
+    }
+
+    return $data;
+  }
+
+  /**
    * Add document field.
    */
   public function addDocumentField($params) {
@@ -1854,6 +1870,86 @@ class ManageFields {
 
     $result['missing_fields'] = array_keys($diff);
     $result['document_fields'] = array_keys($document_fields);
+    $result['indexed_fields'] = array_keys($indexed_fields);
+
+    return $result;
+  }
+
+  /**
+   * Get status of a vocabulary.
+   *
+   * @param \Drupal\taxonomy\Entity\Vocabulary $vocabulary
+   *   The vocabulary.
+   */
+  public function getVocabularyStatus(Vocabulary $vocabulary) {
+    $result = [];
+
+    // Load the search api index.
+    $index = Index::load('terms_' . $vocabulary->id());
+    if (empty($index)) {
+      return;
+    }
+
+    $result = [
+      'total' => $index->getTrackerInstance()->getTotalItemsCount(),
+      'remaining' => $index->getTrackerInstance()->getRemainingItemsCount(),
+      'indexed' => $index->getTrackerInstance()->getIndexedItemsCount(),
+    ];
+
+    $indexed_fields = $this->getIndexedTermFields($vocabulary->id());
+    $vocabulary_fields = $this->getVocabularyFields($vocabulary);
+    $diff = array_diff_key($vocabulary_fields, $indexed_fields);
+    if (isset($diff['revision_timestamp'])) {
+      unset($diff['revision_timestamp']);
+    }
+    if (isset($diff['revision_uid'])) {
+      unset($diff['revision_uid']);
+    }
+    if (isset($diff['revision_created'])) {
+      unset($diff['revision_created']);
+    }
+    if (isset($diff['revision_user'])) {
+      unset($diff['revision_user']);
+    }
+    if (isset($diff['revision_log_message'])) {
+      unset($diff['revision_log_message']);
+    }
+    if (isset($diff['revision_log'])) {
+      unset($diff['revision_log']);
+    }
+    if (isset($diff['status'])) {
+      unset($diff['status']);
+    }
+    if (isset($diff['uid'])) {
+      unset($diff['uid']);
+    }
+    if (isset($diff['promote'])) {
+      unset($diff['promote']);
+    }
+    if (isset($diff['sticky'])) {
+      unset($diff['sticky']);
+    }
+    if (isset($diff['default_langcode'])) {
+      unset($diff['default_langcode']);
+    }
+    if (isset($diff['revision_default'])) {
+      unset($diff['revision_default']);
+    }
+    if (isset($diff['revision_translation_affected'])) {
+      unset($diff['revision_translation_affected']);
+    }
+    if (isset($diff['weight'])) {
+      unset($diff['weight']);
+    }
+    if (isset($diff['parent'])) {
+      unset($diff['parent']);
+    }
+    if (isset($diff['geolocation'])) {
+      unset($diff['geolocation']);
+    }
+
+    $result['missing_fields'] = array_keys($diff);
+    $result['vocabulary_fields'] = array_keys($vocabulary_fields);
     $result['indexed_fields'] = array_keys($indexed_fields);
 
     return $result;

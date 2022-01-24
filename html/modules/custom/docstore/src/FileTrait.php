@@ -1077,7 +1077,7 @@ trait FileTrait {
     }
     // Load the revision before the given id.
     elseif ($previous) {
-      $query->condition($entity_type->getKey('revision'), $revision_id, '<>');
+      $query->condition($entity_type->getKey('revision'), $revision_id, '<');
     }
     // Load the revision with the given id.
     else {
@@ -1094,6 +1094,16 @@ trait FileTrait {
     }
 
     return NULL;
+  }
+
+  /**
+   * Delete a media revision.
+   *
+   * @param int $revision_id
+   *   Media revision ID.
+   */
+  public function deleteMediaRevision($revision_id) {
+    $this->entityTypeManager->getStorage('media')->deleteRevision($revision_id);
   }
 
 }
