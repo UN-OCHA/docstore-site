@@ -208,32 +208,18 @@ trait SearchableResourceTrait {
     }
 
     // Add facets.
-    $add_facets = TRUE;
-    $index->getThirdPartySetting('docstore', 'facets', []);
-    if ($add_facets && $query->getIndex()->getServerInstance()->supportsFeature('search_api_facets')) {
-      $enabled_facets = [
-        'local_groups' => [
-          'field' => 'local_groups',
+    $enabled_facet_fields = $index->getThirdPartySetting('docstore', 'facets', []);
+    if (!empty($enabled_facet_fields) && $query->getIndex()->getServerInstance()->supportsFeature('search_api_facets')) {
+      $enabled_facets = [];
+      foreach ($enabled_facet_fields as $enabled_facet_field) {
+        $enabled_facets[$enabled_facet_field] = [
+          'field' => $enabled_facet_field,
           'limit' => 999,
           'missing' => FALSE,
           'operator' => 'AND',
           'min_count' => 1,
-        ],
-        'ar_status' => [
-          'field' => 'ar_status',
-          'limit' => 999,
-          'missing' => FALSE,
-          'operator' => 'AND',
-          'min_count' => 1,
-        ],
-        'organizations' => [
-          'field' => 'organizations',
-          'limit' => 999,
-          'missing' => FALSE,
-          'operator' => 'AND',
-          'min_count' => 1,
-        ],
-      ];
+        ];
+      }
 
       $query->setOption('search_api_facets', $enabled_facets);
     }
@@ -338,11 +324,10 @@ trait SearchableResourceTrait {
       // Multiple results.
       $output = [
         '_count' => $results->getResultCount(),
-        '_facets' => [],
       ];
 
       // Build facets.
-      if ($query->getIndex()->getServerInstance()->supportsFeature('search_api_facets')) {
+      if (!empty($enabled_facet_fields) && $query->getIndex()->getServerInstance()->supportsFeature('search_api_facets')) {
         $facet_array = [];
         $solr_facets = $results->getExtraData('search_api_facets');
         foreach ($solr_facets as $field => $solr_facet) {
@@ -370,9 +355,13 @@ trait SearchableResourceTrait {
 
             foreach ($entities as $entity) {
               if ($entity->uuid() == $facet_uuid) {
+                $label = $entity->label();
+                if ($entity->hasField('display_name') && !$entity->display_name->isEmpty()) {
+                  $label = $entity->display_name->value;
+                }
                 $facet_data['items'][$facet_uuid] = [
                   'filter' => $facet_uuid,
-                  'label' => $entity->label(),
+                  'label' => $label,
                   'count' => $facet_info['count'],
                 ];
               }
