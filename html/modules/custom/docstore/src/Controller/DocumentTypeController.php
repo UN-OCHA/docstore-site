@@ -730,7 +730,9 @@ class DocumentTypeController extends ControllerBase {
     $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->entityTypeManager, $this->database);
 
     // Get facets.
-    $data = $manager->getDocumentFacets();
+    $data = [
+      'facets' => $manager->getDocumentFacets(),
+    ];
 
     // Add cache.
     $cache = $this->createResponseCache()->addCacheTags(['document_facets']);
@@ -762,8 +764,11 @@ class DocumentTypeController extends ControllerBase {
     /** @var \Drupal\docstore\ManageFields $manager */
     $manager = new ManageFields($provider, $node_type->id(), $this->entityFieldManager, $this->entityTypeManager, $this->database);
 
-    // Get facets.
-    $data = $manager->setDocumentFacets($params['facets'] ?? []);
+    // Update facets.
+    $data = [
+      'message' => 'Facets updated',
+      'facets' => $manager->setDocumentFacets($params['facets'] ?? []),
+    ];
 
     // Invalidate cache.
     Cache::invalidateTags(['document_facets']);

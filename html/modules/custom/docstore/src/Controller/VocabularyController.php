@@ -653,7 +653,9 @@ class VocabularyController extends ControllerBase {
     $manager = new ManageFields($provider, '', $this->entityFieldManager, $this->entityTypeManager, $this->database);
 
     // Get facets.
-    $data = $manager->getVocabularyFacets($id);
+    $data = [
+      'facets' => $manager->$manager->getVocabularyFacets($id),
+    ];
 
     // Add cache.
     $cache = $this->createResponseCache()->addCacheTags(['vocabulary_facets']);
@@ -693,8 +695,11 @@ class VocabularyController extends ControllerBase {
     /** @var \Drupal\docstore\ManageFields $manager */
     $manager = new ManageFields($provider, '', $this->entityFieldManager, $this->entityTypeManager, $this->database);
 
-    // Get facets.
-    $data = $manager->setDocumentFacets($id, $params['facets'] ?? []);
+    // Update facets.
+    $data = [
+      'message' => 'Facets updated',
+      'facets' => $manager->setDocumentFacets($id, $params['facets'] ?? []),
+    ];
 
     // Invalidate cache.
     Cache::invalidateTags(['vocabulary_facets']);
