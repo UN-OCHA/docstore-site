@@ -42,6 +42,7 @@ $SILK -test.v -silk.url "$API" silk_document_types_crud.md || exit 1;
 # @see https://humanitarian.atlassian.net/browse/OPS-8049
 $SILK -test.v -silk.url "$API" silk_document_crud.md || exit 1;
 $SILK -test.v -silk.url "$API" silk_document_facets.md || exit 1;
+$SILK -test.v -silk.url "$API" silk_document_field_reuse.md || exit 1;
 
 $SILK -test.v -silk.url "$API" silk_document_bulk.md || exit 1;
 $SILK -test.v -silk.url "$API" silk_document_bulk_cud.md || exit 1;

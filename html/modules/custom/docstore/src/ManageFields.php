@@ -818,6 +818,19 @@ class ManageFields {
       $field_storage->setThirdPartySetting('docstore', 'author', $author);
       $field_storage->save();
     }
+    else {
+      // Check storage settings.
+      if ($field_storage->getType() !== $field_type) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change field type', [
+          '@field_name' => $field_name,
+        ]));
+      }
+      if ($field_storage->getCardinality() !== ($multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1)) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change cardinality', [
+          '@field_name' => $field_name,
+        ]));
+      }
+    }
 
     // Create instance.
     $field_config = FieldConfig::create([
@@ -897,6 +910,24 @@ class ManageFields {
       $field_storage->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
       $field_storage->setThirdPartySetting('docstore', 'author', $author);
       $field_storage->save();
+    }
+    else {
+      // Check storage settings.
+      if ($field_storage->getType() !== $field_type) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change field type', [
+          '@field_name' => $field_name,
+        ]));
+      }
+      if ($field_storage->getCardinality() !== ($multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1)) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change cardinality', [
+          '@field_name' => $field_name,
+        ]));
+      }
+      if ($field_storage->getSettings()['target_type'] !== $target_type) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change target type', [
+          '@field_name' => $field_name,
+        ]));
+      }
     }
 
     // Create instance.
@@ -1395,6 +1426,19 @@ class ManageFields {
       $field_storage->setThirdPartySetting('docstore', 'author', $author);
       $field_storage->save();
     }
+    else {
+      // Check storage settings.
+      if ($field_storage->getType() !== $field_type) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change field type', [
+          '@field_name' => $field_name,
+        ]));
+      }
+      if ($field_storage->getCardinality() !== ($multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1)) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change cardinality', [
+          '@field_name' => $field_name,
+        ]));
+      }
+    }
 
     // Create instance.
     $field_config = FieldConfig::create([
@@ -1443,6 +1487,19 @@ class ManageFields {
       $field_storage->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
       $field_storage->setThirdPartySetting('docstore', 'author', $author);
       $field_storage->save();
+    }
+    else {
+      // Check storage settings.
+      if ($field_storage->getType() !== $field_type) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change field type', [
+          '@field_name' => $field_name,
+        ]));
+      }
+      if ($field_storage->getCardinality() !== ($multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1)) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change cardinality', [
+          '@field_name' => $field_name,
+        ]));
+      }
     }
 
     // Create instance.
