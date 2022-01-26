@@ -866,7 +866,6 @@ class ManageFields {
    * Create reference document field.
    */
   protected function createDocumentReferenceField($author, $label, $machine_name, $type, $bundle, $multiple, $required, $private) {
-    $new_field = FALSE;
     $field_type = 'entity_reference_uuid';
 
     // Create new machine name if needed.
@@ -885,8 +884,6 @@ class ManageFields {
     $field_storage = FieldStorageConfig::loadByName('node', $field_name);
 
     if (empty($field_storage)) {
-      $new_field = TRUE;
-
       $field_storage = FieldStorageConfig::create([
         'field_name' => $field_name,
         'entity_type' => 'node',
@@ -948,9 +945,7 @@ class ManageFields {
     ])->save();
 
     // Add to index.
-    if (!empty($new_field)) {
-      $this->addDocumentFieldToIndex($field_config, $label);
-    }
+    $this->addDocumentFieldToIndex($field_config, $label);
 
     return $field_name;
   }
@@ -1384,12 +1379,6 @@ class ManageFields {
     if (empty($field_name)) {
       $provider_prefix = $bundle . '_';
       $field_name = $this->generateUniqueMachineName($label, 'taxonomy_term', $provider_prefix);
-    }
-
-    // Check if field already exists.
-    $field_config = FieldConfig::loadByName('taxonomy_term', $bundle, $field_name);
-    if (!empty($field_config)) {
-      return $field_name;
     }
 
     // Create storage.
