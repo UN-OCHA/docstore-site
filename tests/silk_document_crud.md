@@ -102,6 +102,7 @@ Add id field.
 ```json
 {
   "label": "My Id",
+  "machine_name": "ar_my_id",
   "author": "hid_123456789",
   "type": "integer"
 }
@@ -159,11 +160,12 @@ Add display name field.
 
 * Content-Type: "application/json"
 * Accept: "application/json"
-* API-KEY: zzzz
+* API-KEY: abcd
 
 ```json
 {
   "label": "Display Name",
+  "machine_name": "display_name",
   "author": "hid_123456789",
   "type": "string"
 }
@@ -196,7 +198,7 @@ Add test term.
 {
   "label": "Test term",
   "author": "hid_123456789",
-  "{display_name_field}": "Display name for test term"
+  "display_name": "Display name for test term"
 }
 ```
 
@@ -215,8 +217,6 @@ Example output.
 * Data.message: "Term created"
 * Data.uuid: /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/ // Machine_name {test_term_uuid}
 * Data.display_name: /^[A-Za-z ]+$/ // Machine_name {display_name_value}
-
-
 
 ## POST /types/{doc_type_machine_name}/fields
 
@@ -383,7 +383,7 @@ Test filters.
 
 * Accept: "application/json"
 * API-KEY: abcd
-* ?filter[silk_my_id]=42
+* ?filter[ar_my_id]=42
 
 ===
 
@@ -590,7 +590,7 @@ Get private document as owner.
 * Status: `200`
 * Content-Type: "application/json"
 * Data.uuid: {doc2}
-* Data.silk_term_reference.display_name: {display_name_value}
+* Data.ar_term_reference.display_name: {display_name_value}
 
 ## GET /documents/{doc_type_endpoint}/{doc2}
 
@@ -828,7 +828,7 @@ Test filters.
 
 * Accept: "application/json"
 * API-KEY: abcd
-* ?filter[silk_my_id]=7
+* ?filter[ar_my_id]=7
 
 ===
 
@@ -1215,6 +1215,7 @@ Add required field.
 ```json
 {
   "label": "Needed",
+  "machine_name": "silk_needed",
   "author": "hid_123456789",
   "type": "integer",
   "required": true

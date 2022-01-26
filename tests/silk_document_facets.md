@@ -66,7 +66,7 @@ Add test_vocab_facets.
 ```json
 {
   "machine_name": "test_vocab_facets",
-  "label": "Test Vocab",
+  "label": "Test Vocab Facets",
   "author": "hid_123456789"
 }
 ```
@@ -97,6 +97,7 @@ Add display name field.
 ```json
 {
   "label": "Display Name",
+  "machine_name": "display_name",
   "author": "hid_123456789",
   "type": "string"
 }
@@ -190,8 +191,9 @@ Add term reference field.
 ```json
 {
   "label": "Term reference",
+  "machine_name": "ar_term_reference",
   "author": "hid_123456789",
-  "type": "entity_reference_uuid",
+  "type": "term_reference",
   "target": "{test_vocab_facets}"
 }
 ```
@@ -303,7 +305,7 @@ Test filters.
       "items": {
         "{test_term_uuid1}": {
           "filter": "{test_term_uuid1}",
-          "label": "Test term 1",
+          "label": "Display name for test term 1",
           "count": 1
         }
       }
@@ -391,7 +393,7 @@ Test facets.
       "items": {
         "{test_term_uuid1}": {
           "filter": "{test_term_uuid1}",
-          "label": "Test term 1",
+          "label": "Display name for test term 1",
           "count": 2
         }
       }
