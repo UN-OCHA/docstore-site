@@ -384,16 +384,14 @@ function _docstore_trigger_webhooks($event, $payload) {
  * Get allowed node types.
  */
 function _docstore_get_defined_node_types() {
-  // @todo read from config.
-  $config = [
-    'document',
-    'disaster',
-    'assessment',
-    'assessment_document',
-    'knowledge_management',
-  ];
+  $node_types = \Drupal::entityTypeManager()->getStorage('node_type')->loadMultiple();
+  // If you need to display them in a drop down:
+  $items = [];
+  foreach ($node_types as $node_type) {
+    $items[] = $node_type->id();
+  }
 
-  return $config;
+  return $items;
 }
 
 /**

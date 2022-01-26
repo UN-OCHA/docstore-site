@@ -297,6 +297,134 @@ Example output.
 * Content-Type: "application/json"
 * Data.message: "Field my_int_field already exists, unable to change field type"
 
+## POST /types/{doc_type_machine_name_1}/fields
+
+Add id field.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Ref value",
+  "machine_name": "my_ref_field",
+  "author": "hid_123456789",
+  "type": "term_reference",
+  "target": "{test_vocab_use_1}"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Field created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Field created"
+
+## POST /types/{doc_type_machine_name_2}/fields
+
+Add same id field to other content type.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Single value",
+  "machine_name": "my_ref_field",
+  "author": "hid_123456789",
+  "type": "node_reference",
+  "target": "{doc_type_machine_name_1}"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Field my_ref_field already exists, unable to change target type"
+}
+```
+
+* Status: `400`
+* Content-Type: "application/json"
+* Data.message: "Field my_ref_field already exists, unable to change target type"
+
+## POST /types/{doc_type_machine_name_1}/fields
+
+Add id field.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Ref value",
+  "machine_name": "my_term_ref_field",
+  "author": "hid_123456789",
+  "type": "term_reference",
+  "target": "{test_vocab_use_1}"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Field created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Field created"
+
+## POST /types/{doc_type_machine_name_2}/fields
+
+Add same id field to other content type.
+
+* Content-Type: "application/json"
+* Accept: "application/json"
+* API-KEY: abcd
+
+```json
+{
+  "label": "Single value",
+  "machine_name": "my_term_ref_field",
+  "author": "hid_123456789",
+  "type": "term_reference",
+  "target": "{test_vocab_use_2}"
+}
+```
+
+===
+
+Example output.
+
+```json
+{
+  "message": "Field created"
+}
+```
+
+* Status: `201`
+* Content-Type: "application/json"
+* Data.message: "Field created"
+
 ## DELETE /types/{doc_type_machine_name_1}
 
 Delete document type.
