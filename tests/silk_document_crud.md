@@ -229,6 +229,7 @@ Add term reference field.
 ```json
 {
   "label": "Term reference",
+  "machine_name": "ar_term_reference",
   "author": "hid_123456789",
   "type": "entity_reference_uuid",
   "target": "{test_vocab}"
