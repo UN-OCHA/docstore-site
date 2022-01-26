@@ -37,8 +37,12 @@ $SILK -test.v -silk.url "$API" silk_vocabulary_bulk_cud.md || exit 1;
 $SILK -test.v -silk.url "$API" silk_vocabulary_anon_cud.md || exit 1;
 $SILK -test.v -silk.url "$API" silk_vocabulary_anon_r.md || exit 1;
 $SILK -test.v -silk.url "$API" silk_document_types_crud.md || exit 1;
+
+# The following 2 tests need to run in order.
+# @see https://humanitarian.atlassian.net/browse/OPS-8049
 $SILK -test.v -silk.url "$API" silk_document_crud.md || exit 1;
 $SILK -test.v -silk.url "$API" silk_document_facets.md || exit 1;
+
 $SILK -test.v -silk.url "$API" silk_document_bulk.md || exit 1;
 $SILK -test.v -silk.url "$API" silk_document_bulk_cud.md || exit 1;
 $SILK -test.v -silk.url "$API" silk_geofield.md || exit 1;
