@@ -1,7 +1,6 @@
 <?php
 
-// fin drush entity:delete node --bundle=assessment
-// fin drush entity:delete node --bundle=assessment_document
+// fin drush entity:delete taxonomy_term --bundle=offices
 
 const API_URL = 'http://docstore.local.docksal/';
 
@@ -109,7 +108,7 @@ function createFields() {
   }
 }
 
-function syncAssesments($url = '') {
+function syncOffices($url = '') {
   if (empty($url)) {
     $url = 'https://www.humanitarianresponse.info/en/api/v1.0/offices';
   }
@@ -117,9 +116,9 @@ function syncAssesments($url = '') {
   $raw = file_get_contents($url);
   $data = json_decode($raw);
 
-  $assessments = [];
+  $offices = [];
   foreach ($data->data as $row) {
-    $assessment = [
+    $office = [
       'label' => $row->label,
       'id' => $row->id,
       'email' => $row->email ?? '',
@@ -127,7 +126,7 @@ function syncAssesments($url = '') {
     ];
 
     if (isset($row->address)) {
-      $assessment['address'] = [
+      $office['address'] = [
         'country_code' => $row->address->country ?? '',
         //'administrative_area' => $row->address->thoroughfare ?? '',
         'locality' => $row->address->locality ?? '',
@@ -144,7 +143,7 @@ function syncAssesments($url = '') {
         // @todo lookup $phone->countrycode
         $data_phones[] = $phone->number;
       }
-      $assessment['phones'] = $data_phones;
+      $office['phones'] = $data_phones;
     }
 
     if (isset($row->operation)) {
@@ -161,7 +160,7 @@ function syncAssesments($url = '') {
         }
 
         if (!empty($data_operation)) {
-          $assessment['operations'] = $data_operation;
+          $office['operations'] = $data_operation;
         }
       }
     }
@@ -181,7 +180,7 @@ function syncAssesments($url = '') {
         }
       }
 
-      $assessment['organizations'] = $organization_data;
+      $office['organizations'] = $organization_data;
     }
 
     // Locations.
@@ -199,16 +198,16 @@ function syncAssesments($url = '') {
         }
       }
 
-      $assessment['location'] = $location_data;
+      $office['location'] = $location_data;
     }
 
-    $assessment['author'] = 'HRInfo';
-    $assessments[] = $assessment;
+    $office['author'] = 'HRInfo';
+    $offices[] = $office;
   }
 
   $post_data = [
     'author' => 'HRInfo',
-    'terms' => $assessments,
+    'terms' => $offices,
   ];
 
   post(API_URL . 'api/v1/vocabularies/offices/terms/bulk', $post_data);
@@ -216,10 +215,10 @@ function syncAssesments($url = '') {
   // Check for more data.
   if (isset($data->next->href)) {
     print $data->next->href;
-    syncAssesments($data->next->href);
+    syncOffices($data->next->href);
   }
 }
 
-//createVocabularies();
-//createFields();
-syncAssesments();
+createVocabularies();
+createFields();
+syncOffices();
