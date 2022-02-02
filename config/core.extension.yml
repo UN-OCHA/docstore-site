@@ -1,4 +1,5 @@
 module:
+  address: 0
   admin_toolbar: 0
   block: 0
   breakpoint: 0
@@ -13,7 +14,6 @@ module:
   dynamic_page_cache: 0
   entity_reference_uuid: 0
   entity_usage: 0
-  facets: 0
   field: 0
   field_ui: 0
   file: 0
@@ -33,6 +33,7 @@ module:
   syslog: 0
   system: 0
   taxonomy: 0
+  telephone: 0
   text: 0
   toolbar: 0
   user: 0

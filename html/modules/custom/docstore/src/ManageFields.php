@@ -95,6 +95,8 @@ class ManageFields {
       'string_long' => 'text',
       'geofield' => 'string',
       'link' => 'string',
+      'telephone' => 'string',
+      'address' => '',
     ];
   }
 
@@ -318,7 +320,7 @@ class ManageFields {
 
     // Skip unknown field types.
     $field_type_mapping = $this->allowedFieldTypes();
-    if (!isset($field_type_mapping[$field_type])) {
+    if (!isset($field_type_mapping[$field_type]) || empty($field_type_mapping[$field_type])) {
       return;
     }
 
@@ -816,6 +818,19 @@ class ManageFields {
       $field_storage->setThirdPartySetting('docstore', 'author', $author);
       $field_storage->save();
     }
+    else {
+      // Check storage settings.
+      if ($field_storage->getType() !== $field_type) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change field type', [
+          '@field_name' => $field_name,
+        ]));
+      }
+      if ($field_storage->getCardinality() !== ($multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1)) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change cardinality', [
+          '@field_name' => $field_name,
+        ]));
+      }
+    }
 
     // Create instance.
     $field_config = FieldConfig::create([
@@ -864,7 +879,6 @@ class ManageFields {
    * Create reference document field.
    */
   protected function createDocumentReferenceField($author, $label, $machine_name, $type, $bundle, $multiple, $required, $private) {
-    $new_field = FALSE;
     $field_type = 'entity_reference_uuid';
 
     // Create new machine name if needed.
@@ -883,8 +897,6 @@ class ManageFields {
     $field_storage = FieldStorageConfig::loadByName('node', $field_name);
 
     if (empty($field_storage)) {
-      $new_field = TRUE;
-
       $field_storage = FieldStorageConfig::create([
         'field_name' => $field_name,
         'entity_type' => 'node',
@@ -898,6 +910,24 @@ class ManageFields {
       $field_storage->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
       $field_storage->setThirdPartySetting('docstore', 'author', $author);
       $field_storage->save();
+    }
+    else {
+      // Check storage settings.
+      if ($field_storage->getType() !== $field_type) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change field type', [
+          '@field_name' => $field_name,
+        ]));
+      }
+      if ($field_storage->getCardinality() !== ($multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1)) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change cardinality', [
+          '@field_name' => $field_name,
+        ]));
+      }
+      if ($field_storage->getSettings()['target_type'] !== $target_type) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change target type', [
+          '@field_name' => $field_name,
+        ]));
+      }
     }
 
     // Create instance.
@@ -946,9 +976,7 @@ class ManageFields {
     ])->save();
 
     // Add to index.
-    if (!empty($new_field)) {
-      $this->addDocumentFieldToIndex($field_config, $label);
-    }
+    $this->addDocumentFieldToIndex($field_config, $label);
 
     return $field_name;
   }
@@ -1384,12 +1412,6 @@ class ManageFields {
       $field_name = $this->generateUniqueMachineName($label, 'taxonomy_term', $provider_prefix);
     }
 
-    // Check if field already exists.
-    $field_config = FieldConfig::loadByName('taxonomy_term', $bundle, $field_name);
-    if (!empty($field_config)) {
-      return $field_name;
-    }
-
     // Create storage.
     $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
     if (empty($field_storage)) {
@@ -1403,6 +1425,19 @@ class ManageFields {
       $field_storage->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
       $field_storage->setThirdPartySetting('docstore', 'author', $author);
       $field_storage->save();
+    }
+    else {
+      // Check storage settings.
+      if ($field_storage->getType() !== $field_type) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change field type', [
+          '@field_name' => $field_name,
+        ]));
+      }
+      if ($field_storage->getCardinality() !== ($multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1)) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change cardinality', [
+          '@field_name' => $field_name,
+        ]));
+      }
     }
 
     // Create instance.
@@ -1452,6 +1487,19 @@ class ManageFields {
       $field_storage->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
       $field_storage->setThirdPartySetting('docstore', 'author', $author);
       $field_storage->save();
+    }
+    else {
+      // Check storage settings.
+      if ($field_storage->getType() !== $field_type) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change field type', [
+          '@field_name' => $field_name,
+        ]));
+      }
+      if ($field_storage->getCardinality() !== ($multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1)) {
+        throw new \Exception(strtr('Field @field_name already exists, unable to change cardinality', [
+          '@field_name' => $field_name,
+        ]));
+      }
     }
 
     // Create instance.
@@ -1716,6 +1764,61 @@ class ManageFields {
     $field_config->save();
 
     $this->addDocumentFieldToIndex($field_config, $label);
+  }
+
+  /**
+   * Get document facets.
+   */
+  public function getDocumentFacets() {
+    return $this->getIndexFacets('documents_' . $this->nodeType);
+  }
+
+  /**
+   * Set document facets.
+   */
+  public function setDocumentFacets($facets) {
+    return $this->setIndexFacets('documents_' . $this->nodeType, $facets);
+  }
+
+  /**
+   * Get vocabulary facets.
+   */
+  public function getVocabularyFacets($type) {
+    return $this->getIndexFacets('terms_' . $type);
+  }
+
+  /**
+   * Set vocabulary facets.
+   */
+  public function setVocabularyFacets($type, $facets) {
+    return $this->setIndexFacets('terms_' . $type, $facets);
+  }
+
+  /**
+   * Get facets of an index.
+   */
+  public function getIndexFacets($index_name) {
+    $index = Index::load($index_name);
+    if (empty($index)) {
+      return;
+    }
+
+    return $index->getThirdPartySetting('docstore', 'facets', []);
+  }
+
+  /**
+   * Set facets for an index.
+   */
+  public function setIndexFacets($index_name, $facets) {
+    $index = Index::load($index_name);
+    if (empty($index)) {
+      return;
+    }
+
+    $index->setThirdPartySetting('docstore', 'facets', $facets);
+    $index->save();
+
+    return $facets;
   }
 
   /**

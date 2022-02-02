@@ -207,6 +207,23 @@ trait SearchableResourceTrait {
       }
     }
 
+    // Add facets.
+    $enabled_facet_fields = $index->getThirdPartySetting('docstore', 'facets', []);
+    if (!empty($enabled_facet_fields) && $query->getIndex()->getServerInstance()->supportsFeature('search_api_facets')) {
+      $enabled_facets = [];
+      foreach ($enabled_facet_fields as $enabled_facet_field) {
+        $enabled_facets[$enabled_facet_field] = [
+          'field' => $enabled_facet_field,
+          'limit' => 999,
+          'missing' => FALSE,
+          'operator' => 'AND',
+          'min_count' => 1,
+        ];
+      }
+
+      $query->setOption('search_api_facets', $enabled_facets);
+    }
+
     // Run the search API query.
     //
     // The resulset is built when executing the query and contains a list of
@@ -308,6 +325,58 @@ trait SearchableResourceTrait {
       $output = [
         '_count' => $results->getResultCount(),
       ];
+
+      // Build facets.
+      if (!empty($enabled_facet_fields) && $query->getIndex()->getServerInstance()->supportsFeature('search_api_facets')) {
+        $facet_array = [];
+        $solr_facets = $results->getExtraData('search_api_facets');
+        if (is_array($solr_facets)) {
+          foreach ($solr_facets as $field => $solr_facet) {
+            $field_info = $index->getField($field);
+
+            $facet_data = [
+              'id' => $field,
+              'label' => $field_info->getLabel(),
+              'items' => [],
+            ];
+
+            foreach ($solr_facet as $facet_item) {
+              $facet_uuids[] = trim(trim($facet_item['filter'], '"'));
+            }
+
+            $storage = $this->entityTypeManager->getStorage($field_info->getDataDefinition()->getSettings()['target_type']);
+            $uuid_key = $storage->getEntityType()->getKey('uuid');
+            if (!empty($uuid_key)) {
+              $entity_ids = $storage->getQuery()->condition($uuid_key, $facet_uuids, 'IN')->execute();
+              $entities = $storage->loadMultiple($entity_ids);
+            }
+
+            foreach ($solr_facets[$field] as $facet_info) {
+              $facet_uuid = trim(trim($facet_info['filter'], '"'));
+
+              foreach ($entities as $entity) {
+                if ($entity->uuid() == $facet_uuid) {
+                  $label = $entity->label();
+                  if ($entity->hasField('display_name') && !$entity->display_name->isEmpty()) {
+                    $label = $entity->display_name->value;
+                  }
+                  $facet_data['items'][$facet_uuid] = [
+                    'filter' => $facet_uuid,
+                    'label' => $label,
+                    'count' => $facet_info['count'],
+                  ];
+                }
+              }
+            }
+
+            $facet_array[] = $facet_data;
+          }
+
+          if (!empty($facet_array)) {
+            $output['_facets'] = $facet_array;
+          }
+        }
+      }
 
       // Add extra metadata.
       if ($extra = $results->getExtraData('search_api_solr_response')) {
