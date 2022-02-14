@@ -502,6 +502,10 @@ trait SearchableResourceTrait {
       }
 
       // Unserialize the stored data.
+      // @todo this is picked up with the message: "unserialize() is insecure
+      // unless allowed classes are limited. Use a safe format like JSON or use
+      // the allowed_classes option."
+      // @codingStandardsIgnoreLine
       $stored_data = unserialize(base64_decode(reset($values)));
 
       // Skip if we cannot retrieve the resource's bundle.

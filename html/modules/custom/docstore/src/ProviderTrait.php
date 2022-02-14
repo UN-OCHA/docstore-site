@@ -34,7 +34,7 @@ trait ProviderTrait {
       $provider = User::load($current_user->id());
     }
 
-    return isset($provider) ? $provider : User::getAnonymousUser();
+    return $provider ?? User::getAnonymousUser();
   }
 
   /**
