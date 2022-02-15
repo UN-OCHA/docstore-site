@@ -176,7 +176,7 @@ class FileController extends ControllerBase {
       ->addCacheTags(['files']);
 
     // Get pagination.
-    list($offset, $limit) = $this->getRequestPagination($request);
+    [$offset, $limit] = $this->getRequestPagination($request);
 
     /** @var \Drupal\user\UserInterface $provider */
     $provider = $this->getProvider();
