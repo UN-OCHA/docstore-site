@@ -847,6 +847,435 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
   }
 
   /**
+   * Update clusters.
+   *
+   * @command docstore:update-clusters
+   * @usage docstore:update-clusters
+   *   Update clusters from HRInfo.
+   * @validate-module-enabled docstore
+   */
+  public function updateClusters($url = '') {
+    if (empty($url)) {
+      $ts = $this->state->get('docstore_sync_local_groups_ts', 1641025083);
+      $url = 'https://www.humanitarianresponse.info/en/api/v1.0/bundles';
+      $url .= '?filter[changed][value]=' . $ts . '&filter[changed][operator]=>';
+      $url .= '&sort=changed,id';
+    }
+
+    // Load provider.
+    $provider = $this->entityTypeManager->getStorage('user')->load(2);
+
+    // Load vocabulary.
+    $vocabulary = $this->entityTypeManager->getStorage('vocabulary')->load('local_coordination_groups');
+
+    // Vocabulary fields.
+    $fields = [
+      'id' => 'string',
+      'email' => 'string',
+      'website' => 'string',
+      'display_name' => 'string',
+      'global_cluster' => [
+        'type' => 'term_reference',
+        'target' => 'global_coordination_groups',
+        'multiple' => FALSE,
+      ],
+      'lead_agencies' => [
+        'type' => 'term_reference',
+        'target' => 'organizations',
+        'multiple' => TRUE,
+      ],
+      'partners' => [
+        'type' => 'term_reference',
+        'target' => 'organizations',
+        'multiple' => TRUE,
+      ],
+      'operations' => [
+        'type' => 'term_reference',
+        'target' => 'operations',
+        'multiple' => TRUE,
+      ],
+      'ngo_participation' => 'boolean',
+      'government_participation' => 'boolean',
+      'inter_cluster' => 'boolean',
+    ];
+
+    // Load provider.
+    $provider = $this->entityTypeManager->getStorage('user')->load(2);
+
+    $response = $this->httpClient->request('GET', $url);
+    if ($response->getStatusCode() === 200) {
+      $raw = $response->getBody()->getContents();
+      $data = json_decode($raw);
+
+      foreach ($data->data as $row) {
+        $term = NULL;
+        $possible_terms = taxonomy_term_load_multiple_by_name($row->label, $vocabulary->id());
+        if ($possible_terms) {
+          foreach ($possible_terms as $possible_term) {
+            if ($possible_term->get('id')->value == $row->id) {
+              $term = $possible_term;
+              break;
+            }
+          }
+        }
+
+        $display_name = $row->label;
+        if (isset($row->operation) && isset($row->operation[0])) {
+          $display_name .= ' (' . reset($row->operation)->label . ')';
+        }
+
+        if (empty($term)) {
+          $item = [
+            'name' => $row->label,
+            'display_name' => $display_name,
+            'vid' => $vocabulary->id(),
+            'created' => [],
+            'provider_uuid' => [],
+            'parent' => [],
+            'description' => '',
+          ];
+
+          // Set creation time.
+          $item['created'][] = [
+            'value' => time(),
+          ];
+
+          // Set owner.
+          $item['provider_uuid'][] = [
+            'target_uuid' => $provider->uuid(),
+          ];
+
+          // Store HID Id.
+          $item['author'][] = [
+            'value' => 'Shared',
+          ];
+
+          $term = Term::create($item);
+        }
+
+        $term->set('name', $row->label);
+        $term->set('display_name', $display_name);
+
+        foreach ($fields as $name => $type) {
+          $field_name = str_replace('-', '_', $name);
+          if ($field_name === 'operations') {
+            $name = 'operation';
+          }
+
+          if ($term->hasField($field_name)) {
+            $value = FALSE;
+            if (empty($row->{$name})) {
+              continue;
+            }
+            if (is_array($type) && $type['type'] === 'term_reference') {
+              $lookup = $row->{$name};
+              if (is_array($lookup)) {
+                foreach ($lookup as $lookup_item) {
+                  if (empty($lookup_item)) {
+                    continue;
+                  }
+                  if ($lookup_item->label === 'République centrafricaine') {
+                    $lookup_item->label = 'Central African Republic';
+                  }
+                  if ($lookup_item->label === 'Colombie') {
+                    $lookup_item->label = 'Colombia';
+                  }
+
+                  $entities = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
+                    'name' => $lookup_item->label,
+                    'vid' => $type['target'],
+                  ]);
+                  if (!empty($entities)) {
+                    $value[] = ['target_uuid' => reset($entities)->uuid()];
+                  }
+                  else {
+                    // @todo Consider creating missing references here.
+                    print "\n$field_name reference needs creating:\n";
+                    drush_log(serialize($lookup), 'ok');
+                    continue;
+                  }
+                }
+              }
+              else {
+                $entities = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
+                  'name' => $lookup->label,
+                  'vid' => $type['target'],
+                ]);
+                if (!empty($entities)) {
+                  $value['target_uuid'] = reset($entities)->uuid();
+                }
+                else {
+                  // @todo Consider creating missing references here.
+                  print "\n$field_name reference needs creating:\n";
+                  drush_log(serialize($lookup), 'ok');
+                  continue;
+                }
+              }
+            }
+            else {
+              $value = $row->{$name};
+            }
+
+            // @todo We're updating whether something has changed or not.
+            // As there aren't too many, this is okay, but it could be better.
+            if (!empty($value)) {
+              $term->set($field_name, $value);
+            }
+          }
+        }
+
+        $violations = $term->validate();
+        if (count($violations) > 0) {
+          print($violations->get(0)->getMessage());
+          print($violations->get(0)->getPropertyPath());
+        }
+        else {
+          $term->save();
+        }
+      }
+    }
+    else {
+      print "\nNo results for $url\n";
+    }
+
+    // Check for more data.
+    if (isset($data->next) && isset($data->next->href)) {
+      print serialize($data->next->href);
+      $this->updateClusters($data->next->href);
+    }
+
+    $this->state->set('docstore_sync_local_groups_ts', time());
+  }
+
+  /**
+   * Update operations.
+   *
+   * @command docstore:update-operations
+   * @usage docstore:update-operations
+   *   Update operations from HRInfo.
+   * @validate-module-enabled docstore
+   */
+  public function updateOperations($url = '') {
+    if (empty($url)) {
+      $ts = $this->state->get('docstore_sync_operations_ts', 1641025083);
+      $url = 'https://www.humanitarianresponse.info/en/api/v1.0/operations';
+      $url .= '?filter[changed][value]=' . $ts . '&filter[changed][operator]=>';
+      $url .= '&sort=id';
+    }
+
+    $response = $this->httpClient->request('GET', $url);
+    if ($response->getStatusCode() !== 200) {
+      return;
+    }
+
+    // Load provider.
+    $provider = $this->entityTypeManager->getStorage('user')->load(2);
+
+    // Load vocabulary.
+    $vocabulary = $this->entityTypeManager->getStorage('vocabulary')->load('operations');
+
+    $raw = $response->getBody()->getContents();
+    $data = json_decode($raw);
+
+    foreach ($data->data as $row) {
+      $term = NULL;
+      $possible_terms = taxonomy_term_load_multiple_by_name($row->label, $vocabulary->id());
+      if ($possible_terms) {
+        foreach ($possible_terms as $possible_term) {
+          if ($possible_term->get('id')->value == $row->id) {
+            $term = $possible_term;
+            break;
+          }
+        }
+      }
+
+      if ($term) {
+        continue;
+      }
+
+      $item = [
+        'name' => $row->label,
+        'vid' => $vocabulary->id(),
+        'created' => [],
+        'provider_uuid' => [],
+        'parent' => [],
+        'description' => '',
+      ];
+
+      // Set creation time.
+      $item['created'][] = [
+        'value' => time(),
+      ];
+
+      // Store HID Id.
+      $item['author'][] = [
+        'value' => 'Shared',
+      ];
+
+      $term = Term::create($item);
+
+      $term->set('name', $row->label);
+      $term->set('id', $row->id);
+
+      // Set owner.
+      $item['provider_uuid'][] = [
+        'target_uuid' => $provider->uuid(),
+      ];
+
+      // Add country.
+      if (isset($row->country) && !empty($row->country)) {
+        $value = [];
+        $entities = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
+          'name' => $row->country->label,
+          'vid' => 'countries',
+        ]);
+        if (!empty($entities)) {
+          $value['target_uuid'] = reset($entities)->uuid();
+          $term->set('country', $value);
+        }
+      }
+
+      // Add region/operations.
+      if (isset($row->region) && !empty($row->region)) {
+        $operation['region_label'] = $row->region->label;
+        $value = [];
+        $entities = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
+          'name' => $row->region->label,
+          'vid' => 'operations',
+        ]);
+        if (!empty($entities)) {
+          $value['target_uuid'] = reset($entities)->uuid();
+          $term->set('region', $value);
+        }
+      }
+
+      $violations = $term->validate();
+      if (count($violations) > 0) {
+        print($violations->get(0)->getMessage());
+        print($violations->get(0)->getPropertyPath());
+      }
+      else {
+        $term->save();
+      }
+    }
+
+    // Check for more data.
+    if (isset($data->next) && isset($data->next->href)) {
+      print $data->next->href;
+      $this->updateOperations($data->next->href);
+    }
+
+    $this->state->set('docstore_sync_operations_ts', time());
+  }
+
+  /**
+   * Update organizations.
+   *
+   * @command docstore:update-organizations
+   * @usage docstore:update-organizations
+   *   Update organizations from HRInfo.
+   * @validate-module-enabled docstore
+   */
+  public function updateOrganizations($url = '') {
+    if (empty($url)) {
+      $ts = $this->state->get('docstore_sync_organizations_ts', 1641025083);
+      $url = 'https://www.humanitarianresponse.info/en/api/v1.0/organizations';
+      $url .= '?filter[changed][value]=' . $ts . '&filter[changed][operator]=>';
+      $url .= '&sort=id';
+    }
+
+    $response = $this->httpClient->request('GET', $url);
+    if ($response->getStatusCode() !== 200) {
+      return;
+    }
+
+    // Load provider.
+    $provider = $this->entityTypeManager->getStorage('user')->load(2);
+
+    // Load vocabulary.
+    $vocabulary = $this->entityTypeManager->getStorage('vocabulary')->load('organizations');
+
+    $raw = $response->getBody()->getContents();
+    $data = json_decode($raw);
+
+    foreach ($data->data as $row) {
+      $term = NULL;
+      $possible_terms = taxonomy_term_load_multiple_by_name($row->label, $vocabulary->id());
+      if ($possible_terms) {
+        foreach ($possible_terms as $possible_term) {
+          if ($possible_term->get('id')->value == $row->id) {
+            $term = $possible_term;
+            break;
+          }
+        }
+      }
+
+      if ($term) {
+        continue;
+      }
+
+      $item = [
+        'name' => $row->label,
+        'vid' => $vocabulary->id(),
+        'created' => [],
+        'provider_uuid' => [],
+        'parent' => [],
+        'description' => '',
+      ];
+
+      // Set creation time.
+      $item['created'][] = [
+        'value' => time(),
+      ];
+
+      // Store HID Id.
+      $item['author'][] = [
+        'value' => 'Shared',
+      ];
+
+      $term = Term::create($item);
+
+      $term->set('name', $row->label);
+      $term->set('id', $row->id);
+
+      // Set owner.
+      $item['provider_uuid'][] = [
+        'target_uuid' => $provider->uuid(),
+      ];
+
+      // Add organization type.
+      if (isset($row->type->label) && !empty($row->type->label)) {
+        $value = [];
+        $entities = $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
+          'name' => $row->type->label,
+          'vid' => 'organization_types',
+        ]);
+        if (!empty($entities)) {
+          $value['target_uuid'] = reset($entities)->uuid();
+          $term->set('organization_type', $value);
+        }
+      }
+
+      $violations = $term->validate();
+      if (count($violations) > 0) {
+        print($violations->get(0)->getMessage());
+        print($violations->get(0)->getPropertyPath());
+      }
+      else {
+        $term->save();
+      }
+    }
+
+    // Check for more data.
+    if (isset($data->next) && isset($data->next->href)) {
+      print $data->next->href;
+      $this->updateOrganizations($data->next->href);
+    }
+
+    $this->state->set('docstore_sync_organizations_ts', time());
+  }
+
+  /**
    * Create territory terms.
    */
   protected function createTerritoryTerms($data) {
