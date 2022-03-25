@@ -1,12 +1,10 @@
-track_enabled_base_fields: true
+_core:
+  default_config_hash: AXUBMTvVtpcNp0jKjDaWjSHqMy6HjuUf7j4yVbXgazI
 local_task_enabled_entity_types:
   - media
   - node
   - taxonomy_vocabulary
   - taxonomy_term
-usage_controller_items_per_page: 25
-_core:
-  default_config_hash: AXUBMTvVtpcNp0jKjDaWjSHqMy6HjuUf7j4yVbXgazI
 track_enabled_source_entity_types:
   - media
   - node
@@ -16,10 +14,12 @@ track_enabled_target_entity_types:
   - node
   - taxonomy_vocabulary
   - taxonomy_term
-edit_warning_message_entity_types: {  }
-delete_warning_message_entity_types: {  }
 track_enabled_plugins:
   - entity_reference_uuid
   - dynamic_entity_reference
   - entity_reference
+track_enabled_base_fields: true
 site_domains: {  }
+edit_warning_message_entity_types: {  }
+delete_warning_message_entity_types: {  }
+usage_controller_items_per_page: 25
