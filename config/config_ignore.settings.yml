@@ -1,3 +1,5 @@
+_core:
+  default_config_hash: UVH1aJ4b44UM-VdPVN7hNNuuVqfReJxwfVeDQH1Hvsk
 ignored_config_entities:
   - 'taxonomy.*'
   - 'field.storage.taxonomy_term.*'
@@ -13,6 +15,4 @@ ignored_config_entities:
   - 'core.entity_form_display.taxonomy_term.*'
   - 'core.entity_form_display.node.*'
   - 'webhooks.webhook.*'
-_core:
-  default_config_hash: UVH1aJ4b44UM-VdPVN7hNNuuVqfReJxwfVeDQH1Hvsk
 enable_export_filtering: true

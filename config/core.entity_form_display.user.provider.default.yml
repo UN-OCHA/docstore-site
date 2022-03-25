@@ -20,29 +20,29 @@ content:
     settings: {  }
     third_party_settings: {  }
   api_keys:
+    type: string_textfield
     weight: 1
+    region: content
     settings:
       size: 60
       placeholder: ''
     third_party_settings: {  }
-    type: string_textfield
-    region: content
   api_keys_read_only:
+    type: string_textfield
     weight: 2
+    region: content
     settings:
       size: 60
       placeholder: ''
     third_party_settings: {  }
-    type: string_textfield
-    region: content
   dropfolder:
+    type: string_textfield
     weight: 3
+    region: content
     settings:
       size: 60
       placeholder: ''
     third_party_settings: {  }
-    type: string_textfield
-    region: content
   prefix:
     type: string_textfield
     weight: 5
@@ -52,13 +52,13 @@ content:
       placeholder: ''
     third_party_settings: {  }
   shared_secret:
+    type: string_textfield
     weight: 4
+    region: content
     settings:
       size: 60
       placeholder: ''
     third_party_settings: {  }
-    type: string_textfield
-    region: content
 hidden:
   langcode: true
   language: true
