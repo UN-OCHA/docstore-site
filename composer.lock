@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "328a58e2648a60d341bc1f1adfe1a400",
+    "content-hash": "178d7c005c0d46b15741867a0eacb1f4",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -2740,21 +2740,22 @@
         },
         {
             "name": "drupal/address",
-            "version": "1.9.0",
+            "version": "1.10.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/address.git",
-                "reference": "8.x-1.9"
+                "reference": "8.x-1.10"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/address-8.x-1.9.zip",
-                "reference": "8.x-1.9",
-                "shasum": "c7e6406d88c6d6be9e8fe0091040d67012bdbf05"
+                "url": "https://ftp.drupal.org/files/projects/address-8.x-1.10.zip",
+                "reference": "8.x-1.10",
+                "shasum": "bbe61eb51da9d9b2a7ab247f90426836eb9b6f25"
             },
             "require": {
-                "commerceguys/addressing": "^1.0.7",
-                "drupal/core": "^8.8 || ^9"
+                "commerceguys/addressing": "^1.2.0",
+                "drupal/core": "^9.2 || ^10",
+                "php": "^7.3 || ^8.0"
             },
             "require-dev": {
                 "drupal/token": "^1.0"
@@ -2762,8 +2763,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "8.x-1.9",
-                    "datestamp": "1604422821",
+                    "version": "8.x-1.10",
+                    "datestamp": "1643715177",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -2775,6 +2776,10 @@
                 "GPL-2.0-or-later"
             ],
             "authors": [
+                {
+                    "name": "Centarro",
+                    "homepage": "https://www.drupal.org/user/3661446"
+                },
                 {
                     "name": "bojanz",
                     "homepage": "https://www.drupal.org/user/86106"
@@ -3664,17 +3669,17 @@
         },
         {
             "name": "drupal/devel",
-            "version": "4.1.3",
+            "version": "4.1.5",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/devel.git",
-                "reference": "4.1.3"
+                "reference": "4.1.5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/devel-4.1.3.zip",
-                "reference": "4.1.3",
-                "shasum": "f82261ca19a43379742e1df4c5a3795ef7a70441"
+                "url": "https://ftp.drupal.org/files/projects/devel-4.1.5.zip",
+                "reference": "4.1.5",
+                "shasum": "7d0b4397215f615a67ba80aab777e93918d497f9"
             },
             "require": {
                 "doctrine/common": "^2.7",
@@ -3693,8 +3698,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "4.1.3",
-                    "datestamp": "1639534069",
+                    "version": "4.1.5",
+                    "datestamp": "1646072825",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -3782,29 +3787,33 @@
         },
         {
             "name": "drupal/dynamic_entity_reference",
-            "version": "2.0.0-alpha15",
+            "version": "2.0.0-alpha19",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/dynamic_entity_reference.git",
-                "reference": "8.x-2.0-alpha15"
+                "reference": "8.x-2.0-alpha19"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/dynamic_entity_reference-8.x-2.0-alpha15.zip",
-                "reference": "8.x-2.0-alpha15",
-                "shasum": "9acea1f6e893722b403672d18a1666178b466232"
+                "url": "https://ftp.drupal.org/files/projects/dynamic_entity_reference-8.x-2.0-alpha19.zip",
+                "reference": "8.x-2.0-alpha19",
+                "shasum": "a5343baf212eb3371aca77a119e83cf9a3ff11eb"
             },
             "require": {
-                "drupal/core": "^8.7.7 || ^9"
+                "drupal/core": "^9.3",
+                "php": ">=7.4"
             },
             "require-dev": {
-                "drupal/diff": "1.x-dev"
+                "drupal/diff": "1.x-dev",
+                "mglaman/phpstan-drupal": "^1.1",
+                "phpstan/phpstan": "^1.1",
+                "phpstan/phpstan-deprecation-rules": "^1.0"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "8.x-2.0-alpha15",
-                    "datestamp": "1620309100",
+                    "version": "8.x-2.0-alpha19",
+                    "datestamp": "1644273087",
                     "security-coverage": {
                         "status": "not-covered",
                         "message": "Alpha releases are not covered by Drupal security advisories."
@@ -3841,17 +3850,17 @@
         },
         {
             "name": "drupal/entity_reference_uuid",
-            "version": "2.0.0-beta1",
+            "version": "2.0.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/entity_reference_uuid.git",
-                "reference": "2.0.0-beta1"
+                "reference": "2.0.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/entity_reference_uuid-2.0.0-beta1.zip",
-                "reference": "2.0.0-beta1",
-                "shasum": "3682bdc118acc5abf6c40ded198c181fa4ce08fa"
+                "url": "https://ftp.drupal.org/files/projects/entity_reference_uuid-2.0.0.zip",
+                "reference": "2.0.0",
+                "shasum": "a25577a5b228e1ecf2841bdcd2b932f7a362eacb"
             },
             "require": {
                 "drupal/core": "^8 || ^9"
@@ -3859,11 +3868,11 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "2.0.0-beta1",
-                    "datestamp": "1629133692",
+                    "version": "2.0.0",
+                    "datestamp": "1636489963",
                     "security-coverage": {
-                        "status": "not-covered",
-                        "message": "Beta releases are not covered by Drupal security advisories."
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
                     }
                 }
             },
@@ -4033,17 +4042,17 @@
         },
         {
             "name": "drupal/geofield",
-            "version": "1.34.0",
+            "version": "1.38.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/geofield.git",
-                "reference": "8.x-1.34"
+                "reference": "8.x-1.38"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/geofield-8.x-1.34.zip",
-                "reference": "8.x-1.34",
-                "shasum": "69b6253475b7d810ccc44fa8791c2ff026c0ae6b"
+                "url": "https://ftp.drupal.org/files/projects/geofield-8.x-1.38.zip",
+                "reference": "8.x-1.38",
+                "shasum": "a41ce66e4aab2c266a8e9f0addcac68a0b76f44b"
             },
             "require": {
                 "drupal/core": "^8.8 || ^9",
@@ -4052,8 +4061,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "8.x-1.34",
-                    "datestamp": "1626906581",
+                    "version": "8.x-1.38",
+                    "datestamp": "1646604411",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -4081,24 +4090,12 @@
                     "role": "Maintainer"
                 },
                 {
-                    "name": "davidseth",
-                    "homepage": "https://www.drupal.org/user/254857"
-                },
-                {
-                    "name": "itamair",
-                    "homepage": "https://www.drupal.org/user/1179076"
-                },
-                {
                     "name": "phayes",
                     "homepage": "https://www.drupal.org/user/47098"
                 },
                 {
                     "name": "plopesc",
                     "homepage": "https://www.drupal.org/user/282415"
-                },
-                {
-                    "name": "zzolo",
-                    "homepage": "https://www.drupal.org/user/147331"
                 }
             ],
             "description": "Stores geographic and location data (points, lines, and polygons).",
@@ -4111,17 +4108,17 @@
         },
         {
             "name": "drupal/jsonapi_extras",
-            "version": "3.19.0",
+            "version": "3.20.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/jsonapi_extras.git",
-                "reference": "8.x-3.19"
+                "reference": "8.x-3.20"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/jsonapi_extras-8.x-3.19.zip",
-                "reference": "8.x-3.19",
-                "shasum": "c608c004427136f33777d0e7e4485c1a91fcd563"
+                "url": "https://ftp.drupal.org/files/projects/jsonapi_extras-8.x-3.20.zip",
+                "reference": "8.x-3.20",
+                "shasum": "54bec6ae2b9261a53645182121ae16d3183e43ec"
             },
             "require": {
                 "drupal/core": "^8 || ^9",
@@ -4134,8 +4131,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "8.x-3.19",
-                    "datestamp": "1625144988",
+                    "version": "8.x-3.20",
+                    "datestamp": "1639580049",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -4173,26 +4170,26 @@
         },
         {
             "name": "drupal/libraries",
-            "version": "3.0.0-beta1",
+            "version": "3.0.0-beta2",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/libraries.git",
-                "reference": "8.x-3.0-beta1"
+                "reference": "8.x-3.0-beta2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/libraries-8.x-3.0-beta1.zip",
-                "reference": "8.x-3.0-beta1",
-                "shasum": "7843870c52251cc5290e1cdca94524f71edbf016"
+                "url": "https://ftp.drupal.org/files/projects/libraries-8.x-3.0-beta2.zip",
+                "reference": "8.x-3.0-beta2",
+                "shasum": "6e2ade6754f1406345e35b55cf27006b80349c25"
             },
             "require": {
-                "drupal/core": "^8 || ^9"
+                "drupal/core": "^8.8 || ^9"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "8.x-3.0-beta1",
-                    "datestamp": "1618261123",
+                    "version": "8.x-3.0-beta2",
+                    "datestamp": "1635190094",
                     "security-coverage": {
                         "status": "not-covered",
                         "message": "Beta releases are not covered by Drupal security advisories."
@@ -4637,31 +4634,33 @@
         },
         {
             "name": "drupal/social_api",
-            "version": "3.0.2",
+            "version": "3.0.3",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/social_api.git",
-                "reference": "3.0.2"
+                "reference": "3.0.3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/social_api-3.0.2.zip",
-                "reference": "3.0.2",
-                "shasum": "66e3a62416c9fe9ad9ced204e8f243aaa264babf"
+                "url": "https://ftp.drupal.org/files/projects/social_api-3.0.3.zip",
+                "reference": "3.0.3",
+                "shasum": "33db9b3e33c04d53220fd2f218802bf66178a4c5"
             },
             "require": {
                 "drupal/core": "^8.8 || ^9.0",
+                "ext-openssl": "*",
                 "league/oauth2-client": "^2.0"
             },
             "require-dev": {
                 "drupal/coder": "^8.3",
-                "drupal/social_auth": "^3.0@dev"
+                "drupal/social_auth": "^3.0@dev",
+                "phpcompatibility/php-compatibility": "^9.3"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "3.0.2",
-                    "datestamp": "1629547558",
+                    "version": "3.0.3",
+                    "datestamp": "1646578799",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -4784,28 +4783,28 @@
         },
         {
             "name": "drupal/social_auth_hid",
-            "version": "2.7.0",
+            "version": "3.1.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/social_auth_hid.git",
-                "reference": "8.x-2.7"
+                "reference": "8.x-3.1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/social_auth_hid-8.x-2.7.zip",
-                "reference": "8.x-2.7",
-                "shasum": "f9c8384fb81b3fcfd2df50450dcb25161672622b"
+                "url": "https://ftp.drupal.org/files/projects/social_auth_hid-8.x-3.1.zip",
+                "reference": "8.x-3.1",
+                "shasum": "8461a73d2af95f025a7772000a78530b588bbdb8"
             },
             "require": {
-                "drupal/core": "^8.8 || ^9",
+                "drupal/core": "^9 || ^10",
                 "drupal/social_auth": "^3.0",
                 "un-ocha/oauth2-hid": "^1.0.2"
             },
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "8.x-2.7",
-                    "datestamp": "1629377857",
+                    "version": "8.x-3.1",
+                    "datestamp": "1646815796",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
