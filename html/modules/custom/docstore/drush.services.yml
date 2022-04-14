@@ -4,3 +4,8 @@ services:
     arguments: ['@current_user', '@config.factory', '@database', '@entity_field.manager', '@entity.repository', '@entity_type.manager', '@file.mime_type.guesser', '@file_system', '@file.usage', '@state', '@http_client']
     tags:
       - { name: drush.command }
+  docstore.reliefweb.file.migration.commands:
+    class: \Drupal\docstore\Commands\DocstoreReliefWebFileMigrationCommands
+    arguments: ['@database', '@entity_field.manager', '@entity_type.manager', '@file_system', '@entity.memory_cache', '@state']
+    tags:
+      - { name: drush.command }
