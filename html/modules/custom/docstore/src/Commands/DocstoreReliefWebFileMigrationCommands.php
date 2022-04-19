@@ -18,7 +18,6 @@ use Drupal\media\Entity\Media;
 use Drupal\node\Entity\Node;
 use Drupal\search_api\Entity\Index;
 use Drush\Commands\DrushCommands;
-use GuzzleHttp\Psr7\Utils;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -121,11 +120,14 @@ class DocstoreReliefWebFileMigrationCommands extends DrushCommands {
    * @option batch_size Number of reports with attachments to process at once.
    * @option limit Maximum number of reports with non migrated files to process,
    * 0 means process everything.
+   * @option source_directory Local source directory with the ReliefWeb files.
+   * If empty, fetch the files remotely using the base URL.
    *
    * @default options [
    *   'base_url' => 'https://reliefweb.int',
    *   'batch_size' => 1000,
    *   'limit' => 0,
+   *   'source_directory' => '',
    * ]
    * @usage docstore:migrate-reliefweb-files --batch_size=10
    *   Migrate ReliefWeb files (10 documents at a time).
@@ -140,6 +142,7 @@ class DocstoreReliefWebFileMigrationCommands extends DrushCommands {
     'base_url' => 'https://reliefweb.int',
     'batch_size' => 1000,
     'limit' => 0,
+    'source_directory' => '',
   ]) {
     $results = [
       'files' => 0,
@@ -154,17 +157,22 @@ class DocstoreReliefWebFileMigrationCommands extends DrushCommands {
     $base_url = $options['base_url'];
     $batch_size = (int) $options['batch_size'];
     $limit = (int) $options['limit'];
+    $source_directory = rtrim($options['source_directory'], '/');
 
     if (preg_match('#^https?://[^/]+$#', $base_url) !== 1) {
-      $this->logger()->error(dt('The base url must be in the form http(s)://example.test.'));
+      $this->logger()->error(strtr('The base url must be in the form http(s)://example.test.'));
       return FALSE;
     }
     if ($batch_size < 1 || $batch_size > 1000) {
-      $this->logger()->error(dt('The batch size must be within 1 and 1000.'));
+      $this->logger()->error(strtr('The batch size must be within 1 and 1000.'));
       return FALSE;
     }
     if ($limit < 0) {
-      $this->logger()->error(dt('The limit must be equal or superior to 0.'));
+      $this->logger()->error(strtr('The limit must be equal or superior to 0.'));
+      return FALSE;
+    }
+    if (!empty($source_directory) && !file_exists($source_directory)) {
+      $this->logger()->error(strtr('The source directory does not exist.'));
       return FALSE;
     }
 
@@ -179,7 +187,7 @@ class DocstoreReliefWebFileMigrationCommands extends DrushCommands {
         '@documents' => number_format(count($node_data)),
       ]));
 
-      $data = $this->getEntityDataToMigrate($node_data, $base_url);
+      $data = $this->getEntityDataToMigrate($node_data, $base_url, $source_directory);
 
       $migrated = $this->migrateEntities($data);
 
@@ -445,7 +453,7 @@ class DocstoreReliefWebFileMigrationCommands extends DrushCommands {
     $media->save();
 
     // @todo copy the file and create the symlink.
-    if ($this->downloadFile($data, $file, $media)) {
+    if ($this->downloadFile($data, $file)) {
       $this->regenerateMediaSymlinks($media);
     }
   }
@@ -474,7 +482,7 @@ class DocstoreReliefWebFileMigrationCommands extends DrushCommands {
     $media->save();
 
     // @todo copy the file and create the symlink.
-    if ($this->downloadFile($data, $file, $media)) {
+    if ($this->downloadFile($data, $file, $source_directory)) {
       $this->regenerateMediaSymlinks($media);
     }
   }
@@ -544,39 +552,26 @@ class DocstoreReliefWebFileMigrationCommands extends DrushCommands {
     // Try to download the file.
     $success = FALSE;
     if ($this->prepareDirectory($uri)) {
-      try {
-        $input = Utils::TryFopen($url, 'r');
-        $output = Utils::TryFopen($uri, 'w');
-        $success = stream_copy_to_stream($input, $output);
-      }
-      catch (\Exception $exception) {
-        $this->logger()->error(strtr('Unable to download file @url to @uri: @message.', [
+      if (!copy($url, $uri)) {
+        $this->logger()->error(strtr('Unable to download file @url to @uri.', [
           '@url' => $url,
           '@uri' => $uri,
-          '@message' => $exception->getMessage(),
         ]));
-        return FALSE;
+      }
+      else {
+        $this->logger()->info(strtr('Successfully downloaded file @url to @uri.', [
+          '@url' => $url,
+          '@uri' => $uri,
+        ]));
+        $success = TRUE;
       }
     }
     else {
       $this->logger()->error(strtr('Unable to create directory for @uri.', [
         '@uri' => $uri,
       ]));
-      return FALSE;
     }
 
-    if (empty($success)) {
-      $this->logger()->error(strtr('Unable to download file @url to @uri.', [
-        '@url' => $url,
-        '@uri' => $uri,
-      ]));
-    }
-    else {
-      $this->logger()->info(strtr('Successfully downloaded file @url to @uri.', [
-        '@url' => $url,
-        '@uri' => $uri,
-      ]));
-    }
     return $success;
   }
 
@@ -602,12 +597,14 @@ class DocstoreReliefWebFileMigrationCommands extends DrushCommands {
    *   Node data keyed by ids.
    * @param string $base_url
    *   The base url of the site from which to retrieve the files.
+   * @param string $source_directory
+   *   The source directory with the ReliefWeb files.
    *
    * @return array
    *   Associative array keyed by node ids and with their attachments' data as
    *   values.
    */
-  protected function getEntityDataToMigrate(array $node_data, $base_url) {
+  protected function getEntityDataToMigrate(array $node_data, $base_url, $source_directory) {
     $query = $this->getReliefwebDatabase()
       ->select('field_data_field_file', 'f')
       ->fields('f', ['entity_id', 'delta', 'field_file_description'])
@@ -628,7 +625,7 @@ class DocstoreReliefWebFileMigrationCommands extends DrushCommands {
     $files = [];
     foreach ($records as $record) {
       $record['private'] = empty($node_data[$record['entity_id']]['status']);
-      $file = $this->prepareFileData($record, $base_url);
+      $file = $this->prepareFileData($record, $base_url, $source_directory);
       $files[$file['uuid']] = $file;
     }
 
@@ -705,14 +702,15 @@ class DocstoreReliefWebFileMigrationCommands extends DrushCommands {
    *   D7 file record.
    * @param string $base_url
    *   The base url of the site from which to retrieve the files.
+   * @param string $source_directory
+   *   The source directory with the ReliefWeb files.
    *
    * @return array
    *   D9 file data.
    */
-  protected function prepareFileData(array $record, $base_url) {
+  protected function prepareFileData(array $record, $base_url, $source_directory) {
     $uuid = static::generateAttachmentUuid($record['uri']);
     $file_uuid = static::generateAttachmentFileUuid($uuid, $record['fid']);
-    $url = static::getFileLegacyUrl($record['uri'], $base_url);
     $extension = mb_strtolower(pathinfo($record['filename'], PATHINFO_EXTENSION));
     $private = !empty($record['private']);
 
@@ -721,6 +719,13 @@ class DocstoreReliefWebFileMigrationCommands extends DrushCommands {
     $uri .= substr($file_uuid, 0, 2);
     $uri .= '/' . substr($file_uuid, 2, 2);
     $uri .= '/' . $file_uuid . '.' . $extension;
+
+    if (empty($source_directory)) {
+      $url = static::getFileLegacyUrl($record['uri'], $base_url);
+    }
+    else {
+      $url = static::getFileLegacyPath($record['uri'], $source_directory);
+    }
 
     return [
       'fid' => $record['fid'],
@@ -731,6 +736,7 @@ class DocstoreReliefWebFileMigrationCommands extends DrushCommands {
       'uuid' => $uuid,
       'file_uuid' => $file_uuid,
       'url' => $url,
+      'legacy_uri' => $record['uri'],
       'private' => $private,
       'entity_id' => $record['entity_id'],
     ];
@@ -936,6 +942,21 @@ class DocstoreReliefWebFileMigrationCommands extends DrushCommands {
   protected static function getFileLegacyUrl($uri, $base_url = 'https://reliefweb.int') {
     $filename = UrlHelper::encodePath(basename($uri));
     return $base_url . '/sites/reliefweb.int/files/resources/' . $filename;
+  }
+
+  /**
+   * Get a file legacy path from it's legacy URI.
+   *
+   * @param string $uri
+   *   File URI.
+   * @param string $source_directory
+   *   The directory with the ReliefWeb files.
+   *
+   * @return string
+   *   File Path.
+   */
+  protected static function getFileLegacyPath($uri, $source_directory) {
+    return $source_directory . '/resources/' . basename($uri);
   }
 
 }
