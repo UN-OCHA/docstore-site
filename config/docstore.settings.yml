@@ -1,7 +1,7 @@
+_core:
+  default_config_hash: CeJAro5nAe_LEuZjw-zhTEDiamzWajohWIATkkIil1w
 key_length: 32
 param_name: api-key
 detection_methods:
   - header
   - query
-_core:
-  default_config_hash: CeJAro5nAe_LEuZjw-zhTEDiamzWajohWIATkkIil1w
