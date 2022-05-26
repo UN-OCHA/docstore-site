@@ -25,7 +25,7 @@ services:
       - default
 
   mysql:
-    image: public.ecr.aws/unocha/alpine-mysql:10.5.12-r0-202109-01
+    image: unocha/alpine-mysql:10.5.12-r0-202109-01
     hostname: docstore-travis-mysql
     container_name: docstore-travis-mysql
     environment:
