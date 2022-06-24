@@ -214,10 +214,10 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
       }
       $counter++;
       if ($counter % 50 === 0) {
-        drush_print("Progress: $counter locations updated.");
+        $this->logger->info("Progress: $counter locations updated.");
       }
     }
-    drush_print("Finished: $counter locations updated.");
+    $this->logger->info("Finished: $counter locations updated.");
   }
 
   /**
@@ -390,8 +390,8 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
 
       $violations = $term->validate();
       if (count($violations) > 0) {
-        drush_print($violations->get(0)->getMessage());
-        drush_print($violations->get(0)->getPropertyPath());
+        $this->logger->info($violations->get(0)->getMessage());
+        $this->logger->info($violations->get(0)->getPropertyPath());
       }
       else {
         $term->save();
@@ -400,8 +400,8 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
 
     // Check for more data.
     if (isset($data->next) && isset($data->next->href)) {
-      drush_print("Next page:");
-      drush_print($data->next->href);
+      $this->logger->info("Next page:");
+      $this->logger->info($data->next->href);
       $this->updateLocations(0, $data->next->href);
     }
   }
@@ -619,8 +619,8 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
 
       $violations = $node->validate();
       if (count($violations) > 0) {
-        drush_print($violations->get(0)->getMessage());
-        drush_print($violations->get(0)->getPropertyPath());
+        $this->logger->info($violations->get(0)->getMessage());
+        $this->logger->info($violations->get(0)->getPropertyPath());
       }
       else {
         $node->save();
@@ -629,8 +629,8 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
 
     // Check for more data.
     if (isset($data->links) && isset($data->links->next->href)) {
-      drush_print('Next page:');
-      drush_print($data->links->next->href);
+      $this->logger->info('Next page:');
+      $this->logger->info($data->links->next->href);
       $this->updateDisasters(0, $date, $data->links->next->href);
     }
   }
@@ -710,8 +710,8 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
 
       $violations = $term->validate();
       if (count($violations) > 0) {
-        drush_print($violations->get(0)->getMessage());
-        drush_print($violations->get(0)->getPropertyPath());
+        $this->logger->info($violations->get(0)->getMessage());
+        $this->logger->info($violations->get(0)->getPropertyPath());
       }
       else {
         $term->save();
@@ -836,8 +836,8 @@ class DocstoreCommands extends DrushCommands implements SiteAliasManagerAwareInt
 
         $violations = $term->validate();
         if (count($violations) > 0) {
-          drush_print($violations->get(0)->getMessage());
-          drush_print($violations->get(0)->getPropertyPath());
+          $this->logger->info($violations->get(0)->getMessage());
+          $this->logger->info($violations->get(0)->getPropertyPath());
         }
         else {
           $term->save();
