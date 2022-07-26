@@ -10,11 +10,10 @@ env:
 php:
   - 8.0
 
-# Make sure we have a recent version of docker and docker-compose.
+# Make sure we have a recent version of docker-compose.
 addons:
   apt:
     packages:
-      - docker-ce
       - docker-compose
 
 mysql:
@@ -70,18 +69,20 @@ script:
   - sleep 10
 
   # Install the site with the existing config.
-  - docker exec -it docstore-travis-site drush -y si --existing-config
+  - docker exec -it ${SITEID}-travis-site drush -y si --existing-config
 
   # Ensure the file directories are writable.
-  - docker exec -it docstore-travis-site chmod -R 777 /srv/www/html/sites/default/files /srv/www/html/sites/default/private
+  - docker exec -it ${SITEID}-travis-site chmod -R 777 /srv/www/html/sites/default/files /srv/www/html/sites/default/private
 
   # Check coding standards.
-  - docker exec -it -u appuser -w /srv/www docstore-travis-site ./vendor/bin/phpcs -p --report=full --standard=phpcs.xml ./html/modules/custom
+  - docker exec -it -u appuser -w /srv/www ${SITEID}-travis-site ./vendor/bin/phpcs -p --report=full --standard=phpcs.xml ./html/modules/custom
 
   # Run API tests.
-  - docker exec -it -u appuser -w /srv/www/tests -e HOST="http://docstore-travis-site" -e DRUSH="drush -v"  docstore-travis-site sh ./run.sh
+  - docker exec -it -u appuser -w /srv/www/tests -e HOST="http://${SITEID}-travis-site" -e DRUSH="drush -v"  ${SITEID}-travis-site sh ./run.sh
 
 after_success:
+  - cd $TRAVIS_BUILD_DIR
+  - killall -9 php
   - echo "The tests completed without errors."
 
 after_failure:
