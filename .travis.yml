@@ -1,17 +1,29 @@
-dist: bionic
+dist: focal
 language: php
+cache:
+  directories:
+  - $HOME/.composer
+  - $HOME/.npm
+env:
+  - SITEID=docstore
 
 php:
   - 8.0
 
-services:
-  - docker
-
-# Make sure we have a recent version of docker.
+# Make sure we have a recent version of docker and docker-compose.
 addons:
   apt:
     packages:
       - docker-ce
+      - docker-compose
+
+mysql:
+  database: drupal
+  username: root
+  encoding: utf8
+
+services:
+  - docker
 
 before_script:
   # Ensure the PHP environment is ready.
@@ -21,13 +33,29 @@ before_script:
   - if ! [ -x "$(command -v aws)" ]; then curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" ; unzip awscliv2.zip ; sudo ./aws/install ; fi
   - aws ecr-public get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin public.ecr.aws/unocha
 
-script:
+  # Check the docker images we want actually exists.
+  - grep 'unocha/unified-builder:' docker/Dockerfile | awk '{print $2}' | xargs docker pull
+  - grep 'unocha/php-k8s:' docker/Dockerfile | awk '{print $2}' | xargs docker pull
+
   # Get docker information.
   - docker version
   - docker-compose version
 
+  # Ensure the PHP environment is ready.
+  - phpenv rehash
+
+script:
   # PHP linting
+  - set -e
   - test ! -d ./html/modules/custom || find -L ./html/modules/custom -iregex '.*\.\(php\|module\|inc\|install\)$' -print0 | xargs -0 -n 1 -P 4 php -l
+  - test ! -d ./html/themes/custom || find -L ./html/themes/custom -iregex '.*\.\(php\|module\|inc\|install\)$' -print0 | xargs -0 -n 1 -P 4 php -l
+  - set +e
+
+  # PHP CS
+  - set -e
+  - test ! -d ./html/modules/custom || ./vendor/bin/phpcs -p --report=full ./html/modules/custom
+  - test ! -d ./html/themes/custom || ./vendor/bin/phpcs -p --report=full ./html/themes/custom
+  - set +e
 
   # Build local image.
   - make

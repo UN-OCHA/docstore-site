@@ -4,14 +4,14 @@ networks:
   default:
 
 volumes:
-  docstore-site-public:
-  docstore-site-private:
+  ${SITEID}-site-public:
+  ${SITEID}-site-private:
 
 services:
   solr:
     image: solr:8.10.1-slim
-    hostname: docstore-travis-solr
-    container_name: docstore-travis-solr
+    hostname: ${SITEID}-travis-solr
+    container_name: ${SITEID}-travis-solr
     volumes:
       - "./solr:/solr-config:ro"
     command:
@@ -26,24 +26,24 @@ services:
 
   mysql:
     image: unocha/alpine-mysql:10.5.12-r0-202109-01
-    hostname: docstore-travis-mysql
-    container_name: docstore-travis-mysql
+    hostname: ${SITEID}-travis-mysql
+    container_name: ${SITEID}-travis-mysql
     environment:
-      - MYSQL_DB=docstore
-      - MYSQL_USER=docstore
-      - MYSQL_PASS=docstore
+      - MYSQL_DB=${SITEID}
+      - MYSQL_USER=${SITEID}
+      - MYSQL_PASS=${SITEID}
     networks:
       - default
 
   drupal:
-    image: public.ecr.aws/unocha/docstore-site:local
-    hostname: docstore-travis-site
-    container_name: docstore-travis-site
+    image: public.ecr.aws/unocha/${SITEID}-site:local
+    hostname: ${SITEID}-travis-site
+    container_name: ${SITEID}-travis-site
     volumes:
       - "./settings:/srv/www/shared/settings:ro"
       # Mount volumes for the private and public files.
-      - "docstore-site-public:/srv/www/html/sites/default/files:rw"
-      - "docstore-site-private:/srv/www/html/sites/default/private:rw"
+      - "${SITEID}-site-public:/srv/www/html/sites/default/files:rw"
+      - "${SITEID}-site-private:/srv/www/html/sites/default/private:rw"
       # Mount the folders needed for the tests.
       - "../drop_folders:/srv/www/drop_folders:ro"
       - "../tests:/srv/www/tests:ro"
@@ -51,14 +51,14 @@ services:
     environment:
       - TERM=xterm
       - ENVIRONMENT=dev
-      - NGINX_SERVERNAME=docstore-travis-site,localhost,127.0.0.1
-      - NGINX_OVERRIDE_PROTOCOL=HTTP,docstore-travis-site,localhost,127.0.0.1
+      - NGINX_SERVERNAME=${SITEID}-travis-site,localhost,127.0.0.1
+      - NGINX_OVERRIDE_PROTOCOL=HTTP,${SITEID}-travis-site,localhost,127.0.0.1
       - NGINX_LIMIT_HUMANS=128r/s
       - NGINX_BURST_HUMANS=128
-      - DRUSH_OPTIONS_URI=http://docstore-travis-site
-      - DRUPAL_DB_DATABASE=docstore
-      - DRUPAL_DB_USERNAME=docstore
-      - DRUPAL_DB_PASSWORD=docstore
+      - DRUSH_OPTIONS_URI=http://${SITEID}-travis-site
+      - DRUPAL_DB_DATABASE=${SITEID}
+      - DRUPAL_DB_USERNAME=${SITEID}
+      - DRUPAL_DB_PASSWORD=${SITEID}
       - DRUPAL_DB_HOST=mysql
       - DRUPAL_DB_DRIVER=mysql
     networks:
