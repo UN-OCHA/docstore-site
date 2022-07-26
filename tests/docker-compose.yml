@@ -44,8 +44,8 @@ services:
     volumes:
       - "./settings:/srv/www/shared/settings:ro"
       # Mount volumes for the private and public files.
-      - site-public:/srv/www/html/sites/default/files:rw"
-      - site-private:/srv/www/html/sites/default/private:rw"
+      - site-public:/srv/www/html/sites/default/files"
+      - site-private:/srv/www/html/sites/default/private"
       # Mount the folders needed for the tests.
       - "../drop_folders:/srv/www/drop_folders:ro"
       - "../tests:/srv/www/tests:ro"
