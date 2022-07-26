@@ -4,8 +4,8 @@ networks:
   default:
 
 volumes:
-  ${SITEID}-site-public:
-  ${SITEID}-site-private:
+  docstore-site-public:
+  docstore-site-private:
 
 services:
   solr:
