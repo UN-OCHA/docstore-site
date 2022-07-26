@@ -4,8 +4,10 @@ networks:
   default:
 
 volumes:
-  docstore-site-public:
-  docstore-site-private:
+  site-public:
+    name: ${SITEID}-site-public
+  site-private:
+    name: ${SITEID}-site-private
 
 services:
   solr:
@@ -42,8 +44,8 @@ services:
     volumes:
       - "./settings:/srv/www/shared/settings:ro"
       # Mount volumes for the private and public files.
-      - "${SITEID}-site-public:/srv/www/html/sites/default/files:rw"
-      - "${SITEID}-site-private:/srv/www/html/sites/default/private:rw"
+      - site-public:/srv/www/html/sites/default/files:rw"
+      - site-private:/srv/www/html/sites/default/private:rw"
       # Mount the folders needed for the tests.
       - "../drop_folders:/srv/www/drop_folders:ro"
       - "../tests:/srv/www/tests:ro"
