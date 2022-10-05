@@ -17,9 +17,6 @@ RUN rm -rf ./vendor && \
     composer self-update && \
     COMPOSER_MEMORY_LIMIT=-1 composer install --no-interaction --prefer-dist
 
-# Clean up previous npm installation and run new one.
-RUN COMPOSER_MEMORY_LIMIT=-1 composer gulp
-
 # Copy settings to default site location after creating it.
 RUN mkdir -m 0775 -p html/sites/default && \
     cp -a docker/settings.php docker/services.yml html/sites/default
