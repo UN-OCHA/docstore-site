@@ -95,7 +95,7 @@ Public txt
 ```
 
 * Status: `200`
-* Content-Type: "text/plain;charset=UTF-8"
+* Content-Type: "text/plain; charset=UTF-8"
 
 ## POST /files/{file_public_uuid}/content
 
@@ -145,7 +145,7 @@ Public txt - Updated
 ```
 
 * Status: `200`
-* Content-Type: "text/plain;charset=UTF-8"
+* Content-Type: "text/plain; charset=UTF-8"
 
 ## GET /files/{file_public_uuid}/revisions/{file_public_revision_1}/content
 
@@ -162,7 +162,7 @@ Public txt
 ```
 
 * Status: `200`
-* Content-Type: "text/plain;charset=UTF-8"
+* Content-Type: "text/plain; charset=UTF-8"
 
 ## GET /files/{file_public_uuid}/revisions/{file_public_revision_2}/content
 
@@ -179,7 +179,7 @@ Public txt - Updated
 ```
 
 * Status: `200`
-* Content-Type: "text/plain;charset=UTF-8"
+* Content-Type: "text/plain; charset=UTF-8"
 
 ## GET /files
 
@@ -422,7 +422,7 @@ Public txt - Updated
 ```
 
 * Status: `200`
-* Content-Type: "text/plain;charset=UTF-8"
+* Content-Type: "text/plain; charset=UTF-8"
 
 ## GET /files/{file_public_uuid}/content
 
@@ -438,7 +438,7 @@ Public txt - Updated
 ```
 
 * Status: `200`
-* Content-Type: "text/plain;charset=UTF-8"
+* Content-Type: "text/plain; charset=UTF-8"
 
 ## GET /files/{file_public_uuid}/revisions/{current_revision_id}/content
 
@@ -456,7 +456,7 @@ Public txt - Updated
 ```
 
 * Status: `200`
-* Content-Type: "text/plain;charset=UTF-8"
+* Content-Type: "text/plain; charset=UTF-8"
 
 ## GET /files/{file_public_uuid}/revisions/{previous_revision_id}/content
 
@@ -474,7 +474,7 @@ Public txt
 ```
 
 * Status: `200`
-* Content-Type: "text/plain;charset=UTF-8"
+* Content-Type: "text/plain; charset=UTF-8"
 
 ## POST /files
 
