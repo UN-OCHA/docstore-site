@@ -1,0 +1,64 @@
+# Plans
+docstore_fts_get_plans:
+  path: '/api/v1/fts/plan'
+  defaults:
+    _controller: 'docstore_fts.api_controller:getPlans'
+    _title: 'Get Plans'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_fts_get_plan:
+  path: '/api/v1/fts/plan/{id}'
+  defaults:
+    _controller: 'docstore_fts.api_controller:getPlan'
+    _title: 'Get Plan'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+
+docstore_fts_get_plans_iso3:
+  path: '/api/v1/fts/plan/iso3/{iso3}'
+  defaults:
+    _controller: 'docstore_fts.api_controller:getPlansByIso3'
+    _title: 'Get Plans by country'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+docstore_fts_get_plans_year:
+  path: '/api/v1/fts/plan/year/{year}'
+  defaults:
+    _controller: 'docstore_fts.api_controller:getPlansByYear'
+    _title: 'Get Plan'
+  methods: [GET]
+  requirements:
+    _docstore_access_check: 'TRUE'
+  options:
+    _auth: ['docstore_auth']
+    docstore_crud: 'R'
+    docstore_access_level: 'B'
+
+## Reference data
+#docstore_fts_get_iso3:
+#  path: '/api/v1/fts/iso3'
+#  defaults:
+#    _controller: 'docstore_fts.api_controller:getIso3'
+#    _title: 'Get vocabularies'
+#  methods: [GET]
+#docstore_fts_get_year:
+#  path: '/api/v1/fts/year'
+#  defaults:
+#    _controller: 'docstore_fts.api_controller:getYear'
+#    _title: 'Get vocabularies'
+#  methods: [GET]

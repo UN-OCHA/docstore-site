@@ -1,0 +1,7 @@
+services:
+  docstore_fts.api_controller:
+    class: \Drupal\docstore_fts\Controller\ApiController
+    arguments: ['@config.factory', '@logger.factory', '@docstore.document_controller']
+  docstore_fts.data_controller:
+    class: \Drupal\docstore_fts\Controller\DataController
+    arguments: ['@http_client', '@entity_type.manager']

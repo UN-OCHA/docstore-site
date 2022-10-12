@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * @file
+ * Helpers.
+ */
+
+/**
+ * Update current year.
+ */
+function docstore_fts_update_current_year() {
+  docstore_fts_update_year(date('Y'));
+}
+
+/**
+ * Update year.
+ */
+function docstore_fts_update_year($year) {
+  /** @var \Drupal\docstore_fts\Controller\DataController $data_controller */
+  $data_controller = \Drupal::service('docstore_fts.data_controller');
+  $data_controller->updateByYear($year);
+}

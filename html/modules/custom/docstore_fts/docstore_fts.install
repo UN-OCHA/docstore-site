@@ -1,0 +1,216 @@
+<?php
+
+/**
+ * @file
+ * Create structure.
+ */
+
+use Drupal\docstore\ManageFields;
+use Drupal\node\Entity\NodeType;
+use Drupal\taxonomy\Entity\Vocabulary;
+use Drupal\user\Entity\User;
+
+/**
+ * List of vocabularies.
+ */
+function docstore_fts_vocabularies() {
+  return [
+    'fts_country' => 'FTS - Countries',
+    'fts_year' => 'FTS - Years',
+  ];
+}
+
+/**
+ * List of vocabulary fields.
+ */
+function docstore_fts_vocabulary_fields() {
+  return [
+    'fts_country' => [
+      'iso3' => 'string',
+    ],
+  ];
+}
+
+/**
+ * List of documents.
+ */
+function docstore_fts_documents() {
+  return [
+    'fts' => 'FTS - Data',
+  ];
+}
+
+/**
+ * List of document fields.
+ */
+function docstore_fts_document_fields() {
+  return [
+    'fts' => [
+      'plan_id' => 'string',
+      'name' => 'string',
+      'code' => 'string',
+      'iso3' => 'string',
+      'country' => 'string',
+      'year' => 'string',
+      /*
+      'years' => [
+        'type' => 'entity_reference_uuid',
+        'target' => 'fts_year',
+      ],
+      'countries' => [
+        'type' => 'entity_reference_uuid',
+        'target' => 'fts_country',
+      ],
+      */
+      'updated' => 'timestamp',
+      'original_requirements' => [
+        'type' => 'decimal',
+        'settings' => [
+          'precision' => 20,
+        ],
+      ],
+      'revised_requirements' => [
+        'type' => 'decimal',
+        'settings' => [
+          'precision' => 20,
+        ],
+      ],
+      'total_requirements' => [
+        'type' => 'decimal',
+        'settings' => [
+          'precision' => 20,
+        ],
+      ],
+      'funding_total' => [
+        'type' => 'decimal',
+        'settings' => [
+          'precision' => 20,
+        ],
+      ],
+      'unmet_requirements' => [
+        'type' => 'decimal',
+        'settings' => [
+          'precision' => 20,
+        ],
+      ],
+    ],
+  ];
+}
+
+/**
+ * Ensure vocabularies do exist.
+ */
+function docstore_fts_ensure_vocabularies() {
+  $provider = User::load(2);
+  $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+
+  foreach (docstore_fts_vocabularies() as $machine_name => $label) {
+    $vocabulary = Vocabulary::load($machine_name);
+    if (!$vocabulary) {
+      $vocabulary = $manager->createVocabulary([
+        'label' => $label,
+        'machine_name' => $machine_name,
+        'author' => 'FTS',
+        'allow_duplicates' => FALSE,
+      ]);
+    }
+  }
+}
+
+/**
+ * Ensure vocabulary fields do exist.
+ */
+function docstore_fts_ensure_vocabulary_fields() {
+  $provider = User::load(2);
+  $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+
+  foreach (docstore_fts_vocabulary_fields() as $machine_name => $fields) {
+    $vocabulary = Vocabulary::load($machine_name);
+    foreach ($fields as $label => $type) {
+      if (is_array($type)) {
+        $manager->addVocabularyField($vocabulary, [
+          'label' => $label,
+          'type' => $type['type'],
+          'target' => $type['target'],
+          'author' => 'FTS',
+        ]);
+      }
+      else {
+        $manager->addVocabularyField($vocabulary, [
+          'label' => $label,
+          'type' => $type,
+          'author' => 'FTS',
+        ]);
+      }
+    }
+  }
+}
+
+/**
+ * Ensure documents do exist.
+ */
+function docstore_fts_ensure_documents() {
+  $provider = User::load(2);
+  $manager = new ManageFields($provider, '', Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+
+  foreach (docstore_fts_documents() as $machine_name => $label) {
+    $node_type = NodeType::load($machine_name);
+    if (!$node_type) {
+      $node_type = $manager->createDocumentType([
+        'label' => $label,
+        'machine_name' => $machine_name,
+        'endpoint' => $machine_name,
+        'author' => 'FTS',
+        'allow_duplicates' => FALSE,
+      ]);
+    }
+  }
+}
+
+/**
+ * Ensure document fields do exist.
+ */
+function docstore_fts_ensure_document_fields() {
+  $provider = User::load(2);
+
+  foreach (docstore_fts_document_fields() as $machine_name => $fields) {
+    $manager = new ManageFields($provider, $machine_name, Drupal::service('entity_field.manager'), Drupal::service('entity_type.manager'), Drupal::service('database'));
+    foreach ($fields as $label => $type) {
+      if (is_array($type)) {
+        $manager->addDocumentField([
+          'label' => $label,
+          'type' => $type['type'],
+          'target' => $type['target'] ?? NULL,
+          'author' => 'FTS',
+          'machine_name' => $label,
+          'settings' => $type['settings'] ?? NULL,
+        ]);
+      }
+      else {
+        $manager->addDocumentField([
+          'label' => $label,
+          'type' => $type,
+          'author' => 'FTS',
+          'machine_name' => $label,
+        ]);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_install();
+ */
+function docstore_fts_install($is_syncing) {
+  // Force a rebuild.
+  \Drupal::service('docstore.document_controller')->rebuildEndpoints();
+
+  docstore_fts_ensure_vocabularies();
+  docstore_fts_ensure_vocabulary_fields();
+  docstore_fts_ensure_documents();
+  docstore_fts_ensure_document_fields();
+
+  \Drupal::service('docstore.document_controller')->rebuildEndpoints();
+  \Drupal::service('docstore.document_controller')->rebuildAccessibleResourceTypes('node_type');
+  \Drupal::service('docstore.vocabulary_controller')->rebuildAccessibleResourceTypes('taxonomy_vocabulary');
+}

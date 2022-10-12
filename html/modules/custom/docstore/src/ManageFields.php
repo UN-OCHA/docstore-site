@@ -92,6 +92,7 @@ class ManageFields {
       'datetime' => 'date',
       'daterange' => 'date',
       'integer' => 'integer',
+      'decimal' => 'decimal',
       'string_long' => 'text',
       'geofield' => 'string',
       'link' => 'string',
@@ -789,14 +790,14 @@ class ManageFields {
       return $this->createDocumentReferenceField($params['author'], $params['label'], $params['machine_name'], $params['type'], $params['target'], $params['multiple'], $params['required'], $params['private']);
     }
     else {
-      return $this->createDocumentField($params['author'], $params['label'], $params['machine_name'], $params['type'], $params['multiple'], $params['required'], $params['private']);
+      return $this->createDocumentField($params['author'], $params['label'], $params['machine_name'], $params['type'], $params['multiple'], $params['required'], $params['private'], $params['settings'] ?? []);
     }
   }
 
   /**
    * Create basic document field.
    */
-  protected function createDocumentField($author, $label, $machine_name, $field_type, $multiple, $required, $private) {
+  protected function createDocumentField($author, $label, $machine_name, $field_type, $multiple, $required, $private, $settings = []) {
     // Create new machine name if needed.
     $field_name = $machine_name;
     if (empty($field_name)) {
@@ -812,6 +813,7 @@ class ManageFields {
         'entity_type' => 'node',
         'type' => $field_type,
         'cardinality' => $multiple ? FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED : 1,
+        'settings' => $settings,
       ]);
 
       $field_storage->setThirdPartySetting('docstore', 'provider_uuid', $this->provider->uuid());
