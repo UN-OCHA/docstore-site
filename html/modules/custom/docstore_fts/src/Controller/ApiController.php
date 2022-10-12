@@ -72,7 +72,9 @@ class ApiController extends ControllerBase {
    */
   public function getPlan($id, Request $request) {
     $request->query->add([
-      'field[plan_id]' => $id,
+      'filter' => [
+        'plan_id' => $id,
+      ],
     ]);
 
     return $this->docstoreController->getDocuments('fts', $request);
