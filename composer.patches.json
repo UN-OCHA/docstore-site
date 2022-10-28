@@ -5,6 +5,9 @@
         },
         "drupal/config_ignore": {
             "https://www.drupal.org/project/config_ignore/issues/2857247": "https://www.drupal.org/files/issues/2021-01-04/config_ignore_2857247-61.patch"
+        },
+        "drupal/search_api_solr": {
+            "#3314711-21: empty specific languages": "https://www.drupal.org/files/issues/2022-10-24/search_api_solr-empty-specific-languages-3314711-21.patch"
         }
     }
 }
