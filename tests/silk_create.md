@@ -1271,7 +1271,7 @@ Test illegal sort.
 
 * Status: `400`
 * Content-Type: "application/json"
-* Data.message: "Sort \"createdxx\" is not valid solr field."
+* Data.message: "Sorting by \"createdxx\" has no valid solr field."
 
 ## GET /documents/{doc_type_endpoint}
 
