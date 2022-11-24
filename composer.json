@@ -60,7 +60,7 @@
         "dmore/chrome-mink-driver": "^2.7",
         "drupal/coder": "^8.3",
         "drupal/console": "~1.0",
-        "drupal/devel": "^4.1",
+        "drupal/devel": "^5.0.2",
         "drupal/upgrade_rector": "^1.0@alpha",
         "drupal/upgrade_status": "^3.10",
         "drupal/yaml_content": "^1.0",
