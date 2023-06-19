@@ -2,7 +2,6 @@
 
 namespace Drupal\docstore\Controller;
 
-use Drupal\webhooks\Entity\WebhookConfig;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
@@ -11,6 +10,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\docstore\ProviderTrait;
 use Drupal\docstore\ResourceTrait;
+use Drupal\webhooks\Entity\WebhookConfig;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
