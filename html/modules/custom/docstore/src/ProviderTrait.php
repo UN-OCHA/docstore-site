@@ -6,8 +6,8 @@ use Drupal\Core\Config\Entity\ConfigEntityBundleBase;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
-use Drupal\user\EntityOwnerInterface;
 use Drupal\user\Entity\User;
+use Drupal\user\EntityOwnerInterface;
 use Drupal\user\UserInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 

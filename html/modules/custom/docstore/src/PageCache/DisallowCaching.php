@@ -2,8 +2,8 @@
 
 namespace Drupal\docstore\PageCache;
 
-use Drupal\docstore\AuthenticationService;
 use Drupal\Core\PageCache\RequestPolicyInterface;
+use Drupal\docstore\AuthenticationService;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
