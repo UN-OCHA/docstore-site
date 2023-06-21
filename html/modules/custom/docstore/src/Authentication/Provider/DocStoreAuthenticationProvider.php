@@ -2,8 +2,8 @@
 
 namespace Drupal\docstore\Authentication\Provider;
 
-use Drupal\docstore\AuthenticationService;
 use Drupal\Core\Authentication\AuthenticationProviderInterface;
+use Drupal\docstore\AuthenticationService;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
