@@ -89,11 +89,6 @@
             "symfony/flex": true
         }
     },
-    "autoload": {
-        "classmap": [
-            "scripts/composer/ScriptHandler.php"
-        ]
-    },
     "extra": {
         "drush": {
           "services": {
@@ -145,13 +140,9 @@
     "scripts": {
         "git-hooks": "test -d .git && git config core.hooksPath git-hooks || exit 0",
         "post-install-cmd": [
-            "DrupalProject\\composer\\ScriptHandler::createRequiredFiles",
-            "DrupalProject\\composer\\ScriptHandler::removeUnnecessaryFiles",
             "@git-hooks"
         ],
         "post-update-cmd": [
-            "DrupalProject\\composer\\ScriptHandler::createRequiredFiles",
-            "DrupalProject\\composer\\ScriptHandler::removeUnnecessaryFiles",
             "@git-hooks"
         ]
     }

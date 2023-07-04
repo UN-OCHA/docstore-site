@@ -51,8 +51,8 @@ services:
     environment:
       - TERM=xterm
       - ENVIRONMENT=dev
-      - NGINX_SERVERNAME=docstore-travis-site,localhost,127.0.0.1
-      - NGINX_OVERRIDE_PROTOCOL=HTTP,docstore-travis-site,localhost,127.0.0.1
+      - NGINX_SERVERNAME=docstore-travis-site,docstore-test-site,localhost,127.0.0.1
+      - NGINX_OVERRIDE_PROTOCOL=HTTP,docstore-travis-site,docstore-test-site,localhost,127.0.0.1
       - NGINX_LIMIT_HUMANS=128r/s
       - NGINX_BURST_HUMANS=128
       - DRUSH_OPTIONS_URI=http://docstore-travis-site
