@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f72c50784a640227fe1c335a3dac4aa1",
+    "content-hash": "7a7af0c8700c861efbad0a8828e98bb9",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -2772,11 +2772,17 @@
         },
         {
             "name": "drupal/config_ignore",
-            "version": "dev-2.x",
+            "version": "2.4.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/config_ignore.git",
-                "reference": "bbdb8d39d970ecde407c658dabc7fdb21c97947f"
+                "reference": "8.x-2.4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/config_ignore-8.x-2.4.zip",
+                "reference": "8.x-2.4",
+                "shasum": "e0e45dde2d6927c5d26de59f352792fb6cf26554"
             },
             "require": {
                 "drupal/config_filter": "^1 || ^2",
@@ -2784,15 +2790,12 @@
             },
             "type": "drupal-module",
             "extra": {
-                "branch-alias": {
-                    "dev-2.x": "2.x-dev"
-                },
                 "drupal": {
-                    "version": "8.x-2.3+1-dev",
-                    "datestamp": "1662296469",
+                    "version": "8.x-2.4",
+                    "datestamp": "1676045435",
                     "security-coverage": {
-                        "status": "not-covered",
-                        "message": "Dev releases are not covered by Drupal security advisories."
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
                     }
                 }
             },
@@ -4453,11 +4456,17 @@
         },
         {
             "name": "drupal/webhooks",
-            "version": "dev-1.x",
+            "version": "1.0.0-alpha10",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/webhooks.git",
-                "reference": "bf9d4031b9ec9f13024863175f609f5717892c19"
+                "reference": "8.x-1.0-alpha10"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/webhooks-8.x-1.0-alpha10.zip",
+                "reference": "8.x-1.0-alpha10",
+                "shasum": "afa02e87c6e3ce0e486e3de417c11bed2ce0beb3"
             },
             "require": {
                 "drupal/core": "^8 || ^9",
@@ -4465,15 +4474,12 @@
             },
             "type": "drupal-module",
             "extra": {
-                "branch-alias": {
-                    "dev-1.x": "1.x-dev"
-                },
                 "drupal": {
-                    "version": "8.x-1.0-alpha9+1-dev",
-                    "datestamp": "1659089719",
+                    "version": "8.x-1.0-alpha10",
+                    "datestamp": "1659091295",
                     "security-coverage": {
                         "status": "not-covered",
-                        "message": "Dev releases are not covered by Drupal security advisories."
+                        "message": "Alpha releases are not covered by Drupal security advisories."
                     }
                 },
                 "drush": {
@@ -15340,9 +15346,8 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "drupal/config_ignore": 20,
         "drupal/entity_usage": 10,
-        "drupal/webhooks": 20,
+        "drupal/webhooks": 15,
         "drupal/upgrade_rector": 15
     },
     "prefer-stable": true,
