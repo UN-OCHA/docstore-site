@@ -27,7 +27,6 @@
         "php": ">=8.0",
         "composer/installers": "^1.7",
         "cweagans/composer-patches": "^1.7",
-        "drupal-composer/preserve-paths": "^0.1.6",
         "drupal/address": "^1.9",
         "drupal/admin_denied": "^2",
         "drupal/admin_toolbar": "^3.0",
@@ -84,17 +83,11 @@
             "composer/installers": true,
             "cweagans/composer-patches": true,
             "dealerdirect/phpcodesniffer-composer-installer": true,
-            "drupal-composer/preserve-paths": true,
             "drupal/core-composer-scaffold": true,
             "drupal/core-project-message": true,
             "drupal/console-extend-plugin": true,
             "symfony/flex": true
         }
-    },
-    "autoload": {
-        "classmap": [
-            "scripts/composer/ScriptHandler.php"
-        ]
     },
     "extra": {
         "drush": {
@@ -117,6 +110,8 @@
             "html/modules/contrib/{$name}": ["type:drupal-module"],
             "html/profiles/contrib/{$name}": ["type:drupal-profile"],
             "html/themes/contrib/{$name}": ["type:drupal-theme"],
+            "html/modules/custom/{$name}": ["type:drupal-custom-module"],
+            "html/themes/custom/{$name}": ["type:drupal-custom-theme"],
             "drush/Commands/{$name}": ["type:drupal-drush"]
         },
         "drupal-scaffold": {
@@ -139,24 +134,15 @@
             "replace": false,
             "merge-extra": false
         },
-        "preserve-paths": [
-            "html/modules/custom",
-            "html/themes/custom",
-            "html/sites/default"
-        ],
         "patches-file": "composer.patches.json",
         "composer-exit-on-patch-failure": true
     },
     "scripts": {
         "git-hooks": "test -d .git && git config core.hooksPath git-hooks || exit 0",
         "post-install-cmd": [
-            "DrupalProject\\composer\\ScriptHandler::createRequiredFiles",
-            "DrupalProject\\composer\\ScriptHandler::removeUnnecessaryFiles",
             "@git-hooks"
         ],
         "post-update-cmd": [
-            "DrupalProject\\composer\\ScriptHandler::createRequiredFiles",
-            "DrupalProject\\composer\\ScriptHandler::removeUnnecessaryFiles",
             "@git-hooks"
         ]
     }
