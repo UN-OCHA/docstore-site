@@ -86,7 +86,8 @@
             "drupal/core-composer-scaffold": true,
             "drupal/core-project-message": true,
             "drupal/console-extend-plugin": true,
-            "symfony/flex": true
+            "symfony/flex": true,
+            "drupal-composer/preserve-paths": true
         }
     },
     "extra": {
